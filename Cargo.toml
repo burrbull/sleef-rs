@@ -1,0 +1,6 @@
+[package]
+name = "sleef"
+version = "0.1.0"
+authors = ["Andrey Zgarbul <zgarbul.andrey@gmail.com>"]
+
+[dependencies]

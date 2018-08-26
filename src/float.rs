@@ -531,7 +531,6 @@ pub fn xexpf(d: f32) -> f32 {
         .mla(s, 0.5);
 
     u = s * s * u + s + 1.;
-    u = ldexp2kf(u, q);
 
     if d < -104. {
         0.

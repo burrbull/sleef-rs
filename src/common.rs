@@ -295,7 +295,7 @@ impl Check for f64 {
 
 
 #[allow(non_camel_case_types)]
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct f32n2(pub f32, pub f32);
 impl f32n2 {
     #[inline]
@@ -624,7 +624,7 @@ impl Rec<f32n2> for f32 {
 
 
 #[allow(non_camel_case_types)]
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct f64n2(pub f64, pub f64);
 impl f64n2 {
     #[inline]

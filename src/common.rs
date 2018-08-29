@@ -969,3 +969,19 @@ impl Rec<f64n2> for f64 {
         f64n2::new(q0, t * (1. - dh * th - dh * tl - dl * th - dl * tl))
     }
 }
+
+
+
+/*
+
+pub trait VCastF {
+    fn as_vf(self) -> VFloat
+}
+pub trait VCastD {
+    fn as_vd(self) -> VFloat
+}
+
+
+
+
+*/

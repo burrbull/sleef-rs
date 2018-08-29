@@ -476,3 +476,4 @@ fn ddsqrt_d2_d(d : f64) -> f64n2 { // SqrtAsD2 for f64
 //
 
 
+vcast_vf_f(f: float) // VCast for f32

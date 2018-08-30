@@ -160,14 +160,14 @@ fn vor_vm_vm_vm(x: VMask, y: VMask) -> VMask { return vreinterpret_vm_vd(_mm256_
 #[inline]
 fn vxor_vm_vm_vm(x: VMask, y: VMask) -> VMask { return vreinterpret_vm_vd(_mm256_xor_pd(vreinterpret_vd_vm(x), vreinterpret_vd_vm(y))); }
 
-#[inline]
-fn vand_vo_vo_vo(x: VOpMask, y: VOpMask) -> VOpMask { return vreinterpret_vm_vd(_mm256_and_pd(vreinterpret_vd_vm(x), vreinterpret_vd_vm(y))); }
+//#[inline]
+//fn vand_vo_vo_vo(x: VOpMask, y: VOpMask) -> VOpMask { return vreinterpret_vm_vd(_mm256_and_pd(vreinterpret_vd_vm(x), vreinterpret_vd_vm(y))); }
 #[inline]
 fn vandnot_vo_vo_vo(x: VOpMask, y: VOpMask) -> VOpMask { return vreinterpret_vm_vd(_mm256_andnot_pd(vreinterpret_vd_vm(x), vreinterpret_vd_vm(y))); }
-#[inline]
-fn vor_vo_vo_vo(x: VOpMask, y: VOpMask) -> VOpMask { return vreinterpret_vm_vd(_mm256_or_pd(vreinterpret_vd_vm(x), vreinterpret_vd_vm(y))); }
-#[inline]
-fn vxor_vo_vo_vo(x: VOpMask, y: VOpMask) -> VOpMask { return vreinterpret_vm_vd(_mm256_xor_pd(vreinterpret_vd_vm(x), vreinterpret_vd_vm(y))); }
+//#[inline]
+//fn vor_vo_vo_vo(x: VOpMask, y: VOpMask) -> VOpMask { return vreinterpret_vm_vd(_mm256_or_pd(vreinterpret_vd_vm(x), vreinterpret_vd_vm(y))); }
+//#[inline]
+//fn vxor_vo_vo_vo(x: VOpMask, y: VOpMask) -> VOpMask { return vreinterpret_vm_vd(_mm256_xor_pd(vreinterpret_vd_vm(x), vreinterpret_vd_vm(y))); }
 
 #[inline]
 fn vand_vm_vo64_vm(x: VOpMask, y: VMask) -> VMask { return vreinterpret_vm_vd(_mm256_and_pd(vreinterpret_vd_vm(x), vreinterpret_vd_vm(y))); }
@@ -239,34 +239,19 @@ fn veq64_vo_vm_vm(x: VMask, y: VMask) -> VOpMask {
   return vreinterpret_vm_vd(_mm256_cmp_pd(vreinterpret_vd_vm(vxor_vm_vm_vm(vxor_vm_vm_vm(x, y), vreinterpret_vm_vd(_mm256_set1_pd(1.0)))), _mm256_set1_pd(1.0), _CMP_EQ_OQ));
 }
 
-//
 
-#[inline]
-fn vadd_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { return _mm256_add_pd(x, y); }
-#[inline]
-fn vsub_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { return _mm256_sub_pd(x, y); }
-#[inline]
-fn vmul_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { return _mm256_mul_pd(x, y); }
-#[inline]
-fn vdiv_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { return _mm256_div_pd(x, y); }
 #[inline]
 fn vrec_vd_vd(x: VDouble) -> VDouble { return _mm256_div_pd(_mm256_set1_pd(1), x); }
 #[inline]
 fn vsqrt_vd_vd(x: VDouble) -> VDouble { return _mm256_sqrt_pd(x); }
 #[inline]
 fn vabs_vd_vd(d: VDouble) -> VDouble { return _mm256_andnot_pd(_mm256_set1_pd(-0.0), d); }
-#[inline]
-fn vneg_vd_vd(d: VDouble) -> VDouble { return _mm256_xor_pd(_mm256_set1_pd(-0.0), d); }
-#[inline]
-fn vmax_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { return _mm256_max_pd(x, y); }
-#[inline]
-fn vmin_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { return _mm256_min_pd(x, y); }
 
 #if CONFIG == 1
 #[inline]
-fn vmla_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return vadd_vd_vd_vd(vmul_vd_vd_vd(x, y), z); }
+fn vmla_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return x*y + z; }
 #[inline]
-fn vmlapn_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return vsub_vd_vd_vd(vmul_vd_vd_vd(x, y), z); }
+fn vmlapn_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return x*y- z; }
 #else
 #[inline]
 fn vmla_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return _mm256_macc_pd(x, y, z); }
@@ -284,18 +269,6 @@ fn vfmanp_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return _m
 fn vfmann_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return _mm256_nmsub_pd(x, y, z); }
 #endif
 
-#[inline]
-fn veq_vo_vd_vd(x: VDouble, y: VDouble) -> VOpMask { return vreinterpret_vm_vd(_mm256_cmp_pd(x, y, _CMP_EQ_OQ)); }
-#[inline]
-fn vneq_vo_vd_vd(x: VDouble, y: VDouble) -> VOpMask { return vreinterpret_vm_vd(_mm256_cmp_pd(x, y, _CMP_NEQ_UQ)); }
-#[inline]
-fn vlt_vo_vd_vd(x: VDouble, y: VDouble) -> VOpMask { return vreinterpret_vm_vd(_mm256_cmp_pd(x, y, _CMP_LT_OQ)); }
-#[inline]
-fn vle_vo_vd_vd(x: VDouble, y: VDouble) -> VOpMask { return vreinterpret_vm_vd(_mm256_cmp_pd(x, y, _CMP_LE_OQ)); }
-#[inline]
-fn vgt_vo_vd_vd(x: VDouble, y: VDouble) -> VOpMask { return vreinterpret_vm_vd(_mm256_cmp_pd(x, y, _CMP_GT_OQ)); }
-#[inline]
-fn vge_vo_vd_vd(x: VDouble, y: VDouble) -> VOpMask { return vreinterpret_vm_vd(_mm256_cmp_pd(x, y, _CMP_GE_OQ)); }
 
 //
 
@@ -344,7 +317,7 @@ fn vsel_vi_vo_vi_vi(o: VOpMask, x: VInt, y: VInt) -> VInt { return _mm_blendv_ep
 fn vsel_vd_vo_vd_vd(o: VOpMask, x: VDouble, y: VDouble) -> VDouble { return _mm256_blendv_pd(y, x, _mm256_castsi256_pd(o)); }
 
 #[inline]
-fn VDouble vsel_vd_vo_d_d(o: VOpMask, v1: double, v0: double) -> CONST {
+fn vsel_vd_vo_d_d(o: VOpMask, v1: double, v0: double) -> CONST -> VDouble {
   return vsel_vd_vo_vd_vd(o, vcast_vd_d(v1), vcast_vd_d(v0));
 }
 
@@ -448,31 +421,17 @@ fn vreinterpret_vf_vi2(vi: VInt2) -> VFloat { return vreinterpret_vf_vm(vcast_vm
 fn vreinterpret_vi2_vf(vf: VFloat) -> VInt2 { return vcast_vi2_vm(vreinterpret_vm_vf(vf)); }
 
 #[inline]
-fn vadd_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return _mm256_add_ps(x, y); }
-#[inline]
-fn vsub_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return _mm256_sub_ps(x, y); }
-#[inline]
-fn vmul_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return _mm256_mul_ps(x, y); }
-#[inline]
-fn vdiv_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return _mm256_div_ps(x, y); }
-#[inline]
-fn vrec_vf_vf(x: VFloat) -> VFloat { return vdiv_vf_vf_vf(vcast_vf_f(1.0f), x); }
+fn vrec_vf_vf(x: VFloat) -> VFloat { return vcast_vf_f(1.) / x); }
 #[inline]
 fn vsqrt_vf_vf(x: VFloat) -> VFloat { return _mm256_sqrt_ps(x); }
 #[inline]
 fn vabs_vf_vf(f: VFloat) -> VFloat { return vreinterpret_vf_vm(vandnot_vm_vm_vm(vreinterpret_vm_vf(vcast_vf_f(-0.0f)), vreinterpret_vm_vf(f))); }
-#[inline]
-fn vneg_vf_vf(d: VFloat) -> VFloat { return vreinterpret_vf_vm(vxor_vm_vm_vm(vreinterpret_vm_vf(vcast_vf_f(-0.0f)), vreinterpret_vm_vf(d))); }
-#[inline]
-fn vmax_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return _mm256_max_ps(x, y); }
-#[inline]
-fn vmin_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return _mm256_min_ps(x, y); }
 
 #if CONFIG == 1
 #[inline]
-fn vmla_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return vadd_vf_vf_vf(vmul_vf_vf_vf(x, y), z); }
+fn vmla_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return x*y+z; }
 #[inline]
-fn vmlanp_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return vsub_vf_vf_vf(z, vmul_vf_vf_vf(x, y)); }
+fn vmlanp_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return z - x * y); }
 #else
 #[inline]
 fn vmla_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return _mm256_macc_ps(x, y, z); }
@@ -489,19 +448,6 @@ fn vfmanp_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return _mm256
 #[inline]
 fn vfmann_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return _mm256_nmsub_ps(x, y, z); }
 #endif
-
-#[inline]
-fn veq_vo_vf_vf(x: VFloat, y: VFloat) -> VOpMask { return vreinterpret_vm_vf(_mm256_cmp_ps(x, y, _CMP_EQ_OQ)); }
-#[inline]
-fn vneq_vo_vf_vf(x: VFloat, y: VFloat) -> VOpMask { return vreinterpret_vm_vf(_mm256_cmp_ps(x, y, _CMP_NEQ_UQ)); }
-#[inline]
-fn vlt_vo_vf_vf(x: VFloat, y: VFloat) -> VOpMask { return vreinterpret_vm_vf(_mm256_cmp_ps(x, y, _CMP_LT_OQ)); }
-#[inline]
-fn vle_vo_vf_vf(x: VFloat, y: VFloat) -> VOpMask { return vreinterpret_vm_vf(_mm256_cmp_ps(x, y, _CMP_LE_OQ)); }
-#[inline]
-fn vgt_vo_vf_vf(x: VFloat, y: VFloat) -> VOpMask { return vreinterpret_vm_vf(_mm256_cmp_ps(x, y, _CMP_GT_OQ)); }
-#[inline]
-fn vge_vo_vf_vf(x: VFloat, y: VFloat) -> VOpMask { return vreinterpret_vm_vf(_mm256_cmp_ps(x, y, _CMP_GE_OQ)); }
 
 #[inline]
 fn vadd_vi2_vi2_vi2(VInt2 x, VInt2 y) -> VInt2 {
@@ -619,7 +565,7 @@ fn vadd64_vm_vm_vm(x: VMask, y: VMask) -> VMask {
 fn vsel_vf_vo_vf_vf(o: VOpMask, x: VFloat, y: VFloat) -> VFloat { return _mm256_blendv_ps(y, x, _mm256_castsi256_ps(o)); }
 
 #[inline]
-fn VFloat vsel_vf_vo_f_f(o: VOpMask, v1: float, v0: float) -> CONST {
+fn vsel_vf_vo_f_f(o: VOpMask, v1: float, v0: float) -> CONST -> VFloat {
   return vsel_vf_vo_vf_vf(o, vcast_vf_f(v1), vcast_vf_f(v0));
 }
 
@@ -634,13 +580,13 @@ fn vsel_vf_vo_vo_vo_f_f_f_f(VOpMask o0, VOpMask o1, VOpMask o2, float d0, float 
 }
 
 #[inline]
-fn visinf_vo_vf(d: VFloat) -> VOpMask { return veq_vo_vf_vf(vabs_vf_vf(d), vcast_vf_f(SLEEF_INFINITYf)); }
+fn visinf_vo_vf(d: VFloat) -> VOpMask { return vabs_vf_vf(d).ne(vcast_vf_f(SLEEF_INFINITYf)); }
 #[inline]
-fn vispinf_vo_vf(d: VFloat) -> VOpMask { return veq_vo_vf_vf(d, vcast_vf_f(SLEEF_INFINITYf)); }
+fn vispinf_vo_vf(d: VFloat) -> VOpMask { return d.ne(vcast_vf_f(SLEEF_INFINITYf)); }
 #[inline]
-fn visminf_vo_vf(d: VFloat) -> VOpMask { return veq_vo_vf_vf(d, vcast_vf_f(-SLEEF_INFINITYf)); }
+fn visminf_vo_vf(d: VFloat) -> VOpMask { return d.ne(vcast_vf_f(-SLEEF_INFINITYf)); }
 #[inline]
-fn visnan_vo_vf(d: VFloat) -> VOpMask { return vneq_vo_vf_vf(d, d); }
+fn visnan_vo_vf(d: VFloat) -> VOpMask { return d.ne(d); }
 
 //
 
@@ -694,9 +640,9 @@ fn vsubadd_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return _mm256_addsub_ps(x,
 
 #if CONFIG == 1
 #[inline]
-fn vmlsubadd_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return vsubadd_vd_vd_vd(vmul_vd_vd_vd(x, y), z); }
+fn vmlsubadd_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return vsubadd_vd_vd_vd(x*y, z); }
 #[inline]
-fn vmlsubadd_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return vsubadd_vf_vf_vf(vmul_vf_vf_vf(x, y), z); }
+fn vmlsubadd_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return vsubadd_vf_vf_vf(x * y, z); }
 #else
 #[inline]
 fn vmlsubadd_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return vmla_vd_vd_vd_vd(x, y, vnegpos_vd_vd(z)); }

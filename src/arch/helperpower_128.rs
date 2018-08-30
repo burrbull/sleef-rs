@@ -170,30 +170,10 @@ fn vreinterpret_vf_vi2(vi: VInt2) -> VFloat { return (VFloat)vi; }
 fn vreinterpret_vi2_vf(vf: VFloat) -> VInt2 { return (VInt2)vf; }
 
 #[inline]
-fn vadd_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { return vec_add(x, y); }
-#[inline]
-fn vsub_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { return vec_sub(x, y); }
-#[inline]
-fn vmul_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { return vec_mul(x, y); }
-#[inline]
-fn vdiv_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { return vec_div(x, y); }
-#[inline]
 fn vrec_vd_vd(x: VDouble) -> VDouble { return vec_div((1.).as_vd(), x); }
-#[inline]
-fn vneg_vd_vd(d: VDouble) -> VDouble { return vec_neg(d); }
 
 #[inline]
-fn vadd_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return vec_add(x, y); }
-#[inline]
-fn vsub_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return vec_sub(x, y); }
-#[inline]
-fn vmul_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return vec_mul(x, y); }
-#[inline]
-fn vdiv_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return vec_div(x, y); }
-#[inline]
 fn vrec_vf_vf(x: VFloat) -> VFloat { return vec_div((1.).as_vf(), x); }
-#[inline]
-fn vneg_vf_vf(d: VFloat) -> VFloat { return vec_neg(d); }
 
 #[inline]
 fn vand_vm_vm_vm(x: VMask, y: VMask) -> VMask { return vec_and(x, y); }
@@ -204,14 +184,14 @@ fn vor_vm_vm_vm(x: VMask, y: VMask) -> VMask { return vec_or(x, y); }
 #[inline]
 fn vxor_vm_vm_vm(x: VMask, y: VMask) -> VMask { return vec_xor(x, y); }
 
-#[inline]
-fn vand_vo_vo_vo(x: VOpMask, y: VOpMask) -> VOpMask { return vec_and(x, y); }
+//#[inline]
+//fn vand_vo_vo_vo(x: VOpMask, y: VOpMask) -> VOpMask { return vec_and(x, y); }
 #[inline]
 fn vandnot_vo_vo_vo(x: VOpMask, y: VOpMask) -> VOpMask { return vec_andc(y, x); }
-#[inline]
-fn vor_vo_vo_vo(x: VOpMask, y: VOpMask) -> VOpMask { return vec_or(x, y); }
-#[inline]
-fn vxor_vo_vo_vo(x: VOpMask, y: VOpMask) -> VOpMask { return vec_xor(x, y); }
+//#[inline]
+//fn vor_vo_vo_vo(x: VOpMask, y: VOpMask) -> VOpMask { return vec_or(x, y); }
+//#[inline]
+//fn vxor_vo_vo_vo(x: VOpMask, y: VOpMask) -> VOpMask { return vec_xor(x, y); }
 
 #[inline]
 fn vand_vm_vo64_vm(x: VOpMask, y: VMask) -> VMask { return vec_and((VMask)x, y); }
@@ -318,11 +298,7 @@ fn vnegpos_vf_vf(d: VFloat) -> VFloat { return vreinterpret_vf_vm(vxor_vm_vm_vm(
 #[inline]
 fn vabs_vd_vd(d: VDouble) -> VDouble { return vec_abs(d); }
 #[inline]
-fn vmax_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { return vec_max(x, y); }
-#[inline]
-fn vmin_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { return vec_min(x, y); }
-#[inline]
-fn vsubadd_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { return vadd_vd_vd_vd(x, vnegpos_vd_vd(y)); }
+fn vsubadd_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { return x + vnegpos_vd_vd(y); }
 #[inline]
 fn vsqrt_vd_vd(d: VDouble) -> VDouble { return vec_sqrt(d); }
 
@@ -337,11 +313,11 @@ fn vmlapn_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return ve
 #else
 impl Mla for VDouble {
     fn mla(self, y: Self, z: Self) -> Self {
-        vadd_vd_vd_vd(vmul_vd_vd_vd(x, y), z)
+        x*y + z
     }
 }
 #[inline]
-fn vmlapn_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return vsub_vd_vd_vd(vmul_vd_vd_vd(x, y), z); }
+fn vmlapn_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return x*y - z; }
 #endif
 
 #[inline]
@@ -359,12 +335,9 @@ fn vfmann_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return ve
 
 #[inline]
 fn vabs_vf_vf(f: VFloat) -> VFloat { return vec_abs(f); }
+
 #[inline]
-fn vmax_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return vec_max(x, y); }
-#[inline]
-fn vmin_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return vec_min(x, y); }
-#[inline]
-fn vsubadd_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return vadd_vf_vf_vf(x, vnegpos_vf_vf(y)); }
+fn vsubadd_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return x + vnegpos_vf_vf(y); }
 #[inline]
 fn vsqrt_vf_vf(d: VFloat) -> VFloat { return vec_sqrt(d); }
 
@@ -379,11 +352,11 @@ fn vmlanp_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return vec_nm
 #else
 impl Mla for VFloat {
     fn mla(self, y: Self, z: Self) -> Self {
-        vadd_vf_vf_vf(vmul_vf_vf_vf(x, y), z)
+        x*y +z
     }
 }
 #[inline]
-fn vmlanp_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return vsub_vf_vf_vf(z, vmul_vf_vf_vf(x, y)); }
+fn vmlanp_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return z - x * y); }
 #endif
 #[inline]
 fn vmlsubadd_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return x.mla(y, vnegpos_vf_vf(z)); }
@@ -401,7 +374,7 @@ fn vfmann_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return vec_nm
 //
 
 #[inline]
-fn VDouble vsel_vd_vo_d_d(o: VOpMask, v1: double, v0: double) -> CONST {
+fn vsel_vd_vo_d_d(o: VOpMask, v1: double, v0: double) -> CONST -> VDouble {
   return vsel_vd_vo_vd_vd(o, v1.as_vd(), v0.as_vd());
 }
 
@@ -420,18 +393,6 @@ fn vsel_vd_vo_vo_vo_d_d_d_d(VOpMask o0, VOpMask o1, VOpMask o2, double d0, doubl
 #[inline]
 fn vnot_vo_vo(o: VOpMask) -> VOpMask { return vec_nand(o, o); }
 
-#[inline]
-fn veq_vo_vd_vd(x: VDouble, y: VDouble) -> VOpMask { return (VOpMask)vec_cmpeq(x, y); }
-#[inline]
-fn vneq_vo_vd_vd(x: VDouble, y: VDouble) -> VOpMask { return (VOpMask)vnot_vo_vo(vec_cmpeq(x, y)); }
-#[inline]
-fn vlt_vo_vd_vd(x: VDouble, y: VDouble) -> VOpMask { return (VOpMask)vec_cmplt(x, y); }
-#[inline]
-fn vle_vo_vd_vd(x: VDouble, y: VDouble) -> VOpMask { return (VOpMask)vec_cmple(x, y); }
-#[inline]
-fn vgt_vo_vd_vd(x: VDouble, y: VDouble) -> VOpMask { return (VOpMask)vec_cmpgt(x, y); }
-#[inline]
-fn vge_vo_vd_vd(x: VDouble, y: VDouble) -> VOpMask { return (VOpMask)vec_cmpge(x, y); }
 
 impl std::ops::Add for VInt {
     type Output = Self;
@@ -520,7 +481,7 @@ fn vcast_f_vf(v: VFloat) -> float { return v[0]; }
 //
 
 #[inline]
-fn VFloat vsel_vf_vo_f_f(o: VOpMask, v1: float, v0: float) -> CONST {
+fn vsel_vf_vo_f_f(o: VOpMask, v1: float, v0: float) -> CONST -> VFloat {
   return vsel_vf_vo_vf_vf(o, v1.as_vf(), v0.as_vf());
 }
 
@@ -538,19 +499,6 @@ fn vsel_vf_vo_vo_vo_f_f_f_f(VOpMask o0, VOpMask o1, VOpMask o2, float d0, float 
 fn vcast_vi2_vm(vm: VMask) -> VInt2 { return (VInt2)vm; }
 #[inline]
 fn vcast_vm_vi2(vi: VInt2) -> VMask { return (VMask)vi; }
-
-#[inline]
-fn veq_vo_vf_vf(x: VFloat, y: VFloat) -> VOpMask { return (VOpMask)vec_cmpeq(x, y); }
-#[inline]
-fn vneq_vo_vf_vf(x: VFloat, y: VFloat) -> VOpMask { return (VOpMask)vnot_vo_vo(vec_cmpeq(x, y)); }
-#[inline]
-fn vlt_vo_vf_vf(x: VFloat, y: VFloat) -> VOpMask { return (VOpMask)vec_cmplt(x, y); }
-#[inline]
-fn vle_vo_vf_vf(x: VFloat, y: VFloat) -> VOpMask { return (VOpMask)vec_cmple(x, y); }
-#[inline]
-fn vgt_vo_vf_vf(x: VFloat, y: VFloat) -> VOpMask { return (VOpMask)vec_cmpgt(x, y); }
-#[inline]
-fn vge_vo_vf_vf(x: VFloat, y: VFloat) -> VOpMask { return (VOpMask)vec_cmpge(x, y); }
 
 #[inline]
 fn vadd_vi2_vi2_vi2(VInt2 x, VInt2 y) -> VInt2 { return vec_add(x, y); }

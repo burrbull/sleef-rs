@@ -31,7 +31,7 @@
 #include "misc.h"
 
 type VMask = uint32x4_t;
-type vopmask = uint32x4_t;
+type VOpMask = uint32x4_t;
 
 //type VInt = int32x4_t;
 
@@ -44,7 +44,7 @@ type VInt2 = int32x4_t;
 fn vprefetch_v_p(const void *ptr) -> void { }
 
 #[inline]
-fn vtestallones_i_vo32(vopmask g) -> int {
+fn vtestallones_i_vo32(VOpMask g) -> int {
   uint32x2_t x0 = vand_u32(vget_low_u32(g), vget_high_u32(g));
   uint32x2_t x1 = vpmin_u32(x0, x0);
   return vget_lane_u32(x1, 0);
@@ -67,44 +67,44 @@ fn vor_vm_vm_vm(x: VMask, y: VMask) -> VMask { return vorrq_u32(x, y); }
 #[inline]
 fn vxor_vm_vm_vm(x: VMask, y: VMask) -> VMask { return veorq_u32(x, y); }
 
+//#[inline]
+//fn vand_vo_vo_vo(VOpMask x, VOpMask y) -> VOpMask { return vandq_u32(x, y); }
 #[inline]
-fn vand_vo_vo_vo(vopmask x, vopmask y) -> vopmask { return vandq_u32(x, y); }
-#[inline]
-fn vandnot_vo_vo_vo(vopmask x, vopmask y) -> vopmask { return vbicq_u32(y, x); }
-#[inline]
-fn vor_vo_vo_vo(vopmask x, vopmask y) -> vopmask { return vorrq_u32(x, y); }
-#[inline]
-fn vxor_vo_vo_vo(vopmask x, vopmask y) -> vopmask { return veorq_u32(x, y); }
+fn vandnot_vo_vo_vo(VOpMask x, VOpMask y) -> VOpMask { return vbicq_u32(y, x); }
+//#[inline]
+//fn vor_vo_vo_vo(VOpMask x, VOpMask y) -> VOpMask { return vorrq_u32(x, y); }
+//#[inline]
+//fn vxor_vo_vo_vo(VOpMask x, VOpMask y) -> VOpMask { return veorq_u32(x, y); }
 
 #[inline]
-fn vand_vm_vo64_vm(vopmask x, VMask y) -> VMask { return vandq_u32(x, y); }
+fn vand_vm_vo64_vm(VOpMask x, VMask y) -> VMask { return vandq_u32(x, y); }
 #[inline]
-fn vandnot_vm_vo64_vm(vopmask x, VMask y) -> VMask { return vbicq_u32(y, x); }
+fn vandnot_vm_vo64_vm(VOpMask x, VMask y) -> VMask { return vbicq_u32(y, x); }
 #[inline]
-fn vor_vm_vo64_vm(vopmask x, VMask y) -> VMask { return vorrq_u32(x, y); }
+fn vor_vm_vo64_vm(VOpMask x, VMask y) -> VMask { return vorrq_u32(x, y); }
 #[inline]
-fn vxor_vm_vo64_vm(vopmask x, VMask y) -> VMask { return veorq_u32(x, y); }
+fn vxor_vm_vo64_vm(VOpMask x, VMask y) -> VMask { return veorq_u32(x, y); }
 
 #[inline]
-fn vand_vm_vo32_vm(vopmask x, VMask y) -> VMask { return vandq_u32(x, y); }
+fn vand_vm_vo32_vm(VOpMask x, VMask y) -> VMask { return vandq_u32(x, y); }
 #[inline]
-fn vandnot_vm_vo32_vm(vopmask x, VMask y) -> VMask { return vbicq_u32(y, x); }
+fn vandnot_vm_vo32_vm(VOpMask x, VMask y) -> VMask { return vbicq_u32(y, x); }
 #[inline]
-fn vor_vm_vo32_vm(vopmask x, VMask y) -> VMask { return vorrq_u32(x, y); }
+fn vor_vm_vo32_vm(VOpMask x, VMask y) -> VMask { return vorrq_u32(x, y); }
 #[inline]
-fn vxor_vm_vo32_vm(vopmask x, VMask y) -> VMask { return veorq_u32(x, y); }
+fn vxor_vm_vo32_vm(VOpMask x, VMask y) -> VMask { return veorq_u32(x, y); }
 
 #[inline]
-fn vcast_vo32_vo64(vopmask m) -> vopmask { return vuzpq_u32(m, m).val[0]; }
+fn vcast_vo32_vo64(VOpMask m) -> VOpMask { return vuzpq_u32(m, m).val[0]; }
 #[inline]
-fn vcast_vo64_vo32(vopmask m) -> vopmask { return vzipq_u32(m, m).val[0]; }
+fn vcast_vo64_vo32(VOpMask m) -> VOpMask { return vzipq_u32(m, m).val[0]; }
 
 //
 
 #[inline]
 fn vcast_vm_i_i(i0: int, i1: int) -> VMask { return (VMask)vdupq_n_u64((uint64_t)i0 | (((uint64_t)i1) << 32)); }
 #[inline]
-fn veq64_vo_vm_vm(x: VMask, y: VMask) -> vopmask {
+fn veq64_vo_vm_vm(x: VMask, y: VMask) -> VOpMask {
   uint32x4_t t = vceqq_u32(x, y);
   return vandq_u32(t, vrev64q_u32(t));
 }
@@ -146,17 +146,9 @@ fn vreinterpret_vf_vi2(vm: VInt2) -> VFloat { return (VFloat)vm; }
 #[inline]
 fn vreinterpret_vi2_vf(vf: VFloat) -> VInt2 { return (VInt2)vf; }
 
-#[inline]
-fn vadd_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return vaddq_f32(x, y); }
-#[inline]
-fn vsub_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return vsubq_f32(x, y); }
-#[inline]
-fn vmul_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return vmulq_f32(x, y); }
 
 #[inline]
 fn vabs_vf_vf(f: VFloat) -> VFloat { return vabsq_f32(f); }
-#[inline]
-fn vneg_vf_vf(f: VFloat) -> VFloat { return vnegq_f32(f); }
 #if CONFIG == 4
 #[inline]
 fn vmla_vf_vf_vf_vf  (x: VFloat, y: VFloat, z: VFloat) -> VFloat { return vfmaq_f32(z, x, y); }
@@ -167,16 +159,8 @@ fn vfma_vf_vf_vf_vf  (x: VFloat, y: VFloat, z: VFloat) -> VFloat { return vfmaq_
 #[inline]
 fn vfmanp_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return vfmsq_f32(z, x, y); }
 #[inline]
-fn vfmapn_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return vneg_vf_vf(vfmanp_vf_vf_vf_vf(x, y, z)); }
+fn vfmapn_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return -vfmanp_vf_vf_vf_vf(x, y, z); }
 
-#[inline]
-fn vdiv_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat {
-  float32x4_t t = vrecpeq_f32(y), u;
-  t = vmulq_f32(t, vrecpsq_f32(y, t));
-  t = vfmaq_f32(t, vfmsq_f32(vdupq_n_f32(1.0f), y, t), t);
-  u = vmulq_f32(x, t);
-  return vfmaq_f32(u, vfmsq_f32(x, y, u), t);
-}
 
 #[inline]
 fn vsqrt_vf_vf(d: VFloat) -> VFloat {
@@ -208,13 +192,6 @@ fn vmla_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return vmlaq_f3
 #[inline]
 fn vmlanp_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return vmlsq_f32(z, x, y); }
 
-#[inline]
-fn vdiv_vf_vf_vf(n: VFloat, d: VFloat) -> VFloat {
-  float32x4_t x = vrecpeq_f32(d);
-  x = vmulq_f32(x, vrecpsq_f32(d, x));
-  float32x4_t t = vmulq_f32(n, x);
-  return vmlsq_f32(vaddq_f32(t, t), vmulq_f32(t, x), d);
-}
 
 #[inline]
 fn vsqrt_vf_vf(d: VFloat) -> VFloat {
@@ -239,23 +216,6 @@ fn vrecsqrt_vf_vf(d: VFloat) -> VFloat {
   return vmlaq_f32(x, vmlsq_f32(vdupq_n_f32(1), x, vmulq_f32(x, d)), vmulq_f32(x, vdupq_n_f32(0.5)));
 }
 #endif // #if CONFIG == 4
-#[inline]
-fn vmax_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return vmaxq_f32(x, y); }
-#[inline]
-fn vmin_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return vminq_f32(x, y); }
-
-#[inline]
-fn veq_vo_vf_vf(x: VFloat, y: VFloat) -> vopmask { return vceqq_f32(x, y); }
-#[inline]
-fn vneq_vo_vf_vf(x: VFloat, y: VFloat) -> vopmask { return vmvnq_u32(vceqq_f32(x, y)); }
-#[inline]
-fn vlt_vo_vf_vf(x: VFloat, y: VFloat) -> vopmask { return vcltq_f32(x, y); }
-#[inline]
-fn vle_vo_vf_vf(x: VFloat, y: VFloat) -> vopmask { return vcleq_f32(x, y); }
-#[inline]
-fn vgt_vo_vf_vf(x: VFloat, y: VFloat) -> vopmask { return vcgtq_f32(x, y); }
-#[inline]
-fn vge_vo_vf_vf(x: VFloat, y: VFloat) -> vopmask { return vcgeq_f32(x, y); }
 
 #[inline]
 fn vadd_vi2_vi2_vi2(VInt2 x, VInt2 y) -> VInt2 { return vaddq_s32(x, y); }
@@ -274,54 +234,54 @@ fn vor_vi2_vi2_vi2(VInt2 x, VInt2 y) -> VInt2 { return vorrq_s32(x, y); }
 fn vxor_vi2_vi2_vi2(VInt2 x, VInt2 y) -> VInt2 { return veorq_s32(x, y); }
 
 #[inline]
-fn vand_vi2_vo_vi2(vopmask x, VInt2 y) -> VInt2 { return (VInt2)vandq_u32(x, (vopmask)y); }
+fn vand_vi2_vo_vi2(VOpMask x, VInt2 y) -> VInt2 { return (VInt2)vandq_u32(x, (VOpMask)y); }
 #[inline]
-fn vandnot_vi2_vo_vi2(vopmask x, VInt2 y) -> VInt2 { return (VInt2)vbicq_u32((vopmask)y, x); }
+fn vandnot_vi2_vo_vi2(VOpMask x, VInt2 y) -> VInt2 { return (VInt2)vbicq_u32((VOpMask)y, x); }
 
 #define vsll_vi2_vi2_i(x, c) vshlq_n_s32(x, c)
 #define vsrl_vi2_vi2_i(x, c) vreinterpretq_s32_u32(vshrq_n_u32(vreinterpretq_u32_s32(x), c))
 #define vsra_vi2_vi2_i(x, c) vshrq_n_s32(x, c)
 
 #[inline]
-fn veq_vo_vi2_vi2(VInt2 x, VInt2 y) -> vopmask { return vceqq_s32(x, y); }
+fn veq_vo_vi2_vi2(VInt2 x, VInt2 y) -> VOpMask { return vceqq_s32(x, y); }
 #[inline]
-fn vgt_vo_vi2_vi2(VInt2 x, VInt2 y) -> vopmask { return vcgtq_s32(x, y); }
+fn vgt_vo_vi2_vi2(VInt2 x, VInt2 y) -> VOpMask { return vcgtq_s32(x, y); }
 #[inline]
 fn veq_vi2_vi2_vi2(VInt2 x, VInt2 y) -> VInt2 { return (VInt2)vceqq_s32(x, y); }
 #[inline]
 fn vgt_vi2_vi2_vi2(VInt2 x, VInt2 y) -> VInt2 { return (VInt2)vcgtq_s32(x, y); }
 
 #[inline]
-fn vsel_vi2_vo_vi2_vi2(vopmask m, VInt2 x, VInt2 y) -> VInt2 { return (VInt2)vbslq_u32(m, (VMask)x, (VMask)y); }
+fn vsel_vi2_vo_vi2_vi2(VOpMask m, VInt2 x, VInt2 y) -> VInt2 { return (VInt2)vbslq_u32(m, (VMask)x, (VMask)y); }
 
 #[inline]
-fn vsel_vf_vo_vf_vf(vopmask mask, VFloat x, VFloat y) -> VFloat {
+fn vsel_vf_vo_vf_vf(VOpMask mask, VFloat x, VFloat y) -> VFloat {
   return (VFloat)vbslq_u32(mask, (VMask)x, (VMask)y);
 }
 
 #[inline]
-fn VFloat vsel_vf_vo_f_f(vopmask o, float v1, float v0) -> CONST {
+fn vsel_vf_vo_f_f(VOpMask o, float v1, float v0) -> CONST -> VFloat {
   return vsel_vf_vo_vf_vf(o, vcast_vf_f(v1), vcast_vf_f(v0));
 }
 
 #[inline]
-fn vsel_vf_vo_vo_f_f_f(vopmask o0, vopmask o1, float d0, float d1, float d2) -> VFloat {
+fn vsel_vf_vo_vo_f_f_f(VOpMask o0, VOpMask o1, float d0, float d1, float d2) -> VFloat {
   return vsel_vf_vo_vf_vf(o0, vcast_vf_f(d0), vsel_vf_vo_f_f(o1, d1, d2));
 }
 
 #[inline]
-fn vsel_vf_vo_vo_vo_f_f_f_f(vopmask o0, vopmask o1, vopmask o2, float d0, float d1, float d2, float d3) -> VFloat {
+fn vsel_vf_vo_vo_vo_f_f_f_f(VOpMask o0, VOpMask o1, VOpMask o2, float d0, float d1, float d2, float d3) -> VFloat {
   return vsel_vf_vo_vf_vf(o0, vcast_vf_f(d0), vsel_vf_vo_vf_vf(o1, vcast_vf_f(d1), vsel_vf_vo_f_f(o2, d2, d3)));
 }
 
 #[inline]
-fn visinf_vo_vf(d: VFloat) -> vopmask { return veq_vo_vf_vf(vabs_vf_vf(d), vcast_vf_f(SLEEF_INFINITYf)); }
+fn visinf_vo_vf(d: VFloat) -> VOpMask { return vabs_vf_vf(d).ne(vcast_vf_f(SLEEF_INFINITYf)); }
 #[inline]
-fn vispinf_vo_vf(d: VFloat) -> vopmask { return veq_vo_vf_vf(d, vcast_vf_f(SLEEF_INFINITYf)); }
+fn vispinf_vo_vf(d: VFloat) -> VOpMask { return d.ne(vcast_vf_f(SLEEF_INFINITYf)); }
 #[inline]
-fn visminf_vo_vf(d: VFloat) -> vopmask { return veq_vo_vf_vf(d, vcast_vf_f(-SLEEF_INFINITYf)); }
+fn visminf_vo_vf(d: VFloat) -> VOpMask { return d.ne(vcast_vf_f(-SLEEF_INFINITYf)); }
 #[inline]
-fn visnan_vo_vf(d: VFloat) -> vopmask { return vneq_vo_vf_vf(d, d); }
+fn visnan_vo_vf(d: VFloat) -> VOpMask { return d.ne(d); }
 
 // This function is needed when debugging on MSVC.
 #[inline]
@@ -334,7 +294,7 @@ fn vcast_f_vf(v: VFloat) -> float {
 #[inline]
 fn vavailability_i(name: int) -> int {
   if (name != 2) return 0;
-  return vcast_f_vf(vadd_vf_vf_vf(vcast_vf_f(name), vcast_vf_f(name))) != 0.0;
+  return vcast_f_vf(vcast_vf_f(name) + vcast_vf_f(name)) != 0.0;
 }
 
 
@@ -367,9 +327,9 @@ fn vposneg_vf_vf(d: VFloat) -> VFloat { return (VFloat)vxor_vm_vm_vm((VMask)d, (
 fn vnegpos_vf_vf(d: VFloat) -> VFloat { return (VFloat)vxor_vm_vm_vm((VMask)d, (VMask)NPMASKf); }
 
 #[inline]
-fn vsubadd_vf_vf_vf(d0: VFloat, d1: VFloat) -> VFloat { return vadd_vf_vf_vf(d0, vnegpos_vf_vf(d1)); }
+fn vsubadd_vf_vf_vf(d0: VFloat, d1: VFloat) -> VFloat { return d0 + vnegpos_vf_vf(d1); }
 #[inline]
-fn vmlsubadd_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return vsubadd_vf_vf_vf(vmul_vf_vf_vf(x, y), z); }
+fn vmlsubadd_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return vsubadd_vf_vf_vf(x * y, z); }
 
 #[inline]
 fn vrev21_vf_vf(d0: VFloat) -> VFloat { return vrev64q_f32(d0); }

@@ -207,24 +207,8 @@ impl VCastF for f32 {
 
 // Add, Sub, Mul, Reciprocal 1/x, Division, Square root
 #[inline]
-fn vadd_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat {
-  return svadd_f32_x(ptrue, x, y);
-}
-#[inline]
-fn vsub_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat {
-  return svsub_f32_x(ptrue, x, y);
-}
-#[inline]
-fn vmul_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat {
-  return svmul_f32_x(ptrue, x, y);
-}
-#[inline]
 fn vrec_vf_vf(d: VFloat) -> VFloat {
-  return svdivr_n_f32_x(ptrue, d, 1.0f);
-}
-#[inline]
-fn vdiv_vf_vf_vf(n: VFloat, d: VFloat) -> VFloat {
-  return svdiv_f32_x(ptrue, n, d);
+  return svdivr_n_f32_x(ptrue, d, 1.);
 }
 #[inline]
 fn vsqrt_vf_vf(d: VFloat) -> VFloat { return svsqrt_f32_x(ptrue, d); }
@@ -232,18 +216,7 @@ fn vsqrt_vf_vf(d: VFloat) -> VFloat { return svsqrt_f32_x(ptrue, d); }
 // |x|, -x
 #[inline]
 fn vabs_vf_vf(f: VFloat) -> VFloat { return svabs_f32_x(ptrue, f); }
-#[inline]
-fn vneg_vf_vf(f: VFloat) -> VFloat { return svneg_f32_x(ptrue, f); }
 
-// max, min
-#[inline]
-fn vmax_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat {
-  return svmax_f32_x(ptrue, x, y);
-}
-#[inline]
-fn vmin_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat {
-  return svmin_f32_x(ptrue, x, y);
-}
 
 // int <--> float conversions
 #[inline]
@@ -277,11 +250,11 @@ fn vmlanp_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat {
 #else
 impl Mla for VFloat {
     fn mla(self, y: Self, z: Self) -> Self {
-        vadd_vf_vf_vf(vmul_vf_vf_vf(x, y), z)
+        x * y + z
     }
 }
 #[inline]
-fn vmlanp_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return vsub_vf_vf_vf(z, vmul_vf_vf_vf(x, y)); }
+fn vmlanp_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return z - x * y; }
 #endif
 
 // fused multiply add / sub
@@ -314,7 +287,7 @@ fn vsel_vf_vo_vf_vf(mask: VOpMask, x: VFloat, y: VFloat) -> VFloat {
 //
 //
 #[inline]
-fn VFloat vsel_vf_vo_f_f(o: VOpMask, v1: float, v0: float) -> CONST {
+fn vsel_vf_vo_f_f(o: VOpMask, v1: float, v0: float) -> CONST -> VFloat {
   return vsel_vf_vo_vf_vf(o, v1.as_vf(), v0.as_vf());
 }
 
@@ -411,34 +384,7 @@ fn vsel_vi2_vo_vi2_vi2(m: VOpMask, x: VInt2, y: VInt2) -> VInt2 {
   return svsel_s32(m, x, y);
 }
 
-/****************************************/
-/* opmask operations                    */
-/****************************************/
-// single precision FP
-#[inline]
-fn veq_vo_vf_vf(x: VFloat, y: VFloat) -> VOpMask {
-  return svcmpeq_f32(ptrue, x, y);
-}
-#[inline]
-fn vneq_vo_vf_vf(x: VFloat, y: VFloat) -> VOpMask {
-  return svcmpne_f32(ptrue, x, y);
-}
-#[inline]
-fn vlt_vo_vf_vf(x: VFloat, y: VFloat) -> VOpMask {
-  return svcmplt_f32(ptrue, x, y);
-}
-#[inline]
-fn vle_vo_vf_vf(x: VFloat, y: VFloat) -> VOpMask {
-  return svcmple_f32(ptrue, x, y);
-}
-#[inline]
-fn vgt_vo_vf_vf(x: VFloat, y: VFloat) -> VOpMask {
-  return svcmpgt_f32(ptrue, x, y);
-}
-#[inline]
-fn vge_vo_vf_vf(x: VFloat, y: VFloat) -> VOpMask {
-  return svcmpge_f32(ptrue, x, y);
-}
+
 #[inline]
 fn visinf_vo_vf(d: VFloat) -> VOpMask {
   return svcmpeq_n_f32(ptrue, vabs_vf_vf(d), SLEEF_INFINITYf);
@@ -452,7 +398,7 @@ fn visminf_vo_vf(d: VFloat) -> VOpMask {
   return svcmpeq_n_f32(ptrue, d, -SLEEF_INFINITYf);
 }
 #[inline]
-fn visnan_vo_vf(d: VFloat) -> VOpMask { return vneq_vo_vf_vf(d, d); }
+fn visnan_vo_vf(d: VFloat) -> VOpMask { return d.ne(d); }
 
 // integers
 #[inline]
@@ -465,22 +411,22 @@ fn vgt_vo_vi2_vi2(VInt2 x, VInt2 y) -> VOpMask {
 }
 
 // logical opmask
-#[inline]
-fn vand_vo_vo_vo(x: VOpMask, y: VOpMask) -> VOpMask {
-  return svand_b_z(ptrue, x, y);
-}
+//#[inline]
+//fn vand_vo_vo_vo(x: VOpMask, y: VOpMask) -> VOpMask {
+//  return svand_b_z(ptrue, x, y);
+//}
 #[inline]
 fn vandnot_vo_vo_vo(x: VOpMask, y: VOpMask) -> VOpMask {
   return svbic_b_z(ptrue, y, x);
 }
-#[inline]
-fn vor_vo_vo_vo(x: VOpMask, y: VOpMask) -> VOpMask {
-  return svorr_b_z(ptrue, x, y);
-}
-#[inline]
-fn vxor_vo_vo_vo(x: VOpMask, y: VOpMask) -> VOpMask {
-  return sveor_b_z(ptrue, x, y);
-}
+//#[inline]
+//fn vor_vo_vo_vo(x: VOpMask, y: VOpMask) -> VOpMask {
+//  return svorr_b_z(ptrue, x, y);
+//}
+//#[inline]
+//fn vxor_vo_vo_vo(x: VOpMask, y: VOpMask) -> VOpMask {
+//  return sveor_b_z(ptrue, x, y);
+//}
 
 #[inline]
 fn vand_vi2_vo_vi2(x: VOpMask, y: VInt2) -> VInt2 {
@@ -597,7 +543,7 @@ fn vsel_vd_vo_vd_vd(o: VOpMask, x: VDouble, y: VDouble) -> VDouble {
 }
 
 #[inline]
-fn VDouble vsel_vd_vo_d_d(o: VOpMask, v1: double, v0: double) -> CONST {
+fn vsel_vd_vo_d_d(o: VOpMask, v1: double, v0: double) -> CONST -> VDouble {
   return vsel_vd_vo_vd_vd(o, v1.as_vd(), v0.as_vd());
 }
 
@@ -634,24 +580,8 @@ fn vrint_vd_vd(vd: VDouble) -> VDouble {
 }
 
 // FP math operations
-#[inline]
-fn vadd_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble {
-  return svadd_f64_x(ptrue, x, y);
-}
-#[inline]
-fn vsub_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble {
-  return svsub_f64_x(ptrue, x, y);
-}
-#[inline]
-fn vneg_vd_vd(x: VDouble) -> VDouble { return svneg_f64_x(ptrue, x); }
-#[inline]
-fn vmul_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble {
-  return svmul_f64_x(ptrue, x, y);
-}
-#[inline]
-fn vdiv_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble {
-  return svdiv_f64_x(ptrue, x, y);
-}
+
+
 #[inline]
 fn vrec_vd_vd(x: VDouble) -> VDouble {
   return svdivr_n_f64_x(ptrue, x, 1.0);
@@ -660,14 +590,7 @@ fn vrec_vd_vd(x: VDouble) -> VDouble {
 fn vsqrt_vd_vd(x: VDouble) -> VDouble { return svsqrt_f64_x(ptrue, x); }
 #[inline]
 fn vabs_vd_vd(x: VDouble) -> VDouble { return svabs_f64_x(ptrue, x); }
-#[inline]
-fn vmax_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble {
-  return svmax_f64_x(ptrue, x, y);
-}
-#[inline]
-fn vmin_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble {
-  return svmin_f64_x(ptrue, x, y);
-}
+
 
 #if CONFIG == 1
 // Multiply accumulate / subtract
@@ -683,11 +606,11 @@ fn vmlapn_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { // z = x 
 #else
 impl Mla for VDouble {
     fn mla(self, y: Self, z: Self) -> Self {
-        vadd_vd_vd_vd(vmul_vd_vd_vd(x, y), z)
+        x*y + z
     }
 }
 #[inline]
-fn vmlapn_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return vsub_vd_vd_vd(vmul_vd_vd_vd(x, y), z); }
+fn vmlapn_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return x*y - z; }
 #endif
 
 #[inline]
@@ -703,31 +626,6 @@ fn vfmapn_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble{ // x * y -
   return svnmsb_f64_x(ptrue, x, y, z);
 }
 
-// Float comparison
-#[inline]
-fn vlt_vo_vd_vd(x: VDouble, y: VDouble) -> VOpMask {
-  return svcmplt_f64(ptrue, x, y);
-}
-#[inline]
-fn veq_vo_vd_vd(x: VDouble, y: VDouble) -> VOpMask {
-  return svcmpeq_f64(ptrue, x, y);
-}
-#[inline]
-fn vgt_vo_vd_vd(x: VDouble, y: VDouble) -> VOpMask {
-  return svcmpgt_f64(ptrue, x, y);
-}
-#[inline]
-fn vge_vo_vd_vd(x: VDouble, y: VDouble) -> VOpMask {
-  return svcmpge_f64(ptrue, x, y);
-}
-#[inline]
-fn vneq_vo_vd_vd(x: VDouble, y: VDouble) -> VOpMask {
-  return svcmpne_f64(ptrue, x, y);
-}
-#[inline]
-fn vle_vo_vd_vd(x: VDouble, y: VDouble) -> VOpMask {
-  return svcmple_f64(ptrue, x, y);
-}
 
 // predicates
 #[inline]
@@ -911,9 +809,9 @@ fn vnegpos_vf_vf(d: VFloat) -> VFloat {
 }
 
 #[inline]
-fn vsubadd_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { return vadd_vd_vd_vd(x, vnegpos_vd_vd(y)); }
+fn vsubadd_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { return x + vnegpos_vd_vd(y); }
 #[inline]
-fn vsubadd_vf_vf_vf(d0: VFloat, d1: VFloat) -> VFloat { return vadd_vf_vf_vf(d0, vnegpos_vf_vf(d1)); }
+fn vsubadd_vf_vf_vf(d0: VFloat, d1: VFloat) -> VFloat { return d0 + vnegpos_vf_vf(d1); }
 #[inline]
 fn vmlsubadd_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return vfma_vd_vd_vd_vd(x, y, vnegpos_vd_vd(z)); }
 #[inline]

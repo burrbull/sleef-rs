@@ -218,14 +218,14 @@ impl VCastD for f64 {
 
 //
 
-#[inline]
-fn vand_vo_vo_vo   (x: VOpMask, y: VOpMask) -> VOpMask { VOpMask ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = x.u[i] &  y.u[i]; return ret; }
+//#[inline]
+//fn vand_vo_vo_vo   (x: VOpMask, y: VOpMask) -> VOpMask { VOpMask ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = x.u[i] &  y.u[i]; return ret; }
 #[inline]
 fn vandnot_vo_vo_vo(x: VOpMask, y: VOpMask) -> VOpMask { VOpMask ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = y.u[i] & ~x.u[i]; return ret; }
-#[inline]
-fn vor_vo_vo_vo    (x: VOpMask, y: VOpMask) -> VOpMask { VOpMask ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = x.u[i] |  y.u[i]; return ret; }
-#[inline]
-fn vxor_vo_vo_vo   (x: VOpMask, y: VOpMask) -> VOpMask { VOpMask ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = x.u[i] ^  y.u[i]; return ret; }
+//#[inline]
+//fn vor_vo_vo_vo    (x: VOpMask, y: VOpMask) -> VOpMask { VOpMask ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = x.u[i] |  y.u[i]; return ret; }
+//#[inline]
+//fn vxor_vo_vo_vo   (x: VOpMask, y: VOpMask) -> VOpMask { VOpMask ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = x.u[i] ^  y.u[i]; return ret; }
 
 #[inline]
 fn vand_vm_vm_vm     (x: VMask, y: VMask)     -> VMask { VMask   ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = x.u[i] &  y.u[i]; return ret; }
@@ -262,7 +262,7 @@ fn vsel_vd_vo_vd_vd   (o: VOpMask, x: VDouble, y: VDouble) -> VDouble { VDouble 
 fn   vsel_vi2_vo_vi2_vi2(o: VOpMask, x: VInt2, y: VInt2)     -> VInt2 { VInt2 ret;   for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = (o.u[i] & x.u[i]) | (y.u[i] & ~o.u[i]); return ret; }
 
 #[inline]
-fn VDouble vsel_vd_vo_d_d(o: VOpMask, v1: double, v0: double) -> CONST {
+fn vsel_vd_vo_d_d(o: VOpMask, v1: double, v0: double) -> CONST -> VDouble {
   return vsel_vd_vo_vd_vd(o, v1.as_vd(), v0.as_vd());
 }
 
@@ -312,21 +312,12 @@ fn vreinterpret_vd_vi2(vi: VInt2) { union -> VDouble { VInt2 vi2; VDouble vd; } 
 #[inline]
 fn vreinterpret_vd_vm(vm: VMask) { union -> VDouble { VMask vm; VDouble vd; } cnv; cnv.vm = vm; return cnv.vd; }
 
-#[inline]
-fn vadd_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { VDouble ret; for(int i=0;i<VECTLENDP;i++) ret.d[i] = x.d[i] + y.d[i]; return ret; }
-#[inline]
-fn vsub_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { VDouble ret; for(int i=0;i<VECTLENDP;i++) ret.d[i] = x.d[i] - y.d[i]; return ret; }
-#[inline]
-fn vmul_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { VDouble ret; for(int i=0;i<VECTLENDP;i++) ret.d[i] = x.d[i] * y.d[i]; return ret; }
-#[inline]
-fn vdiv_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { VDouble ret; for(int i=0;i<VECTLENDP;i++) ret.d[i] = x.d[i] / y.d[i]; return ret; }
+
 #[inline]
 fn vrec_vd_vd(x: VDouble)               -> VDouble { VDouble ret; for(int i=0;i<VECTLENDP;i++) ret.d[i] = 1.0 / x.d[i];    return ret; }
 
 #[inline]
 fn vabs_vd_vd(d: VDouble) -> VDouble { VDouble ret; for(int i=0;i<VECTLENDP;i++) ret.x[i] = d.x[i] & 0x7fffffffffffffffULL; return ret; }
-#[inline]
-fn vneg_vd_vd(d: VDouble) -> VDouble { VDouble ret; for(int i=0;i<VECTLENDP;i++) ret.d[i] = -d.d[i]; return ret; }
 impl Mla for VDouble {
     fn mla(self, y: Self, z: Self) -> Self {
         VDouble ret; for(int i=0;i<VECTLENDP;i++) ret.d[i] = x.d[i] * y.d[i] + z.d[i]; return ret;
@@ -334,10 +325,6 @@ impl Mla for VDouble {
 }
 #[inline]
 fn vmlapn_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { VDouble ret; for(int i=0;i<VECTLENDP;i++) ret.d[i] = x.d[i] * y.d[i] - z.d[i]; return ret; }
-#[inline]
-fn vmax_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { VDouble ret; for(int i=0;i<VECTLENDP;i++) ret.d[i] = x.d[i] > y.d[i] ? x.d[i] : y.d[i]; return ret; }
-#[inline]
-fn vmin_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { VDouble ret; for(int i=0;i<VECTLENDP;i++) ret.d[i] = x.d[i] < y.d[i] ? x.d[i] : y.d[i]; return ret; }
 
 #[inline]
 fn vposneg_vd_vd(d: VDouble) -> VDouble { VDouble ret; for(int i=0;i<VECTLENDP;i++) ret.d[i] = (i & 1) == 0 ?  d.d[i] : -d.d[i]; return ret; }
@@ -346,20 +333,8 @@ fn vnegpos_vd_vd(d: VDouble) -> VDouble { VDouble ret; for(int i=0;i<VECTLENDP;i
 #[inline]
 fn vsubadd_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { VDouble ret; for(int i=0;i<VECTLENDP;i++) ret.d[i] = (i & 1) == 0 ? x.d[i] - y.d[i] : x.d[i] + y.d[i]; return ret; }
 #[inline]
-fn vmlsubadd_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return vsubadd_vd_vd_vd(vmul_vd_vd_vd(x, y), z); }
+fn vmlsubadd_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return vsubadd_vd_vd_vd(x*y, z); }
 
-#[inline]
-fn veq_vo_vd_vd(x: VDouble, y: VDouble)  -> VOpMask { VOpMask ret; for(int i=0;i<VECTLENDP;i++) ret.x[i] = x.d[i] == y.d[i] ? -1 : 0; return ret; }
-#[inline]
-fn vneq_vo_vd_vd(x: VDouble, y: VDouble) -> VOpMask { VOpMask ret; for(int i=0;i<VECTLENDP;i++) ret.x[i] = x.d[i] != y.d[i] ? -1 : 0; return ret; }
-#[inline]
-fn vlt_vo_vd_vd(x: VDouble, y: VDouble)  -> VOpMask { VOpMask ret; for(int i=0;i<VECTLENDP;i++) ret.x[i] = x.d[i] <  y.d[i] ? -1 : 0; return ret; }
-#[inline]
-fn vle_vo_vd_vd(x: VDouble, y: VDouble)  -> VOpMask { VOpMask ret; for(int i=0;i<VECTLENDP;i++) ret.x[i] = x.d[i] <= y.d[i] ? -1 : 0; return ret; }
-#[inline]
-fn vgt_vo_vd_vd(x: VDouble, y: VDouble)  -> VOpMask { VOpMask ret; for(int i=0;i<VECTLENDP;i++) ret.x[i] = x.d[i] >  y.d[i] ? -1 : 0; return ret; }
-#[inline]
-fn vge_vo_vd_vd(x: VDouble, y: VDouble)  -> VOpMask { VOpMask ret; for(int i=0;i<VECTLENDP;i++) ret.x[i] = x.d[i] >= y.d[i] ? -1 : 0; return ret; }
 
 impl std::ops::Add for VInt {
     type Output = Self;
@@ -519,20 +494,10 @@ fn vreinterpret_vi2_vf(vf: VFloat) { union -> VInt2 { VFloat vf; VInt2 vi2; } cn
 fn vrev21_vi2_vi2(i: VInt2) -> VInt2 { return vreinterpret_vi2_vf(vrev21_vf_vf(vreinterpret_vf_vi2(i))); }
 
 #[inline]
-fn vadd_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { VFloat ret; for(int i=0;i<VECTLENSP;i++) ret.f[i] = x.f[i] + y.f[i]; return ret; }
-#[inline]
-fn vsub_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { VFloat ret; for(int i=0;i<VECTLENSP;i++) ret.f[i] = x.f[i] - y.f[i]; return ret; }
-#[inline]
-fn vmul_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { VFloat ret; for(int i=0;i<VECTLENSP;i++) ret.f[i] = x.f[i] * y.f[i]; return ret; }
-#[inline]
-fn vdiv_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { VFloat ret; for(int i=0;i<VECTLENSP;i++) ret.f[i] = x.f[i] / y.f[i]; return ret; }
-#[inline]
 fn vrec_vf_vf   (x: VFloat)           -> VFloat { VFloat ret; for(int i=0;i<VECTLENSP;i++) ret.f[i] = 1.0    / x.f[i]; return ret; }
 
 #[inline]
 fn vabs_vf_vf(x: VFloat) -> VFloat { VFloat ret; for(int i=0;i<VECTLENSP;i++) ret.i[i] = x.i[i] & 0x7fffffff; return ret; }
-#[inline]
-fn vneg_vf_vf(x: VFloat) -> VFloat { VFloat ret; for(int i=0;i<VECTLENSP;i++) ret.f[i] = -x.f[i]; return ret; }
 impl Mla for VFloat {
     fn mla(self, y: Self, z: Self) -> Self {
         VFloat ret; for(int i=0;i<VECTLENSP;i++) ret.f[i] = x.f[i] * y.f[i] + z.f[i]; return ret;
@@ -540,10 +505,6 @@ impl Mla for VFloat {
 }
 #[inline]
 fn vmlanp_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { VFloat ret; for(int i=0;i<VECTLENSP;i++) ret.f[i] = x.f[i] * y.f[i] - z.f[i]; return ret; }
-#[inline]
-fn vmax_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { VFloat ret; for(int i=0;i<VECTLENSP;i++) ret.f[i] = x.f[i] > y.f[i] ? x.f[i] : y.f[i]; return ret; }
-#[inline]
-fn vmin_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { VFloat ret; for(int i=0;i<VECTLENSP;i++) ret.f[i] = x.f[i] < y.f[i] ? x.f[i] : y.f[i]; return ret; }
 
 #[inline]
 fn vposneg_vf_vf(x: VFloat) -> VFloat { VFloat ret; for(int i=0;i<VECTLENSP;i++) ret.f[i] = (i & 1) == 0 ?  x.f[i] : -x.f[i]; return ret; }
@@ -552,20 +513,8 @@ fn vnegpos_vf_vf(x: VFloat) -> VFloat { VFloat ret; for(int i=0;i<VECTLENSP;i++)
 #[inline]
 fn vsubadd_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { VFloat ret; for(int i=0;i<VECTLENSP;i++) ret.f[i] = (i & 1) == 0 ? x.f[i] - y.f[i] : x.f[i] + y.f[i]; return ret; }
 #[inline]
-fn vmlsubadd_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return vsubadd_vf_vf_vf(vmul_vf_vf_vf(x, y), z); }
+fn vmlsubadd_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return vsubadd_vf_vf_vf(x * y, z); }
 
-#[inline]
-fn veq_vo_vf_vf(x: VFloat, y: VFloat)  -> VOpMask { VOpMask ret; for(int i=0;i<VECTLENSP;i++) ret.u[i] = ((x.f[i] == y.f[i]) ? -1 : 0); return ret; }
-#[inline]
-fn vneq_vo_vf_vf(x: VFloat, y: VFloat) -> VOpMask { VOpMask ret; for(int i=0;i<VECTLENSP;i++) ret.u[i] = ((x.f[i] != y.f[i]) ? -1 : 0); return ret; }
-#[inline]
-fn vlt_vo_vf_vf(x: VFloat, y: VFloat)  -> VOpMask { VOpMask ret; for(int i=0;i<VECTLENSP;i++) ret.u[i] = ((x.f[i] <  y.f[i]) ? -1 : 0); return ret; }
-#[inline]
-fn vle_vo_vf_vf(x: VFloat, y: VFloat)  -> VOpMask { VOpMask ret; for(int i=0;i<VECTLENSP;i++) ret.u[i] = ((x.f[i] <= y.f[i]) ? -1 : 0); return ret; }
-#[inline]
-fn vgt_vo_vf_vf(x: VFloat, y: VFloat)  -> VOpMask { VOpMask ret; for(int i=0;i<VECTLENSP;i++) ret.u[i] = ((x.f[i] >  y.f[i]) ? -1 : 0); return ret; }
-#[inline]
-fn vge_vo_vf_vf(x: VFloat, y: VFloat)  -> VOpMask { VOpMask ret; for(int i=0;i<VECTLENSP;i++) ret.u[i] = ((x.f[i] >= y.f[i]) ? -1 : 0); return ret; }
 
 #[inline]
 fn vadd_vi2_vi2_vi2(x: VInt, y: VInt) -> VInt { VInt ret; for(int i=0;i<VECTLENSP;i++) ret.i[i] = x.i[i] + y.i[i]; return ret; }
@@ -587,7 +536,7 @@ fn vxor_vi2_vi2_vi2(x: VInt, y: VInt)    -> VInt { VInt ret; for(int i=0;i<VECTL
 fn vsel_vf_vo_vf_vf(o: VOpMask, x: VFloat, y: VFloat) -> VFloat { VFloat ret; for(int i=0;i<VECTLENSP;i++) ret.u[i] = (o.u[i] & x.u[i]) | (y.u[i] & ~o.u[i]); return ret; }
 
 #[inline]
-fn VFloat vsel_vf_vo_f_f(o: VOpMask, v1: float, v0: float) -> CONST {
+fn vsel_vf_vo_f_f(o: VOpMask, v1: float, v0: float) -> CONST -> VFloat {
   return vsel_vf_vo_vf_vf(o, v1.as_vf(), v0.as_vf());
 }
 

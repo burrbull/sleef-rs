@@ -147,14 +147,14 @@ impl VCastD for f64 {
 
 //
 
-#[inline]
-fn vand_vo_vo_vo   (x: VOpMask, y: VOpMask) -> VOpMask { return x & y; }
+//#[inline]
+//fn vand_vo_vo_vo   (x: VOpMask, y: VOpMask) -> VOpMask { return x & y; }
 #[inline]
 fn vandnot_vo_vo_vo(x: VOpMask, y: VOpMask) -> VOpMask { return y & ~x; }
-#[inline]
-fn vor_vo_vo_vo    (x: VOpMask, y: VOpMask) -> VOpMask { return x | y; }
-#[inline]
-fn vxor_vo_vo_vo   (x: VOpMask, y: VOpMask) -> VOpMask { return x ^ y; }
+//#[inline]
+//fn vor_vo_vo_vo    (x: VOpMask, y: VOpMask) -> VOpMask { return x | y; }
+//#[inline]
+//fn vxor_vo_vo_vo   (x: VOpMask, y: VOpMask) -> VOpMask { return x ^ y; }
 
 #[inline]
 fn vand_vm_vm_vm     (x: VMask, y: VMask)     -> VMask { return x & y; }
@@ -194,7 +194,7 @@ fn vsel_vd_vo_vd_vd   (o: VOpMask, x: VDouble, y: VDouble) -> VDouble { return o
 fn   vsel_vi2_vo_vi2_vi2(o: VOpMask, x: VInt2, y: VInt2)     -> VInt2 { return o ? x : y; }
 
 #[inline]
-fn VDouble vsel_vd_vo_d_d(o: VOpMask, v1: double, v0: double) -> CONST { return o ? v1 : v0; }
+fn vsel_vd_vo_d_d(o: VOpMask, v1: double, v0: double) -> CONST -> VDouble { return o ? v1 : v0; }
 
 #[inline]
 fn vsel_vd_vo_vo_d_d_d(VOpMask o0, VOpMask o1, double d0, double d1, double d2) -> VDouble {
@@ -257,26 +257,20 @@ fn vreinterpret_vd_vi2(vi: VInt2) { union -> VDouble { VInt2 vi2; VDouble vd; } 
 #[inline]
 fn vreinterpret_vd_vm(vm: VMask) { union -> VDouble { VMask vm; VDouble vd; } cnv; cnv.vm = vm; return cnv.vd; }
 
-#[inline]
-fn vadd_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { return x + y; }
-#[inline]
-fn vsub_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { return x - y; }
-#[inline]
-fn vmul_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { return x * y; }
-#[inline]
-fn vdiv_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { return x / y; }
+
+impl std::ops::Add for VDouble {
+    type Output = Self;
+    #[inline]
+    fn add(self, other: Self) -> Self {
+        self+other
+    }
+}
 #[inline]
 fn vrec_vd_vd(x: VDouble)               -> VDouble { return 1 / x; }
 
 #[inline]
 fn vabs_vd_vd(d: VDouble) { versatileVector v = -> VDouble { .d = d }; v.x &= 0x7fffffffffffffffULL; return v.d; }
-#[inline]
-fn vneg_vd_vd(d: VDouble) -> VDouble { return -d; }
 
-#[inline]
-fn vmax_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { return x > y ? x : y; }
-#[inline]
-fn vmin_vd_vd_vd(x: VDouble, y: VDouble) -> VDouble { return x < y ? x : y; }
 
 #ifndef ENABLE_FMA_DP
 impl Mla for VDouble {
@@ -307,19 +301,6 @@ fn vfmanp_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return FM
 #[inline]
 fn vfmann_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return FMA(-x, y, -z); }
 #endif
-
-#[inline]
-fn veq_vo_vd_vd(x: VDouble, y: VDouble)  -> VOpMask { return x == y ? ~(uint32_t)0 : 0; }
-#[inline]
-fn vneq_vo_vd_vd(x: VDouble, y: VDouble) -> VOpMask { return x != y ? ~(uint32_t)0 : 0; }
-#[inline]
-fn vlt_vo_vd_vd(x: VDouble, y: VDouble)  -> VOpMask { return x <  y ? ~(uint32_t)0 : 0; }
-#[inline]
-fn vle_vo_vd_vd(x: VDouble, y: VDouble)  -> VOpMask { return x <= y ? ~(uint32_t)0 : 0; }
-#[inline]
-fn vgt_vo_vd_vd(x: VDouble, y: VDouble)  -> VOpMask { return x >  y ? ~(uint32_t)0 : 0; }
-#[inline]
-fn vge_vo_vd_vd(x: VDouble, y: VDouble)  -> VOpMask { return x >= y ? ~(uint32_t)0 : 0; }
 
 impl std::ops::Add for VInt {
     type Output = Self;
@@ -459,25 +440,11 @@ fn vreinterpret_vf_vi2(vi: VInt2) { union -> VFloat { VFloat vf; VInt2 vi2; } cn
 fn vreinterpret_vi2_vf(vf: VFloat) { union -> VInt2 { VFloat vf; VInt2 vi2; } cnv; cnv.vi2 = 0; cnv.vf = vf; return cnv.vi2; }
 
 #[inline]
-fn vadd_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return x + y; }
-#[inline]
-fn vsub_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return x - y; }
-#[inline]
-fn vmul_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return x * y; }
-#[inline]
-fn vdiv_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return x / y; }
-#[inline]
 fn vrec_vf_vf   (x: VFloat)           -> VFloat { return 1 / x; }
 
 #[inline]
 fn vabs_vf_vf(x: VFloat) { versatileVector v = -> VFloat { .f = x }; v.x &= 0x7fffffff; return v.f; }
-#[inline]
-fn vneg_vf_vf(x: VFloat) -> VFloat { return -x; }
 
-#[inline]
-fn vmax_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return x > y ? x : y; }
-#[inline]
-fn vmin_vf_vf_vf(x: VFloat, y: VFloat) -> VFloat { return x < y ? x : y; }
 
 #ifndef ENABLE_FMA_SP
 impl Mla for VFloat {
@@ -509,18 +476,6 @@ fn vfmanp_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return FMAF(-
 fn vfmann_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return FMAF(-x, y, -z); }
 #endif
 
-#[inline]
-fn veq_vo_vf_vf(x: VFloat, y: VFloat)  -> VOpMask { return x == y ? ~(uint32_t)0 : 0; }
-#[inline]
-fn vneq_vo_vf_vf(x: VFloat, y: VFloat) -> VOpMask { return x != y ? ~(uint32_t)0 : 0; }
-#[inline]
-fn vlt_vo_vf_vf(x: VFloat, y: VFloat)  -> VOpMask { return x <  y ? ~(uint32_t)0 : 0; }
-#[inline]
-fn vle_vo_vf_vf(x: VFloat, y: VFloat)  -> VOpMask { return x <= y ? ~(uint32_t)0 : 0; }
-#[inline]
-fn vgt_vo_vf_vf(x: VFloat, y: VFloat)  -> VOpMask { return x >  y ? ~(uint32_t)0 : 0; }
-#[inline]
-fn vge_vo_vf_vf(x: VFloat, y: VFloat)  -> VOpMask { return x >= y ? ~(uint32_t)0 : 0; }
 
 #[inline]
 fn vadd_vi2_vi2_vi2(VInt2 x, VInt2 y) { versatileVector v = { .i2 = x }, w = -> VInt2 { .i2 = y }; v.i[0] += w.i[0]; v.i[1] += w.i[1]; return v.i2; }

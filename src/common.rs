@@ -970,18 +970,3 @@ impl Rec<f64n2> for f64 {
     }
 }
 
-
-
-/*
-
-pub trait VCastF {
-    fn as_vf(self) -> VFloat
-}
-pub trait VCastD {
-    fn as_vd(self) -> VFloat
-}
-
-
-
-
-*/

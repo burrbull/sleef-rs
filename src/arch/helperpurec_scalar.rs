@@ -83,12 +83,12 @@ typedef union {
   int64_t i2;
 } versatileVector;
 
-typedef uint64_t VMask;
-typedef uint32_t VOpMask;
-typedef double VDouble;
-typedef int32_t VInt;
-typedef float VFloat;
-typedef int64_t VInt2;
+typedef uint64_t $mx;
+typedef uint32_t $mox;
+typedef double $f64x;
+typedef int32_t $ix;
+typedef float $f32x;
+typedef int64_t $ix2;
 
 //
 
@@ -98,167 +98,135 @@ fn vavailability_i(name: int) -> int { return -1; }
 fn vprefetch_v_p(const void *ptr) -> void {}
 
 #[inline]
-fn vtestallones_i_vo64(g: VOpMask) -> int { return g; }
+fn vtestallones_i_vo64(g: $mox) -> int { return g; }
 #[inline]
-fn vtestallones_i_vo32(g: VOpMask) -> int { return g; }
+fn vtestallones_i_vo32(g: $mox) -> int { return g; }
 
 //
 
-static VInt2 vloadu_vi2_p(int32_t *p) { return *p; }
-static void vstoreu_v_p_vi2(int32_t *p, VInt2 v) { *p = v; }
-static VInt vloadu_vi_p(int32_t *p) { return *p; }
-static void vstoreu_v_p_vi(int32_t *p, VInt v) { *p = v; }
-
-//
-
-#[inline]
-fn vcast_vo32_vo64(m: VOpMask) -> VOpMask { return m; }
-#[inline]
-fn vcast_vo64_vo32(m: VOpMask) -> VOpMask { return m; }
-#[inline]
-fn vcast_vm_i_i(h: int, l: int) -> VMask { return (((uint64_t)h) << 32) | (uint32_t)l; }
-
-impl VCastI2 for VInt {
-    #[inline]
-    fn as_vi2(self) -> VInt2 {
-        (self as u64) << 32
-    }
-}
-//#[inline]
-//fn vcastu_vi2_vi(vi: VInt) -> VInt2 { return ((int64_t)vi) << 32; }
-impl VCastI for VInt2 {
-    #[inline]
-    fn as_vi(self) -> VInt {
-      self >> 32
-    }
-}
-//#[inline]
-//fn vcastu_vi_vi2(vi2: VInt2) -> VInt { return vi2 >> 32; }
-
-#[inline]
-fn vrev21_vi2_vi2(vi2: VInt2) -> VInt2 { return (((uint64_t)vi2) << 32) | (((uint64_t)vi2) >> 32); }
-
-impl VCastD for f64 {
-    #[inline]
-    fn as_vd(self) -> VDouble {
-        d
-    }
-}
-
-//
-
-//#[inline]
-//fn vand_vo_vo_vo   (x: VOpMask, y: VOpMask) -> VOpMask { return x & y; }
-#[inline]
-fn vandnot_vo_vo_vo(x: VOpMask, y: VOpMask) -> VOpMask { return y & ~x; }
-//#[inline]
-//fn vor_vo_vo_vo    (x: VOpMask, y: VOpMask) -> VOpMask { return x | y; }
-//#[inline]
-//fn vxor_vo_vo_vo   (x: VOpMask, y: VOpMask) -> VOpMask { return x ^ y; }
-
-#[inline]
-fn vand_vm_vm_vm     (x: VMask, y: VMask)     -> VMask { return x & y; }
-#[inline]
-fn vandnot_vm_vm_vm  (x: VMask, y: VMask)     -> VMask { return y & ~x; }
-#[inline]
-fn vor_vm_vm_vm      (x: VMask, y: VMask)     -> VMask { return x | y; }
-#[inline]
-fn vxor_vm_vm_vm     (x: VMask, y: VMask)     -> VMask { return x ^ y; }
-
-#[inline]
-fn vcast_vm_vo(o: VOpMask) -> VMask { return (VMask)o | (((VMask)o) << 32); }
-
-#[inline]
-fn vand_vm_vo64_vm(x: VOpMask, y: VMask)      -> VMask { return vcast_vm_vo(x) & y; }
-#[inline]
-fn vandnot_vm_vo64_vm(x: VOpMask, y: VMask)   -> VMask { return y & ~vcast_vm_vo(x); }
-#[inline]
-fn vor_vm_vo64_vm(x: VOpMask, y: VMask)       -> VMask { return vcast_vm_vo(x) | y; }
-#[inline]
-fn vxor_vm_vo64_vm(x: VOpMask, y: VMask)      -> VMask { return vcast_vm_vo(x) ^ y; }
-
-#[inline]
-fn vand_vm_vo32_vm(x: VOpMask, y: VMask)      -> VMask { return vcast_vm_vo(x) & y; }
-#[inline]
-fn vandnot_vm_vo32_vm(x: VOpMask, y: VMask)   -> VMask { return y & ~vcast_vm_vo(x); }
-#[inline]
-fn vor_vm_vo32_vm(x: VOpMask, y: VMask)       -> VMask { return vcast_vm_vo(x) | y; }
-#[inline]
-fn vxor_vm_vo32_vm(x: VOpMask, y: VMask)      -> VMask { return vcast_vm_vo(x) ^ y; }
+static $ix2 vloadu_vi2_p(int32_t *p) { return *p; }
+static void vstoreu_v_p_vi2(int32_t *p, $ix2 v) { *p = v; }
+static $ix vloadu_vi_p(int32_t *p) { return *p; }
+static void vstoreu_v_p_vi(int32_t *p, $ix v) { *p = v; }
 
 //
 
 #[inline]
-fn vsel_vd_vo_vd_vd   (o: VOpMask, x: VDouble, y: VDouble) -> VDouble { return o ? x : y; }
+fn vcast_vo32_vo64(m: $mox) -> $mox { return m; }
 #[inline]
-fn   vsel_vi2_vo_vi2_vi2(o: VOpMask, x: VInt2, y: VInt2)     -> VInt2 { return o ? x : y; }
+fn vcast_vo64_vo32(m: $mox) -> $mox { return m; }
+#[inline]
+fn vcast_vm_i_i(h: int, l: int) -> $mx { return (((uint64_t)h) << 32) | (uint32_t)l; }
+
 
 #[inline]
-fn vsel_vd_vo_d_d(o: VOpMask, v1: double, v0: double) -> CONST -> VDouble { return o ? v1 : v0; }
+fn vrev21_vi2_vi2(vi2: $ix2) -> $ix2 { return (((uint64_t)vi2) << 32) | (((uint64_t)vi2) >> 32); }
 
-#[inline]
-fn vsel_vd_vo_vo_d_d_d(VOpMask o0, VOpMask o1, double d0, double d1, double d2) -> VDouble {
-  return vsel_vd_vo_vd_vd(o0, d0.as_vd(), vsel_vd_vo_d_d(o1, d1, d2));
-}
 
-#[inline]
-fn vsel_vd_vo_vo_vo_d_d_d_d(VOpMask o0, VOpMask o1, VOpMask o2, double d0, double d1, double d2, double d3) -> VDouble {
-  return vsel_vd_vo_vd_vd(o0, d0.as_vd(), vsel_vd_vo_vd_vd(o1, d1.as_vd(), vsel_vd_vo_d_d(o2, d2, d3)));
-}
+//
 
-#[inline]
-fn vcast_vd_vi(vi: VInt) -> VDouble { return vi; }
-impl VCastI for isize {
-    #[inline]
-    fn as_vi(self) -> VInt {
-        self
-    }
-}
 //#[inline]
-//fn vcast_vi_i(j: int) -> VInt { return j; }
+//fn vand_vo_vo_vo   (x: $mox, y: $mox) -> $mox { return x & y; }
+#[inline]
+fn vandnot_vo_vo_vo(x: $mox, y: $mox) -> $mox { return y & ~x; }
+//#[inline]
+//fn vor_vo_vo_vo    (x: $mox, y: $mox) -> $mox { return x | y; }
+//#[inline]
+//fn vxor_vo_vo_vo   (x: $mox, y: $mox) -> $mox { return x ^ y; }
+
+#[inline]
+fn vand_vm_vm_vm     (x: $mx, y: $mx)     -> $mx { return x & y; }
+#[inline]
+fn vandnot_vm_vm_vm  (x: $mx, y: $mx)     -> $mx { return y & ~x; }
+#[inline]
+fn vor_vm_vm_vm      (x: $mx, y: $mx)     -> $mx { return x | y; }
+#[inline]
+fn vxor_vm_vm_vm     (x: $mx, y: $mx)     -> $mx { return x ^ y; }
+
+#[inline]
+fn vcast_vm_vo(o: $mox) -> $mx { return ($mx)o | ((($mx)o) << 32); }
+
+#[inline]
+fn vand_vm_vo64_vm(x: $mox, y: $mx)      -> $mx { return vcast_vm_vo(x) & y; }
+#[inline]
+fn vandnot_vm_vo64_vm(x: $mox, y: $mx)   -> $mx { return y & ~vcast_vm_vo(x); }
+#[inline]
+fn vor_vm_vo64_vm(x: $mox, y: $mx)       -> $mx { return vcast_vm_vo(x) | y; }
+#[inline]
+fn vxor_vm_vo64_vm(x: $mox, y: $mx)      -> $mx { return vcast_vm_vo(x) ^ y; }
+
+#[inline]
+fn vand_vm_vo32_vm(x: $mox, y: $mx)      -> $mx { return vcast_vm_vo(x) & y; }
+#[inline]
+fn vandnot_vm_vo32_vm(x: $mox, y: $mx)   -> $mx { return y & ~vcast_vm_vo(x); }
+#[inline]
+fn vor_vm_vo32_vm(x: $mox, y: $mx)       -> $mx { return vcast_vm_vo(x) | y; }
+#[inline]
+fn vxor_vm_vo32_vm(x: $mox, y: $mx)      -> $mx { return vcast_vm_vo(x) ^ y; }
+
+//
+
+#[inline]
+fn vsel_vd_vo_vd_vd   (o: $mox, x: $f64x, y: $f64x) -> $f64x { return o ? x : y; }
+#[inline]
+fn   vsel_vi2_vo_vi2_vi2(o: $mox, x: $ix2, y: $ix2)     -> $ix2 { return o ? x : y; }
+
+#[inline]
+fn vsel_vd_vo_d_d(o: $mox, v1: f64, v0: f64) -> CONST -> $f64x { return o ? v1 : v0; }
+
+#[inline]
+fn vsel_vd_vo_vo_d_d_d(o0: $mox, o1: $mox, d0: f64, d1: f64, d2: f64) -> $f64x {
+  return vsel_vd_vo_vd_vd(o0, $f64x::splat(d0), vsel_vd_vo_d_d(o1, d1, d2));
+}
+
+#[inline]
+fn vsel_vd_vo_vo_vo_d_d_d_d(o0: $mox, o1: $mox, o2: $mox, d0: f64, d1: f64, d2: f64, d3: f64) -> $f64x {
+  return vsel_vd_vo_vd_vd(o0, $f64x::splat(d0), vsel_vd_vo_vd_vd(o1, $f64x::splat(d1), vsel_vd_vo_d_d(o2, d2, d3)));
+}
+
 
 #ifdef FULL_FP_ROUNDING
 #[inline]
-fn vrint_vi_vd(d: VDouble) -> VInt { return (int32_t)RINT(d); }
+fn vrint_vi_vd(d: $f64x) -> $ix { return (int32_t)RINT(d); }
 #[inline]
-fn vrint_vd_vd(vd: VDouble) -> VDouble { return RINT(vd); }
+fn vrint_vd_vd(vd: $f64x) -> $f64x { return RINT(vd); }
 #[inline]
-fn vtruncate_vd_vd(vd: VDouble) -> VDouble { return TRUNC(vd); }
+fn vtruncate_vd_vd(vd: $f64x) -> $f64x { return TRUNC(vd); }
 #[inline]
-fn vtruncate_vi_vd(vd: VDouble) -> VInt { return (int32_t)TRUNC(vd); }
+fn vtruncate_vi_vd(vd: $f64x) -> $ix { return (int32_t)TRUNC(vd); }
 #else
 #[inline]
-fn vrint_vi_vd(a: VDouble) -> VInt {
+fn vrint_vi_vd(a: $f64x) -> $ix {
   a += a > 0 ? 0.5 : -0.5;
   versatileVector v = { .d = a }; v.x -= 1 & (int)a;
   return (int32_t)v.d;
 }
 #[inline]
-fn vrint_vd_vd(vd: VDouble) -> VDouble { return vcast_vd_vi(vrint_vi_vd(vd)); }
+fn vrint_vd_vd(vd: $f64x) -> $f64x { return $f64x::from(vrint_vi_vd(vd)); }
 #[inline]
-fn vtruncate_vi_vd(vd: VDouble) -> VInt { return vd; }
+fn vtruncate_vi_vd(vd: $f64x) -> $ix { return vd; }
 #[inline]
-fn vtruncate_vd_vd(vd: VDouble) -> VDouble { return vcast_vd_vi(vtruncate_vi_vd(vd)); }
+fn vtruncate_vd_vd(vd: $f64x) -> $f64x { return $f64x::from(vtruncate_vi_vd(vd)); }
 #endif
 
 #[inline]
-fn veq64_vo_vm_vm(x: VMask, y: VMask) -> VOpMask { return x == y ? ~(uint32_t)0 : 0; }
+fn veq64_vo_vm_vm(x: $mx, y: $mx) -> $mox { return x == y ? ~(uint32_t)0 : 0; }
 #[inline]
-fn vadd64_vm_vm_vm(x: VMask, y: VMask) -> VMask { return x + y; }
+fn vadd64_vm_vm_vm(x: $mx, y: $mx) -> $mx { return x + y; }
 
 //
 
 #[inline]
-fn vreinterpret_vm_vd(vd: VDouble) { union -> VMask { VDouble vd; VMask vm; } cnv; cnv.vd = vd; return cnv.vm; }
+fn vreinterpret_vm_vd(vd: $f64x) { union -> $mx { $f64x vd; $mx vm; } cnv; cnv.vd = vd; return cnv.vm; }
 #[inline]
-fn vreinterpret_vi2_vd(vd: VDouble) { union -> VInt2 { VDouble vd; VInt2 vi2; } cnv; cnv.vd = vd; return cnv.vi2; }
+fn vreinterpret_vi2_vd(vd: $f64x) { union -> $ix2 { $f64x vd; $ix2 vi2; } cnv; cnv.vd = vd; return cnv.vi2; }
 #[inline]
-fn vreinterpret_vd_vi2(vi: VInt2) { union -> VDouble { VInt2 vi2; VDouble vd; } cnv; cnv.vi2 = vi; return cnv.vd; }
+fn vreinterpret_vd_vi2(vi: $ix2) { union -> $f64x { $ix2 vi2; $f64x vd; } cnv; cnv.vi2 = vi; return cnv.vd; }
 #[inline]
-fn vreinterpret_vd_vm(vm: VMask) { union -> VDouble { VMask vm; VDouble vd; } cnv; cnv.vm = vm; return cnv.vd; }
+fn vreinterpret_vd_vm(vm: $mx) { union -> $f64x { $mx vm; $f64x vd; } cnv; cnv.vm = vm; return cnv.vd; }
 
 
-impl std::ops::Add for VDouble {
+impl std::ops::Add for $f64x {
     type Output = Self;
     #[inline]
     fn add(self, other: Self) -> Self {
@@ -266,43 +234,43 @@ impl std::ops::Add for VDouble {
     }
 }
 #[inline]
-fn vrec_vd_vd(x: VDouble)               -> VDouble { return 1 / x; }
+fn vrec_vd_vd(x: $f64x)               -> $f64x { return 1 / x; }
 
 #[inline]
-fn vabs_vd_vd(d: VDouble) { versatileVector v = -> VDouble { .d = d }; v.x &= 0x7fffffffffffffffULL; return v.d; }
+fn vabs_vd_vd(d: $f64x) { versatileVector v = -> $f64x { .d = d }; v.x &= 0x7fffffffffffffffULL; return v.d; }
 
 
 #ifndef ENABLE_FMA_DP
-impl Mla for VDouble {
+impl Mla for $f64x {
     fn mla(self, y: Self, z: Self) -> Self {
         x * y + z
     }
 }
 #[inline]
-fn vmlapn_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return x * y - z; }
+fn vmlapn_vd_vd_vd_vd(x: $f64x, y: $f64x, z: $f64x) -> $f64x { return x * y - z; }
 #else
-impl Mla for VDouble {
+impl Mla for $f64x {
     fn mla(self, y: Self, z: Self) -> Self {
         FMA(x, y, z)
     }
 }
 #[inline]
-fn vmlapn_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return FMA(x, y, -z); }
+fn vmlapn_vd_vd_vd_vd(x: $f64x, y: $f64x, z: $f64x) -> $f64x { return FMA(x, y, -z); }
 #[inline]
-fn vmlanp_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return FMA(-x, y, z); }
+fn vmlanp_vd_vd_vd_vd(x: $f64x, y: $f64x, z: $f64x) -> $f64x { return FMA(-x, y, z); }
 #[inline]
-fn vfma_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return FMA(x, y, z); }
+fn vfma_vd_vd_vd_vd(x: $f64x, y: $f64x, z: $f64x) -> $f64x { return FMA(x, y, z); }
 #[inline]
-fn vfmapp_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return FMA(x, y, z); }
+fn vfmapp_vd_vd_vd_vd(x: $f64x, y: $f64x, z: $f64x) -> $f64x { return FMA(x, y, z); }
 #[inline]
-fn vfmapn_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return FMA(x, y, -z); }
+fn vfmapn_vd_vd_vd_vd(x: $f64x, y: $f64x, z: $f64x) -> $f64x { return FMA(x, y, -z); }
 #[inline]
-fn vfmanp_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return FMA(-x, y, z); }
+fn vfmanp_vd_vd_vd_vd(x: $f64x, y: $f64x, z: $f64x) -> $f64x { return FMA(-x, y, z); }
 #[inline]
-fn vfmann_vd_vd_vd_vd(x: VDouble, y: VDouble, z: VDouble) -> VDouble { return FMA(-x, y, -z); }
+fn vfmann_vd_vd_vd_vd(x: $f64x, y: $f64x, z: $f64x) -> $f64x { return FMA(-x, y, -z); }
 #endif
 
-impl std::ops::Add for VInt {
+impl std::ops::Add for $ix {
     type Output = Self;
     #[inline]
     fn add(self, other: Self) -> Self {
@@ -310,8 +278,8 @@ impl std::ops::Add for VInt {
     }
 }
 //#[inline]
-//fn vadd_vi_vi_vi(x: VInt, y: VInt) -> VInt { return x + y; }
-impl std::ops::Sub for VInt {
+//fn vadd_vi_vi_vi(x: $ix, y: $ix) -> $ix { return x + y; }
+impl std::ops::Sub for $ix {
     type Output = Self;
     #[inline]
     fn sub(self, other: Self) -> Self {
@@ -319,8 +287,8 @@ impl std::ops::Sub for VInt {
     }
 }
 //#[inline]
-//fn vsub_vi_vi_vi(x: VInt, y: VInt) -> VInt { return x - y; }
-impl std::ops::Neg for VInt {
+//fn vsub_vi_vi_vi(x: $ix, y: $ix) -> $ix { return x - y; }
+impl std::ops::Neg for $ix {
     type Output = Self;
     #[inline]
     fn neg(self) -> Self {
@@ -329,228 +297,217 @@ impl std::ops::Neg for VInt {
 }
 
 #[inline]
-fn vand_vi_vi_vi(x: VInt, y: VInt)    -> VInt { return x & y; }
+fn vand_vi_vi_vi(x: $ix, y: $ix)    -> $ix { return x & y; }
 #[inline]
-fn vandnot_vi_vi_vi(x: VInt, y: VInt) -> VInt { return y & ~x; }
+fn vandnot_vi_vi_vi(x: $ix, y: $ix) -> $ix { return y & ~x; }
 #[inline]
-fn vor_vi_vi_vi(x: VInt, y: VInt)     -> VInt { return x | y; }
+fn vor_vi_vi_vi(x: $ix, y: $ix)     -> $ix { return x | y; }
 #[inline]
-fn vxor_vi_vi_vi(x: VInt, y: VInt)    -> VInt { return x ^ y; }
+fn vxor_vi_vi_vi(x: $ix, y: $ix)    -> $ix { return x ^ y; }
 
 #[inline]
-fn vand_vi_vo_vi(x: VOpMask, y: VInt)    -> VInt { return x & y; }
+fn vand_vi_vo_vi(x: $mox, y: $ix)    -> $ix { return x & y; }
 #[inline]
-fn vandnot_vi_vo_vi(x: VOpMask, y: VInt) -> VInt { return y & ~x; }
+fn vandnot_vi_vo_vi(x: $mox, y: $ix) -> $ix { return y & ~x; }
 
 #[inline]
-fn vsll_vi_vi_i(x: VInt, c: int) -> VInt { return (uint32_t)x << c; }
+fn vsll_vi_vi_i(x: $ix, c: int) -> $ix { return (uint32_t)x << c; }
 #[inline]
-fn vsrl_vi_vi_i(x: VInt, c: int) -> VInt { return (uint32_t)x >> c; }
+fn vsrl_vi_vi_i(x: $ix, c: int) -> $ix { return (uint32_t)x >> c; }
 #[inline]
-fn vsra_vi_vi_i(x: VInt, c: int) -> VInt { return x >> c; }
+fn vsra_vi_vi_i(x: $ix, c: int) -> $ix { return x >> c; }
 
 #[inline]
-fn veq_vo_vi_vi(x: VInt, y: VInt) -> VOpMask { return x == y ? ~(uint32_t)0 : 0; }
+fn veq_vo_vi_vi(x: $ix, y: $ix) -> $mox { return x == y ? ~(uint32_t)0 : 0; }
 #[inline]
-fn vgt_vo_vi_vi(x: VInt, y: VInt) -> VOpMask { return x >  y ? ~(uint32_t)0 : 0; }
+fn vgt_vo_vi_vi(x: $ix, y: $ix) -> $mox { return x >  y ? ~(uint32_t)0 : 0; }
 
 #[inline]
-fn vsel_vi_vo_vi_vi(m: VOpMask, x: VInt, y: VInt) -> VInt { return m ? x : y; }
+fn vsel_vi_vo_vi_vi(m: $mox, x: $ix, y: $ix) -> $ix { return m ? x : y; }
 
 #[inline]
-fn visinf_vo_vd(d: VDouble)  -> VOpMask { return (d == SLEEF_INFINITY || d == -SLEEF_INFINITY) ? ~(uint32_t)0 : 0; }
+fn visinf_vo_vd(d: $f64x)  -> $mox { return (d == SLEEF_INFINITY || d == -SLEEF_INFINITY) ? ~(uint32_t)0 : 0; }
 #[inline]
-fn vispinf_vo_vd(d: VDouble) -> VOpMask { return d == SLEEF_INFINITY ? ~(uint32_t)0 : 0; }
+fn vispinf_vo_vd(d: $f64x) -> $mox { return d == SLEEF_INFINITY ? ~(uint32_t)0 : 0; }
 #[inline]
-fn visminf_vo_vd(d: VDouble) -> VOpMask { return d == -SLEEF_INFINITY ? ~(uint32_t)0 : 0; }
+fn visminf_vo_vd(d: $f64x) -> $mox { return d == -SLEEF_INFINITY ? ~(uint32_t)0 : 0; }
 #[inline]
-fn visnan_vo_vd(d: VDouble)  -> VOpMask { return d != d ? ~(uint32_t)0 : 0; }
+fn visnan_vo_vd(d: $f64x)  -> $mox { return d != d ? ~(uint32_t)0 : 0; }
 
 #[inline]
-fn vsqrt_vd_vd(d: VDouble) -> VDouble { return SQRT(d); }
+fn vsqrt_vd_vd(d: $f64x) -> $f64x { return SQRT(d); }
 #[inline]
-fn vsqrt_vf_vf(x: VFloat) -> VFloat { return SQRTF(x); }
+fn vsqrt_vf_vf(x: $f32x) -> $f32x { return SQRTF(x); }
 
 #[inline]
-fn vcast_d_vd(v: VDouble) -> double { return v; }
+fn vcast_d_vd(v: $f64x) -> double { return v; }
 
 #[inline]
-fn vload_vd_p(const double *ptr) -> VDouble { return *ptr; }
+fn vload_vd_p(const double *ptr) -> $f64x { return *ptr; }
 #[inline]
-fn vloadu_vd_p(const double *ptr) -> VDouble { return *ptr; }
+fn vloadu_vd_p(const double *ptr) -> $f64x { return *ptr; }
 #[inline]
-fn vgather_vd_p_vi(const double *ptr, VInt vi) -> VDouble { return ptr[vi]; }
+fn vgather_vd_p_vi(const double *ptr, $ix vi) -> $f64x { return ptr[vi]; }
 
 #[inline]
-fn vstore_v_p_vd(double *ptr, VDouble v) -> void { *ptr = v; }
+fn vstore_v_p_vd(double *ptr, $f64x v) -> void { *ptr = v; }
 #[inline]
-fn vstoreu_v_p_vd(double *ptr, VDouble v) -> void { *ptr = v; }
+fn vstoreu_v_p_vd(double *ptr, $f64x v) -> void { *ptr = v; }
 //#[inline]
-//fn vstream_v_p_vd(double *ptr, VDouble v) -> void { *ptr = v; }
+//fn vstream_v_p_vd(double *ptr, $f64x v) -> void { *ptr = v; }
 
 //
 
 #[inline]
-fn vcast_vi2_vm(vm: VMask) { union -> VInt2 { VInt2 vi2; VMask vm; } cnv; cnv.vm = vm; return cnv.vi2; }
+fn vcast_vi2_vm(vm: $mx) { union -> $ix2 { $ix2 vi2; $mx vm; } cnv; cnv.vm = vm; return cnv.vi2; }
 #[inline]
-fn vcast_vm_vi2(vi: VInt2) { union -> VMask { VInt2 vi2; VMask vm; } cnv; cnv.vi2 = vi; return cnv.vm; }
-
-#[inline]
-fn vcast_vf_vi2(vi: VInt2) -> VFloat { return (int32_t)vi; }
-#[inline]
-fn vcast_vi2_i(j: int) -> VInt2 { return j; }
+fn vcast_vm_vi2(vi: $ix2) { union -> $mx { $ix2 vi2; $mx vm; } cnv; cnv.vi2 = vi; return cnv.vm; }
 
 #ifdef FULL_FP_ROUNDING
 #[inline]
-fn vrint_vi2_vf(d: VFloat) -> VInt2 { return (int)RINTF(d); }
+fn vrint_vi2_vf(d: $f32x) -> $ix2 { return (int)RINTF(d); }
 #[inline]
-fn vrint_vf_vf(vd: VFloat) -> VFloat { return RINTF(vd); }
+fn vrint_vf_vf(vd: $f32x) -> $f32x { return RINTF(vd); }
 #[inline]
-fn vtruncate_vf_vf(vd: VFloat) -> VFloat { return TRUNCF(vd); }
+fn vtruncate_vf_vf(vd: $f32x) -> $f32x { return TRUNCF(vd); }
 #[inline]
-fn vtruncate_vi2_vf(vf: VFloat) -> VInt2 { return (int32_t)TRUNCF(vf); }
+fn vtruncate_vi2_vf(vf: $f32x) -> $ix2 { return (int32_t)TRUNCF(vf); }
 #else
 #[inline]
-fn vrint_vi2_vf(a: VFloat) -> VInt2 {
+fn vrint_vi2_vf(a: $f32x) -> $ix2 {
   a += a > 0 ? 0.5f : -0.5f;
   versatileVector v = { .f = a }; v.u[0] -= 1 & (int)a;
   return (int32_t)v.f;
 }
 #[inline]
-fn vrint_vf_vf(vd: VFloat) -> VFloat { return vcast_vf_vi2(vrint_vi2_vf(vd)); }
+fn vrint_vf_vf(vd: $f32x) -> $f32x { return vcast_vf_vi2(vrint_vi2_vf(vd)); }
 #[inline]
-fn vtruncate_vi2_vf(vf: VFloat) -> VInt2 { return vf; }
+fn vtruncate_vi2_vf(vf: $f32x) -> $ix2 { return vf; }
 #[inline]
-fn vtruncate_vf_vf(vd: VFloat) -> VFloat { return vcast_vf_vi2(vtruncate_vi2_vf(vd)); }
+fn vtruncate_vf_vf(vd: $f32x) -> $f32x { return vcast_vf_vi2(vtruncate_vi2_vf(vd)); }
 #endif
 
-impl VCastF for f32 {
-    #[inline]
-    fn as_vf(self) -> VFloat {
-        self
-    }
-}
 #[inline]
-fn vreinterpret_vm_vf(vf: VFloat) { union -> VMask { VFloat vf; VMask vm; } cnv; cnv.vf = vf; return cnv.vm; }
+fn vreinterpret_vm_vf(vf: $f32x) { union -> $mx { $f32x vf; $mx vm; } cnv; cnv.vf = vf; return cnv.vm; }
 #[inline]
-fn vreinterpret_vf_vm(vm: VMask) { union -> VFloat { VFloat vf; VMask vm; } cnv; cnv.vm = vm; return cnv.vf; }
+fn vreinterpret_vf_vm(vm: $mx) { union -> $f32x { $f32x vf; $mx vm; } cnv; cnv.vm = vm; return cnv.vf; }
 #[inline]
-fn vreinterpret_vf_vi2(vi: VInt2) { union -> VFloat { VFloat vf; VInt2 vi2; } cnv; cnv.vi2 = vi; return cnv.vf; }
+fn vreinterpret_vf_vi2(vi: $ix2) { union -> $f32x { $f32x vf; $ix2 vi2; } cnv; cnv.vi2 = vi; return cnv.vf; }
 #[inline]
-fn vreinterpret_vi2_vf(vf: VFloat) { union -> VInt2 { VFloat vf; VInt2 vi2; } cnv; cnv.vi2 = 0; cnv.vf = vf; return cnv.vi2; }
+fn vreinterpret_vi2_vf(vf: $f32x) { union -> $ix2 { $f32x vf; $ix2 vi2; } cnv; cnv.vi2 = 0; cnv.vf = vf; return cnv.vi2; }
 
 #[inline]
-fn vrec_vf_vf   (x: VFloat)           -> VFloat { return 1 / x; }
+fn vrec_vf_vf   (x: $f32x)           -> $f32x { return 1 / x; }
 
 #[inline]
-fn vabs_vf_vf(x: VFloat) { versatileVector v = -> VFloat { .f = x }; v.x &= 0x7fffffff; return v.f; }
+fn vabs_vf_vf(x: $f32x) { versatileVector v = -> $f32x { .f = x }; v.x &= 0x7fffffff; return v.f; }
 
 
 #ifndef ENABLE_FMA_SP
-impl Mla for VFloat {
+impl Mla for $f32x {
     fn mla(self, y: Self, z: Self) -> Self {
         x * y + z
     }
 }
 #[inline]
-fn vmlanp_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return - x * y + z; }
+fn vmlanp_vf_vf_vf_vf(x: $f32x, y: $f32x, z: $f32x) -> $f32x { return - x * y + z; }
 #else
-impl Mla for VFloat {
+impl Mla for $f32x {
     fn mla(self, y: Self, z: Self) -> Self {
         FMAF(x, y, z)
     }
 }
 #[inline]
-fn vmlapn_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return FMAF(x, y, -z); }
+fn vmlapn_vf_vf_vf_vf(x: $f32x, y: $f32x, z: $f32x) -> $f32x { return FMAF(x, y, -z); }
 #[inline]
-fn vmlanp_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return FMAF(-x, y, z); }
+fn vmlanp_vf_vf_vf_vf(x: $f32x, y: $f32x, z: $f32x) -> $f32x { return FMAF(-x, y, z); }
 #[inline]
-fn vfma_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return FMAF(x, y, z); }
+fn vfma_vf_vf_vf_vf(x: $f32x, y: $f32x, z: $f32x) -> $f32x { return FMAF(x, y, z); }
 #[inline]
-fn vfmapp_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return FMAF(x, y, z); }
+fn vfmapp_vf_vf_vf_vf(x: $f32x, y: $f32x, z: $f32x) -> $f32x { return FMAF(x, y, z); }
 #[inline]
-fn vfmapn_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return FMAF(x, y, -z); }
+fn vfmapn_vf_vf_vf_vf(x: $f32x, y: $f32x, z: $f32x) -> $f32x { return FMAF(x, y, -z); }
 #[inline]
-fn vfmanp_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return FMAF(-x, y, z); }
+fn vfmanp_vf_vf_vf_vf(x: $f32x, y: $f32x, z: $f32x) -> $f32x { return FMAF(-x, y, z); }
 #[inline]
-fn vfmann_vf_vf_vf_vf(x: VFloat, y: VFloat, z: VFloat) -> VFloat { return FMAF(-x, y, -z); }
+fn vfmann_vf_vf_vf_vf(x: $f32x, y: $f32x, z: $f32x) -> $f32x { return FMAF(-x, y, -z); }
 #endif
 
 
 #[inline]
-fn vadd_vi2_vi2_vi2(VInt2 x, VInt2 y) { versatileVector v = { .i2 = x }, w = -> VInt2 { .i2 = y }; v.i[0] += w.i[0]; v.i[1] += w.i[1]; return v.i2; }
+fn vadd_vi2_vi2_vi2($ix2 x, $ix2 y) { versatileVector v = { .i2 = x }, w = -> $ix2 { .i2 = y }; v.i[0] += w.i[0]; v.i[1] += w.i[1]; return v.i2; }
 #[inline]
-fn vsub_vi2_vi2_vi2(VInt2 x, VInt2 y) { versatileVector v = { .i2 = x }, w = -> VInt2 { .i2 = y }; v.i[0] -= w.i[0]; v.i[1] -= w.i[1]; return v.i2; }
+fn vsub_vi2_vi2_vi2($ix2 x, $ix2 y) { versatileVector v = { .i2 = x }, w = -> $ix2 { .i2 = y }; v.i[0] -= w.i[0]; v.i[1] -= w.i[1]; return v.i2; }
 #[inline]
-fn vneg_vi2_vi2(x: VInt2)              { versatileVector v = -> VInt2 { .i2 = x }; v.i[0] = -v.i[0]; return v.i2; }
+fn vneg_vi2_vi2(x: $ix2)              { versatileVector v = -> $ix2 { .i2 = x }; v.i[0] = -v.i[0]; return v.i2; }
 
 #[inline]
-fn vand_vi2_vi2_vi2(VInt2 x, VInt2 y)    -> VInt2 { return x & y; }
+fn vand_vi2_vi2_vi2($ix2 x, $ix2 y)    -> $ix2 { return x & y; }
 #[inline]
-fn vandnot_vi2_vi2_vi2(VInt2 x, VInt2 y) -> VInt2 { return y & ~x; }
+fn vandnot_vi2_vi2_vi2($ix2 x, $ix2 y) -> $ix2 { return y & ~x; }
 #[inline]
-fn vor_vi2_vi2_vi2(VInt2 x, VInt2 y)     -> VInt2 { return x | y; }
+fn vor_vi2_vi2_vi2($ix2 x, $ix2 y)     -> $ix2 { return x | y; }
 #[inline]
-fn vxor_vi2_vi2_vi2(VInt2 x, VInt2 y)    -> VInt2 { return x ^ y; }
+fn vxor_vi2_vi2_vi2($ix2 x, $ix2 y)    -> $ix2 { return x ^ y; }
 
 #[inline]
-fn vsel_vf_vo_vf_vf(o: VOpMask, x: VFloat, y: VFloat) -> VFloat { return o ? x : y; }
+fn vsel_vf_vo_vf_vf(o: $mox, x: $f32x, y: $f32x) -> $f32x { return o ? x : y; }
 #[inline]
-fn vsel_vf_vo_f_f(o: VOpMask, v1: float, v0: float) -> VFloat { return o ? v1 : v0; }
+fn vsel_vf_vo_f_f(o: $mox, v1: f32, v0: f32) -> $f32x { return o ? v1 : v0; }
 
 #[inline]
-fn vsel_vf_vo_vo_f_f_f(VOpMask o0, VOpMask o1, float d0, float d1, float d2) -> VFloat {
-  return vsel_vf_vo_vf_vf(o0, d0.as_vf(), vsel_vf_vo_f_f(o1, d1, d2));
+fn vsel_vf_vo_vo_f_f_f(o0: $mox, o1: $mox, d0: f32, d1: f32, d2: f32) -> $f32x {
+  return vsel_vf_vo_vf_vf(o0, $f32x::splat(d0), vsel_vf_vo_f_f(o1, d1, d2));
 }
 
 #[inline]
-fn vsel_vf_vo_vo_vo_f_f_f_f(VOpMask o0, VOpMask o1, VOpMask o2, float d0, float d1, float d2, float d3) -> VFloat {
-  return vsel_vf_vo_vf_vf(o0, d0.as_vf(), vsel_vf_vo_vf_vf(o1, d1.as_vf(), vsel_vf_vo_f_f(o2, d2, d3)));
+fn vsel_vf_vo_vo_vo_f_f_f_f(o0: $mox, o1: $mox, o2: $mox, d0: f32, d1: f32, d2: f32, d3: f32) -> $f32x {
+  return vsel_vf_vo_vf_vf(o0, $f32x::splat(d0), vsel_vf_vo_vf_vf(o1, $f32x::splat(d1), vsel_vf_vo_f_f(o2, d2, d3)));
 }
 
 #[inline]
-fn vand_vi2_vo_vi2(x: VOpMask, y: VInt2) -> VInt2 { return vcast_vm_vo(x) & y; }
+fn vand_vi2_vo_vi2(x: $mox, y: $ix2) -> $ix2 { return vcast_vm_vo(x) & y; }
 #[inline]
-fn vandnot_vi2_vo_vi2(x: VOpMask, y: VInt2) -> VInt2 { return y & ~vcast_vm_vo(x); }
+fn vandnot_vi2_vo_vi2(x: $mox, y: $ix2) -> $ix2 { return y & ~vcast_vm_vo(x); }
 
 #[inline]
-fn vsll_vi2_vi2_i(x: VInt2, c: int) { versatileVector v = -> VInt2 { .i2 = x }; v.u[0] <<= c; v.u[1] <<= c; return v.i2; }
+fn vsll_vi2_vi2_i(x: $ix2, c: int) { versatileVector v = -> $ix2 { .i2 = x }; v.u[0] <<= c; v.u[1] <<= c; return v.i2; }
 #[inline]
-fn vsrl_vi2_vi2_i(x: VInt2, c: int) { versatileVector v = -> VInt2 { .i2 = x }; v.u[0] >>= c; v.u[1] >>= c; return v.i2; }
+fn vsrl_vi2_vi2_i(x: $ix2, c: int) { versatileVector v = -> $ix2 { .i2 = x }; v.u[0] >>= c; v.u[1] >>= c; return v.i2; }
 #[inline]
-fn vsra_vi2_vi2_i(x: VInt2, c: int) { versatileVector v = -> VInt2 { .i2 = x }; v.i[0] >>= c; v.i[1] >>= c; return v.i2; }
+fn vsra_vi2_vi2_i(x: $ix2, c: int) { versatileVector v = -> $ix2 { .i2 = x }; v.i[0] >>= c; v.i[1] >>= c; return v.i2; }
 
 #[inline]
-fn visinf_vo_vf (d: VFloat) -> VOpMask { return (d == SLEEF_INFINITYf || d == -SLEEF_INFINITYf) ? ~(uint32_t)0 : 0; }
+fn visinf_vo_vf (d: $f32x) -> $mox { return (d == SLEEF_INFINITYf || d == -SLEEF_INFINITYf) ? ~(uint32_t)0 : 0; }
 #[inline]
-fn vispinf_vo_vf(d: VFloat) -> VOpMask { return d == SLEEF_INFINITYf ? ~(uint32_t)0 : 0; }
+fn vispinf_vo_vf(d: $f32x) -> $mox { return d == SLEEF_INFINITYf ? ~(uint32_t)0 : 0; }
 #[inline]
-fn visminf_vo_vf(d: VFloat) -> VOpMask { return d == -SLEEF_INFINITYf ? ~(uint32_t)0 : 0; }
+fn visminf_vo_vf(d: $f32x) -> $mox { return d == -SLEEF_INFINITYf ? ~(uint32_t)0 : 0; }
 #[inline]
-fn visnan_vo_vf (d: VFloat) -> VOpMask { return d != d ? ~(uint32_t)0 : 0; }
+fn visnan_vo_vf (d: $f32x) -> $mox { return d != d ? ~(uint32_t)0 : 0; }
 
 #[inline]
-fn veq_vo_vi2_vi2 (VInt2 x, VInt2 y) -> VOpMask { return (int32_t)x == (int32_t)y ? ~(uint32_t)0 : 0; }
+fn veq_vo_vi2_vi2 ($ix2 x, $ix2 y) -> $mox { return (int32_t)x == (int32_t)y ? ~(uint32_t)0 : 0; }
 #[inline]
-fn vgt_vo_vi2_vi2 (VInt2 x, VInt2 y) -> VOpMask { return (int32_t)x >  (int32_t)y ? ~(uint32_t)0 : 0; }
+fn vgt_vo_vi2_vi2 ($ix2 x, $ix2 y) -> $mox { return (int32_t)x >  (int32_t)y ? ~(uint32_t)0 : 0; }
 #[inline]
-fn   veq_vi2_vi2_vi2(VInt2 x, VInt2 y) -> VInt2 { return (int32_t)x == (int32_t)y ? ~(uint32_t)0 : 0; }
+fn   veq_vi2_vi2_vi2($ix2 x, $ix2 y) -> $ix2 { return (int32_t)x == (int32_t)y ? ~(uint32_t)0 : 0; }
 #[inline]
-fn   vgt_vi2_vi2_vi2(VInt2 x, VInt2 y) -> VInt2 { return (int32_t)x >  (int32_t)y ? ~(uint32_t)0 : 0; }
+fn   vgt_vi2_vi2_vi2($ix2 x, $ix2 y) -> $ix2 { return (int32_t)x >  (int32_t)y ? ~(uint32_t)0 : 0; }
 
 #[inline]
-fn vcast_f_vf(v: VFloat) -> float { return v; }
+fn vcast_f_vf(v: $f32x) -> float { return v; }
 
 #[inline]
-fn vload_vf_p(const float *ptr) -> VFloat { return *ptr; }
+fn vload_vf_p(const float *ptr) -> $f32x { return *ptr; }
 #[inline]
-fn vloadu_vf_p(const float *ptr) -> VFloat { return *ptr; }
+fn vloadu_vf_p(const float *ptr) -> $f32x { return *ptr; }
 #[inline]
-fn vgather_vf_p_vi2(const float *ptr, VInt2 vi) -> VFloat { return ptr[vi]; }
+fn vgather_vf_p_vi2(const float *ptr, $ix2 vi) -> $f32x { return ptr[vi]; }
 
 #[inline]
-fn vstore_v_p_vf(float *ptr, VFloat v) -> void { *ptr = v; }
+fn vstore_v_p_vf(float *ptr, $f32x v) -> void { *ptr = v; }
 #[inline]
-fn vstoreu_v_p_vf(float *ptr, VFloat v) -> void { *ptr = v; }
+fn vstoreu_v_p_vf(float *ptr, $f32x v) -> void { *ptr = v; }
 //#[inline]
-//fn vstream_v_p_vf(float *ptr, VFloat v) -> void { *ptr = v; }
+//fn vstream_v_p_vf(float *ptr, $f32x v) -> void { *ptr = v; }

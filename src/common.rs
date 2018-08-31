@@ -373,10 +373,9 @@ impl std::ops::Add for f32n2 {
         Self::new(r0, (self.0 - (r0 - v)) + (other.0 - v) + self.1 + other.1) // [self.0+other.0, self.1+other.1]
     }
 }
-
 impl std::ops::AddAssign for f32n2 {
     #[inline]
-    fn add_assign(&mut self, other: f32n2) {
+    fn add_assign(&mut self, other: Self) {
         *self = *self + other;
     }
 }
@@ -391,7 +390,6 @@ impl std::ops::Add<f32> for f32n2 {
         Self::new(r0, (self.0 - (r0 - v)) + (other - v) + self.1) // [self.0+other, self.1]
     }
 }
-
 impl std::ops::AddAssign<f32> for f32n2 {
     #[inline]
     fn add_assign(&mut self, other: f32) {
@@ -424,10 +422,9 @@ impl std::ops::Mul for f32n2 {
         )
     }
 }
-
 impl std::ops::MulAssign for f32n2 {
     #[inline]
-    fn mul_assign(&mut self, other: f32n2) {
+    fn mul_assign(&mut self, other: Self) {
         *self = *self * other;
     }
 }
@@ -447,7 +444,6 @@ impl std::ops::Mul<f32> for f32n2 {
         )
     }
 }
-
 impl std::ops::MulAssign<f32> for f32n2 {
     #[inline]
     fn mul_assign(&mut self, other: f32) {
@@ -511,7 +507,6 @@ impl AddChecked<f32> for f32n2 {
         Self::new(r0, self.0 - r0 + other + self.1) // [self.0+y, self.1]
     }
 }
-
 impl AddCheckedAssign<f32> for f32n2 {
     #[inline]
     fn add_checked_assign(&mut self, other: f32) {
@@ -596,7 +591,7 @@ impl SqrtAsF2 for f32 {
 }
 
 impl Rec for f32n2 {
-    fn rec(self) -> f32n2 {
+    fn rec(self) -> Self {
         let t = 1. / self.0;
         let dh = upperf(self.0);
         let dl = self.0 - dh;

@@ -93,8 +93,6 @@ typedef int64_t $ix2;
 //
 
 #[inline]
-fn vavailability_i(name: int) -> int { return -1; }
-#[inline]
 fn vprefetch_v_p(const void *ptr) -> void {}
 
 #[inline]
@@ -104,9 +102,7 @@ fn vtestallones_i_vo32(g: $mox) -> int { return g; }
 
 //
 
-static $ix2 vloadu_vi2_p(int32_t *p) { return *p; }
 static void vstoreu_v_p_vi2(int32_t *p, $ix2 v) { *p = v; }
-static $ix vloadu_vi_p(int32_t *p) { return *p; }
 static void vstoreu_v_p_vi(int32_t *p, $ix v) { *p = v; }
 
 //
@@ -125,23 +121,13 @@ fn vrev21_vi2_vi2(vi2: $ix2) -> $ix2 { return (((uint64_t)vi2) << 32) | (((uint6
 
 //
 
-//#[inline]
-//fn vand_vo_vo_vo   (x: $mox, y: $mox) -> $mox { return x & y; }
 #[inline]
 fn vandnot_vo_vo_vo(x: $mox, y: $mox) -> $mox { return y & ~x; }
-//#[inline]
-//fn vor_vo_vo_vo    (x: $mox, y: $mox) -> $mox { return x | y; }
-//#[inline]
-//fn vxor_vo_vo_vo   (x: $mox, y: $mox) -> $mox { return x ^ y; }
 
-#[inline]
-fn vand_vm_vm_vm     (x: $mx, y: $mx)     -> $mx { return x & y; }
 #[inline]
 fn vandnot_vm_vm_vm  (x: $mx, y: $mx)     -> $mx { return y & ~x; }
 #[inline]
 fn vor_vm_vm_vm      (x: $mx, y: $mx)     -> $mx { return x | y; }
-#[inline]
-fn vxor_vm_vm_vm     (x: $mx, y: $mx)     -> $mx { return x ^ y; }
 
 #[inline]
 fn vcast_vm_vo(o: $mox) -> $mx { return ($mx)o | ((($mx)o) << 32); }
@@ -216,28 +202,17 @@ fn vadd64_vm_vm_vm(x: $mx, y: $mx) -> $mx { return x + y; }
 
 //
 
-#[inline]
-fn vreinterpret_vm_vd(vd: $f64x) { union -> $mx { $f64x vd; $mx vm; } cnv; cnv.vd = vd; return cnv.vm; }
-#[inline]
-fn vreinterpret_vi2_vd(vd: $f64x) { union -> $ix2 { $f64x vd; $ix2 vi2; } cnv; cnv.vd = vd; return cnv.vi2; }
-#[inline]
-fn vreinterpret_vd_vi2(vi: $ix2) { union -> $f64x { $ix2 vi2; $f64x vd; } cnv; cnv.vi2 = vi; return cnv.vd; }
-#[inline]
-fn vreinterpret_vd_vm(vm: $mx) { union -> $f64x { $mx vm; $f64x vd; } cnv; cnv.vm = vm; return cnv.vd; }
-
-
-impl std::ops::Add for $f64x {
-    type Output = Self;
+impl Rec for $f64x {
     #[inline]
-    fn add(self, other: Self) -> Self {
-        self+other
+    fn rec(self) -> Self {
+        1. / self
     }
 }
-#[inline]
-fn vrec_vd_vd(x: $f64x)               -> $f64x { return 1 / x; }
-
-#[inline]
-fn vabs_vd_vd(d: $f64x) { versatileVector v = -> $f64x { .d = d }; v.x &= 0x7fffffffffffffffULL; return v.d; }
+impl Abs for $f64x {
+    fn abs(self) -> Self {
+        versatileVector v = -> $f64x { .d = d }; v.x &= 0x7fffffffffffffffULL; return v.d;
+    }
+}
 
 
 #ifndef ENABLE_FMA_DP
@@ -270,24 +245,7 @@ fn vfmanp_vd_vd_vd_vd(x: $f64x, y: $f64x, z: $f64x) -> $f64x { return FMA(-x, y,
 fn vfmann_vd_vd_vd_vd(x: $f64x, y: $f64x, z: $f64x) -> $f64x { return FMA(-x, y, -z); }
 #endif
 
-impl std::ops::Add for $ix {
-    type Output = Self;
-    #[inline]
-    fn add(self, other: Self) -> Self {
-        self + other
-    }
-}
-//#[inline]
-//fn vadd_vi_vi_vi(x: $ix, y: $ix) -> $ix { return x + y; }
-impl std::ops::Sub for $ix {
-    type Output = Self;
-    #[inline]
-    fn sub(self, other: Self) -> Self {
-        self - other
-    }
-}
-//#[inline]
-//fn vsub_vi_vi_vi(x: $ix, y: $ix) -> $ix { return x - y; }
+
 impl std::ops::Neg for $ix {
     type Output = Self;
     #[inline]
@@ -297,13 +255,7 @@ impl std::ops::Neg for $ix {
 }
 
 #[inline]
-fn vand_vi_vi_vi(x: $ix, y: $ix)    -> $ix { return x & y; }
-#[inline]
 fn vandnot_vi_vi_vi(x: $ix, y: $ix) -> $ix { return y & ~x; }
-#[inline]
-fn vor_vi_vi_vi(x: $ix, y: $ix)     -> $ix { return x | y; }
-#[inline]
-fn vxor_vi_vi_vi(x: $ix, y: $ix)    -> $ix { return x ^ y; }
 
 #[inline]
 fn vand_vi_vo_vi(x: $mox, y: $ix)    -> $ix { return x & y; }
@@ -317,10 +269,6 @@ fn vsrl_vi_vi_i(x: $ix, c: int) -> $ix { return (uint32_t)x >> c; }
 #[inline]
 fn vsra_vi_vi_i(x: $ix, c: int) -> $ix { return x >> c; }
 
-#[inline]
-fn veq_vo_vi_vi(x: $ix, y: $ix) -> $mox { return x == y ? ~(uint32_t)0 : 0; }
-#[inline]
-fn vgt_vo_vi_vi(x: $ix, y: $ix) -> $mox { return x >  y ? ~(uint32_t)0 : 0; }
 
 #[inline]
 fn vsel_vi_vo_vi_vi(m: $mox, x: $ix, y: $ix) -> $ix { return m ? x : y; }
@@ -340,28 +288,10 @@ fn vsqrt_vd_vd(d: $f64x) -> $f64x { return SQRT(d); }
 fn vsqrt_vf_vf(x: $f32x) -> $f32x { return SQRTF(x); }
 
 #[inline]
-fn vcast_d_vd(v: $f64x) -> double { return v; }
-
-#[inline]
-fn vload_vd_p(const double *ptr) -> $f64x { return *ptr; }
-#[inline]
-fn vloadu_vd_p(const double *ptr) -> $f64x { return *ptr; }
-#[inline]
 fn vgather_vd_p_vi(const double *ptr, $ix vi) -> $f64x { return ptr[vi]; }
 
-#[inline]
-fn vstore_v_p_vd(double *ptr, $f64x v) -> void { *ptr = v; }
-#[inline]
-fn vstoreu_v_p_vd(double *ptr, $f64x v) -> void { *ptr = v; }
-//#[inline]
-//fn vstream_v_p_vd(double *ptr, $f64x v) -> void { *ptr = v; }
 
 //
-
-#[inline]
-fn vcast_vi2_vm(vm: $mx) { union -> $ix2 { $ix2 vi2; $mx vm; } cnv; cnv.vm = vm; return cnv.vi2; }
-#[inline]
-fn vcast_vm_vi2(vi: $ix2) { union -> $mx { $ix2 vi2; $mx vm; } cnv; cnv.vi2 = vi; return cnv.vm; }
 
 #ifdef FULL_FP_ROUNDING
 #[inline]
@@ -375,7 +305,7 @@ fn vtruncate_vi2_vf(vf: $f32x) -> $ix2 { return (int32_t)TRUNCF(vf); }
 #else
 #[inline]
 fn vrint_vi2_vf(a: $f32x) -> $ix2 {
-  a += a > 0 ? 0.5f : -0.5f;
+  a += a > 0 ? 0.5 : -0.5;
   versatileVector v = { .f = a }; v.u[0] -= 1 & (int)a;
   return (int32_t)v.f;
 }
@@ -386,21 +316,18 @@ fn vtruncate_vi2_vf(vf: $f32x) -> $ix2 { return vf; }
 #[inline]
 fn vtruncate_vf_vf(vd: $f32x) -> $f32x { return vcast_vf_vi2(vtruncate_vi2_vf(vd)); }
 #endif
+impl Rec for $f32x {
+    #[inline]
+    fn rec(self) -> Self {
+        1 / self
+    }
+}
 
-#[inline]
-fn vreinterpret_vm_vf(vf: $f32x) { union -> $mx { $f32x vf; $mx vm; } cnv; cnv.vf = vf; return cnv.vm; }
-#[inline]
-fn vreinterpret_vf_vm(vm: $mx) { union -> $f32x { $f32x vf; $mx vm; } cnv; cnv.vm = vm; return cnv.vf; }
-#[inline]
-fn vreinterpret_vf_vi2(vi: $ix2) { union -> $f32x { $f32x vf; $ix2 vi2; } cnv; cnv.vi2 = vi; return cnv.vf; }
-#[inline]
-fn vreinterpret_vi2_vf(vf: $f32x) { union -> $ix2 { $f32x vf; $ix2 vi2; } cnv; cnv.vi2 = 0; cnv.vf = vf; return cnv.vi2; }
-
-#[inline]
-fn vrec_vf_vf   (x: $f32x)           -> $f32x { return 1 / x; }
-
-#[inline]
-fn vabs_vf_vf(x: $f32x) { versatileVector v = -> $f32x { .f = x }; v.x &= 0x7fffffff; return v.f; }
+impl Abs for $f32x {
+    fn abs(self) -> Self {
+        versatileVector v = -> $f32x { .f = x }; v.x &= 0x7fffffff; return v.f;
+    }
+}
 
 
 #ifndef ENABLE_FMA_SP
@@ -435,20 +362,7 @@ fn vfmann_vf_vf_vf_vf(x: $f32x, y: $f32x, z: $f32x) -> $f32x { return FMAF(-x, y
 
 
 #[inline]
-fn vadd_vi2_vi2_vi2($ix2 x, $ix2 y) { versatileVector v = { .i2 = x }, w = -> $ix2 { .i2 = y }; v.i[0] += w.i[0]; v.i[1] += w.i[1]; return v.i2; }
-#[inline]
-fn vsub_vi2_vi2_vi2($ix2 x, $ix2 y) { versatileVector v = { .i2 = x }, w = -> $ix2 { .i2 = y }; v.i[0] -= w.i[0]; v.i[1] -= w.i[1]; return v.i2; }
-#[inline]
-fn vneg_vi2_vi2(x: $ix2)              { versatileVector v = -> $ix2 { .i2 = x }; v.i[0] = -v.i[0]; return v.i2; }
-
-#[inline]
-fn vand_vi2_vi2_vi2($ix2 x, $ix2 y)    -> $ix2 { return x & y; }
-#[inline]
 fn vandnot_vi2_vi2_vi2($ix2 x, $ix2 y) -> $ix2 { return y & ~x; }
-#[inline]
-fn vor_vi2_vi2_vi2($ix2 x, $ix2 y)     -> $ix2 { return x | y; }
-#[inline]
-fn vxor_vi2_vi2_vi2($ix2 x, $ix2 y)    -> $ix2 { return x ^ y; }
 
 #[inline]
 fn vsel_vf_vo_vf_vf(o: $mox, x: $f32x, y: $f32x) -> $f32x { return o ? x : y; }
@@ -487,27 +401,10 @@ fn visminf_vo_vf(d: $f32x) -> $mox { return d == -SLEEF_INFINITYf ? ~(uint32_t)0
 fn visnan_vo_vf (d: $f32x) -> $mox { return d != d ? ~(uint32_t)0 : 0; }
 
 #[inline]
-fn veq_vo_vi2_vi2 ($ix2 x, $ix2 y) -> $mox { return (int32_t)x == (int32_t)y ? ~(uint32_t)0 : 0; }
-#[inline]
-fn vgt_vo_vi2_vi2 ($ix2 x, $ix2 y) -> $mox { return (int32_t)x >  (int32_t)y ? ~(uint32_t)0 : 0; }
-#[inline]
 fn   veq_vi2_vi2_vi2($ix2 x, $ix2 y) -> $ix2 { return (int32_t)x == (int32_t)y ? ~(uint32_t)0 : 0; }
 #[inline]
 fn   vgt_vi2_vi2_vi2($ix2 x, $ix2 y) -> $ix2 { return (int32_t)x >  (int32_t)y ? ~(uint32_t)0 : 0; }
 
 #[inline]
-fn vcast_f_vf(v: $f32x) -> float { return v; }
-
-#[inline]
-fn vload_vf_p(const float *ptr) -> $f32x { return *ptr; }
-#[inline]
-fn vloadu_vf_p(const float *ptr) -> $f32x { return *ptr; }
-#[inline]
 fn vgather_vf_p_vi2(const float *ptr, $ix2 vi) -> $f32x { return ptr[vi]; }
 
-#[inline]
-fn vstore_v_p_vf(float *ptr, $f32x v) -> void { *ptr = v; }
-#[inline]
-fn vstoreu_v_p_vf(float *ptr, $f32x v) -> void { *ptr = v; }
-//#[inline]
-//fn vstream_v_p_vf(float *ptr, $f32x v) -> void { *ptr = v; }

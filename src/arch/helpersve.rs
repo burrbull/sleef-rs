@@ -52,21 +52,6 @@
 #error CONFIG macro invalid or not defined
 #endif
 
-#ifdef LOG2VECTLENDP
-// For DFT, VECTLENDP and VECTLENSP are not the size of the available
-// vector length, but the size of the partial vectors utilized in the
-// computation. The appropriate VECTLENDP and VECTLENSP are chosen by
-// the dispatcher according to the value of svcntd().
-
-#define LOG2VECTLENSP (LOG2VECTLENDP+1)
-#define VECTLENDP (1 << LOG2VECTLENDP)
-#define VECTLENSP (1 << LOG2VECTLENSP)
-#[inline]
-fn vavailability_i(name: int) -> int { return svcntd() >= VECTLENDP ? 3 : 0; }
-#else
-#[inline]
-fn vavailability_i(name: int) -> int { return 3; }
-#endif
 
 #define ENABLE_SP
 #define ENABLE_DP
@@ -128,35 +113,10 @@ fn vtestallones_i_vo64(g: $mox) -> int {
 #[inline]
 fn vstoreu_v_p_vi2(int32_t *p, $ix2 v) -> void { svst1_s32(ptrue, p, v); }
 
-#[inline]
-fn vload_vf_p(const float *ptr) -> $f32x {
-  return svld1_f32(ptrue, ptr);
-}
-#[inline]
-fn vloadu_vf_p(const float *ptr) -> $f32x {
-  return svld1_f32(ptrue, ptr);
-}
-#[inline]
-fn vstoreu_v_p_vf(float *ptr, $f32x v) -> void {
-  svst1_f32(ptrue, ptr, v);
-}
-
 // Basic logical operations for mask
-#[inline]
-fn vand_vm_vm_vm(x: $mx, y: $mx) -> $mx {
-  return svand_s32_x(ptrue, x, y);
-}
 #[inline]
 fn vandnot_vm_vm_vm(x: $mx, y: $mx) -> $mx {
   return svbic_s32_x(ptrue, y, x);
-}
-#[inline]
-fn vor_vm_vm_vm(x: $mx, y: $mx) -> $mx {
-  return svorr_s32_x(ptrue, x, y);
-}
-#[inline]
-fn vxor_vm_vm_vm(x: $mx, y: $mx) -> $mx {
-  return sveor_s32_x(ptrue, x, y);
 }
 
 #[inline]
@@ -166,27 +126,6 @@ fn vadd64_vm_vm_vm(x: $mx, y: $mx) -> $mx {
                               svreinterpret_s64_s32(y)));
 }
 
-// Mask <--> single precision reinterpret
-#[inline]
-fn vreinterpret_vm_vf(vf: $f32x) -> $mx {
-  return svreinterpret_s32_f32(vf);
-}
-#[inline]
-fn vreinterpret_vf_vm(vm: $mx) -> $f32x {
-  return svreinterpret_f32_s32(vm);
-}
-#[inline]
-fn vreinterpret_vf_vi2(vm: $ix2) -> $f32x {
-  return svreinterpret_f32_s32(vm);
-}
-#[inline]
-fn vreinterpret_vi2_vf(vf: $f32x) -> $ix2 {
-  return svreinterpret_s32_f32(vf);
-}
-#[inline]
-fn vcast_vi2_vm(vm: $mx) -> $ix2 { return vm; }
-#[inline]
-fn vcast_vm_vi2(vi: $ix2) -> $mx { return vi; }
 
 // Conditional select
 #[inline]
@@ -200,16 +139,21 @@ fn vsel_vi2_vm_vi2_vi2($mx m, $ix2 x, $ix2 y) -> $ix2 {
 // Broadcast
 
 // Add, Sub, Mul, Reciprocal 1/x, Division, Square root
-#[inline]
-fn vrec_vf_vf(d: $f32x) -> $f32x {
-  return svdivr_n_f32_x(ptrue, d, 1.);
+impl Rec for $f32x {
+    #[inline]
+    fn rec(self) -> Self {
+        svdivr_n_f32_x(ptrue, self, 1.)
+    }
 }
 #[inline]
 fn vsqrt_vf_vf(d: $f32x) -> $f32x { return svsqrt_f32_x(ptrue, d); }
 
 // |x|, -x
-#[inline]
-fn vabs_vf_vf(f: $f32x) -> $f32x { return svabs_f32_x(ptrue, f); }
+impl Abs for $f32x {
+    fn abs(self) -> Self {
+        svabs_f32_x(ptrue, f)
+    }
+}
 
 
 // int <--> float conversions
@@ -324,34 +268,12 @@ fn vrint_vf_vf(vf: $f32x) -> $f32x {
 /* Single precision integer operations */
 /***************************************/
 
-// Add, Sub, Neg (-x)
-#[inline]
-fn vadd_vi2_vi2_vi2($ix2 x, $ix2 y) -> $ix2 {
-  return svadd_s32_x(ptrue, x, y);
-}
-#[inline]
-fn vsub_vi2_vi2_vi2($ix2 x, $ix2 y) -> $ix2 {
-  return svsub_s32_x(ptrue, x, y);
-}
-#[inline]
-fn vneg_vi2_vi2(e: $ix2) -> $ix2 { return svneg_s32_x(ptrue, e); }
 
 // Logical operations
-#[inline]
-fn vand_vi2_vi2_vi2($ix2 x, $ix2 y) -> $ix2 {
-  return svand_s32_x(ptrue, x, y);
-}
+
 #[inline]
 fn vandnot_vi2_vi2_vi2($ix2 x, $ix2 y) -> $ix2 {
   return svbic_s32_x(ptrue, y, x);
-}
-#[inline]
-fn vor_vi2_vi2_vi2($ix2 x, $ix2 y) -> $ix2 {
-  return svorr_s32_x(ptrue, x, y);
-}
-#[inline]
-fn vxor_vi2_vi2_vi2($ix2 x, $ix2 y) -> $ix2 {
-  return sveor_s32_x(ptrue, x, y);
 }
 
 // Shifts
@@ -376,7 +298,7 @@ fn vsel_vi2_vo_vi2_vi2(m: $mox, x: $ix2, y: $ix2) -> $ix2 {
 
 #[inline]
 fn visinf_vo_vf(d: $f32x) -> $mox {
-  return svcmpeq_n_f32(ptrue, vabs_vf_vf(d), SLEEF_INFINITYf);
+  return svcmpeq_n_f32(ptrue, d.abs(), SLEEF_INFINITYf);
 }
 #[inline]
 fn vispinf_vo_vf(d: $f32x) -> $mox {
@@ -390,32 +312,12 @@ fn visminf_vo_vf(d: $f32x) -> $mox {
 fn visnan_vo_vf(d: $f32x) -> $mox { return d.ne(d); }
 
 // integers
-#[inline]
-fn veq_vo_vi2_vi2($ix2 x, $ix2 y) -> $mox {
-  return svcmpeq_s32(ptrue, x, y);
-}
-#[inline]
-fn vgt_vo_vi2_vi2($ix2 x, $ix2 y) -> $mox {
-  return svcmpgt_s32(ptrue, x, y);
-}
 
 // logical opmask
-//#[inline]
-//fn vand_vo_vo_vo(x: $mox, y: $mox) -> $mox {
-//  return svand_b_z(ptrue, x, y);
-//}
 #[inline]
 fn vandnot_vo_vo_vo(x: $mox, y: $mox) -> $mox {
   return svbic_b_z(ptrue, y, x);
 }
-//#[inline]
-//fn vor_vo_vo_vo(x: $mox, y: $mox) -> $mox {
-//  return svorr_b_z(ptrue, x, y);
-//}
-//#[inline]
-//fn vxor_vo_vo_vo(x: $mox, y: $mox) -> $mox {
-//  return sveor_b_z(ptrue, x, y);
-//}
 
 #[inline]
 fn vand_vi2_vo_vi2(x: $mox, y: $ix2) -> $ix2 {
@@ -450,44 +352,12 @@ fn vcast_vm_i_i(i0: int, i1: int) -> $mx {
 /*********************************/
 
 // Vector load/store
-#[inline]
-fn vload_vd_p(const double *ptr) -> $f64x {
-  return svld1_f64(ptrue, ptr);
-}
-#[inline]
-fn vloadu_vd_p(const double *ptr) -> $f64x {
-  return svld1_f64(ptrue, ptr);
-}
-#[inline]
-fn vstoreu_v_p_vd(double *ptr, $f64x v) -> void {
-  svst1_f64(ptrue, ptr, v);
-}
 
 #[inline]
 fn vstoreu_v_p_vi(int *ptr, $ix v) -> void {
   svst1w_s64(ptrue, ptr, svreinterpret_s64_s32(v));
 }
-static $ix vloadu_vi_p(int32_t *p) {
-  return svreinterpret_s32_s64(svld1uw_s64(ptrue, (uint32_t *)p));
-}
 
-// Reinterpret
-#[inline]
-fn vreinterpret_vd_vm(vm: $mx) -> $f64x {
-  return svreinterpret_f64_s32(vm);
-}
-#[inline]
-fn vreinterpret_vm_vd(vd: $f64x) -> $mx {
-  return svreinterpret_s32_f64(vd);
-}
-#[inline]
-fn vreinterpret_vd_vi2(x: $ix2) -> $f64x {
-  return svreinterpret_f64_s32(x);
-}
-#[inline]
-fn vreinterpret_vi2_vd(x: $f64x) -> $ix2 {
-  return svreinterpret_s32_f64(x);
-}
 
 // Conditional select
 #[inline]
@@ -535,14 +405,19 @@ fn vrint_vd_vd(vd: $f64x) -> $f64x {
 // FP math operations
 
 
-#[inline]
-fn vrec_vd_vd(x: $f64x) -> $f64x {
-  return svdivr_n_f64_x(ptrue, x, 1.0);
+impl Rec for $f64x {
+    #[inline]
+    fn rec(self) -> Self {
+        svdivr_n_f64_x(ptrue, self, 1.)
+    }
 }
 #[inline]
 fn vsqrt_vd_vd(x: $f64x) -> $f64x { return svsqrt_f64_x(ptrue, x); }
-#[inline]
-fn vabs_vd_vd(x: $f64x) -> $f64x { return svabs_f64_x(ptrue, x); }
+impl Abs for $f64x {
+    fn abs(self) -> Self {
+        svabs_f64_x(ptrue, x)
+    }
+}
 
 
 #if CONFIG == 1
@@ -628,61 +503,9 @@ fn vandnot_vi_vo_vi(x: $mox, y: $ix) -> $ix {
 #define vsrl_vi_vi_i(x, c) svlsr_n_s32_x(ptrue, x, c)
 
 #[inline]
-fn vand_vi_vi_vi(x: $ix, y: $ix) -> $ix {
-  return svand_s32_x(ptrue, x, y);
-}
-#[inline]
 fn vandnot_vi_vi_vi(x: $ix, y: $ix) -> $ix {
   return svbic_s32_x(ptrue, y, x);
 }
-#[inline]
-fn vxor_vi_vi_vi(x: $ix, y: $ix) -> $ix {
-  return sveor_s32_x(ptrue, x, y);
-}
-
-// integer math
-impl std::ops::Add for $ix {
-    type Output = Self;
-    #[inline]
-    fn add(self, other: Self) -> Self {
-        svadd_s32_x(ptrue, self, other)
-    }
-}
-//#[inline]
-//fn vadd_vi_vi_vi(x: $ix, y: $ix) -> $ix {
-//  return svadd_s32_x(ptrue, x, y);
-//}
-impl std::ops::Sub for $ix {
-    type Output = Self;
-    #[inline]
-    fn sub(self, other: Self) -> Self {
-        svsub_s32_x(ptrue, self, other)
-    }
-}
-//#[inline]
-//fn vsub_vi_vi_vi(x: $ix, y: $ix) -> $ix {
-//  return svsub_s32_x(ptrue, x, y);
-//}
-impl std::ops::Neg for $ix {
-    type Output = Self;
-    #[inline]
-    fn neg(self) -> Self {
-        -svneg_s32_x(ptrue, self)
-    }
-}
-//#[inline]
-//fn vneg_vi_vi(x: $ix) -> $ix { return svneg_s32_x(ptrue, x); }
-
-// integer comparison
-#[inline]
-fn vgt_vo_vi_vi(x: $ix, y: $ix) -> $mox {
-  return svcmpgt_s32(ptrue, x, y);
-}
-#[inline]
-fn veq_vo_vi_vi(x: $ix, y: $ix) -> $mox {
-  return svcmpeq_s32(ptrue, x, y);
-}
-
 
 
 // bitmask logical operations
@@ -711,7 +534,7 @@ fn vrev21_vf_vf(vf: $f32x) -> $f32x {
 }
 
 #[inline]
-fn vrev21_vi2_vi2(i: $ix2) -> $ix2 { return vreinterpret_vi2_vf(vrev21_vf_vf(vreinterpret_vf_vi2(i))); }
+fn vrev21_vi2_vi2(i: $ix2) -> $ix2 { return $ix2::from(vrev21_vf_vf($f32x::from(i))); }
 
 // Comparison returning integer
 #[inline]
@@ -764,69 +587,6 @@ fn vmlsubadd_vf_vf_vf_vf(x: $f32x, y: $f32x, z: $f32x) -> $f32x { return vfma_vf
 
 //
 
-#[inline]
-fn vrev21_vd_vd(x: $f64x) -> $f64x { return svzip1_f64(svuzp2_f64(x, x), svuzp1_f64(x, x)); }
-
-#[inline]
-fn vreva2_vd_vd(vd: $f64x) -> $f64x {
-  s$ix64_t x = svindex_s64((VECTLENDP-1), -1);
-  x = svzip1_s64(svuzp2_s64(x, x), svuzp1_s64(x, x));
-  return svtbl_f64(vd, svreinterpret_u64_s64(x));
-}
-
-#[inline]
-fn vreva2_vf_vf(vf: $f32x) -> $f32x {
-  s$ix32_t x = svindex_s32((VECTLENSP-1), -1);
-  x = svzip1_s32(svuzp2_s32(x, x), svuzp1_s32(x, x));
-  return svtbl_f32(vf, svreinterpret_u32_s32(x));
-}
-
 //
 
-//#[inline]
-//fn vscatter2_v_p_i_i_vd(double *ptr, int offset, int step, $f64x v) -> void {
-//  svst1_scatter_u64index_f64(ptrue, ptr + offset*2, svzip1_u64(svindex_u64(0, step*2), svindex_u64(1, step*2)), v);
-//}
 
-//#[inline]
-//fn vscatter2_v_p_i_i_vf(float *ptr, int offset, int step, $f32x v) -> void {
-//  svst1_scatter_u32index_f32(ptrue, ptr + offset*2, svzip1_u32(svindex_u32(0, step*2), svindex_u32(1, step*2)), v);
-//}
-
-#[inline]
-fn vstore_v_p_vd(double *ptr, $f64x v) -> void { vstoreu_v_p_vd(ptr, v); }
-//#[inline]
-//fn vstream_v_p_vd(double *ptr, $f64x v) -> void { vstore_v_p_vd(ptr, v); }
-#[inline]
-fn vstore_v_p_vf(float *ptr, $f32x v) -> void { vstoreu_v_p_vf(ptr, v); }
-//#[inline]
-//fn vstream_v_p_vf(float *ptr, $f32x v) -> void { vstore_v_p_vf(ptr, v); }
-//#[inline]
-//fn vsscatter2_v_p_i_i_vd(double *ptr, int offset, int step, $f64x v) -> void { vscatter2_v_p_i_i_vd(ptr, offset, step, v); }
-//#[inline]
-//fn vsscatter2_v_p_i_i_vf(float *ptr, int offset, int step, $f32x v) -> void { vscatter2_v_p_i_i_vf(ptr, offset, step, v); }
-
-// These functions are for debugging
-static double vcast_d_vd(v: $f64x) {
-  double a[svcntd()];
-  vstoreu_v_p_vd(a, v);
-  return a[0];
-}
-
-static float vcast_f_vf(v: $f32x) {
-  float a[svcntw()];
-  vstoreu_v_p_vf(a, v);
-  return a[0];
-}
-
-static int vcast_i_vi(v: $ix) {
-  int a[svcntw()];
-  vstoreu_v_p_vi(a, v);
-  return a[0];
-}
-
-static int vcast_i_vi2(v: $ix2) {
-  int a[svcntw()];
-  vstoreu_v_p_vi2(a, v);
-  return a[0];
-}

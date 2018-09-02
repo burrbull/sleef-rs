@@ -1,6 +1,6 @@
 #[inline]
 fn vupper_vf_vf(d: $f32x) -> $f32x {
-  return vreinterpret_vf_vi2(vand_vi2_vi2_vi2(vreinterpret_vi2_vf(d), $ix2::splat(0xfffff000)));
+  $f32x::from($ix2::from(d) & $ix2::splat(0xfffff000))
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -19,8 +19,8 @@ impl F2<$f32x> {
 
     #[inline]
     pub fn abs(self) -> Self {
-        Self::new(vabs_vf_vf(self.0),
-            vreinterpret_vf_vm(vxor_vm_vm_vm(vreinterpret_vm_vf(self.1), vand_vm_vm_vm(vreinterpret_vm_vf(self.0), vreinterpret_vm_vf($f32x::splat(-0.))))))
+        Self::new(self.0.abs(),
+            $f32x::from($mx::from(self.1) ^ ($mx::from(self.0) & $mx::from($f32x::splat(-0.))))
     }
 
     #[inline]
@@ -225,7 +225,7 @@ impl std::ops::Div for F2<$f32x> {
     #[cfg(feature="enable_fma_dp")]
     #[inline]
     fn div(self, other: Self) -> Self {
-        let t = vrec_vf_vf(other.0);
+        let t = other.0.rec();
 
         let q0 = self.0 * t;
         let u = vfmapn_vf_vf_vf_vf(t, self.0, q0);
@@ -237,7 +237,7 @@ impl std::ops::Div for F2<$f32x> {
     #[cfg(not(feature="enable_fma_dp"))]
     #[inline]
     fn div(self, other: Self) -> Self {
-        let t = vrec_vf_vf(other.0);
+        let t = (other.0.rec();
         let dh  = vupper_vf_vf(other.0);
         let dl  = other.0 -  dh;
         let th  = vupper_vf_vf(t  );
@@ -382,13 +382,13 @@ impl Rec for F2<$f32x> {
     #[cfg(feature="enable_fma_dp")]
     #[inline]
     fn rec(self) -> Self {
-        let q0 = vrec_vf_vf(self.0);
+        let q0 = self.0.rec();
         Self::new(r0, q0 * vfmanp_vf_vf_vf_vf(self.1, q0, vfmanp_vf_vf_vf_vf(self.0, q0, $f32x::splat(1))) )
     }
     #[cfg(not(feature="enable_fma_dp"))]
     #[inline]
     fn rec(self) -> Self {
-        let t = vrec_vf_vf(self.0);
+        let t = self.0.rec();
         let dh = vupper_vf_vf(self.0);
         let dl = self.0 - dh;
         let th = vupper_vf_vf(t  );
@@ -409,13 +409,13 @@ impl RecAsF2<F2<$f32x>> for $f32x {
     #[cfg(feature="enable_fma_dp")]
     #[inline]
     fn rec_as_f2(self) -> F2<Self> {
-        let q0 = vrec_vf_vf(self);
+        let q0 = self.rec();
         F2<Self>::new(q0, q0 * vfmanp_vf_vf_vf_vf(self, q0, Self::splat(1)) )
     }
     #[cfg(not(feature="enable_fma_dp"))]
     #[inline]
     fn rec_as_f2(self) -> F2<Self> {
-        let t = vrec_vf_vf(self);
+        let t = self.rec();
         let dh = vupper_vf_vf(self);
         let dl = self - dh;
         let th = vupper_vf_vf(t);

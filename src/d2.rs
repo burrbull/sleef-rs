@@ -1,6 +1,6 @@
 #[inline]
 fn vupper_vd_vd(d: $f64x) -> $f64x {
-  return vreinterpret_vd_vm(vand_vm_vm_vm(vreinterpret_vm_vd(d), vcast_vm_i_i(0xffffffff, 0xf8000000)));
+  $f64x::from($mx::from(d) & vcast_vm_i_i(0xffffffff, 0xf8000000))
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -19,8 +19,8 @@ impl D2<$f64x> {
 
     #[inline]
     pub fn abs(self) -> Self {
-        Self::new(vabs_vd_vd(self.0),
-            vreinterpret_vd_vm(vxor_vm_vm_vm(vreinterpret_vm_vd(self.1), vand_vm_vm_vm(vreinterpret_vm_vd(self.0), vreinterpret_vm_vd($f64x::splat((-0.))))))
+        Self::new(self.0.abs(),
+            $f64x::from($mx::from(self.1) ^ ($mx::from(self.0) & $mx::from($f64x::splat((-0.)))))
     }
 
     #[inline]
@@ -196,7 +196,7 @@ impl std::ops::Div for D2<$f64x> {
     #[cfg(feature="enable_fma_dp")]
     #[inline]
     fn div(self, other: Self) -> Self {
-        let t = vrec_vd_vd(other.0);
+        let t = other.0.rec();
 
         let q0 = self.0 * t;
         let u = vfmapn_vd_vd_vd_vd(t, self.0, q0);
@@ -208,7 +208,7 @@ impl std::ops::Div for D2<$f64x> {
     #[cfg(not(feature="enable_fma_dp"))]
     #[inline]
     fn div(self, other: Self) -> Self {
-        let t = vrec_vd_vd(other.0);
+        let t = other.0.rec();
         let dh  = vupper_vd_vd(other.0);
         let dl  = other.0 -  dh;
         let th  = vupper_vd_vd(t  );
@@ -339,13 +339,13 @@ impl Rec for D2<$f64x> {
     #[cfg(feature="enable_fma_dp")]
     #[inline]
     fn rec(self) -> Self {
-        let q0 = vrec_vd_vd(self.0);
+        let q0 = self.0.rec();
         Self::new(q0, q0 * vfmanp_vd_vd_vd_vd(self.1, q0, vfmanp_vd_vd_vd_vd(self.0, q0, $f64x::splat(1))) )
     }
     #[cfg(not(feature="enable_fma_dp"))]
     #[inline]
     fn rec(self) -> D2<$f64x> {
-        let t = vrec_vd_vd(self.0);
+        let t = self.0.rec();
         let dh = vupper_vd_vd(self.0);
         let dl = self.0 - dh;
         let th = vupper_vd_vd(t  );

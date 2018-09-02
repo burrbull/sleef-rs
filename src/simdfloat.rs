@@ -217,33 +217,33 @@ extern const float rempitabsp[];
 #include "df.h"
 #[inline]
 fn visnegzero_vo_vf(d: $f32x) -> $mox {
-  return veq_vo_vi2_vi2(vreinterpret_vi2_vf(d), vreinterpret_vi2_vf($f32x::splat(-0.)));
+  $ix2::from(d).eq($ix2::from($f32x::splat(-0.)))
 }
 
 #[inline]
-fn $mox vnot_vo32_vo32($mox x) {
-  return x ^ veq_vo_vi2_vi2($ix2::splat(0), $ix2::splat(0));
+fn vnot_vo32_vo32(x: $mox) -> $mox {
+  x ^ $ix2::splat(0).eq($ix2::splat(0))
 }
 #[inline]
 fn vsignbit_vm_vf(f: $f32x) -> vmask {
-  return vand_vm_vm_vm(vreinterpret_vm_vf(f), vreinterpret_vm_vf($f32x::splat(-0.)));
+  $mx::from(f) & $mx::from($f32x::splat(-0.))
 }
 #[inline]
 fn vmulsign_vf_vf_vf(x: $f32x, y: $f32x) -> $f32x {
-  return vreinterpret_vf_vm(vxor_vm_vm_vm(vreinterpret_vm_vf(x), vsignbit_vm_vf(y)));
+  $f32x::from($mx::from(x) ^ vsignbit_vm_vf(y))
 }
 #[inline]
 fn vcopysign_vf_vf_vf(x: $f32x, y: $f32x) -> $f32x {
-  return vreinterpret_vf_vm(vxor_vm_vm_vm(vandnot_vm_vm_vm(vreinterpret_vm_vf($f32x::splat(-0.)), vreinterpret_vm_vf(x)), 
-					  vand_vm_vm_vm   (vreinterpret_vm_vf($f32x::splat(-0.)), vreinterpret_vm_vf(y))));
+  $f32x::from(vandnot_vm_vm_vm($mx::from($f32x::splat(-0.)), $mx::from(x)) ^
+					  ($mx::from($f32x::splat(-0.)) & $mx::from(y)))
 }
 #[inline]
 fn vsign_vf_vf(f: $f32x) -> $f32x {
-  return vreinterpret_vf_vm(vor_vm_vm_vm(vreinterpret_vm_vf($f32x::splat(1.)), vand_vm_vm_vm(vreinterpret_vm_vf($f32x::splat(-0.)), vreinterpret_vm_vf(f))));
+  $f32x::from($mx::from($f32x::splat(1.)) | ($mx::from($f32x::splat(-0.)) & $mx::from(f)))
 }
 #[inline]
 fn vsignbit_vo_vf(d: $f32x) -> $mox {
-  return veq_vo_vi2_vi2(vand_vi2_vi2_vi2(vreinterpret_vi2_vf(d), $ix2::splat(0x80000000)), $ix2::splat(0x80000000));
+  ($ix2::from(d) & $ix2::splat(0x80000000)).eq($ix2::splat(0x80000000))
 }
 #[inline]
 fn vsel_vi2_vf_vf_vi2_vi2($f32x f0, $f32x f1, $ix2 x, $ix2 y) -> $ix2 {
@@ -262,24 +262,22 @@ fn visnumber_vo_vf(x: $f32x) -> $mox { return vnot_vo32_vo32(visinf_vo_vf(x) | v
 fn vilogbk_vi2_vf(d: $f32x) -> $ix2 {
   $mox o = d.lt($f32x::splat(5.421010862427522e-20));
   d = vsel_vf_vo_vf_vf(o, $f32x::splat(1.8446744073709552e19) * d, d);
-  $ix2 q = vand_vi2_vi2_vi2(vsrl_vi2_vi2_i(vcast_vi2_vm(vreinterpret_vm_vf(d)), 23), $ix2::splat(0xff));
-  q = vsub_vi2_vi2_vi2(q, vsel_vi2_vo_vi2_vi2(o, $ix2::splat(64 + 0x7f), $ix2::splat(0x7f)));
-  return q;
+  $ix2 q = vsrl_vi2_vi2_i($ix2::from($mx::from(d)), 23) & $ix2::splat(0xff);
+  q - vsel_vi2_vo_vi2_vi2(o, $ix2::splat(64 + 0x7f), $ix2::splat(0x7f))
 }
 #[inline]
 fn vilogb2k_vi2_vf(d: $f32x) -> $ix2 {
-  $ix2 q = vreinterpret_vi2_vf(d);
+  $ix2 q = $ix2::from(d);
   q = vsrl_vi2_vi2_i(q, 23);
-  q = vand_vi2_vi2_vi2(q, $ix2::splat(0xff));
-  q = vsub_vi2_vi2_vi2(q, $ix2::splat(0x7f));
-  return q;
+  q = q & $ix2::splat(0xff);
+  q - $ix2::splat(0x7f)
 }
 #endif
 
 //
 
 pub fn xilogbf(d: $f32x) -> $ix2 {
-  $ix2 e = vilogbk_vi2_vf(vabs_vf_vf(d));
+  $ix2 e = vilogbk_vi2_vf(d.abs());
   e = vsel_vi2_vo_vi2_vi2(d.eq($f32x::splat(0.)), $ix2::splat(SLEEF_FP_ILOGB0), e);
   e = vsel_vi2_vo_vi2_vi2(visnan_vo_vf(d), $ix2::splat(SLEEF_FP_ILOGBNAN), e);
   e = vsel_vi2_vo_vi2_vi2(visinf_vo_vf(d), $ix2::splat(INT_MAX), e);
@@ -287,30 +285,30 @@ pub fn xilogbf(d: $f32x) -> $ix2 {
 }
 #[inline]
 fn vpow2i_vf_vi2($ix2 q) -> $f32x {
-  return vreinterpret_vf_vm(vcast_vm_vi2(vsll_vi2_vi2_i(vadd_vi2_vi2_vi2(q, $ix2::splat(0x7f)), 23)));
+  return $f32x::from($mx::from(vsll_vi2_vi2_i(q + $ix2::splat(0x7f), 23)));
 }
 #[inline]
 fn vldexp_vf_vf_vi2($f32x x, $ix2 q) -> $f32x {
   $f32x u;
   $ix2 m = vsra_vi2_vi2_i(q, 31);
-  m = vsll_vi2_vi2_i(vsub_vi2_vi2_vi2(vsra_vi2_vi2_i(vadd_vi2_vi2_vi2(m, q), 6), m), 4);
-  q = vsub_vi2_vi2_vi2(q, vsll_vi2_vi2_i(m, 2));
-  m = vadd_vi2_vi2_vi2(m, $ix2::splat(0x7f));
-  m = vand_vi2_vi2_vi2(vgt_vi2_vi2_vi2(m, $ix2::splat(0)), m);
+  m = vsll_vi2_vi2_i(vsra_vi2_vi2_i(m + q, 6) - m, 4);
+  q = q - vsll_vi2_vi2_i(m, 2);
+  m = m + $ix2::splat(0x7f);
+  m = vgt_vi2_vi2_vi2(m, $ix2::splat(0)) & m;
   $ix2 n = vgt_vi2_vi2_vi2(m, $ix2::splat(0xff));
-  m = vor_vi2_vi2_vi2(vandnot_vi2_vi2_vi2(n, m), vand_vi2_vi2_vi2(n, $ix2::splat(0xff)));
-  u = vreinterpret_vf_vm(vcast_vm_vi2(vsll_vi2_vi2_i(m, 23)));
+  m = vandnot_vi2_vi2_vi2(n, m) | (n & $ix2::splat(0xff));
+  u = $f32x::from($mx::from(vsll_vi2_vi2_i(m, 23)));
   x *= u*u*u*u;
-  u = vreinterpret_vf_vm(vcast_vm_vi2(vsll_vi2_vi2_i(vadd_vi2_vi2_vi2(q, $ix2::splat(0x7f)), 23)));
+  u = $f32x::from($mx::from(vsll_vi2_vi2_i(q + $ix2::splat(0x7f), 23)));
   x * u
 }
 #[inline]
 fn vldexp2_vf_vf_vi2($f32x d, $ix2 e) -> $f32x {
-  d * vpow2i_vf_vi2(vsra_vi2_vi2_i(e, 1)) * vpow2i_vf_vi2(vsub_vi2_vi2_vi2(e, vsra_vi2_vi2_i(e, 1)))
+  d * vpow2i_vf_vi2(vsra_vi2_vi2_i(e, 1)) * vpow2i_vf_vi2(e - vsra_vi2_vi2_i(e, 1))
 }
 #[inline]
 fn vldexp3_vf_vf_vi2($f32x d, $ix2 q) -> $f32x {
-  return vreinterpret_vf_vi2(vadd_vi2_vi2_vi2(vreinterpret_vi2_vf(d), vsll_vi2_vi2_i(q, 23)));
+  return $f32x::from($ix2::from(d) + vsll_vi2_vi2_i(q, 23));
 }
 
 pub fn xldexpf($f32x x, $ix2 q) -> $f32x { return vldexp_vf_vf_vi2(x, q); }
@@ -323,27 +321,27 @@ fn rempisubf(x: $f32x) -> ($f32x, $ix2) {
   ( x - y * $f32x::splat(0.25), vi )
  } else {
   $f32x fr = x - $f32x::splat(F1_10) * vtruncate_vf_vf(x * $f32x::splat(1. / F1_10));
-  $ix2 vi = vadd_vi2_vi2_vi2(vsel_vi2_vo_vi2_vi2(x.gt($f32x::splat(0.)), $ix2::splat(4), $ix2::splat(3)), vtruncate_vi2_vf(fr * $f32x::splat(8.)));
-  vi = vsra_vi2_vi2_i(vsub_vi2_vi2_vi2(vand_vi2_vi2_vi2($ix2::splat(7), vi), $ix2::splat(3)), 1);
+  $ix2 vi = vsel_vi2_vo_vi2_vi2(x.gt($f32x::splat(0.)), $ix2::splat(4), $ix2::splat(3)) + vtruncate_vi2_vf(fr * $f32x::splat(8.));
+  vi = vsra_vi2_vi2_i(($ix2::splat(7) & vi) - $ix2::splat(3)), 1);
   fr -= $f32x::splat(0.25) * vtruncate_vf_vf(fr.mla($f32x::splat(4.), vmulsign_vf_vf_vf($f32x::splat(0.5), x)));
-  fr = vsel_vf_vo_vf_vf(vabs_vf_vf(fr).gt($f32x::splat(0.25)), fr - vmulsign_vf_vf_vf($f32x::splat(0.5), x), fr);
-  fr = vsel_vf_vo_vf_vf(vabs_vf_vf(fr).gt($f32x::splat(1e+10)), $f32x::splat(0), fr);
-  $mox o = vabs_vf_vf(x).eq($f32x::splat(0.12499999254941940308));
+  fr = vsel_vf_vo_vf_vf(fr.abs().gt($f32x::splat(0.25)), fr - vmulsign_vf_vf_vf($f32x::splat(0.5), x), fr);
+  fr = vsel_vf_vo_vf_vf(fr.abs().gt($f32x::splat(1e+10)), $f32x::splat(0), fr);
+  $mox o = x.abs().eq($f32x::splat(0.12499999254941940308));
   fr = vsel_vf_vo_vf_vf(o, x, fr);
   vi = vsel_vi2_vo_vi2_vi2(o, $ix2::splat(0), vi);
   ( fr, vi )
   }
 }
 #[inline]
-fn rempif(a: $f32x) -> (F2, $ix2) {
+fn rempif(a: $f32x) -> (F2<$f32x>, $ix2) {
   F2 x, y, z;
   $ix2 ex = vilogb2k_vi2_vf(a);
   if cfg!("enable_avx512f") || cfg!("enable_avx512fnofma") {
     ex = vandnot_vi2_vi2_vi2(vsra_vi2_vi2_i(ex, 31), ex);
-    ex = vand_vi2_vi2_vi2(ex, $ix2::splat(127));
+    ex = ex & $ix2::splat(127);
   }
-  ex = vsub_vi2_vi2_vi2(ex, $ix2::splat(25));
-  $ix2 q = vand_vi2_vo_vi2(vgt_vo_vi2_vi2(ex, $ix2::splat(90-25)), $ix2::splat(-64));
+  ex -= $ix2::splat(25);
+  $ix2 q = vand_vi2_vo_vi2(ex.gt($ix2::splat(90-25)), $ix2::splat(-64));
   a = vldexp3_vf_vf_vi2(a, q);
   ex = vandnot_vi2_vi2_vi2(vsra_vi2_vi2_i(ex, 31), ex);
   ex = vsll_vi2_vi2_i(ex, 2);
@@ -355,7 +353,7 @@ fn rempif(a: $f32x) -> (F2, $ix2) {
   y = a.mul_as_f2(vgather_vf_p_vi2(rempitabsp+1, ex));
   x += y;
   di = rempisubf(x.0);
-  q = vadd_vi2_vi2_vi2(q, di.i);
+  q = q + di.i;
   x.0 = di.d;
   x = x.normalize();
   y = F2::new(vgather_vf_p_vi2(rempitabsp+2, ex), vgather_vf_p_vi2(rempitabsp+3, ex));
@@ -363,7 +361,7 @@ fn rempif(a: $f32x) -> (F2, $ix2) {
   x += y;
   x = x.normalize();
   x *= F2::from((3.1415927410125732422*2., -8.7422776573475857731e-08*2.));
-  x = vsel_vf2_vo_vf2_vf2(vabs_vf_vf(a).lt($f32x::splat(0.7)), F2::new(a, $f32x::splat(0.)), x);
+  x = vsel_vf2_vo_vf2_vf2(a.abs().lt($f32x::splat(0.7)), F2::new(a, $f32x::splat(0.)), x);
   ( x, q )
 }
 
@@ -371,13 +369,13 @@ pub fn xsinf(d: $f32x) -> $f32x {
   $ix2 q;
   $f32x u, s, r = d;
 
-  if (LIKELY(vtestallones_i_vo32(vabs_vf_vf(d).lt($f32x::splat(TRIGRANGEMAX2_F))))) {
+  if (LIKELY(vtestallones_i_vo32(d.abs().lt($f32x::splat(TRIGRANGEMAX2_F))))) {
     q = vrint_vi2_vf(d*$f32x::splat(M_1_PI_F));
     u = $f32x::from(q);
     d = u.mla($f32x::splat(-PI_A2_F), d);
     d = u.mla($f32x::splat(-PI_B2_F), d);
     d = u.mla($f32x::splat(-PI_C2_F), d);
-  } else if (LIKELY(vtestallones_i_vo32(vabs_vf_vf(d).lt($f32x::splat(TRIGRANGEMAX_F))))) {
+  } else if (LIKELY(vtestallones_i_vo32(d.abs().lt($f32x::splat(TRIGRANGEMAX_F))))) {
     q = vrint_vi2_vf(d*$f32x::splat(M_1_PI_F));
     u = $f32x::from(q);
     d = u.mla($f32x::splat(-PI_A_F), d);
@@ -386,22 +384,22 @@ pub fn xsinf(d: $f32x) -> $f32x {
     d = u.mla($f32x::splat(-PI_D_F), d);
   } else {
     let (dfidf, dfii) = rempif(d);
-    q = vand_vi2_vi2_vi2(dfii, $ix2::splat(3));
-    q = vadd_vi2_vi2_vi2(vadd_vi2_vi2_vi2(q, q), vsel_vi2_vo_vi2_vi2(dfidf.0.gt($f32x::splat(0.)), $ix2::splat(2), $ix2::splat(1)));
+    q = dfii & $ix2::splat(3);
+    q = q + q + vsel_vi2_vo_vi2_vi2(dfidf.0.gt($f32x::splat(0.)), $ix2::splat(2), $ix2::splat(1));
     q = vsra_vi2_vi2_i(q, 2);
-    $mox o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(dfii, $ix2::splat(1)), $ix2::splat(1));
+    $mox o = (dfii & $ix2::splat(1)).eq($ix2::splat(1));
     F2 x = F2::new(vmulsign_vf_vf_vf($f32x::splat(3.1415927410125732422*-0.5), dfidf.0), 
 				vmulsign_vf_vf_vf($f32x::splat(-8.7422776573475857731e-08*-0.5), dfidf.0));
     x = dfidf + x;
     dfidf = vsel_vf2_vo_vf2_vf2(o, x, dfidf);
     d = dfidf.0 + dfidf.1;
 
-    d = vreinterpret_vf_vm(vor_vm_vo32_vm(visinf_vo_vf(r) | visnan_vo_vf(r), vreinterpret_vm_vf(d)));
+    d = $f32x::from(vor_vm_vo32_vm(visinf_vo_vf(r) | visnan_vo_vf(r), $mx::from(d)));
   }
 
   s = d*d;
 
-  d = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, $ix2::splat(1)), $ix2::splat(1)), vreinterpret_vm_vf($f32x::splat(-0.))), vreinterpret_vm_vf(d)));
+  d = $f32x::from(vand_vm_vo32_vm((q & $ix2::splat(1)).eq($ix2::splat(1)), $mx::from($f32x::splat(-0.))) ^ $mx::from(d));
 
   u = $f32x::splat(2.6083159809786593541503e-06)
       .mla(s, $f32x::splat(-0.0001981069071916863322258))
@@ -419,17 +417,17 @@ pub fn xcosf(d: $f32x) -> $f32x {
   $ix2 q;
   $f32x u, s, r = d;
 
-  if (LIKELY(vtestallones_i_vo32(vabs_vf_vf(d).lt($f32x::splat(TRIGRANGEMAX2_F))))) {
+  if (LIKELY(vtestallones_i_vo32(d.abs().lt($f32x::splat(TRIGRANGEMAX2_F))))) {
     q = vrint_vi2_vf(d*$f32x::splat(M_1_PI_F) - $f32x::splat(0.5));
-    q = vadd_vi2_vi2_vi2(vadd_vi2_vi2_vi2(q, q), $ix2::splat(1));
+    q = q + q + $ix2::splat(1);
 
     u = $f32x::from(q);
     d = u.mla($f32x::splat(-PI_A2_F*0.5), d);
     d = u.mla($f32x::splat(-PI_B2_F*0.5), d);
     d = u.mla($f32x::splat(-PI_C2_F*0.5), d);
-  } else if (LIKELY(vtestallones_i_vo32(vabs_vf_vf(d).lt($f32x::splat(TRIGRANGEMAX_F))))) {
+  } else if (LIKELY(vtestallones_i_vo32(d.abs().lt($f32x::splat(TRIGRANGEMAX_F))))) {
     q = vrint_vi2_vf(d*$f32x::splat(M_1_PI_F) - $f32x::splat(0.5));
-    q = vadd_vi2_vi2_vi2(vadd_vi2_vi2_vi2(q, q), $ix2::splat(1));
+    q = q + q + $ix2::splat(1);
 
     u = $f32x::from(q);
     d = u.mla($f32x::splat(-PI_A_F*0.5), d);
@@ -438,10 +436,10 @@ pub fn xcosf(d: $f32x) -> $f32x {
     d = u.mla($f32x::splat(-PI_D_F*0.5), d);
   } else {
     let (dfidf, dfii) = rempif(d);
-    q = vand_vi2_vi2_vi2(dfii, $ix2::splat(3));
-    q = vadd_vi2_vi2_vi2(vadd_vi2_vi2_vi2(q, q), vsel_vi2_vo_vi2_vi2(dfidf.0.gt($f32x::splat(0.)), $ix2::splat(8), $ix2::splat(7)));
+    q = dfii & $ix2::splat(3);
+    q = q + q + vsel_vi2_vo_vi2_vi2(dfidf.0.gt($f32x::splat(0.)), $ix2::splat(8), $ix2::splat(7));
     q = vsra_vi2_vi2_i(q, 1);
-    $mox o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(dfii, $ix2::splat(1)), $ix2::splat(0));
+    $mox o = (dfii & $ix2::splat(1)).eq($ix2::splat(0));
     $f32x y = vsel_vf_vo_vf_vf(dfidf.0.gt($f32x::splat(0.)), $f32x::splat(0.), $f32x::splat(-1.));
     F2 x = F2::new(vmulsign_vf_vf_vf($f32x::splat(3.1415927410125732422*-0.5), y),
 				vmulsign_vf_vf_vf($f32x::splat(-8.7422776573475857731e-08*-0.5), y));
@@ -449,12 +447,12 @@ pub fn xcosf(d: $f32x) -> $f32x {
     dfidf = vsel_vf2_vo_vf2_vf2(o, x, dfidf);
     d = dfidf.0 + dfidf.1;
 
-    d = vreinterpret_vf_vm(vor_vm_vo32_vm(visinf_vo_vf(r) | visnan_vo_vf(r), vreinterpret_vm_vf(d)));
+    d = $f32x::from(vor_vm_vo32_vm(visinf_vo_vf(r) | visnan_vo_vf(r), $mx::from(d)));
   }
 
   s = d * d;
 
-  d = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, $ix2::splat(2)), $ix2::splat(0)), vreinterpret_vm_vf($f32x::splat(-0.))), vreinterpret_vm_vf(d)));
+  d = $f32x::from(vand_vm_vo32_vm((q & $ix2::splat(2)).eq($ix2::splat(0)), $mx::from($f32x::splat(-0.))) ^ $mx::from(d));
 
   u = $f32x::splat(2.6083159809786593541503e-06)
       .mla(s, $f32x::splat(-0.0001981069071916863322258))
@@ -473,13 +471,13 @@ pub fn xtanf(d: $f32x) -> $f32x {
 
   x = d;
 
-  if (LIKELY(vtestallones_i_vo32(vabs_vf_vf(d).lt($f32x::splat(TRIGRANGEMAX2_F*0.5))))) {
+  if (LIKELY(vtestallones_i_vo32(d.abs().lt($f32x::splat(TRIGRANGEMAX2_F*0.5))))) {
     q = vrint_vi2_vf(d * $f32x::splat(2. * M_1_PI_F));
     u = $f32x::from(q);
     x = u.mla($f32x::splat(-PI_A2_F*0.5), x);
     x = u.mla($f32x::splat(-PI_B2_F*0.5), x);
     x = u.mla($f32x::splat(-PI_C2_F*0.5), x);
-  } else if (LIKELY(vtestallones_i_vo32(vabs_vf_vf(d).lt($f32x::splat(TRIGRANGEMAX_F))))) {
+  } else if (LIKELY(vtestallones_i_vo32(d.abs().lt($f32x::splat(TRIGRANGEMAX_F))))) {
     q = vrint_vi2_vf(d * (2. * $f32x::splat(M_1_PI_F)));
     u = $f32x::from(q);
     x = u.mla($f32x::splat(-PI_A_F*0.5), x);
@@ -490,14 +488,14 @@ pub fn xtanf(d: $f32x) -> $f32x {
     let (dfidf, dfii) = rempif(d);
     q = dfii;
     x = dfidf.0 + dfidf.1;
-    x = vreinterpret_vf_vm(vor_vm_vo32_vm(visinf_vo_vf(d) | visnan_vo_vf(d), vreinterpret_vm_vf(x)));
+    x = $f32x::from(vor_vm_vo32_vm(visinf_vo_vf(d) | visnan_vo_vf(d), $mx::from(x)));
     x = vsel_vf_vo_vf_vf(visnegzero_vo_vf(d), d, x);
   }
 
   s = x * x;
 
-  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, $ix2::splat(1)), $ix2::splat(1));
-  x = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(o, vreinterpret_vm_vf($f32x::splat(-0.))), vreinterpret_vm_vf(x)));
+  o = (q & $ix2::splat(1)).eq($ix2::splat(1));
+  x = $f32x::from(vand_vm_vo32_vm(o, $mx::from($f32x::splat(-0.))) ^ $mx::from(x));
 
   u = $f32x::splat(0.00927245803177356719970703)
       .mla(s, $f32x::splat(0.00331984995864331722259521))
@@ -508,7 +506,7 @@ pub fn xtanf(d: $f32x) -> $f32x {
 
   u = s.mla(u * x, x);
 
-  u = vsel_vf_vo_vf_vf(o, vrec_vf_vf(u), u);
+  u = vsel_vf_vo_vf_vf(o, u.rec(), u);
 
   return u;
 }
@@ -518,7 +516,7 @@ pub fn xsinf_u1(d: $f32x) -> $f32x {
   $f32x u, v;
   F2 s, t, x;
 
-  if (LIKELY(vtestallones_i_vo32(vabs_vf_vf(d).lt($f32x::splat(TRIGRANGEMAX2_F))))) {
+  if (LIKELY(vtestallones_i_vo32(d.abs().lt($f32x::splat(TRIGRANGEMAX2_F))))) {
     u = vrint_vf_vf(d, $f32x::splat(M_1_PI_F));
     q = vrint_vi2_vf(u);
     v = u.mla($f32x::splat(-PI_A2_F), d);
@@ -526,17 +524,17 @@ pub fn xsinf_u1(d: $f32x) -> $f32x {
     s = s.add_checked(u * $f32x::splat(-PI_C2_F));
   } else {
     let (dfidf, dfii) = rempif(d);
-    q = vand_vi2_vi2_vi2(dfii, $ix2::splat(3));
-    q = vadd_vi2_vi2_vi2(vadd_vi2_vi2_vi2(q, q), vsel_vi2_vo_vi2_vi2(dfidf.0.gt($f32x::splat(0.)), $ix2::splat(2), $ix2::splat(1)));
+    q = dfii & $ix2::splat(3);
+    q = q + q + vsel_vi2_vo_vi2_vi2(dfidf.0.gt($f32x::splat(0.)), $ix2::splat(2), $ix2::splat(1));
     q = vsra_vi2_vi2_i(q, 2);
-    $mox o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(dfii, $ix2::splat(1)), $ix2::splat(1));
+    $mox o = (dfii & $ix2::splat(1)).eq($ix2::splat(1));
     F2 x = F2::new(vmulsign_vf_vf_vf($f32x::splat(3.1415927410125732422*-0.5), dfidf.0), 
 				vmulsign_vf_vf_vf($f32x::splat(-8.7422776573475857731e-08*-0.5), dfidf.0));
     x = dfidf + x;
     dfidf = vsel_vf2_vo_vf2_vf2(o, x, dfidf);
     s = dfidf.normalize();
 
-    s.0 = vreinterpret_vf_vm(vor_vm_vo32_vm(visinf_vo_vf(d) | visnan_vo_vf(d), vreinterpret_vm_vf(s.0)));
+    s.0 = $f32x::from(vor_vm_vo32_vm(visinf_vo_vf(d) | visnan_vo_vf(d), $mx::from(s.0)));
   }
 
   t = s;
@@ -550,7 +548,7 @@ pub fn xsinf_u1(d: $f32x) -> $f32x {
 
   u = t.mul_as_f(x);
 
-  u = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, $ix2::splat(1)), $ix2::splat(1)), vreinterpret_vm_vf($f32x::splat(-0.))), vreinterpret_vm_vf(u)));
+  u = $f32x::from(vand_vm_vo32_vm((q & $ix2::splat(1)).eq($ix2::splat(1)), $mx::from($f32x::splat(-0.))) ^ $mx::from(u));
 
   u = vsel_vf_vo_vf_vf(visnegzero_vo_vf(d), d, u);
 
@@ -562,7 +560,7 @@ pub fn xcosf_u1(d: $f32x) -> $f32x {
   $f32x u;
   F2 s, t, x;
 
-  if (LIKELY(vtestallones_i_vo32(vabs_vf_vf(d).lt($f32x::splat(TRIGRANGEMAX2_F))))) {
+  if (LIKELY(vtestallones_i_vo32(d.abs().lt($f32x::splat(TRIGRANGEMAX2_F))))) {
     $f32x dq = vrint_vf_vf(d.mla($f32x::splat(M_1_PI_F), $f32x::splat(-0.5))).mla(
 				 $f32x::splat(2.), $f32x::splat(1.));
     q = vrint_vi2_vf(dq);
@@ -571,10 +569,10 @@ pub fn xcosf_u1(d: $f32x) -> $f32x {
     s += dq * $f32x::splat(-PI_C2_F*0.5);
   } else {
     let (dfidf, dfii) = rempif(d);
-    q = vand_vi2_vi2_vi2(dfii, $ix2::splat(3));
-    q = vadd_vi2_vi2_vi2(vadd_vi2_vi2_vi2(q, q), vsel_vi2_vo_vi2_vi2(dfidf.0.gt($f32x::splat(0.)), $ix2::splat(8), $ix2::splat(7)));
+    q = dfii & $ix2::splat(3);
+    q = q + q + vsel_vi2_vo_vi2_vi2(dfidf.0.gt($f32x::splat(0.)), $ix2::splat(8), $ix2::splat(7));
     q = vsra_vi2_vi2_i(q, 1);
-    $mox o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(dfii, $ix2::splat(1)), $ix2::splat(0));
+    $mox o = (dfii & $ix2::splat(1)).eq($ix2::splat(0));
     $f32x y = vsel_vf_vo_vf_vf(dfidf.0.gt($f32x::splat(0.)), $f32x::splat(0.), $f32x::splat(-1));
     F2 x = F2::new(vmulsign_vf_vf_vf($f32x::splat(3.1415927410125732422*-0.5), y),
 				vmulsign_vf_vf_vf($f32x::splat(-8.7422776573475857731e-08*-0.5), y));
@@ -582,7 +580,7 @@ pub fn xcosf_u1(d: $f32x) -> $f32x {
     dfidf = vsel_vf2_vo_vf2_vf2(o, x, dfidf);
     s = dfidf.normalize();
 
-    s.0 = vreinterpret_vf_vm(vor_vm_vo32_vm(visinf_vo_vf(d) | visnan_vo_vf(d), vreinterpret_vm_vf(s.0)));
+    s.0 = $f32x::from(vor_vm_vo32_vm(visinf_vo_vf(d) | visnan_vo_vf(d), $mx::from(s.0)));
   }
 
   t = s;
@@ -596,7 +594,7 @@ pub fn xcosf_u1(d: $f32x) -> $f32x {
 
   u = t.mul_as_f(x);
 
-  u = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, $ix2::splat(2)), $ix2::splat(0)), vreinterpret_vm_vf($f32x::splat(-0.))), vreinterpret_vm_vf(u)));
+  u = $f32x::from(vand_vm_vo32_vm((q & $ix2::splat(2)).eq($ix2::splat(0)), $mx::from($f32x::splat(-0.))) ^ $mx::from(u));
   
   return u;
 }
@@ -610,13 +608,13 @@ pub fn xsincosf(d: $f32x) -> ($f32x, $f32x) {
 
   s = d;
 
-  if (LIKELY(vtestallones_i_vo32(vabs_vf_vf(d).lt($f32x::splat(TRIGRANGEMAX2_F))))) {
+  if (LIKELY(vtestallones_i_vo32(d.abs().lt($f32x::splat(TRIGRANGEMAX2_F))))) {
     q = vrint_vi2_vf(d * $f32x::splat(M_2_PI_F));
     u = $f32x::from(q);
     s = u.mla($f32x::splat(-PI_A2_F*0.5), s);
     s = u.mla($f32x::splat(-PI_B2_F*0.5), s);
     s = u.mla($f32x::splat(-PI_C2_F*0.5), s);
-  } else if (LIKELY(vtestallones_i_vo32(vabs_vf_vf(d).lt($f32x::splat(TRIGRANGEMAX_F))))) {
+  } else if (LIKELY(vtestallones_i_vo32(d.abs().lt($f32x::splat(TRIGRANGEMAX_F))))) {
     q = vrint_vi2_vf(d * $f32x::splat(M_2_PI_F));
     u = $f32x::from(q);
     s = u.mla($f32x::splat(-PI_A_F*0.5), s);
@@ -627,7 +625,7 @@ pub fn xsincosf(d: $f32x) -> ($f32x, $f32x) {
     let (dfidf, dfii) = rempif(d);
     q = dfii;
     s = dfidf.0 + dfidf.1;
-    s = vreinterpret_vf_vm(vor_vm_vo32_vm(visinf_vo_vf(d) | visnan_vo_vf(d), vreinterpret_vm_vf(s)));
+    s = $f32x::from(vor_vm_vo32_vm(visinf_vo_vf(d) | visnan_vo_vf(d), $mx::from(s)));
   }
 
   t = s;
@@ -649,15 +647,15 @@ pub fn xsincosf(d: $f32x) -> ($f32x, $f32x) {
 
   ry = s.mla(u, $f32x::splat(1.));
 
-  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, $ix2::splat(1)), $ix2::splat(0));
+  o = (q & $ix2::splat(1)).eq($ix2::splat(0));
   rsin = vsel_vf_vo_vf_vf(o, rx, ry);
   rcos = vsel_vf_vo_vf_vf(o, ry, rx);
 
-  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, $ix2::splat(2)), $ix2::splat(2));
-  rsin = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(o, vreinterpret_vm_vf($f32x::splat(-0.))), vreinterpret_vm_vf(rsin)));
+  o = (q & $ix2::splat(2)).eq($ix2::splat(2));
+  rsin = $f32x::from(vand_vm_vo32_vm(o, $mx::from($f32x::splat(-0.))) ^ $mx::from(rsin));
 
-  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(vadd_vi2_vi2_vi2(q, $ix2::splat(1)), $ix2::splat(2)), $ix2::splat(2));
-  rcos = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(o, vreinterpret_vm_vf($f32x::splat(-0.))), vreinterpret_vm_vf(rcos)));
+  o = ((q + $ix2::splat(1)) & $ix2::splat(2)).eq($ix2::splat(2));
+  rcos = $f32x::from(vand_vm_vo32_vm(o, $mx::from($f32x::splat(-0.))) ^ $mx::from(rcos));
 
   (rsin, rcos)
 }
@@ -668,7 +666,7 @@ pub fn xsincosf_u1(d: $f32x) -> ($f32x, $f32x) {
   $f32x u, v, rx, ry;
   F2 r, s, t, x;
 
-  if (LIKELY(vtestallones_i_vo32(vabs_vf_vf(d).lt($f32x::splat(TRIGRANGEMAX2_F))))) {
+  if (LIKELY(vtestallones_i_vo32(d.abs().lt($f32x::splat(TRIGRANGEMAX2_F))))) {
     u = vrint_vf_vf(d * $f32x::splat(2. * M_1_PI_F));
     q = vrint_vi2_vf(u);
     v = u.mla($f32x::splat(-PI_A2_F*0.5), d);
@@ -679,7 +677,7 @@ pub fn xsincosf_u1(d: $f32x) -> ($f32x, $f32x) {
     q = dfii;
     s = dfidf;
     o = visinf_vo_vf(d) | visnan_vo_vf(d);
-    s.0 = vreinterpret_vf_vm(vor_vm_vo32_vm(o, vreinterpret_vm_vf(s.0)));
+    s.0 = $f32x::from(vor_vm_vo32_vm(o, $mx::from(s.0)));
   }
 
   t = s;
@@ -706,15 +704,15 @@ pub fn xsincosf_u1(d: $f32x) -> ($f32x, $f32x) {
   x = $f32x::splat(1.).add_checked(s.0.mul_as_f2(u));
   ry = x.0 + x.1;
 
-  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, $ix2::splat(1)), $ix2::splat(0));
+  o = (q & $ix2::splat(1)).eq($ix2::splat(0));
   rsin = vsel_vf_vo_vf_vf(o, rx, ry);
   rcos = vsel_vf_vo_vf_vf(o, ry, rx);
 
-  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, $ix2::splat(2)), $ix2::splat(2));
-  rsin = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(o, vreinterpret_vm_vf($f32x::splat(-0.))), vreinterpret_vm_vf(rsin)));
+  o = (q & $ix2::splat(2)).eq($ix2::splat(2));
+  rsin = $f32x::from(vand_vm_vo32_vm(o, $mx::from($f32x::splat(-0.))) ^ $mx::from(rsin));
 
-  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(vadd_vi2_vi2_vi2(q, $ix2::splat(1)), $ix2::splat(2)), $ix2::splat(2));
-  rcos = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(o, vreinterpret_vm_vf($f32x::splat(-0.))), vreinterpret_vm_vf(rcos)));
+  o = ((q + $ix2::splat(1)) & $ix2::splat(2)).eq($ix2::splat(2));
+  rcos = $f32x::from(vand_vm_vo32_vm(o, $mx::from($f32x::splat(-0.))) ^ $mx::from(rcos));
 
   (rsin, rcos)
 }
@@ -726,7 +724,7 @@ pub fn xsincospif_u05(d: $f32x) -> ($f32x, $f32x) {
 
   u = d * $f32x::splat(4.);
   $ix2 q = vtruncate_vi2_vf(u);
-  q = vand_vi2_vi2_vi2(vadd_vi2_vi2_vi2(q, vxor_vi2_vi2_vi2(vsrl_vi2_vi2_i(q, 31), $ix2::splat(1))), $ix2::splat(~1));
+  q = (q + (vsrl_vi2_vi2_i(q, 31) ^ $ix2::splat(1))) & $ix2::splat(!1);
   s = u - $f32x::from(q);
 
   t = s;
@@ -759,23 +757,23 @@ pub fn xsincospif_u05(d: $f32x) -> ($f32x, $f32x) {
 
   //
 
-  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, $ix2::splat(2)), $ix2::splat(0));
+  o = (q & $ix2::splat(2)).eq($ix2::splat(0));
   rsin = vsel_vf_vo_vf_vf(o, rx, ry);
   rcos = vsel_vf_vo_vf_vf(o, ry, rx);
 
-  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, $ix2::splat(4)), $ix2::splat(4));
-  rsin = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(o, vreinterpret_vm_vf($f32x::splat(-0.))), vreinterpret_vm_vf(rsin)));
+  o = (q & $ix2::splat(4)).eq($ix2::splat(4));
+  rsin = $f32x::from(vand_vm_vo32_vm(o, $mx::from($f32x::splat(-0.))) ^ $mx::from(rsin));
 
-  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(vadd_vi2_vi2_vi2(q, $ix2::splat(2)), $ix2::splat(4)), $ix2::splat(4));
-  rcos = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(o, vreinterpret_vm_vf($f32x::splat(-0.))), vreinterpret_vm_vf(rcos)));
+  o = ((q + $ix2::splat(2)) & $ix2::splat(4)).eq($ix2::splat(4));
+  rcos = $f32x::from(vand_vm_vo32_vm(o, $mx::from($f32x::splat(-0.))) ^ $mx::from(rcos));
 
-  o = vabs_vf_vf(d).gt($f32x::splat(1e+7));
-  rsin = vreinterpret_vf_vm(vandnot_vm_vo32_vm(o, vreinterpret_vm_vf(rsin)));
-  rcos = vreinterpret_vf_vm(vandnot_vm_vo32_vm(o, vreinterpret_vm_vf(rcos)));
+  o = d.abs().gt($f32x::splat(1e+7));
+  rsin = $f32x::from(vandnot_vm_vo32_vm(o, $mx::from(rsin)));
+  rcos = $f32x::from(vandnot_vm_vo32_vm(o, $mx::from(rcos)));
   
   o = visinf_vo_vf(d);
-  rsin = vreinterpret_vf_vm(vor_vm_vo32_vm(o, vreinterpret_vm_vf(rsin)));
-  rcos = vreinterpret_vf_vm(vor_vm_vo32_vm(o, vreinterpret_vm_vf(rcos)));
+  rsin = $f32x::from(vor_vm_vo32_vm(o, $mx::from(rsin)));
+  rcos = $f32x::from(vor_vm_vo32_vm(o, $mx::from(rcos)));
 
   (rsin, rcos)
 }
@@ -787,7 +785,7 @@ pub fn xsincospif_u35(d: $f32x) -> ($f32x, $f32x) {
 
   u = d * $f32x::splat(4.);
   $ix2 q = vtruncate_vi2_vf(u);
-  q = vand_vi2_vi2_vi2(vadd_vi2_vi2_vi2(q, vxor_vi2_vi2_vi2(vsrl_vi2_vi2_i(q, 31), $ix2::splat(1))), $ix2::splat(~1));
+  q = (q + (vsrl_vi2_vi2_i(q, 31) ^ $ix2::splat(1))) & $ix2::splat(!1);
   s = u - $f32x::from(q);
 
   t = s;
@@ -814,30 +812,30 @@ pub fn xsincospif_u35(d: $f32x) -> ($f32x, $f32x) {
 
   //
 
-  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, $ix2::splat(2)), $ix2::splat(0));
+  o = (q & $ix2::splat(2)).eq($ix2::splat(0));
   r.0 = vsel_vf_vo_vf_vf(o, rx, ry);
   r.1 = vsel_vf_vo_vf_vf(o, ry, rx);
 
-  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, $ix2::splat(4)), $ix2::splat(4));
-  r.0 = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(o, vreinterpret_vm_vf($f32x::splat(-0.))), vreinterpret_vm_vf(r.0)));
+  o = (q & $ix2::splat(4)).eq($ix2::splat(4));
+  r.0 = $f32x::from(vand_vm_vo32_vm(o, $mx::from($f32x::splat(-0.))) ^ $mx::from(r.0));
 
-  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(vadd_vi2_vi2_vi2(q, $ix2::splat(2)), $ix2::splat(4)), $ix2::splat(4));
-  r.1 = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(o, vreinterpret_vm_vf($f32x::splat(-0.))), vreinterpret_vm_vf(r.1)));
+  o = ((q + $ix2::splat(2)) & $ix2::splat(4)).eq($ix2::splat(4));
+  r.1 = $f32x::from(vand_vm_vo32_vm(o, $mx::from($f32x::splat(-0.))) ^ $mx::from(r.1));
 
-  o = vabs_vf_vf(d).gt($f32x::splat(1e+7));
-  r.0 = vreinterpret_vf_vm(vandnot_vm_vo32_vm(o, vreinterpret_vm_vf(r.0)));
-  r.1 = vreinterpret_vf_vm(vandnot_vm_vo32_vm(o, vreinterpret_vm_vf(r.1)));
+  o = d.abs().gt($f32x::splat(1e+7));
+  r.0 = $f32x::from(vandnot_vm_vo32_vm(o, $mx::from(r.0)));
+  r.1 = $f32x::from(vandnot_vm_vo32_vm(o, $mx::from(r.1)));
   
   o = visinf_vo_vf(d);
-  r.0 = vreinterpret_vf_vm(vor_vm_vo32_vm(o, vreinterpret_vm_vf(r.0)));
-  r.1 = vreinterpret_vf_vm(vor_vm_vo32_vm(o, vreinterpret_vm_vf(r.1)));
+  r.0 = $f32x::from(vor_vm_vo32_vm(o, $mx::from(r.0)));
+  r.1 = $f32x::from(vor_vm_vo32_vm(o, $mx::from(r.1)));
 
   (rsin, rcos)
 }
 
 pub fn xmodff(x: $f32x) -> ($f32x, $f32x) {
   $f32x fr = x - $f32x::from(vtruncate_vi2_vf(x));
-  fr = vsel_vf_vo_vf_vf(vabs_vf_vf(x).gt($f32x::splat(F1_23)), $f32x::splat(0.), fr);
+  fr = vsel_vf_vo_vf_vf(x.abs().gt($f32x::splat(F1_23)), $f32x::splat(0.), fr);
 
   F2 ret;
 
@@ -854,7 +852,7 @@ pub fn xtanf_u1(d: $f32x) -> $f32x {
   F2 s, t, x;
   $mox o;
 
-  if (LIKELY(vtestallones_i_vo32(vabs_vf_vf(d).lt($f32x::splat(TRIGRANGEMAX2_F))))) {
+  if (LIKELY(vtestallones_i_vo32(d.abs().lt($f32x::splat(TRIGRANGEMAX2_F))))) {
     u = vrint_vf_vf(d * $f32x::splat(2. * M_1_PI_F));
     q = vrint_vi2_vf(u);
     v = u.mla($f32x::splat(-PI_A2_F*0.5), d);
@@ -865,14 +863,14 @@ pub fn xtanf_u1(d: $f32x) -> $f32x {
     q = dfii;
     s = dfidf;
     o = visinf_vo_vf(d) | visnan_vo_vf(d);
-    s.0 = vreinterpret_vf_vm(vor_vm_vo32_vm(o, vreinterpret_vm_vf(s.0)));
-    s.1 = vreinterpret_vf_vm(vor_vm_vo32_vm(o, vreinterpret_vm_vf(s.1)));
+    s.0 = $f32x::from(vor_vm_vo32_vm(o, $mx::from(s.0)));
+    s.1 = $f32x::from(vor_vm_vo32_vm(o, $mx::from(s.1)));
   }
 
-  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, $ix2::splat(1)), $ix2::splat(1));
-  vmask n = vand_vm_vo32_vm(o, vreinterpret_vm_vf($f32x::splat(-0.)));
-  s.0 = vreinterpret_vf_vm(vxor_vm_vm_vm(vreinterpret_vm_vf(s.0), n));
-  s.1 = vreinterpret_vf_vm(vxor_vm_vm_vm(vreinterpret_vm_vf(s.1), n));
+  o = (q & $ix2::splat(1)).eq($ix2::splat(1));
+  vmask n = vand_vm_vo32_vm(o, $mx::from($f32x::splat(-0.)));
+  s.0 = $f32x::from($mx::from(s.0) ^ n);
+  s.1 = $f32x::from($mx::from(s.1) ^ n);
 
   t = s;
   s = s.square();
@@ -902,10 +900,10 @@ pub fn xatanf(d: $f32x) -> $f32x {
   $ix2 q;
 
   q = vsel_vi2_vf_vi2(d, $ix2::splat(2));
-  s = vabs_vf_vf(d);
+  s = d.abs();
 
-  q = vsel_vi2_vf_vf_vi2_vi2($f32x::splat(1.), s, vadd_vi2_vi2_vi2(q, $ix2::splat(1)), q);
-  s = vsel_vf_vo_vf_vf($f32x::splat(1.).lt(s), vrec_vf_vf(s), s);
+  q = vsel_vi2_vf_vf_vi2_vi2($f32x::splat(1.), s, (q + $ix2::splat(1)), q);
+  s = vsel_vf_vo_vf_vf($f32x::splat(1.).lt(s), s.rec(), s);
 
   t = s * s;
 
@@ -920,9 +918,9 @@ pub fn xatanf(d: $f32x) -> $f32x {
 
   t = s.mla(t * u, s);
 
-  t = vsel_vf_vo_vf_vf(veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, $ix2::splat(1)), $ix2::splat(1)), $f32x::splat(M_PI_F/2.) - t, t);
+  t = vsel_vf_vo_vf_vf((q & $ix2::splat(1)).eq($ix2::splat(1)), $f32x::splat(M_PI_F/2.) - t, t);
 
-  t = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, $ix2::splat(2)), $ix2::splat(2)), vreinterpret_vm_vf($f32x::splat(-0.))), vreinterpret_vm_vf(t)));
+  t = $f32x::from(vand_vm_vo32_vm((q & $ix2::splat(2)).eq($ix2::splat(2)), $mx::from($f32x::splat(-0.))) ^ $mx::from(t));
 
 #if defined(ENABLE_NEON32) || defined(ENABLE_NEON32VFPV4)
   t = vsel_vf_vo_vf_vf(visinf_vo_vf(d), vmulsign_vf_vf_vf($f32x::splat(1.5874010519681994747517056), d), t);
@@ -937,9 +935,9 @@ fn atan2kf(y: $f32x, x: $f32x) -> $f32x {
   $mox p;
 
   q = vsel_vi2_vf_vi2(x, $ix2::splat(-2));
-  x = vabs_vf_vf(x);
+  x = x.abs();
 
-  q = vsel_vi2_vf_vf_vi2_vi2(x, y, vadd_vi2_vi2_vi2(q, $ix2::splat(1)), q);
+  q = vsel_vi2_vf_vf_vi2_vi2(x, y, q + $ix2::splat(1), q);
   p = x.lt(y);
   s = vsel_vf_vo_vf_vf(p, -x, y);
   t = x.max(y);
@@ -963,26 +961,26 @@ fn atan2kf(y: $f32x, x: $f32x) -> $f32x {
 }
 #[inline]
 fn visinf2_vf_vf_vf(d: $f32x, m: $f32x) -> $f32x {
-  return vreinterpret_vf_vm(vand_vm_vo32_vm(visinf_vo_vf(d), vor_vm_vm_vm(vsignbit_vm_vf(d), vreinterpret_vm_vf(m))));
+  $f32x::from(vand_vm_vo32_vm(visinf_vo_vf(d), vsignbit_vm_vf(d) | $mx::from(m)))
 }
 
 pub fn xatan2f(y: $f32x, x: $f32x) -> $f32x {
-  $f32x r = atan2kf(vabs_vf_vf(y), x);
+  $f32x r = atan2kf(y.abs(), x);
 
   r = vmulsign_vf_vf_vf(r, x);
   r = vsel_vf_vo_vf_vf(visinf_vo_vf(x) | x.eq($f32x::splat(0.)), $f32x::splat(M_PI_F/2.) - visinf2_vf_vf_vf(x, vmulsign_vf_vf_vf($f32x::splat(M_PI_F/2.), x)), r);
   r = vsel_vf_vo_vf_vf(visinf_vo_vf(y), $f32x::splat(M_PI_F/2.) - visinf2_vf_vf_vf(x, vmulsign_vf_vf_vf($f32x::splat(M_PI_F/4.), x)), r);
 
-  r = vsel_vf_vo_vf_vf(y.eq($f32x::splat(0.)), vreinterpret_vf_vm(vand_vm_vo32_vm(vsignbit_vo_vf(x), vreinterpret_vm_vf($f32x::splat(M_PI_F)))), r);
+  r = vsel_vf_vo_vf_vf(y.eq($f32x::splat(0.)), $f32x::from(vand_vm_vo32_vm(vsignbit_vo_vf(x), $mx::from($f32x::splat(M_PI_F)))), r);
 
-  r = vreinterpret_vf_vm(vor_vm_vo32_vm(visnan_vo_vf(x) | visnan_vo_vf(y), vreinterpret_vm_vf(vmulsign_vf_vf_vf(r, y))));
+  r = $f32x::from(vor_vm_vo32_vm(visnan_vo_vf(x) | visnan_vo_vf(y), $mx::from(vmulsign_vf_vf_vf(r, y))));
   return r;
 }
 
 pub fn xasinf(d: $f32x) -> $f32x {
-  $mox o = vabs_vf_vf(d).lt($f32x::splat(0.5));
-  $f32x x2 = vsel_vf_vo_vf_vf(o, d * d, ($f32x::splat(1.) - vabs_vf_vf(d)) * $f32x::splat(0.5));
-  $f32x x = vsel_vf_vo_vf_vf(o, vabs_vf_vf(d), vsqrt_vf_vf(x2)), u;
+  $mox o = d.abs().lt($f32x::splat(0.5));
+  $f32x x2 = vsel_vf_vo_vf_vf(o, d * d, ($f32x::splat(1.) - d.abs()) * $f32x::splat(0.5));
+  $f32x x = vsel_vf_vo_vf_vf(o, d.abs(), vsqrt_vf_vf(x2)), u;
 
   u = $f32x::splat(+0.4197454825e-1)
       .mla(x2, $f32x::splat(+0.2424046025e-1))
@@ -996,11 +994,11 @@ pub fn xasinf(d: $f32x) -> $f32x {
 }
 
 pub fn xacosf(d: $f32x) -> $f32x {
-  $mox o = vabs_vf_vf(d).lt($f32x::splat(0.5));
+  $mox o = d.abs().lt($f32x::splat(0.5));
   $f32x x2 = vsel_vf_vo_vf_vf(o, d * d,
-				($f32x::splat(1.) - vabs_vf_vf(d)) * $f32x::splat(0.5)), u;
-  $f32x x = vsel_vf_vo_vf_vf(o, vabs_vf_vf(d), vsqrt_vf_vf(x2));
-  x = vsel_vf_vo_vf_vf(vabs_vf_vf(d).eq($f32x::splat(1.)), $f32x::splat(0.), x);
+				($f32x::splat(1.) - d.abs()) * $f32x::splat(0.5)), u;
+  $f32x x = vsel_vf_vo_vf_vf(o, d.abs(), vsqrt_vf_vf(x2));
+  x = vsel_vf_vo_vf_vf(d.abs().eq($f32x::splat(1.)), $f32x::splat(0.), x);
 
   u = $f32x::splat(+0.4197454825e-1)
       .mla(x2, $f32x::splat(+0.2424046025e-1))
@@ -1018,7 +1016,7 @@ pub fn xacosf(d: $f32x) -> $f32x {
 
 //
 #[inline]
-fn atan2kf_u1(F2 y, F2 x) -> F2 {
+fn atan2kf_u1(y: F2<$f32x>, x: F2<$f32x>) -> F2<$f32x> {
   $f32x u;
   F2 s, t;
   $ix2 q;
@@ -1027,11 +1025,11 @@ fn atan2kf_u1(F2 y, F2 x) -> F2 {
   
   q = vsel_vi2_vf_vf_vi2_vi2(x.0, $f32x::splat(0.), $ix2::splat(-2), $ix2::splat(0));
   p = x.0.lt($f32x::splat(0.));
-  r = vand_vm_vo32_vm(p, vreinterpret_vm_vf($f32x::splat(-0.)));
-  x.0 = vreinterpret_vf_vm(vxor_vm_vm_vm(vreinterpret_vm_vf(x.0), r));
-  x.1 = vreinterpret_vf_vm(vxor_vm_vm_vm(vreinterpret_vm_vf(x.1), r));
+  r = vand_vm_vo32_vm(p, $mx::from($f32x::splat(-0.)));
+  x.0 = $f32x::from($mx::from(x.0) ^ r);
+  x.1 = $f32x::from($mx::from(x.1) ^ r);
 
-  q = vsel_vi2_vf_vf_vi2_vi2(x.0, y.0, vadd_vi2_vi2_vi2(q, $ix2::splat(1)), q);
+  q = vsel_vi2_vf_vf_vi2_vi2(x.0, y.0, q + $ix2::splat(1), q);
   p = x.0.lt(y.0);
   s = vsel_vf2_vo_vf2_vf2(p, -x, y);
   t = vsel_vf2_vo_vf2_vf2(p, y, x);
@@ -1057,27 +1055,27 @@ fn atan2kf_u1(F2 y, F2 x) -> F2 {
 }
 
 pub fn xatan2f_u1(y: $f32x, x: $f32x) -> $f32x {
-  $mox o = vabs_vf_vf(x).lt($f32x::splat(2.9387372783541830947e-39)); // nexttowardf((1.0 / FLT_MAX), 1)
+  $mox o = x.abs().lt($f32x::splat(2.9387372783541830947e-39)); // nexttowardf((1.0 / FLT_MAX), 1)
   x = vsel_vf_vo_vf_vf(o, x * $f32x::splat(F1_24), x);
   y = vsel_vf_vo_vf_vf(o, y * $f32x::splat(F1_24), y);
   
-  F2 d = atan2kf_u1(F2::new(vabs_vf_vf(y), $f32x::splat(0.)), F2::new(x, $f32x::splat(0.)));
+  F2 d = atan2kf_u1(F2::new(y.abs(), $f32x::splat(0.)), F2::new(x, $f32x::splat(0.)));
   $f32x r = d.0 + d.1;
 
   r = vmulsign_vf_vf_vf(r, x);
   r = vsel_vf_vo_vf_vf(visinf_vo_vf(x) | x.eq($f32x::splat(0.)), $f32x::splat(M_PI_F/2.) - visinf2_vf_vf_vf(x, vmulsign_vf_vf_vf($f32x::splat(M_PI_F/2.), x)), r);
   r = vsel_vf_vo_vf_vf(visinf_vo_vf(y), $f32x::splat(M_PI_F/2.) - visinf2_vf_vf_vf(x, vmulsign_vf_vf_vf($f32x::splat(M_PI_F/4.), x)), r);
-  r = vsel_vf_vo_vf_vf(y.eq($f32x::splat(0.)), vreinterpret_vf_vm(vand_vm_vo32_vm(vsignbit_vo_vf(x), vreinterpret_vm_vf($f32x::splat(M_PI_F)))), r);
+  r = vsel_vf_vo_vf_vf(y.eq($f32x::splat(0.)), $f32x::from(vand_vm_vo32_vm(vsignbit_vo_vf(x), $mx::from($f32x::splat(M_PI_F)))), r);
 
-  r = vreinterpret_vf_vm(vor_vm_vo32_vm(visnan_vo_vf(x) | visnan_vo_vf(y), vreinterpret_vm_vf(vmulsign_vf_vf_vf(r, y))));
+  r = $f32x::from(vor_vm_vo32_vm(visnan_vo_vf(x) | visnan_vo_vf(y), $mx::from(vmulsign_vf_vf_vf(r, y))));
   return r;
 }
 
 pub fn xasinf_u1(d: $f32x) -> $f32x {
-  $mox o = vabs_vf_vf(d).lt($f32x::splat(0.5));
-  $f32x x2 = vsel_vf_vo_vf_vf(o, d * d, ($f32x::splat(1.) - vabs_vf_vf(d)) * $f32x::splat(0.5)), u;
-  F2 x = vsel_vf2_vo_vf2_vf2(o, F2::new(vabs_vf_vf(d), $f32x::splat(0.)), x2.sqrt_as_d2());
-  x = vsel_vf2_vo_vf2_vf2(vabs_vf_vf(d).eq($f32x::splat(1.)), F2::from((0., 0.)), x);
+  $mox o = d.abs().lt($f32x::splat(0.5));
+  $f32x x2 = vsel_vf_vo_vf_vf(o, d * d, ($f32x::splat(1.) - d.abs()) * $f32x::splat(0.5)), u;
+  F2 x = vsel_vf2_vo_vf2_vf2(o, F2::new(d.abs(), $f32x::splat(0.)), x2.sqrt_as_d2());
+  x = vsel_vf2_vo_vf2_vf2(d.abs().eq($f32x::splat(1.)), F2::from((0., 0.)), x);
 
   u = $f32x::splat(+0.4197454825e-1)
       .mla(x2, $f32x::splat(+0.2424046025e-1))
@@ -1094,11 +1092,11 @@ pub fn xasinf_u1(d: $f32x) -> $f32x {
 }
 
 pub fn xacosf_u1(d: $f32x) -> $f32x {
-  $mox o = vabs_vf_vf(d).lt($f32x::splat(0.5));
-  $f32x x2 = vsel_vf_vo_vf_vf(o, d * d, ($f32x::splat(1.) - vabs_vf_vf(d)) * $f32x::splat(0.5));
+  $mox o = d.abs().lt($f32x::splat(0.5));
+  $f32x x2 = vsel_vf_vo_vf_vf(o, d * d, ($f32x::splat(1.) - d.abs()) * $f32x::splat(0.5));
    u;
-  F2 x = vsel_vf2_vo_vf2_vf2(o, F2::new(vabs_vf_vf(d), $f32x::splat(0.)), x2.sqrt_as_d2());
-  x = vsel_vf2_vo_vf2_vf2(vabs_vf_vf(d).eq($f32x::splat(1.)), F2::from((0., 0.)), x);
+  F2 x = vsel_vf2_vo_vf2_vf2(o, F2::new(d.abs(), $f32x::splat(0.)), x2.sqrt_as_d2());
+  x = vsel_vf2_vo_vf2_vf2(d.abs().eq($f32x::splat(1.)), F2::from((0., 0.)), x);
 
   u = $f32x::splat(+0.4197454825e-1)
       .mla(x2, $f32x::splat(+0.2424046025e-1))
@@ -1120,7 +1118,7 @@ pub fn xacosf_u1(d: $f32x) -> $f32x {
 }
 
 pub fn xatanf_u1(d: $f32x) -> $f32x {
-  F2 d2 = atan2kf_u1(F2::new(vabs_vf_vf(d), $f32x::splat(0.)), F2::from((1., 0.)));
+  F2 d2 = atan2kf_u1(F2::new(d.abs(), $f32x::splat(0.)), F2::from((1., 0.)));
   $f32x r = d2.0 + d2.1;
   r = vsel_vf_vo_vf_vf(visinf_vo_vf(d), $f32x::splat(1.570796326794896557998982), r);
   return vmulsign_vf_vf_vf(r, d);
@@ -1135,8 +1133,8 @@ pub fn xlogf(d: $f32x) -> $f32x {
   $mox o = d.lt($f32x::splat(f32::MIN));
   d = vsel_vf_vo_vf_vf(o, d * $f32x::splat(F1_32 * F1_32), d);
   $ix2 e = vilogb2k_vi2_vf(d * $f32x::splat(1./0.75));
-  m = vldexp3_vf_vf_vi2(d, vneg_vi2_vi2(e));
-  e = vsel_vi2_vo_vi2_vi2(o, vsub_vi2_vi2_vi2(e, $ix2::splat(64)), e);
+  m = vldexp3_vf_vf_vi2(d, -e);
+  e = vsel_vi2_vo_vi2_vi2(o, e - $ix2::splat(64), e);
 #else
   $f32x e = vgetexp_vf_vf(d * $f32x::splat(1./0.75));
   e = vsel_vf_vo_vf_vf(vispinf_vo_vf(e), $f32x::splat(128.), e);
@@ -1183,7 +1181,7 @@ pub fn xexpf(d: $f32x) -> $f32x {
 
   u = vldexp2_vf_vf_vi2(u, q);
 
-  u = vreinterpret_vf_vm(vandnot_vm_vo32_vm(d.lt($f32x::splat(-104.)), vreinterpret_vm_vf(u)));
+  u = $f32x::from(vandnot_vm_vo32_vm(d.lt($f32x::splat(-104.)), $mx::from(u)));
   u = vsel_vf_vo_vf_vf($f32x::splat(100.).lt(d), $f32x::splat(SLEEF_INFINITY_F), u);
 
   return u;
@@ -1205,7 +1203,7 @@ fn expm1fk(d: $f32x) -> $f32x {
 
   u = (s * s).mla(u, s);
 
-  u = vsel_vf_vo_vf_vf(veq_vo_vi2_vi2(q, $ix2::splat(0)), u,
+  u = vsel_vf_vo_vf_vf(q.eq($ix2::splat(0)), u,
 		       vldexp2_vf_vf_vi2(u + $f32x::splat(1.), q) - $f32x::splat(1.));
 
   return u;
@@ -1213,17 +1211,17 @@ fn expm1fk(d: $f32x) -> $f32x {
 
 #if defined(ENABLE_NEON32) || defined(ENABLE_NEON32VFPV4)
 pub fn xsqrtf_u35(d: $f32x) -> $f32x {
-  $f32x e = vreinterpret_vf_vi2(vadd_vi2_vi2_vi2($ix2::splat(0x20000000), vand_vi2_vi2_vi2($ix2::splat(0x7f000000), vsrl_vi2_vi2_i(vreinterpret_vi2_vf(d), 1))));
-  $f32x m = vreinterpret_vf_vi2(vadd_vi2_vi2_vi2($ix2::splat(0x3f000000), vand_vi2_vi2_vi2($ix2::splat(0x01ffffff), vreinterpret_vi2_vf(d))));
+  $f32x e = $f32x::from($ix2::splat(0x20000000) + ($ix2::splat(0x7f000000) & vsrl_vi2_vi2_i($ix2::from(d), 1)));
+  $f32x m = $f32x::from($ix2::splat(0x3f000000) + ($ix2::splat(0x01ffffff) & $ix2::from(d)));
   float32x4_t x = vrsqrteq_f32(m);
   x = vmulq_f32(x, vrsqrtsq_f32(m, vmulq_f32(x, x)));
   float32x4_t u = vmulq_f32(x, m);
   u = vmlaq_f32(u, vmlsq_f32(m, u, u), vmulq_f32(x, vdupq_n_f32(0.5)));
-  e = vreinterpret_vf_vm(vandnot_vm_vo32_vm(d.eq($f32x::splat(0.)), vreinterpret_vm_vf(e)));
+  e = $f32x::from(vandnot_vm_vo32_vm(d.eq($f32x::splat(0.)), $mx::from(e)));
   u = e * u;
 
   u = vsel_vf_vo_vf_vf(visinf_vo_vf(d), $f32x::splat(SLEEF_INFINITY_F), u);
-  u = vreinterpret_vf_vm(vor_vm_vo32_vm(visnan_vo_vf(d) | d.lt($f32x::splat(0.)), vreinterpret_vm_vf(u)));
+  u = $f32x::from(vor_vm_vo32_vm(visnan_vo_vf(d) | d.lt($f32x::splat(0.)), $mx::from(u)));
   u = vmulsign_vf_vf_vf(u, d);
 
   return u;
@@ -1245,19 +1243,19 @@ pub fn xcbrtf(d: $f32x) -> $f32x {
 #if defined(ENABLE_AVX512F) || defined(ENABLE_AVX512FNOFMA)
   $f32x s = d;
 #endif
-  e = vadd_vi2_vi2_vi2(vilogbk_vi2_vf(vabs_vf_vf(d)), $ix2::splat(1));
-  d = vldexp2_vf_vf_vi2(d, vneg_vi2_vi2(e));
+  e = vilogbk_vi2_vf(d.abs()) + $ix2::splat(1);
+  d = vldexp2_vf_vf_vi2(d, -e);
 
   t = $f32x::from(e) + $f32x::splat(6144.);
   qu = vtruncate_vi2_vf(t * $f32x::splat(1./3.));
   re = vtruncate_vi2_vf(t - $f32x::from(qu) * $f32x::splat(3.));
 
-  q = vsel_vf_vo_vf_vf(veq_vo_vi2_vi2(re, $ix2::splat(1)), $f32x::splat(1.2599210498948731647672106), q);
-  q = vsel_vf_vo_vf_vf(veq_vo_vi2_vi2(re, $ix2::splat(2)), $f32x::splat(1.5874010519681994747517056), q);
-  q = vldexp2_vf_vf_vi2(q, vsub_vi2_vi2_vi2(qu, $ix2::splat(2048)));
+  q = vsel_vf_vo_vf_vf(re.eq($ix2::splat(1)), $f32x::splat(1.2599210498948731647672106), q);
+  q = vsel_vf_vo_vf_vf(re.eq($ix2::splat(2)), $f32x::splat(1.5874010519681994747517056), q);
+  q = vldexp2_vf_vf_vi2(q, qu - $ix2::splat(2048));
 
   q = vmulsign_vf_vf_vf(q, d);
-  d = vabs_vf_vf(d);
+  d = d.abs();
 
   x = $f32x::splat(-0.601564466953277587890625)
       .mla(d, $f32x::splat(2.8208892345428466796875))
@@ -1286,18 +1284,18 @@ pub fn xcbrtf_u1(d: $f32x) -> $f32x {
 #if defined(ENABLE_AVX512F) || defined(ENABLE_AVX512FNOFMA)
   $f32x s = d;
 #endif
-  e = vadd_vi2_vi2_vi2(vilogbk_vi2_vf(vabs_vf_vf(d)), $ix2::splat(1));
-  d = vldexp2_vf_vf_vi2(d, vneg_vi2_vi2(e));
+  e = vilogbk_vi2_vf(d.abs()) + $ix2::splat(1);
+  d = vldexp2_vf_vf_vi2(d, -e);
 
   t = $f32x::from(e) + $f32x::splat(6144.);
   qu = vtruncate_vi2_vf(t * $f32x::splat(1./3.));
   re = vtruncate_vi2_vf(t - $f32x::from(qu) * $f32x::splat(3.));
 
-  q2 = vsel_vf2_vo_vf2_vf2(veq_vo_vi2_vi2(re, $ix2::splat(1)), F2::from((1.2599210739135742188, -2.4018701694217270415e-08)), q2);
-  q2 = vsel_vf2_vo_vf2_vf2(veq_vo_vi2_vi2(re, $ix2::splat(2)), F2::from((1.5874010324478149414,  1.9520385308169352356e-08)), q2);
+  q2 = vsel_vf2_vo_vf2_vf2(re.eq($ix2::splat(1)), F2::from((1.2599210739135742188, -2.4018701694217270415e-08)), q2);
+  q2 = vsel_vf2_vo_vf2_vf2(re.eq($ix2::splat(2)), F2::from((1.5874010324478149414,  1.9520385308169352356e-08)), q2);
 
   q2.0 = vmulsign_vf_vf_vf(q2.0, d); q2.1 = vmulsign_vf_vf_vf(q2.1, d);
-  d = vabs_vf_vf(d);
+  d = d.abs();
 
   x = $f32x::splat(-0.601564466953277587890625)
       .mla(d, $f32x::splat(2.8208892345428466796875))
@@ -1322,10 +1320,10 @@ pub fn xcbrtf_u1(d: $f32x) -> $f32x {
   v = z.mul_as_f2(z) + y;
   v *= d;
   v *= q2;
-  z = vldexp2_vf_vf_vi2(v.0 + v.1, vsub_vi2_vi2_vi2(qu, $ix2::splat(2048)));
+  z = vldexp2_vf_vf_vi2(v.0 + v.1, qu - $ix2::splat(2048));
 
   z = vsel_vf_vo_vf_vf(visinf_vo_vf(d), vmulsign_vf_vf_vf($f32x::splat(SLEEF_INFINITY_F), q2.0), z);
-  z = vsel_vf_vo_vf_vf(d.eq($f32x::splat(0.)), vreinterpret_vf_vm(vsignbit_vm_vf(q2.0)), z);
+  z = vsel_vf_vo_vf_vf(d.eq($f32x::splat(0.)), $f32x::from(vsignbit_vm_vf(q2.0)), z);
 
 #if defined(ENABLE_AVX512F) || defined(ENABLE_AVX512FNOFMA)
   z = vsel_vf_vo_vf_vf(visinf_vo_vf(s), vmulsign_vf_vf_vf($f32x::splat(SLEEF_INFINITY_F), s), z);
@@ -1335,7 +1333,7 @@ pub fn xcbrtf_u1(d: $f32x) -> $f32x {
   return z;
 }
 #[inline]
-fn logkf(d: $f32x) -> F2 {
+fn logkf(d: $f32x) -> F2<$f32x> {
   F2 x, x2;
   $f32x t, m;
 
@@ -1343,8 +1341,8 @@ fn logkf(d: $f32x) -> F2 {
   $mox o = d.lt($f32x::splat(f32::MIN));
   d = vsel_vf_vo_vf_vf(o, d * $f32x::splat(F1_32 * F1_32), d);
   $ix2 e = vilogb2k_vi2_vf(d * $f32x::splat(1./0.75));
-  m = vldexp3_vf_vf_vi2(d, vneg_vi2_vi2(e));
-  e = vsel_vi2_vo_vi2_vi2(o, vsub_vi2_vi2_vi2(e, $ix2::splat(64)), e);
+  m = vldexp3_vf_vf_vi2(d, -e);
+  e = vsel_vi2_vo_vi2_vi2(o, e - $ix2::splat(64), e);
 #else
   $f32x e = vgetexp_vf_vf(d * $f32x::splat(1./0.75));
   e = vsel_vf_vo_vf_vf(vispinf_vo_vf(e), $f32x::splat(128.), e);
@@ -1378,8 +1376,8 @@ pub fn xlogf_u1(d: $f32x) -> $f32x {
   $mox o = d.lt($f32x::splat(f32::MIN));
   d = vsel_vf_vo_vf_vf(o, d * $f32x::splat(F1_32 * F1_32), d);
   $ix2 e = vilogb2k_vi2_vf(d * $f32x::splat(1./0.75));
-  m = vldexp3_vf_vf_vi2(d, vneg_vi2_vi2(e));
-  e = vsel_vi2_vo_vi2_vi2(o, vsub_vi2_vi2_vi2(e, $ix2::splat(64)), e);
+  m = vldexp3_vf_vf_vi2(d, -e);
+  e = vsel_vi2_vo_vi2_vi2(o, e - $ix2::splat(64), e);
   F2 s = F2::from((0.69314718246459960938, -1.904654323148236017e-09)) * $f32x::from(e);
 #else
   $f32x e = vgetexp_vf_vf(d * $f32x::splat(1./0.75));
@@ -1411,7 +1409,7 @@ pub fn xlogf_u1(d: $f32x) -> $f32x {
   return r;
 }
 #[inline]
-fn expkf(F2 d) -> $f32x {
+fn expkf(d: F2<$f32x>) -> $f32x {
   $f32x u = (d.0 + d.1) * $f32x::splat(R_LN2_F);
   $ix2 q = vrint_vi2_vf(u);
   F2 s, t;
@@ -1433,22 +1431,22 @@ fn expkf(F2 d) -> $f32x {
   u = t.0 + t.1;
   u = vldexp_vf_vf_vi2(u, q);
 
-  u = vreinterpret_vf_vm(vandnot_vm_vo32_vm(d.0.lt($f32x::splat(-104.)), vreinterpret_vm_vf(u)));
+  u = $f32x::from(vandnot_vm_vo32_vm(d.0.lt($f32x::splat(-104.)), $mx::from(u)));
   
   return u;
 }
 
 pub fn xpowf(x: $f32x, y: $f32x) -> $f32x {
 #if 1
-  $mox yisint = vtruncate_vf_vf(y).eq(y) | vabs_vf_vf(y).gt($f32x::splat(F1_24));
-  $mox yisodd = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(vtruncate_vi2_vf(y), $ix2::splat(1)), $ix2::splat(1)) & yisint &
-				 vabs_vf_vf(y).lt($f32x::splat(F1_24));
+  $mox yisint = vtruncate_vf_vf(y).eq(y) | y.abs().gt($f32x::splat(F1_24));
+  $mox yisodd = (vtruncate_vi2_vf(y) & $ix2::splat(1)).eq($ix2::splat(1)) & yisint &
+				 y.abs().lt($f32x::splat(F1_24));
 
 #if defined(ENABLE_NEON32) || defined(ENABLE_NEON32VFPV4)
   yisodd = vandnot_vm_vo32_vm(visinf_vo_vf(y), yisodd);
 #endif
 
-  $f32x result = expkf(logkf(vabs_vf_vf(x)) * y);
+  $f32x result = expkf(logkf(x.abs()) * y);
 
   result = vsel_vf_vo_vf_vf(visnan_vo_vf(result), $f32x::splat(SLEEF_INFINITY_F), result);
   
@@ -1456,22 +1454,22 @@ pub fn xpowf(x: $f32x, y: $f32x) -> $f32x {
 					  $f32x::splat(1.),
 					  vsel_vf_vo_vf_vf(yisint, vsel_vf_vo_vf_vf(yisodd, $f32x::splat(-1.), $f32x::splat(1.)), $f32x::splat(SLEEF_NAN_F)));
 
-  $f32x efx = vmulsign_vf_vf_vf(vabs_vf_vf(x) - $f32x::splat(1.), y);
+  $f32x efx = vmulsign_vf_vf_vf(x.abs() - $f32x::splat(1.), y);
 
   result = vsel_vf_vo_vf_vf(visinf_vo_vf(y),
-			    vreinterpret_vf_vm(vandnot_vm_vo32_vm(efx.lt($f32x::splat(0.)),
-								  vreinterpret_vm_vf(vsel_vf_vo_vf_vf(efx.eq($f32x::splat(0.)),
+			    $f32x::from(vandnot_vm_vo32_vm(efx.lt($f32x::splat(0.)),
+								  $mx::from(vsel_vf_vo_vf_vf(efx.eq($f32x::splat(0.)),
 												      $f32x::splat(1.),
 												      $f32x::splat(SLEEF_INFINITY_F))))),
 			    result);
 
   result = vsel_vf_vo_vf_vf(visinf_vo_vf(x) | x.eq($f32x::splat(0.)),
 			    vsel_vf_vo_vf_vf(yisodd, vsign_vf_vf(x), $f32x::splat(1.)) *
-					  vreinterpret_vf_vm(vandnot_vm_vo32_vm(vsel_vf_vo_vf_vf(x.eq($f32x::splat(0.)), -y, y).lt($f32x::splat(0.)),
-										vreinterpret_vm_vf($f32x::splat(SLEEF_INFINITY_F)))),
+					  $f32x::from(vandnot_vm_vo32_vm(vsel_vf_vo_vf_vf(x.eq($f32x::splat(0.)), -y, y).lt($f32x::splat(0.)),
+										$mx::from($f32x::splat(SLEEF_INFINITY_F)))),
 			    result);
 
-  result = vreinterpret_vf_vm(vor_vm_vo32_vm(visnan_vo_vf(x) | visnan_vo_vf(y), vreinterpret_vm_vf(result)));
+  result = $f32x::from(vor_vm_vo32_vm(visnan_vo_vf(x) | visnan_vo_vf(y), $mx::from(result)));
 
   result = vsel_vf_vo_vf_vf(y.eq($f32x::splat(0.)) | x.eq($f32x::splat(1.)), $f32x::splat(1.), result);
 
@@ -1481,7 +1479,7 @@ pub fn xpowf(x: $f32x, y: $f32x) -> $f32x {
 #endif
 }
 #[inline]
-fn expk2f(F2 d) -> F2 {
+fn expk2f(d: F2<$f32x>) -> F2<$f32x> {
   $f32x u = (d.0 + d.1) * $f32x::splat(R_LN2_F);
   $ix2 q = vrint_vi2_vf(u);
   F2 s, t;
@@ -1503,101 +1501,89 @@ fn expk2f(F2 d) -> F2 {
   t.0 = vldexp2_vf_vf_vi2(t.0, q);
   t.1 = vldexp2_vf_vf_vi2(t.1, q);
 
-  t.0 = vreinterpret_vf_vm(vandnot_vm_vo32_vm(d.0.lt($f32x::splat(-104.)), vreinterpret_vm_vf(t.0)));
-  t.1 = vreinterpret_vf_vm(vandnot_vm_vo32_vm(d.0.lt($f32x::splat(-104.)), vreinterpret_vm_vf(t.1)));
+  t.0 = $f32x::from(vandnot_vm_vo32_vm(d.0.lt($f32x::splat(-104.)), $mx::from(t.0)));
+  t.1 = $f32x::from(vandnot_vm_vo32_vm(d.0.lt($f32x::splat(-104.)), $mx::from(t.1)));
 
-  return t;
+  t
 }
 
 pub fn xsinhf(x: $f32x) -> $f32x {
-  $f32x y = vabs_vf_vf(x);
+  $f32x y = x.abs();
   F2 d = expk2f(F2::new(y, $f32x::splat(0.)));
   d = d.sub_checked(d.rec());
   y = (d.0 + d.1) * $f32x::splat(0.5);
 
-  y = vsel_vf_vo_vf_vf(vabs_vf_vf(x).gt($f32x::splat(89.)) |
+  y = vsel_vf_vo_vf_vf(x.abs().gt($f32x::splat(89.)) |
 				    visnan_vo_vf(y), $f32x::splat(SLEEF_INFINITY_F), y);
   y = vmulsign_vf_vf_vf(y, x);
-  y = vreinterpret_vf_vm(vor_vm_vo32_vm(visnan_vo_vf(x), vreinterpret_vm_vf(y)));
-
-  return y;
+  $f32x::from(vor_vm_vo32_vm(visnan_vo_vf(x), $mx::from(y)))
 }
 
 pub fn xcoshf(x: $f32x) -> $f32x {
-  $f32x y = vabs_vf_vf(x);
+  $f32x y = x.abs();
   F2 d = expk2f(F2::new(y, $f32x::splat(0.)));
   d = d.add_checked(d.rec());
   y = (d.0 + d.1) * $f32x::splat(0.5);
 
-  y = vsel_vf_vo_vf_vf(vabs_vf_vf(x).gt($f32x::splat(89.)) |
+  y = vsel_vf_vo_vf_vf(x.abs().gt($f32x::splat(89.)) |
 				    visnan_vo_vf(y), $f32x::splat(SLEEF_INFINITY_F), y);
-  y = vreinterpret_vf_vm(vor_vm_vo32_vm(visnan_vo_vf(x), vreinterpret_vm_vf(y)));
-
-  return y;
+  $f32x::from(vor_vm_vo32_vm(visnan_vo_vf(x), $mx::from(y)))
 }
 
 pub fn xtanhf(x: $f32x) -> $f32x {
-  $f32x y = vabs_vf_vf(x);
+  $f32x y = x.abs();
   F2 d = expk2f(F2::new(y, $f32x::splat(0.)));
   F2 e = d.rec();
   d = d.add_checked(-e) / d.add_checked(e);
   y = d.0 + d.1;
 
-  y = vsel_vf_vo_vf_vf(vabs_vf_vf(x).gt($f32x::splat(8.664339742)) |
+  y = vsel_vf_vo_vf_vf(x.abs().gt($f32x::splat(8.664339742)) |
 				    visnan_vo_vf(y), $f32x::splat(1.), y);
   y = vmulsign_vf_vf_vf(y, x);
-  y = vreinterpret_vf_vm(vor_vm_vo32_vm(visnan_vo_vf(x), vreinterpret_vm_vf(y)));
-
-  return y;
+  $f32x::from(vor_vm_vo32_vm(visnan_vo_vf(x), $mx::from(y)))
 }
 
 pub fn xsinhf_u35(x: $f32x) -> $f32x {
-  $f32x e = expm1fk(vabs_vf_vf(x));
+  $f32x e = expm1fk(x.abs());
   $f32x y = (e + $f32x::splat(2.)) / (e + $f32x::splat(1.));
   y *= $f32x::splat(0.5) * e;
 
-  y = vsel_vf_vo_vf_vf(vabs_vf_vf(x).gt($f32x::splat(88.)) |
+  y = vsel_vf_vo_vf_vf(x.abs().gt($f32x::splat(88.)) |
 				    visnan_vo_vf(y), $f32x::splat(SLEEF_INFINITY_F), y);
   y = vmulsign_vf_vf_vf(y, x);
-  y = vreinterpret_vf_vm(vor_vm_vo32_vm(visnan_vo_vf(x), vreinterpret_vm_vf(y)));
-
-  return y;
+  $f32x::from(vor_vm_vo32_vm(visnan_vo_vf(x), $mx::from(y)))
 }
 
 pub fn xcoshf_u35(x: $f32x) -> $f32x {
-  $f32x e = xexpf(vabs_vf_vf(x));
+  $f32x e = xexpf(x.abs());
   $f32x y = $f32x::splat(0.5).mla(e, $f32x::splat(0.5) / e);
 
-  y = vsel_vf_vo_vf_vf(vabs_vf_vf(x).gt($f32x::splat(88.)) |
+  y = vsel_vf_vo_vf_vf(x.abs().gt($f32x::splat(88.)) |
 				    visnan_vo_vf(y), $f32x::splat(SLEEF_INFINITY_F), y);
-  y = vreinterpret_vf_vm(vor_vm_vo32_vm(visnan_vo_vf(x), vreinterpret_vm_vf(y)));
-
-  return y;
+  $f32x::from(vor_vm_vo32_vm(visnan_vo_vf(x), $mx::from(y)))
 }
 
 pub fn xtanhf_u35(x: $f32x) -> $f32x {
-  $f32x d = expm1fk($f32x::splat(2.) * vabs_vf_vf(x));
+  $f32x d = expm1fk($f32x::splat(2.) * x.abs());
   $f32x y = d / ($f32x::splat(2.) + d);
 
-  y = vsel_vf_vo_vf_vf(vabs_vf_vf(x).gt($f32x::splat(8.664339742)) |
+  y = vsel_vf_vo_vf_vf(x.abs().gt($f32x::splat(8.664339742)) |
 				    visnan_vo_vf(y), $f32x::splat(1.), y);
   y = vmulsign_vf_vf_vf(y, x);
-  y = vreinterpret_vf_vm(vor_vm_vo32_vm(visnan_vo_vf(x), vreinterpret_vm_vf(y)));
-
-  return y;
+  $f32x::from(vor_vm_vo32_vm(visnan_vo_vf(x), $mx::from(y)))
 }
 #[inline]
-fn logk2f(F2 d) -> F2 {
+fn logk2f(d: F2<$f32x>) -> F2<$f32x> {
   F2 x, x2, m, s;
   $f32x t;
   $ix2 e;
 
-#if !defined(ENABLE_AVX512F) && !defined(ENABLE_AVX512FNOFMA)
-  e = vilogbk_vi2_vf(d.0 * $f32x::splat(1./0.75));
-#else
-  e = vrint_vi2_vf(vgetexp_vf_vf(d.0 * $f32x::splat(1./0.75)));
-#endif
-  m = d.scale(vpow2i_vf_vi2(vneg_vi2_vi2(e)));
+  if !cfg!(feature="enable_avx512f") && !cfg!(feature="enable_avx512fnofma") {
+    e = vilogbk_vi2_vf(d.0 * $f32x::splat(1./0.75));
+  } else {
+    e = vrint_vi2_vf(vgetexp_vf_vf(d.0 * $f32x::splat(1./0.75)));
+  }
+  m = d.scale(vpow2i_vf_vi2(-e));
 
   x = (m + $f32x::splat(-1.)) / ( m + $f32x::splat(1.));
   x2 = x.square();
@@ -1609,13 +1595,11 @@ fn logk2f(F2 d) -> F2 {
 
   s = F2::new($f32x::splat(0.69314718246459960938), $f32x::splat(-1.904654323148236017e-09)) * $f32x::from(e);
   s = s.add_checked(x.scale($f32x::splat(2.)));
-  s = s.add_checked(x2 * x * t);
-
-  return s;
+  s.add_checked(x2 * x * t)
 }
 
 pub fn xasinhf(x: $f32x) -> $f32x {
-  $f32x y = vabs_vf_vf(x);
+  $f32x y = x.abs();
   $mox o = y.gt($f32x::splat(1.));
   F2 d;
   
@@ -1626,41 +1610,35 @@ pub fn xasinhf(x: $f32x) -> $f32x {
   d = logk2f((d + x).normalize());
   y = d.0 + d.1;
 
-  y = vsel_vf_vo_vf_vf(vabs_vf_vf(x).gt($f32x::splat(SQRT_FLT_MAX)) |
+  y = vsel_vf_vo_vf_vf(x.abs().gt($f32x::splat(SQRT_FLT_MAX)) |
 				    visnan_vo_vf(y),
 		       vmulsign_vf_vf_vf($f32x::splat(SLEEF_INFINITY_F), x), y);
-  y = vreinterpret_vf_vm(vor_vm_vo32_vm(visnan_vo_vf(x), vreinterpret_vm_vf(y)));
-  y = vsel_vf_vo_vf_vf(visnegzero_vo_vf(x), $f32x::splat(-0.), y);
-
-  return y;
+  y = $f32x::from(vor_vm_vo32_vm(visnan_vo_vf(x), $mx::from(y)));
+  vsel_vf_vo_vf_vf(visnegzero_vo_vf(x), $f32x::splat(-0.), y)
 }
 
 pub fn xacoshf(x: $f32x) -> $f32x {
   F2 d = logk2f(x.add_as_f2($f32x::splat(1.)).sqrt() * x.add_as_f2($f32x::splat(-1.)).sqrt() + x);
   $f32x y = d.0 + d.1;
 
-  y = vsel_vf_vo_vf_vf(vabs_vf_vf(x).gt($f32x::splat(SQRT_FLT_MAX)) |
+  y = vsel_vf_vo_vf_vf(x.abs().gt($f32x::splat(SQRT_FLT_MAX)) |
 				    visnan_vo_vf(y),
 		       $f32x::splat(SLEEF_INFINITY_F), y);
 
-  y = vreinterpret_vf_vm(vandnot_vm_vo32_vm(x.eq($f32x::splat(1.)), vreinterpret_vm_vf(y)));
+  y = $f32x::from(vandnot_vm_vo32_vm(x.eq($f32x::splat(1.)), $mx::from(y)));
 
-  y = vreinterpret_vf_vm(vor_vm_vo32_vm(x.lt($f32x::splat(1.)), vreinterpret_vm_vf(y)));
-  y = vreinterpret_vf_vm(vor_vm_vo32_vm(visnan_vo_vf(x), vreinterpret_vm_vf(y)));
-
-  return y;
+  y = $f32x::from(vor_vm_vo32_vm(x.lt($f32x::splat(1.)), $mx::from(y)));
+  $f32x::from(vor_vm_vo32_vm(visnan_vo_vf(x), $mx::from(y)))
 }
 
 pub fn xatanhf(x: $f32x) -> $f32x {
-  $f32x y = vabs_vf_vf(x);
+  $f32x y = x.abs();
   F2 d = logk2f($f32x::splat(1.).add_as_f2(y) / $f32x::splat(1.).add_as_f2(-y));
-  y = vreinterpret_vf_vm(vor_vm_vo32_vm(y.gt($f32x::splat(1.)), vreinterpret_vm_vf(vsel_vf_vo_vf_vf(y.eq($f32x::splat(1.)), $f32x::splat(SLEEF_INFINITY_F), (d.0 + d.1) * $f32x::splat(0.5)))));
+  y = $f32x::from(vor_vm_vo32_vm(y.gt($f32x::splat(1.)), $mx::from(vsel_vf_vo_vf_vf(y.eq($f32x::splat(1.)), $f32x::splat(SLEEF_INFINITY_F), (d.0 + d.1) * $f32x::splat(0.5)))));
 
-  y = vreinterpret_vf_vm(vor_vm_vo32_vm(visinf_vo_vf(x) | visnan_vo_vf(y), vreinterpret_vm_vf(y)));
+  y = $f32x::from(vor_vm_vo32_vm(visinf_vo_vf(x) | visnan_vo_vf(y), $mx::from(y)));
   y = vmulsign_vf_vf_vf(y, x);
-  y = vreinterpret_vf_vm(vor_vm_vo32_vm(visnan_vo_vf(x), vreinterpret_vm_vf(y)));
-
-  return y;
+  $f32x::from(vor_vm_vo32_vm(visnan_vo_vf(x), $mx::from(y)))
 }
 
 pub fn xexp2f(d: $f32x) -> $f32x {
@@ -1676,18 +1654,16 @@ pub fn xexp2f(d: $f32x) -> $f32x {
       .mla(s, $f32x::splat(+0.2402264476e+0))
       .mla(s, $f32x::splat(+0.6931471825e+0));
 
-#ifdef ENABLE_FMA_SP
-  u = vfma_vf_vf_vf_vf(u, s, $f32x::splat(1.));
-#else
-  u = $f32x::splat(1.).add_checked(u.mul_as_f2(s)).normalize().0;
-#endif
+  if !cfg!(feature="enable_fma_sp") {
+    u = vfma_vf_vf_vf_vf(u, s, $f32x::splat(1.));
+  } else {
+    u = $f32x::splat(1.).add_checked(u.mul_as_f2(s)).normalize().0;
+  }
   
   u = vldexp2_vf_vf_vi2(u, q);
 
   u = vsel_vf_vo_vf_vf(d.ge($f32x::splat(128.)), $f32x::splat(SLEEF_INFINITY), u);
-  u = vreinterpret_vf_vm(vandnot_vm_vo32_vm(d.lt($f32x::splat(-150.)), vreinterpret_vm_vf(u)));
-
-  return u;
+  $f32x::from(vandnot_vm_vo32_vm(d.lt($f32x::splat(-150.)), $mx::from(u)))
 }
 
 pub fn xexp10f(d: $f32x) -> $f32x {
@@ -1704,18 +1680,16 @@ pub fn xexp10f(d: $f32x) -> $f32x {
       .mla(s, $f32x::splat(+0.2650948763e+1))
       .mla(s, $f32x::splat(+0.2302585125e+1));
 
-#ifdef ENABLE_FMA_SP
-  u = vfma_vf_vf_vf_vf(u, s, $f32x::splat(1.));
-#else
-  u = $f32x::splat(1.).add_checked(u.mul_as_f2(s)).normalize().0;
-#endif
+  if !cfg!(feature="enable_fma_sp") {
+    u = vfma_vf_vf_vf_vf(u, s, $f32x::splat(1.));
+  } else {
+    u = $f32x::splat(1.).add_checked(u.mul_as_f2(s)).normalize().0;
+  }
   
   u = vldexp2_vf_vf_vi2(u, q);
 
   u = vsel_vf_vo_vf_vf(d.gt($f32x::splat(38.5318394191036238941387)), $f32x::splat(SLEEF_INFINITY_F), u);
-  u = vreinterpret_vf_vm(vandnot_vm_vo32_vm(d.lt($f32x::splat(-50.)), vreinterpret_vm_vf(u)));
-
-  return u;
+  $f32x::from(vandnot_vm_vo32_vm(d.lt($f32x::splat(-50.)), $mx::from(u)))
 }
 
 pub fn xexpm1f(a: $f32x) -> $f32x {
@@ -1723,25 +1697,24 @@ pub fn xexpm1f(a: $f32x) -> $f32x {
   $f32x x = d.0 + d.1;
   x = vsel_vf_vo_vf_vf(a.gt($f32x::splat(88.72283172607421875)), $f32x::splat(SLEEF_INFINITY_F), x);
   x = vsel_vf_vo_vf_vf(a.lt($f32x::splat(-16.635532333438687426013570)), $f32x::splat(-1.), x);
-  x = vsel_vf_vo_vf_vf(visnegzero_vo_vf(a), $f32x::splat(-0.), x);
-  return x;
+  vsel_vf_vo_vf_vf(visnegzero_vo_vf(a), $f32x::splat(-0.), x)
 }
 
 pub fn xlog10f(d: $f32x) -> $f32x {
   F2 x;
   $f32x t, m, x2;
 
-#if !defined(ENABLE_AVX512F) && !defined(ENABLE_AVX512FNOFMA)
-  $mox o = d.lt($f32x::splat(f32::MIN));
-  d = vsel_vf_vo_vf_vf(o, d * $f32x::splat(F1_32 * F1_32), d);
-  $ix2 e = vilogb2k_vi2_vf(d * $f32x::splat(1./0.75));
-  m = vldexp3_vf_vf_vi2(d, vneg_vi2_vi2(e));
-  e = vsel_vi2_vo_vi2_vi2(o, vsub_vi2_vi2_vi2(e, $ix2::splat(64)), e);
-#else
-  $f32x e = vgetexp_vf_vf(d * $f32x::splat(1./0.75));
-  e = vsel_vf_vo_vf_vf(vispinf_vo_vf(e), $f32x::splat(128.), e);
-  m = vgetmant_vf_vf(d);
-#endif
+  if !cfg!(feature="enable_avx512f") && !cfg!(feature="enable_avx512fnofma") {
+    $mox o = d.lt($f32x::splat(f32::MIN));
+    d = vsel_vf_vo_vf_vf(o, d * $f32x::splat(F1_32 * F1_32), d);
+    $ix2 e = vilogb2k_vi2_vf(d * $f32x::splat(1./0.75));
+    m = vldexp3_vf_vf_vi2(d, -e);
+    e = vsel_vi2_vo_vi2_vi2(o, e - $ix2::splat(64), e);
+  } else {
+    $f32x e = vgetexp_vf_vf(d * $f32x::splat(1./0.75));
+    e = vsel_vf_vo_vf_vf(vispinf_vo_vf(e), $f32x::splat(128.), e);
+    m = vgetmant_vf_vf(d);
+  }
 
   x = $f32x::splat(-1.).add_as_f2(m) / $f32x::splat(1.).add_as_f2(m);
   x2 = x.0 * x.0;
@@ -1750,43 +1723,42 @@ pub fn xlog10f(d: $f32x) -> $f32x {
       .mla(x2, $f32x::splat( 0.1735493541e+0))
       .mla(x2, $f32x::splat( 0.2895309627e+0));
   
-#if !defined(ENABLE_AVX512F) && !defined(ENABLE_AVX512FNOFMA)
-  F2 s = F2::from((0.30103001, -1.432098889e-08)) * $f32x::from(e);
-#else
-  F2 s = F2::from((0.30103001, -1.432098889e-08)) * e;
-#endif
+  let mut s = if !cfg!(feature="enable_avx512f") && !cfg!(feature="enable_avx512fnofma") {
+    F2::from((0.30103001, -1.432098889e-08)) * $f32x::from(e)
+  } else {
+    F2::from((0.30103001, -1.432098889e-08)) * e
+  };
 
   s = s.add_checked(x * F2::from((0.868588984, -2.170757285e-08)));
   s = s.add_checked(x2 * x.0 * t);
 
   $f32x r = s.0 + s.1;
 
-#if !defined(ENABLE_AVX512F) && !defined(ENABLE_AVX512FNOFMA)
-  r = vsel_vf_vo_vf_vf(vispinf_vo_vf(d), $f32x::splat(SLEEF_INFINITY), r);
-  r = vsel_vf_vo_vf_vf(d.lt($f32x::splat(0.)) | visnan_vo_vf(d), $f32x::splat(SLEEF_NAN), r);
-  r = vsel_vf_vo_vf_vf(d.eq($f32x::splat(0.)), $f32x::splat(-SLEEF_INFINITY), r);
-#else
-  r = vfixup_vf_vf_vf_vi2_i(r, d, $ix2::splat((4 << (2*4)) | (3 << (4*4)) | (5 << (5*4)) | (2 << (6*4))), 0);
-#endif
-  
-  return r;
+  if !cfg!(feature="enable_avx512f") && !cfg!(feature="enable_avx512fnofma") {
+    r = vsel_vf_vo_vf_vf(vispinf_vo_vf(d), $f32x::splat(SLEEF_INFINITY), r);
+    r = vsel_vf_vo_vf_vf(d.lt($f32x::splat(0.)) | visnan_vo_vf(d), $f32x::splat(SLEEF_NAN), r);
+    vsel_vf_vo_vf_vf(d.eq($f32x::splat(0.)), $f32x::splat(-SLEEF_INFINITY), r)
+  } else {
+    vfixup_vf_vf_vf_vi2_i(r, d, $ix2::splat((4 << (2*4)) | (3 << (4*4)) | (5 << (5*4)) | (2 << (6*4))), 0)
+  }
+
 }
 
 pub fn xlog2f(d: $f32x) -> $f32x {
   F2 x;
   $f32x t, m, x2;
 
-#if !defined(ENABLE_AVX512F) && !defined(ENABLE_AVX512FNOFMA)
-  $mox o = d.lt($f32x::splat(f32::MIN));
-  d = vsel_vf_vo_vf_vf(o, d * $f32x::splat(F1_32 * F1_32), d);
-  $ix2 e = vilogb2k_vi2_vf(d * $f32x::splat(1./0.75));
-  m = vldexp3_vf_vf_vi2(d, vneg_vi2_vi2(e));
-  e = vsel_vi2_vo_vi2_vi2(o, vsub_vi2_vi2_vi2(e, $ix2::splat(64)), e);
-#else
-  $f32x e = vgetexp_vf_vf(d * $f32x::splat(1./0.75));
-  e = vsel_vf_vo_vf_vf(vispinf_vo_vf(e), $f32x::splat(128.), e);
-  m = vgetmant_vf_vf(d);
-#endif
+  if !cfg!(feature="enable_avx512f") && !cfg!(feature="enable_avx512fnofma") {
+    $mox o = d.lt($f32x::splat(f32::MIN));
+    d = vsel_vf_vo_vf_vf(o, d * $f32x::splat(F1_32 * F1_32), d);
+    $ix2 e = vilogb2k_vi2_vf(d * $f32x::splat(1./0.75));
+    m = vldexp3_vf_vf_vi2(d, -e);
+    e = vsel_vi2_vo_vi2_vi2(o, e - $ix2::splat(64), e);
+  } else {
+    $f32x e = vgetexp_vf_vf(d * $f32x::splat(1./0.75));
+    e = vsel_vf_vo_vf_vf(vispinf_vo_vf(e), $f32x::splat(128.), e);
+    m = vgetmant_vf_vf(d);
+  }
 
   x = $f32x::splat(-1.).add_as_f2(m) / $f32x::splat(1.).add_as_f2(m);
   x2 = x.0 * x.0;
@@ -1795,25 +1767,23 @@ pub fn xlog2f(d: $f32x) -> $f32x {
       .mla(x2, $f32x::splat(+0.5764790177e+0))
       .mla(x2, $f32x::splat(+0.9618012905120));
   
-#if !defined(ENABLE_AVX512F) && !defined(ENABLE_AVX512FNOFMA)
-  F2 s = $f32x::from(e) + x * F2::from((2.8853900432586669922, 3.2734474483568488616e-08));
-#else
-  F2 s = e + x * F2::from((2.8853900432586669922, 3.2734474483568488616e-08));
-#endif
+  let mut s = if !cfg!(feature="enable_avx512f") && !cfg!(feature="enable_avx512fnofma") {
+    $f32x::from(e) + x * F2::from((2.8853900432586669922, 3.2734474483568488616e-08))
+  } else {
+    e + x * F2::from((2.8853900432586669922, 3.2734474483568488616e-08))
+  };
 
   s += x2 * x.0 * t;
 
   $f32x r = s.0 + s.1;
 
-#if !defined(ENABLE_AVX512F) && !defined(ENABLE_AVX512FNOFMA)
-  r = vsel_vf_vo_vf_vf(vispinf_vo_vf(d), $f32x::splat(SLEEF_INFINITY), r);
-  r = vsel_vf_vo_vf_vf(d.lt($f32x::splat(0.)) | visnan_vo_vf(d), $f32x::splat(SLEEF_NAN), r);
-  r = vsel_vf_vo_vf_vf(d.eq($f32x::splat(0.)), $f32x::splat(-SLEEF_INFINITY), r);
-#else
-  r = vfixup_vf_vf_vf_vi2_i(r, d, $ix2::splat((4 << (2*4)) | (3 << (4*4)) | (5 << (5*4)) | (2 << (6*4))), 0);
-#endif
-  
-  return r;
+  if !cfg!(feature="enable_avx512f") && !cfg!(feature="enable_avx512fnofma") {
+    r = vsel_vf_vo_vf_vf(vispinf_vo_vf(d), $f32x::splat(SLEEF_INFINITY), r);
+    r = vsel_vf_vo_vf_vf(d.lt($f32x::splat(0.)) | visnan_vo_vf(d), $f32x::splat(SLEEF_NAN), r);
+    vsel_vf_vo_vf_vf(d.eq($f32x::splat(0.)), $f32x::splat(-SLEEF_INFINITY), r)
+  } else {
+    vfixup_vf_vf_vf_vi2_i(r, d, $ix2::splat((4 << (2*4)) | (3 << (4*4)) | (5 << (5*4)) | (2 << (6*4))), 0)
+  }
 }
 
 pub fn xlog1pf(d: $f32x) -> $f32x {
@@ -1822,21 +1792,21 @@ pub fn xlog1pf(d: $f32x) -> $f32x {
 
   $f32x dp1 = d + $f32x::splat(1.);
 
-#if !defined(ENABLE_AVX512F) && !defined(ENABLE_AVX512FNOFMA)
-  $mox o = dp1.lt($f32x::splat(f32::MIN));
-  dp1 = vsel_vf_vo_vf_vf(o, dp1 * $f32x::splat(F1_32 * F1_32), dp1);
-  $ix2 e = vilogb2k_vi2_vf(dp1 * $f32x::splat(1./0.75));
-  t = vldexp3_vf_vf_vi2($f32x::splat(1.), vneg_vi2_vi2(e));
-  m = d.mla(t, t - $f32x::splat(1.));
-  e = vsel_vi2_vo_vi2_vi2(o, vsub_vi2_vi2_vi2(e, $ix2::splat(64)), e);
-  F2 s = F2::from((0.69314718246459960938, -1.904654323148236017e-09)) * $f32x::from(e);
-#else
-  $f32x e = vgetexp_vf_vf(dp1, $f32x::splat(1./0.75));
-  e = vsel_vf_vo_vf_vf(vispinf_vo_vf(e), $f32x::splat(128.), e);
-  t = vldexp3_vf_vf_vi2($f32x::splat(1.), vneg_vi2_vi2(vrint_vi2_vf(e)));
-  m = d.mla(t, t - $f32x::splat(1.));
-  F2 s = F2::from((0.69314718246459960938, -1.904654323148236017e-09)) * e;
-#endif
+  if !cfg!(feature="enable_avx512f") && !cfg!(feature="enable_avx512fnofma") {
+    $mox o = dp1.lt($f32x::splat(f32::MIN));
+    dp1 = vsel_vf_vo_vf_vf(o, dp1 * $f32x::splat(F1_32 * F1_32), dp1);
+    $ix2 e = vilogb2k_vi2_vf(dp1 * $f32x::splat(1./0.75));
+    t = vldexp3_vf_vf_vi2($f32x::splat(1.), -e);
+    m = d.mla(t, t - $f32x::splat(1.));
+    e = vsel_vi2_vo_vi2_vi2(o, e - $ix2::splat(64), e);
+    F2 s = F2::from((0.69314718246459960938, -1.904654323148236017e-09)) * $f32x::from(e);
+  } else {
+    $f32x e = vgetexp_vf_vf(dp1, $f32x::splat(1./0.75));
+    e = vsel_vf_vo_vf_vf(vispinf_vo_vf(e), $f32x::splat(128.), e);
+    t = vldexp3_vf_vf_vi2($f32x::splat(1.), -vrint_vi2_vf(e));
+    m = d.mla(t, t - $f32x::splat(1.));
+    F2 s = F2::from((0.69314718246459960938, -1.904654323148236017e-09)) * e;
+  }
 
   x = F2::new(m, $f32x::splat(0.)) / $f32x::splat(2.).add_checked_as_f2(m);
   x2 = x.0 * x.0;
@@ -1851,56 +1821,57 @@ pub fn xlog1pf(d: $f32x) -> $f32x {
   $f32x r = s.0 + s.1;
   
   r = vsel_vf_vo_vf_vf(d.gt($f32x::splat(1e+38)), $f32x::splat(SLEEF_INFINITY_F), r);
-  r = vreinterpret_vf_vm(vor_vm_vo32_vm($f32x::splat(-1.).gt(d), vreinterpret_vm_vf(r)));
+  r = $f32x::from(vor_vm_vo32_vm($f32x::splat(-1.).gt(d), $mx::from(r)));
   r = vsel_vf_vo_vf_vf(d.eq($f32x::splat(-1.)), $f32x::splat(-SLEEF_INFINITY_F), r);
-  r = vsel_vf_vo_vf_vf(visnegzero_vo_vf(d), $f32x::splat(-0.), r);
-
-  return r;
+  vsel_vf_vo_vf_vf(visnegzero_vo_vf(d), $f32x::splat(-0.), r)
 }
 
 //
 
-pub fn xfabsf(x: $f32x) -> $f32x { return vabs_vf_vf(x); }
+pub fn xfabsf(x: $f32x) -> $f32x {
+  x.abs()
+}
 
-pub fn xcopysignf(x: $f32x, y: $f32x) -> $f32x { return vcopysign_vf_vf_vf(x, y); }
+pub fn xcopysignf(x: $f32x, y: $f32x) -> $f32x {
+  vcopysign_vf_vf_vf(x, y)
+}
 
 pub fn xfmaxf(x: $f32x, y: $f32x) -> $f32x {
-#if (defined(__x86_64__) || defined(__i386__)) && !defined(ENABLE_VECEXT) && !defined(ENABLE_PUREC)
-  return vsel_vf_vo_vf_vf(visnan_vo_vf(y), x, x.max(y));
-#else
-  return vsel_vf_vo_vf_vf(visnan_vo_vf(y), x, vsel_vf_vo_vf_vf(x.gt(y), x, y));
-#endif
+  if (cfg!(target_arch = "x86_64") || cfg!(target_arch = "x86")) && !cfg!(feature="enable_vecext") && !cfg!(feature="enable_purec") {
+    vsel_vf_vo_vf_vf(visnan_vo_vf(y), x, x.max(y))
+  } else {
+    vsel_vf_vo_vf_vf(visnan_vo_vf(y), x, vsel_vf_vo_vf_vf(x.gt(y), x, y))
+  }
 }
 
 pub fn xfminf(x: $f32x, y: $f32x) -> $f32x {
-#if (defined(__x86_64__) || defined(__i386__)) && !defined(ENABLE_VECEXT) && !defined(ENABLE_PUREC)
-  return vsel_vf_vo_vf_vf(visnan_vo_vf(y), x, x.min(y));
-#else
-  return vsel_vf_vo_vf_vf(visnan_vo_vf(y), x, vsel_vf_vo_vf_vf(y.gt(x), x, y));
-#endif
+  if (cfg!(target_arch = "x86_64") || cfg!(target_arch = "x86")) && !cfg!(feature="enable_vecext") && !cfg!(feature="enable_purec") {
+    vsel_vf_vo_vf_vf(visnan_vo_vf(y), x, x.min(y))
+  } else {
+    vsel_vf_vo_vf_vf(visnan_vo_vf(y), x, vsel_vf_vo_vf_vf(y.gt(x), x, y))
+  }
 }
 
 pub fn xfdimf(x: $f32x, y: $f32x) -> $f32x {
   $f32x ret = x - y;
-  ret = vsel_vf_vo_vf_vf(ret.lt($f32x::splat(0.)) | x.eq(y), $f32x::splat(0.), ret);
-  return ret;
+  vsel_vf_vo_vf_vf(ret.lt($f32x::splat(0.)) | x.eq(y), $f32x::splat(0.), ret)
 }
 
 pub fn xtruncf(x: $f32x) -> $f32x {
   $f32x fr = x - $f32x::from(vtruncate_vi2_vf(x));
-  return vsel_vf_vo_vf_vf(visinf_vo_vf(x) | vabs_vf_vf(x).ge($f32x::splat(F1_23)), x, vcopysign_vf_vf_vf(x - fr, x));
+  vsel_vf_vo_vf_vf(visinf_vo_vf(x) | x.abs().ge($f32x::splat(F1_23)), x, vcopysign_vf_vf_vf(x - fr, x))
 }
 
 pub fn xfloorf(x: $f32x) -> $f32x {
   $f32x fr = x - $f32x::from(vtruncate_vi2_vf(x));
   fr = vsel_vf_vo_vf_vf(fr.lt($f32x::splat(0.)), fr + $f32x::splat(1.), fr);
-  return vsel_vf_vo_vf_vf(visinf_vo_vf(x) | vabs_vf_vf(x).ge($f32x::splat(F1_23)), x, vcopysign_vf_vf_vf(x - fr, x));
+  vsel_vf_vo_vf_vf(visinf_vo_vf(x) | x.abs().ge($f32x::splat(F1_23)), x, vcopysign_vf_vf_vf(x - fr, x))
 }
 
 pub fn xceilf(x: $f32x) -> $f32x {
   $f32x fr = x - $f32x::from(vtruncate_vi2_vf(x));
   fr = vsel_vf_vo_vf_vf(fr.le($f32x::splat(0.)), fr, fr - $f32x::splat(1.));
-  return vsel_vf_vo_vf_vf(visinf_vo_vf(x) | vabs_vf_vf(x).ge($f32x::splat(F1_23)), x, vcopysign_vf_vf_vf(x - fr, x));
+  vsel_vf_vo_vf_vf(visinf_vo_vf(x) | x.abs().ge($f32x::splat(F1_23)), x, vcopysign_vf_vf_vf(x - fr, x))
 }
 
 pub fn xroundf(d: $f32x) -> $f32x {
@@ -1909,23 +1880,22 @@ pub fn xroundf(d: $f32x) -> $f32x {
   x = vsel_vf_vo_vf_vf(x.le($f32x::splat(0.)) & fr.eq($f32x::splat(0.)), x - $f32x::splat(1.), x);
   fr = vsel_vf_vo_vf_vf(fr.lt($f32x::splat(0.)), fr + $f32x::splat(1.), fr);
   x = vsel_vf_vo_vf_vf(d.eq($f32x::splat(0.4999999701976776123)), $f32x::splat(0.), x);
-  return vsel_vf_vo_vf_vf(visinf_vo_vf(d) | vabs_vf_vf(d).ge($f32x::splat(F1_23)), d, vcopysign_vf_vf_vf(x - fr, d));
+  vsel_vf_vo_vf_vf(visinf_vo_vf(d) | d.abs().ge($f32x::splat(F1_23)), d, vcopysign_vf_vf_vf(x - fr, d))
 }
 
 pub fn xrintf(d: $f32x) -> $f32x {
-  $f32x x = d + $f32x::splat(0.5);
-  $mox isodd = veq_vo_vi2_vi2(vand_vi2_vi2_vi2($ix2::splat(1), vtruncate_vi2_vf(x)), $ix2::splat(1));
-  $f32x fr = x - $f32x::from(vtruncate_vi2_vf(x));
+  let mut x = d + $f32x::splat(0.5);
+  let isodd = ($ix2::splat(1) & vtruncate_vi2_vf(x)).eq($ix2::splat(1));
+  let mut fr = x - $f32x::from(vtruncate_vi2_vf(x));
   fr = vsel_vf_vo_vf_vf(fr.lt($f32x::splat(0.)) | (fr.eq($f32x::splat(0.)) & isodd), fr + $f32x::splat(1.), fr);
   x = vsel_vf_vo_vf_vf(d.eq($f32x::splat(0.50000005960464477539)), $f32x::splat(0.), x);
-  $f32x ret = vsel_vf_vo_vf_vf(visinf_vo_vf(d) | vabs_vf_vf(d).ge($f32x::splat(F1_23)), d, vcopysign_vf_vf_vf(x - fr, d));
-  return ret;
+  vsel_vf_vo_vf_vf(visinf_vo_vf(d) | d.abs().ge($f32x::splat(F1_23)), d, vcopysign_vf_vf_vf(x - fr, d))
 }
 
 pub fn xfmaf($f32x x, $f32x y, $f32x z) -> $f32x {
   $f32x h2 = x * y + z;
    q = $f32x::splat(1.);
-  $mox o = vabs_vf_vf(h2).lt($f32x::splat(1e-38));
+  $mox o = h2.abs().lt($f32x::splat(1e-38));
   {
     const float c0 = 1ULL << 25, c1 = c0 * c0, c2 = c1 * c1;
     x = vsel_vf_vo_vf_vf(o, x * $f32x::splat(c1), x);
@@ -1933,7 +1903,7 @@ pub fn xfmaf($f32x x, $f32x y, $f32x z) -> $f32x {
     z = vsel_vf_vo_vf_vf(o, z * $f32x::splat(c2), z);
     q = vsel_vf_vo_vf_vf(o, $f32x::splat(1. / c2), q);
   }
-  o = vabs_vf_vf(h2).gt($f32x::splat(1e+38));
+  o = h2.abs().gt($f32x::splat(1e+38));
   {
     const float c0 = 1ULL << 25, c1 = c0 * c0, c2 = c1 * c1;
     x = vsel_vf_vo_vf_vf(o, x * $f32x::splat(1. / c1), x);
@@ -1953,10 +1923,10 @@ pub fn xfmaf($f32x x, $f32x y, $f32x z) -> $f32x {
 
   o = visinf_vo_vf(h2) | visnan_vo_vf(h2);
   
-  return vsel_vf_vo_vf_vf(o, h2, ret * q);
+  vsel_vf_vo_vf_vf(o, h2, ret * q)
 }
 #[inline]
-fn vcast_vi2_i_i(int i0, int i1) -> $ix2 { return vcast_vi2_vm(vcast_vm_i_i(i0, i1)); }
+fn vcast_vi2_i_i(int i0, int i1) -> $ix2 { $ix2::from(vcast_vm_i_i(i0, i1)) }
 
 SQRTFU05_FUNCATR $f32x xsqrtf_u05(d: $f32x) {
   $f32x q;
@@ -1972,7 +1942,7 @@ SQRTFU05_FUNCATR $f32x xsqrtf_u05(d: $f32x) {
   d = vsel_vf_vo_vf_vf(o, d * $f32x::splat(5.4210108624275220e-20), d);
   q = vsel_vf_vo_vf_vf(o, $f32x::splat(4294967296.0 * 0.5), q);
 
-  $f32x x = vreinterpret_vf_vi2(vsub_vi2_vi2_vi2($ix2::splat(0x5f375a86), vsrl_vi2_vi2_i(vreinterpret_vi2_vf(d + $f32x::splat(1e-45)), 1)));
+  $f32x x = $f32x::from($ix2::splat(0x5f375a86) - vsrl_vi2_vi2_i($ix2::from(d + $f32x::splat(1e-45)), 1));
 
   x *= $f32x::splat(1.5) - $f32x::splat(0.5) * d * x * x;
   x *= $f32x::splat(1.5) - $f32x::splat(0.5) * d * x * x;
@@ -1984,22 +1954,21 @@ SQRTFU05_FUNCATR $f32x xsqrtf_u05(d: $f32x) {
   x = (d2.0 + d2.1) * q;
 
   x = vsel_vf_vo_vf_vf(vispinf_vo_vf(d), $f32x::splat(SLEEF_INFINITY_F), x);
-  x = vsel_vf_vo_vf_vf(d.eq($f32x::splat(0.)), d, x);
-  
-  return x;
+  vsel_vf_vo_vf_vf(d.eq($f32x::splat(0.)), d, x)
 }
 
 pub fn xsqrtf(d: $f32x) -> $f32x {
-#ifdef ACCURATE_SQRT
-  return vsqrt_vf_vf(d);
-#endif
-  // fall back to approximation if ACCURATE_SQRT is undefined
-  return xsqrtf_u05(d);
+  if cfg!(feature="accurate_sqrt") {
+    vsqrt_vf_vf(d)
+  } else {
+    // fall back to approximation if ACCURATE_SQRT is undefined
+    xsqrtf_u05(d)
+  }
 }
 
 pub fn xhypotf_u05(x: $f32x, y: $f32x) -> $f32x {
-  x = vabs_vf_vf(x);
-  y = vabs_vf_vf(y);
+  x = x.abs();
+  y = y.abs();
   $f32x min = x.min(y);
   n = min;
   $f32x max = x.max(y);
@@ -2015,14 +1984,12 @@ pub fn xhypotf_u05(x: $f32x, y: $f32x) -> $f32x {
   ret = vsel_vf_vo_vf_vf(visnan_vo_vf(ret), $f32x::splat(SLEEF_INFINITY_F), ret);
   ret = vsel_vf_vo_vf_vf(min.eq($f32x::splat(0.)), max, ret);
   ret = vsel_vf_vo_vf_vf(visnan_vo_vf(x) | visnan_vo_vf(y), $f32x::splat(SLEEF_NAN_F), ret);
-  ret = vsel_vf_vo_vf_vf(x.eq($f32x::splat(SLEEF_INFINITY_F)) | y.eq($f32x::splat(SLEEF_INFINITY_F)), $f32x::splat(SLEEF_INFINITY_F), ret);
-
-  return ret;
+  vsel_vf_vo_vf_vf(x.eq($f32x::splat(SLEEF_INFINITY_F)) | y.eq($f32x::splat(SLEEF_INFINITY_F)), $f32x::splat(SLEEF_INFINITY_F), ret)
 }
 
 pub fn xhypotf_u35(x: $f32x, y: $f32x) -> $f32x {
-  x = vabs_vf_vf(x);
-  y = vabs_vf_vf(y);
+  x = x.abs();
+  y = y.abs();
   $f32x min = x.min(y);
   n = min;
   $f32x max = x.max(y);
@@ -2032,84 +1999,78 @@ pub fn xhypotf_u35(x: $f32x, y: $f32x) -> $f32x {
   $f32x ret = max * vsqrt_vf_vf(t.mla(t, $f32x::splat(1.)));
   ret = vsel_vf_vo_vf_vf(min.eq($f32x::splat(0.)), max, ret);
   ret = vsel_vf_vo_vf_vf(visnan_vo_vf(x) | visnan_vo_vf(y), $f32x::splat(SLEEF_NAN_F), ret);
-  ret = vsel_vf_vo_vf_vf(x.eq($f32x::splat(SLEEF_INFINITY_F)) | y.eq($f32x::splat(SLEEF_INFINITY_F)), $f32x::splat(SLEEF_INFINITY_F), ret);
-
-  return ret;
+  vsel_vf_vo_vf_vf(x.eq($f32x::splat(SLEEF_INFINITY_F)) | y.eq($f32x::splat(SLEEF_INFINITY_F)), $f32x::splat(SLEEF_INFINITY_F), ret)
 }
 
 pub fn xnextafterf(x: $f32x, y: $f32x) -> $f32x {
   x = vsel_vf_vo_vf_vf(x.eq($f32x::splat(0.)), vmulsign_vf_vf_vf($f32x::splat(0.), y), x);
-  $ix2 t, xi2 = vreinterpret_vi2_vf(x);
+  $ix2 t, xi2 = $ix2::from(x);
   $mox c = vsignbit_vo_vf(x) ^ y.ge(x);
 
-  xi2 = vsel_vi2_vo_vi2_vi2(c, vsub_vi2_vi2_vi2($ix2::splat(0), vxor_vi2_vi2_vi2(xi2, $ix2::splat(1 << 31))), xi2);
+  xi2 = vsel_vi2_vo_vi2_vi2(c, $ix2::splat(0) - (xi2 ^ $ix2::splat(1 << 31)), xi2);
 
-  xi2 = vsel_vi2_vo_vi2_vi2(x.ne(y), vsub_vi2_vi2_vi2(xi2, $ix2::splat(1)), xi2);
+  xi2 = vsel_vi2_vo_vi2_vi2(x.ne(y), xi2 - $ix2::splat(1), xi2);
 
-  xi2 = vsel_vi2_vo_vi2_vi2(c, vsub_vi2_vi2_vi2($ix2::splat(0), vxor_vi2_vi2_vi2(xi2, $ix2::splat(1 << 31))), xi2);
+  xi2 = vsel_vi2_vo_vi2_vi2(c, $ix2::splat(0) - (xi2 ^ $ix2::splat(1 << 31)), xi2);
 
-  $f32x ret = vreinterpret_vf_vi2(xi2);
+  $f32x ret = $f32x::from(xi2);
 
   ret = vsel_vf_vo_vf_vf(ret.eq($f32x::splat(0.)) & x.ne($f32x::splat(0.)), 
 			 vmulsign_vf_vf_vf($f32x::splat(0.), x), ret);
 
   ret = vsel_vf_vo_vf_vf(x.eq($f32x::splat(0.)) & y.eq($f32x::splat(0.)), y, ret);
 
-  ret = vsel_vf_vo_vf_vf(visnan_vo_vf(x) | visnan_vo_vf(y), $f32x::splat(SLEEF_NAN_F), ret);
-  
-  return ret;
+  vsel_vf_vo_vf_vf(visnan_vo_vf(x) | visnan_vo_vf(y), $f32x::splat(SLEEF_NAN_F), ret)
 }
 
 pub fn xfrfrexpf(x: $f32x) -> $f32x {
-  x = vsel_vf_vo_vf_vf(vabs_vf_vf(x).lt($f32x::splat(f32::MIN)), x * $f32x::splat(F1_32), x);
+  x = vsel_vf_vo_vf_vf(x.abs().lt($f32x::splat(f32::MIN)), x * $f32x::splat(F1_32), x);
 
-  vmask xm = vreinterpret_vm_vf(x);
-  xm = vand_vm_vm_vm(xm, vcast_vm_i_i(~0x7f800000U, ~0x7f800000U));
-  xm = vor_vm_vm_vm (xm, vcast_vm_i_i( 0x3f000000U,  0x3f000000U));
+  vmask xm = $mx::from(x);
+  xm = xm & vcast_vm_i_i(!0x7f800000u32, !0x7f800000u32);
+  xm = vor_vm_vm_vm (xm, vcast_vm_i_i( 0x3f000000u32,  0x3f000000u32));
 
-  $f32x ret = vreinterpret_vf_vm(xm);
+  $f32x ret = $f32x::from(xm);
 
   ret = vsel_vf_vo_vf_vf(visinf_vo_vf(x), vmulsign_vf_vf_vf($f32x::splat(SLEEF_INFINITY_F), x), ret);
-  ret = vsel_vf_vo_vf_vf(x.eq($f32x::splat(0.)), x, ret);
-  
-  return ret;
+  vsel_vf_vo_vf_vf(x.eq($f32x::splat(0.)), x, ret)
 }
 
 pub fn xexpfrexpf(x: $f32x) -> $ix2 {
   /*
-  x = vsel_vf_vo_vf_vf(vabs_vf_vf(x).lt($f32x::splat(f32::MIN)), x * $f32x::splat(F1_63), x);
+  x = vsel_vf_vo_vf_vf(x.abs().lt($f32x::splat(f32::MIN)), x * $f32x::splat(F1_63), x);
 
-  let ret = vreinterpret_vi2_vf$ix::splat(x);
-  ret = vand_vi_vi_vi(vsrl_vi_vi_i(ret, 20), $ix::splat(0x7ff)) - $ix::splat(0x3fe);
+  let mut ret = $ix2::from($ix::splat(x);
+  ret = (vsrl_vi_vi_i(ret, 20) & $ix::splat(0x7ff)) - $ix::splat(0x3fe);
 
-  ret = vsel_vi_vo_vi_vi(x.eq($f32x::splat(0.)) | visnan_vo_vf(x) | visinf_vo_vf(x), $ix::splat(0), ret);
-  
-  return ret;
+  vsel_vi_vo_vi_vi(x.eq($f32x::splat(0.)) | visnan_vo_vf(x) | visinf_vo_vf(x), $ix::splat(0), ret)
   */
-  return $ix2::splat(0);
+  $ix2::splat(0)
 }
 #[inline]
 fn vtoward0f(x: $f32x) -> $f32x {
-  $f32x t = vreinterpret_vf_vi2(vsub_vi2_vi2_vi2(vreinterpret_vi2_vf(x), $ix2::splat(1)));
-  return vsel_vf_vo_vf_vf(x.eq($f32x::splat(0.)), $f32x::splat(0.), t);
+  let t = $f32x::from($ix2::from(x) - $ix2::splat(1));
+  vsel_vf_vo_vf_vf(x.eq($f32x::splat(0.)), $f32x::splat(0.), t)
 }
 #[inline]
 fn vptruncf(x: $f32x) -> $f32x {
-#ifdef FULL_FP_ROUNDING
-  return vtruncate_vf_vf(x);
-#else
-  $f32x fr = x - $f32x::from(vtruncate_vi2_vf(x));
-  return vsel_vf_vo_vf_vf(vabs_vf_vf(x).ge($f32x::splat(F1_23)), x, x - fr);
-#endif
+  if cfg!(feature="full_fp_rounding") {
+    vtruncate_vf_vf(x)
+  } else {
+    let fr = x - $f32x::from(vtruncate_vi2_vf(x));
+    vsel_vf_vo_vf_vf(x.abs().ge($f32x::splat(F1_23)), x, x - fr)
+  }
 }
 
 pub fn xfmodf(x: $f32x, y: $f32x) -> $f32x {
-  $f32x nu = vabs_vf_vf(x), de = vabs_vf_vf(y), s = $f32x::splat(1.), q;
+  $f32x nu = x.abs();
+  de = y.abs();
+  s = $f32x::splat(1.);
   $mox o = de.lt($f32x::splat(f32::MIN));
   nu = vsel_vf_vo_vf_vf(o, nu * $f32x::splat(F1_25), nu);
   de = vsel_vf_vo_vf_vf(o, de * $f32x::splat(F1_25), de);
   s  = vsel_vf_vo_vf_vf(o, s * $f32x::splat(1. / F1_25), s);
-  $f32x rde = vtoward0f(vrec_vf_vf(de));
+  $f32x rde = vtoward0f(de.rec());
 #if defined(ENABLE_NEON32) || defined(ENABLE_NEON32VFPV4)
   rde = vtoward0f(rde);
 #endif
@@ -2129,22 +2090,20 @@ pub fn xfmodf(x: $f32x, y: $f32x) -> $f32x {
   ret = vmulsign_vf_vf_vf(ret, x);
 
   ret = vsel_vf_vo_vf_vf(nu.lt(de), x, ret);
-  ret = vsel_vf_vo_vf_vf(de.eq($f32x::splat(0.)), $f32x::splat(SLEEF_NAN_F), ret);
-
-  return ret;
+  vsel_vf_vo_vf_vf(de.eq($f32x::splat(0.)), $f32x::splat(SLEEF_NAN_F), ret)
 }
 
 //
 #[inline]
-fn sinpifk(d: $f32x) -> F2 {
+fn sinpifk(d: $f32x) -> F2<$f32x> {
   $mox o;
   $f32x u, s, t;
   F2 x, s2;
 
   u = d * $f32x::splat(4.);
   $ix2 q = vtruncate_vi2_vf(u);
-  q = vand_vi2_vi2_vi2(vadd_vi2_vi2_vi2(q, vxor_vi2_vi2_vi2(vsrl_vi2_vi2_i(q, 31), $ix2::splat(1))), $ix2::splat(~1));
-  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, $ix2::splat(2)), $ix2::splat(2));
+  q = (q + (vsrl_vi2_vi2_i(q, 31) ^ $ix2::splat(1))) & $ix2::splat(!1);
+  o = (q & $ix2::splat(2)).eq($ix2::splat(2));
 
   s = u - $f32x::from(q);
   t = s;
@@ -2165,11 +2124,11 @@ fn sinpifk(d: $f32x) -> F2 {
   x *= vsel_vf2_vo_vf2_vf2(o, s2, F2::new(t, $f32x::splat(0.)));
   x = vsel_vf2_vo_vf2_vf2(o, x + $f32x::splat(1.), x);
 
-  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, $ix2::splat(4)), $ix2::splat(4));
-  x.0 = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(o, vreinterpret_vm_vf($f32x::splat(-0.))), vreinterpret_vm_vf(x.0)));
-  x.1 = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(o, vreinterpret_vm_vf($f32x::splat(-0.))), vreinterpret_vm_vf(x.1)));
+  o = (q & $ix2::splat(4)).eq($ix2::splat(4));
+  x.0 = $f32x::from(vand_vm_vo32_vm(o, $mx::from($f32x::splat(-0.))) ^ $mx::from(x.0));
+  x.1 = $f32x::from(vand_vm_vo32_vm(o, $mx::from($f32x::splat(-0.))) ^ $mx::from(x.1));
 
-  return x;
+  x
 }
 
 pub fn xsinpif_u05(d: $f32x) -> $f32x {
@@ -2177,21 +2136,19 @@ pub fn xsinpif_u05(d: $f32x) -> $f32x {
   $f32x r = x.0 + x.1;
 
   r = vsel_vf_vo_vf_vf(visnegzero_vo_vf(d), $f32x::splat(-0.), r);
-  r = vreinterpret_vf_vm(vandnot_vm_vo32_vm(vabs_vf_vf(d).gt($f32x::splat(TRIGRANGEMAX4_F)), vreinterpret_vm_vf(r)));
-  r = vreinterpret_vf_vm(vor_vm_vo32_vm(visinf_vo_vf(d), vreinterpret_vm_vf(r)));
-  
-  return r;
+  r = $f32x::from(vandnot_vm_vo32_vm(d.abs().gt($f32x::splat(TRIGRANGEMAX4_F)), $mx::from(r)));
+  $f32x::from(vor_vm_vo32_vm(visinf_vo_vf(d), $mx::from(r)))
 }
 #[inline]
-fn cospifk(d: $f32x) -> F2 {
+fn cospifk(d: $f32x) -> F2<$f32x> {
   $mox o;
   $f32x u, s, t;
   F2 x, s2;
 
   u = d * $f32x::splat(4.);
   $ix2 q = vtruncate_vi2_vf(u);
-  q = vand_vi2_vi2_vi2(vadd_vi2_vi2_vi2(q, vxor_vi2_vi2_vi2(vsrl_vi2_vi2_i(q, 31), $ix2::splat(1))), $ix2::splat(!1));
-  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, $ix2::splat(2)), $ix2::splat(0));
+  q = (q + (vsrl_vi2_vi2_i(q, 31) ^ $ix2::splat(1))) & $ix2::splat(!1);
+  o = (q & $ix2::splat(2)).eq($ix2::splat(0));
 
   s = u - $f32x::from(q);
   t = s;
@@ -2211,35 +2168,24 @@ fn cospifk(d: $f32x) -> F2 {
   x *= vsel_vf2_vo_vf2_vf2(o, s2, F2::new(t, $f32x::splat(0.)));
   x = vsel_vf2_vo_vf2_vf2(o, x + $f32x::splat(1.), x);
 
-  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(vadd_vi2_vi2_vi2(q, $ix2::splat(2)), $ix2::splat(4)), $ix2::splat(4));
-  x.0 = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(o, vreinterpret_vm_vf($f32x::splat(-0.))), vreinterpret_vm_vf(x.0)));
-  x.1 = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(o, vreinterpret_vm_vf($f32x::splat(-0.))), vreinterpret_vm_vf(x.1)));
+  o = ((q + $ix2::splat(2)) & $ix2::splat(4)).eq($ix2::splat(4));
+  x.0 = $f32x::from(vand_vm_vo32_vm(o, $mx::from($f32x::splat(-0.))) ^ $mx::from(x.0));
+  x.1 = $f32x::from(vand_vm_vo32_vm(o, $mx::from($f32x::splat(-0.))) ^ $mx::from(x.1));
 
-  return x;
+  x
 }
 
 pub fn xcospif_u05(d: $f32x) -> $f32x {
   F2 x = cospifk(d);
   $f32x r = x.0 + x.1;
 
-  r = vsel_vf_vo_vf_vf(vabs_vf_vf(d).gt($f32x::splat(TRIGRANGEMAX4_F)), $f32x::splat(1.), r);
-  r = vreinterpret_vf_vm(vor_vm_vo32_vm(visinf_vo_vf(d), vreinterpret_vm_vf(r)));
-  
-  return r;
+  r = vsel_vf_vo_vf_vf(d.abs().gt($f32x::splat(TRIGRANGEMAX4_F)), $f32x::splat(1.), r);
+  $f32x::from(vor_vm_vo32_vm(visinf_vo_vf(d), $mx::from(r)))
 }
 
-#if defined(ENABLE_SVE) || defined(ENABLE_SVENOFMA)
-  typedef __sizeless_struct {
-    F2 a, b;
-  } df2;
-#else
-  typedef struct {
-    F2 a, b;
-  } df2;
-#endif
 
 /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
-static CONST df2 gammafk(a: $f32x) {
+static CONST df2 gammafk(a: $f32x) -> (F2<$f32x>, F2<$f32x>) {
   F2 clc = F2::from((0., 0.));
   clln = F2::from((1., 0.));
   clld = F2::from((1., 0.));
@@ -2247,7 +2193,7 @@ static CONST df2 gammafk(a: $f32x) {
   x, y, z;
   $f32x t, u;
 
-  $mox otiny = vabs_vf_vf(a).lt($f32x::splat(1e-30)), oref = a.lt($f32x::splat(0.5));
+  $mox otiny = a.abs().lt($f32x::splat(1e-30)), oref = a.lt($f32x::splat(0.5));
 
   x = vsel_vf2_vo_vf2_vf2(otiny, F2::from((0., 0.)),
 			  vsel_vf2_vo_vf2_vf2(oref, $f32x::splat(1.).add_as_f2(-a),
@@ -2263,7 +2209,7 @@ static CONST df2 gammafk(a: $f32x) {
   clln = vsel_vf2_vo_vf2_vf2(o, y, clln);
 
   x = vsel_vf2_vo_vf2_vf2(o, x + $f32x::splat(3.), x);
-  t = vsel_vf_vo_vf_vf(o2, vrec_vf_vf(x.0), (x + vsel_vf_vo_f_f(o0, -1, -2)).normalize().0);
+  t = vsel_vf_vo_vf_vf(o2, x.0.rec(), (x + vsel_vf_vo_f_f(o0, -1, -2)).normalize().0);
 
   u = vsel_vf_vo_vo_f_f_f(o2, o0, 0.000839498720672087279971000786, 0.9435157776e+0, 0.1102489550e-3)
       .mla(t, vsel_vf_vo_vo_f_f_f(o2, o0, -5.17179090826059219329394422e-05, 0.8670063615e+0, 0.8160019934e-4))
@@ -2302,9 +2248,7 @@ static CONST df2 gammafk(a: $f32x) {
   clld = vsel_vf2_vo_vf2_vf2(otiny, F2::new(a * $f32x::splat(F1_30*F1_30), $f32x::splat(0.)),
 			     vsel_vf2_vo_vf2_vf2(oref, x, y));
 
-  df2 ret = { clc, clln / clld };
-
-  return ret;
+  ( clc, clln / clld )
 }
 
 pub fn xtgammaf_u1(a: $f32x) -> $f32x {
@@ -2321,9 +2265,7 @@ pub fn xtgammaf_u1(a: $f32x) -> $f32x {
   o = (a.eq($f32x::splat(SLEEF_INFINITY_F)) | visnumber_vo_vf(a)) &
 				  a.ge($f32x::splat(-f32::MIN)) &
 		    (a.eq($f32x::splat(0.)) | a.gt($f32x::splat(36.)) | visnan_vo_vf(r));
-  r = vsel_vf_vo_vf_vf(o, vmulsign_vf_vf_vf($f32x::splat(SLEEF_INFINITY_F), a), r);
-  
-  return r;
+  vsel_vf_vo_vf_vf(o, vmulsign_vf_vf_vf($f32x::splat(SLEEF_INFINITY_F), a), r)
 }
 
 pub fn xlgammaf_u1(a: $f32x) -> $f32x {
@@ -2335,9 +2277,7 @@ pub fn xlgammaf_u1(a: $f32x) -> $f32x {
   o = visinf_vo_vf(a) |
 		   ((a.le($f32x::splat(0.)) & visint_vo_vf(a)) |
 				(visnumber_vo_vf(a) & visnan_vo_vf(r)));
-  r = vsel_vf_vo_vf_vf(o, $f32x::splat(SLEEF_INFINITY_F), r);
-
-  return r;
+  vsel_vf_vo_vf_vf(o, $f32x::splat(SLEEF_INFINITY_F), r)
 }
 
 /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
@@ -2345,7 +2285,7 @@ pub fn xerff_u1(a: $f32x) -> $f32x {
   $f32x s = a, t, u;
   F2 d;
 
-  a = vabs_vf_vf(a);
+  a = a.abs();
   $mox o0 = a.lt($f32x::splat(1.1));
   $mox o1 = a.lt($f32x::splat(2.4));
   $mox o2 = a.lt($f32x::splat(4.));
@@ -2363,16 +2303,14 @@ pub fn xerff_u1(a: $f32x) -> $f32x {
   d *= a;
   d = vsel_vf2_vo_vf2_vf2(o0, d, $f32x::splat(1.).add_checked(-expk2f(d)));
   u = vmulsign_vf_vf_vf(vsel_vf_vo_vf_vf(o2, d.0 + d.1, $f32x::splat(1.)), s);
-  u = vsel_vf_vo_vf_vf(visnan_vo_vf(a), $f32x::splat(SLEEF_NAN_F), u);
-
-  return u;
+  vsel_vf_vo_vf_vf(visnan_vo_vf(a), $f32x::splat(SLEEF_NAN_F), u)
 }
 
 /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
 pub fn xerfcf_u15(a: $f32x) -> $f32x {
   $f32x s = a, r = $f32x::splat(0.), t;
   F2 u, d, x;
-  a = vabs_vf_vf(a);
+  a = a.abs();
   $mox o0 = a.lt($f32x::splat(1.));
   $mox o1 = a.lt($f32x::splat(2.2));
   $mox o2 = a.lt($f32x::splat(4.3));
@@ -2401,50 +2339,5 @@ pub fn xerfcf_u15(a: $f32x) -> $f32x {
 
   r = vsel_vf_vo_vf_vf(o3, x.0 + x.1, $f32x::splat(0.));
   r = vsel_vf_vo_vf_vf(vsignbit_vo_vf(s), $f32x::splat(2.) - r, r);
-  r = vsel_vf_vo_vf_vf(visnan_vo_vf(s), $f32x::splat(SLEEF_NAN_F), r);
-  return r;
+  vsel_vf_vo_vf_vf(visnan_vo_vf(s), $f32x::splat(SLEEF_NAN_F), r)
 }
-
-#ifndef ENABLE_GNUABI
-pub fn xgetIntf(int name) -> int {
-  if (1 <= name && name <= 10) return vavailability_i(name);
-  return 0;
-}
-
-pub fn *xgetPtrf(int name) -> void {
-  if (name == 0) return ISANAME;
-  return (void *)0;
-}
-#endif
-
-/*#ifdef ALIAS_NO_EXT_SUFFIX
-#include ALIAS_NO_EXT_SUFFIX
-#endif
-
-#ifdef ENABLE_GNUABI
-pub fn $f32x __acosf_finite     ($f32x)         __attribute__((weak, alias(str_xacosf_u1  )));
-pub fn $f32x __acoshf_finite    ($f32x)         __attribute__((weak, alias(str_xacoshf    )));
-pub fn $f32x __asinf_finite     (double)         __attribute__((weak, alias(str_xasinf_u1  )));
-pub fn $f32x __atan2f_finite    ($f32x, $f32x) __attribute__((weak, alias(str_xatan2f_u1 )));
-pub fn $f32x __atanhf_finite    ($f32x)         __attribute__((weak, alias(str_xatanhf    )));
-pub fn $f32x __coshf_finite     ($f32x)         __attribute__((weak, alias(str_xcoshf     )));
-pub fn $f32x __exp10f_finite    ($f32x)         __attribute__((weak, alias(str_xexp10f    )));
-pub fn $f32x __exp2f_finite     ($f32x)         __attribute__((weak, alias(str_xexp2f     )));
-pub fn $f32x __expf_finite      ($f32x)         __attribute__((weak, alias(str_xexpf      )));
-pub fn $f32x __fmodf_finite     ($f32x, $f32x) __attribute__((weak, alias(str_xfmodf     )));
-pub fn $f32x __modff_finite      ($f32x, $f32x *) __attribute__((weak, alias(str_xmodff  )));
-pub fn $f32x __hypotf_u05_finite($f32x, $f32x) __attribute__((weak, alias(str_xhypotf_u05)));
-pub fn $f32x __lgammaf_u1_finite($f32x)         __attribute__((weak, alias(str_xlgammaf_u1)));
-pub fn $f32x __log10f_finite    ($f32x)         __attribute__((weak, alias(str_xlog10f    )));
-pub fn $f32x __logf_finite      ($f32x)         __attribute__((weak, alias(str_xlogf_u1   )));
-pub fn $f32x __powf_finite      ($f32x, $f32x) __attribute__((weak, alias(str_xpowf      )));
-pub fn $f32x __sinhf_finite     ($f32x)         __attribute__((weak, alias(str_xsinhf     )));
-pub fn $f32x __sqrtf_finite     ($f32x)         __attribute__((weak, alias(str_xsqrtf     )));
-pub fn $f32x __tgammaf_u1_finite($f32x)         __attribute__((weak, alias(str_xtgammaf_u1)));
-
-#ifdef HEADER_MASKED
-#include HEADER_MASKED
-#endif
-#endif /* #ifdef ENABLE_GNUABI */
-
-*/

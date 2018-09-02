@@ -1,6 +1,6 @@
 #[inline]
 fn vupper_vf_vf(d: $f32x) -> $f32x {
-  $f32x::from($ix2::from(d) & $ix2::splat(0xfffff000))
+  $f32x::from_bits($ix2::from(d) & $ix2::splat(0xfffff000))
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -20,7 +20,7 @@ impl F2<$f32x> {
     #[inline]
     pub fn abs(self) -> Self {
         Self::new(self.0.abs(),
-            $f32x::from($mx::from(self.1) ^ ($mx::from(self.0) & $mx::from($f32x::splat(-0.))))
+            $f32x::from_bits($bx::from_bits(self.1) ^ ($bx::from_bits(self.0) & $bx::from_bits($f32x::splat(-0.))))
     }
 
     #[inline]
@@ -28,13 +28,13 @@ impl F2<$f32x> {
         Self::new( self.0 * other, self.1 * other )
     }
 
-    #[cfg(feature="enable_fma_dp")]
+    #[target_feature(enable = "fma")]
     #[inline]
     pub fn square(self) -> Self {
         let r0 = self.0 * self.0;
         Self::new(r0, vfma_vf_vf_vf_vf(self.0 + self.0, self.1, vfmapn_vf_vf_vf_vf(self.0, self.0, r0)) )
     }
-    #[cfg(not(feature="enable_fma_dp"))]
+    #[target_feature(not(enable = "fma"))]
     #[inline]
     pub fn square(self) -> Self {
         let xh = vupper_vf_vf(self.0);
@@ -48,12 +48,12 @@ impl F2<$f32x> {
         Self::new(r0, t)
     }
 
-    #[cfg(feature="enable_fma_dp")]
+    #[target_feature(enable = "fma")]
     #[inline]
     pub fn square_as_f(self) -> $f32x {
         vfma_vf_vf_vf_vf(self.0, self.0, self.0 * self.1 + self.0 * self.1)
     }
-    #[cfg(not(feature="enable_fma_dp"))]
+    #[target_feature(not(enable = "fma"))]
     #[inline]
     pub fn square_as_f(self) -> $f32x {
         let xh = vupper_vf_vf(self.0);
@@ -75,12 +75,12 @@ impl F2<$f32x> {
         ((self + t.mul_as_f2(t)) * t.rec()).scale($f32x::splat(0.5))
     }
 
-    #[cfg(feature="enable_fma_dp")]
+    #[target_feature(enable = "fma")]
     #[inline]
     pub fn mul_as_f(self, other: Self) -> $f32x {
         vfma_vf_vf_vf_vf(self.0, other.0, vfma_vf_vf_vf_vf(self.1, other.0, self.0 * other.1))
     }
-    #[cfg(not(feature="enable_fma_dp"))]
+    #[target_feature(not(enable = "fma"))]
     #[inline]
     pub fn mul_as_f(self, other: Self) -> $f32x {
         let xh = vupper_vf_vf(self.0);

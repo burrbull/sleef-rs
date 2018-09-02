@@ -202,12 +202,12 @@ extern const double rempitabdp[];
 //
 
 #[inline]
-fn $mx vnot_vo64_vo64($mx x) {
+fn $bx vnot_vo64_vo64($bx x) {
   return x ^ veq64_vo_vm_vm(vcast_vm_i_i(0, 0), vcast_vm_i_i(0, 0));
 }
 #[inline]
-fn vsignbit_vo_vd(d: $f64x) -> $mx {
-  return veq64_vo_vm_vm($mx::from(d) & $mx::from($f64x::splat(-0.)), $mx::from($f64x::splat(-0.)));
+fn vsignbit_vo_vd(d: $f64x) -> $bx {
+  return veq64_vo_vm_vm($bx::from_bits(d) & $bx::from_bits($f64x::splat(-0.)), $bx::from_bits($f64x::splat(-0.)));
 }
 
 // return d0 < d1 ? x : y
@@ -218,25 +218,25 @@ fn vsel_vi_vd_vd_vi_vi($f64x d0, $f64x d1, $ix x, $ix y) -> $ix { return vsel_vi
 #[inline]
 fn vsel_vi_vd_vi($f64x d, $ix x) -> $ix { return vand_vi_vo_vi(vcast_vo32_vo64(vsignbit_vo_vd(d)), x); }
 #[inline]
-fn visnegzero_vo_vd(d: $f64x) -> $mx {
-  return veq64_vo_vm_vm($mx::from(d), $mx::from($f64x::splat(-0.)));
+fn visnegzero_vo_vd(d: $f64x) -> $bx {
+  return veq64_vo_vm_vm($bx::from_bits(d), $bx::from_bits($f64x::splat(-0.)));
 }
 #[inline]
-fn visnumber_vo_vd(x: $f64x) -> $mx {
+fn visnumber_vo_vd(x: $f64x) -> $bx {
   return vandnot_vo_vo_vo(visinf_vo_vd(x), x.eq(x));
 }
 #[inline]
 fn vsignbit_vm_vd(d: $f64x) -> vmask {
-  $mx::from(d) & $mx::from($f64x::splat(-0.))
+  $bx::from_bits(d) & $bx::from_bits($f64x::splat(-0.))
 }
 #[inline]
 fn vmulsign_vd_vd_vd(x: $f64x, y: $f64x) -> $f64x {
-  $f64x::from($mx::from(x) ^ vsignbit_vm_vd(y))
+  $f64x::from_bits($bx::from_bits(x) ^ vsignbit_vm_vd(y))
 }
 #[inline]
 fn vcopysign_vd_vd_vd(x: $f64x, y: $f64x) -> $f64x {
-  $f64x::from(vandnot_vm_vm_vm($mx::from($f64x::splat(-0.)), $mx::from(x)) ^
-					  ($mx::from($f64x::splat(-0.)) & $mx::from(y)))
+  $f64x::from_bits(vandnot_vm_vm_vm($bx::from_bits($f64x::splat(-0.)), $bx::from_bits(x)) ^
+					  ($bx::from_bits($f64x::splat(-0.)) & $bx::from_bits(y)))
 }
 #[inline]
 fn vsign_vd_vd(d: $f64x) -> $f64x {
@@ -246,32 +246,32 @@ fn vsign_vd_vd(d: $f64x) -> $f64x {
 fn vpow2i_vd_vi(q: $ix) -> $f64x {
   q = $ix::splat(0x3ff) + q;
   let r = $ix2::from(q);
-  return $f64x::from(vsll_vi2_vi2_i(r, 20));
+  $f64x::from_bits(r << 20)
 }
 #[inline]
 fn vldexp_vd_vd_vi(x: $f64x, q: $ix) -> $f64x {
-  $ix m = vsra_vi_vi_i(q, 31);
-  m = vsll_vi_vi_i(vsra_vi_vi_i(m + q, 9) - m, 7);
-  q = q - vsll_vi_vi_i(m, 2);
+  $ix m = q >> 31;
+  m = (((m + q) >> 9) - m) << 7;
+  q = q - (m << 2);
   m = $ix::splat(0x3ff) + m;
   m = vandnot_vi_vo_vi($ix::splat(0).gt(m), m);
   m = vsel_vi_vo_vi_vi(m.gt($ix::splat(0x7ff)), $ix::splat(0x7ff), m);
   let r = $ix2::from(m);
-  $f64x y = $f64x::from(vsll_vi2_vi2_i(r, 20));
+  let y = $f64x::from_bits(r << 20);
   x * y * y * y * y * vpow2i_vd_vi(q)
 }
 #[inline]
 fn vldexp2_vd_vd_vi(d: $f64x, e: $ix) -> $f64x {
-  d * vpow2i_vd_vi(vsra_vi_vi_i(e, 1)) * vpow2i_vd_vi(e - vsra_vi_vi_i(e, 1))
+  d * vpow2i_vd_vi(e >> 1) * vpow2i_vd_vi(e - (e >> 1))
 }
 #[inline]
 fn vldexp3_vd_vd_vi(d: $f64x, q: $ix) -> $f64x {
-  $f64x::from($ix2::from(d) + vsll_vi2_vi2_i($ix2::from(q), 20))
+  $f64x::from_bits($ix2::from(d) + ($ix2::from(q) << 20))
 }
 
 #[cfg(all(not(feature="enable_avx512f"), not(feature="enable_avx512fnofma")))]#[inline]
 fn vilogbk_vi_vd(d: $f64x) -> $ix {
-  $mx o = d.lt($f64x::splat(4.9090934652977266e-91));
+  $bx o = d.lt($f64x::splat(4.9090934652977266e-91));
   d = vsel_vd_vo_vd_vd(o, $f64x::splat(2.037035976334486e90) * d, d);
   let q = $ix::splat($ix2::from(d));
   q = q & $ix::splat(((1 << 12)-1) << 20);
@@ -287,13 +287,13 @@ fn vilogb2k_vi_vd(d: $f64x) -> $ix {
 }
 #endif
 #[inline]
-fn visint_vo_vd(d: $f64x) -> $mx {
+fn visint_vo_vd(d: $f64x) -> $bx {
   $f64x x = vtruncate_vd_vd(d * $f64x::splat(1. / D1_31));
   x = $f64x::splat(-D1_31).mla(x, d);
   vtruncate_vd_vd(x).eq(x) | d.abs().gt($f64x::splat(D1_53))
 }
 #[inline]
-fn visodd_vo_vd(d: $f64x) -> $mx {
+fn visodd_vo_vd(d: $f64x) -> $bx {
   $f64x x = vtruncate_vd_vd(d * $f64x::splat(1. / D1_31));
   x = $f64x::splat(-D1_31).mla(x, d);
 
@@ -322,11 +322,11 @@ fn rempisub(x: $f64x) -> ($f64x, $ix) {
    } else {
     $f64x fr = x - $f64x::splat(D1_28) * vtruncate_vd_vd(x * $f64x::splat(1. / D1_28));
     $ix vi = vsel_vi_vo_vi_vi(vcast_vo32_vo64(x.gt($f64x::splat(0.))), $ix::splat(4), $ix::splat(3)) + vtruncate_vi_vd(fr * $f64x::splat(8.));
-    vi = vsra_vi_vi_i(($ix::splat(7) & vi) - $ix::splat(3), 1);
+    vi = (($ix::splat(7) & vi) - $ix::splat(3)) >> 1;
     fr = fr - $f64x::splat(0.25) * vtruncate_vd_vd(fr.mla($f64x::splat(4.), vmulsign_vd_vd_vd($f64x::splat(0.5), x)));
     fr = vsel_vd_vo_vd_vd(fr.abs().gt($f64x::splat(0.25)), fr - vmulsign_vd_vd_vd($f64x::splat(0.5), x), fr);
     fr = vsel_vd_vo_vd_vd(fr.abs().gt($f64x::splat(1e+10)), $f64x::splat(0), fr);
-    $mx o = x.abs().eq($f64x::splat(0.12499999999999998612));
+    $bx o = x.abs().eq($f64x::splat(0.12499999999999998612));
     fr = vsel_vd_vo_vd_vd(o, x, fr);
     vi = vsel_vi_vo_vi_vi(vcast_vo32_vo64(o), $ix::splat(0), vi);
     ( fr, vi )
@@ -337,14 +337,14 @@ fn rempi(a: $f64x) -> (D2, $ix) {
   D2 x, y, z;
   $ix ex = vilogb2k_vi_vd(a);
 #if defined(ENABLE_AVX512F) || defined(ENABLE_AVX512FNOFMA)
-  ex = vandnot_vi_vi_vi(vsra_vi_vi_i(ex, 31), ex);
+  ex = vandnot_vi_vi_vi(ex >> 31, ex);
   ex = ex & $ix::splat(1023);
 #endif
   ex = ex - $ix::splat(55);
   $ix q = vand_vi_vo_vi(ex.gt($ix::splat(700-55)), $ix::splat(-64));
   a = vldexp3_vd_vd_vi(a, q);
-  ex = vandnot_vi_vi_vi(vsra_vi_vi_i(ex, 31), ex);
-  ex = vsll_vi_vi_i(ex, 2);
+  ex = vandnot_vi_vi_vi(ex >> 31, ex);
+  ex = ex << 2;
   x = a.mul_as_d2(vgather_vd_p_vi(rempitabdp, ex));
   let (dii, did) = rempisub(x.0);
   q = dii;
@@ -361,9 +361,9 @@ fn rempi(a: $f64x) -> (D2, $ix) {
   x += y;
   x = x.normalize();
   x *= D2::from((3.141592653589793116*2, 1.2246467991473532072e-16*2));
-  $mx o = a.abs().lt($f64x::splat(0.7));
+  $bx o = a.abs().lt($f64x::splat(0.7));
   x.0 = vsel_vd_vo_vd_vd(o, a, x.0);
-  x.1 = $f64x::from(vandnot_vm_vo64_vm(o, $mx::from(x.1)));
+  x.1 = $f64x::from_bits(vandnot_vm_vo64_vm(o, $bx::from_bits(x.1)));
   ( x, q )
 }
 
@@ -379,7 +379,7 @@ pub fn xsin(d: $f64x) -> $f64x {
   } else if (LIKELY(vtestallones_i_vo64(d.abs().lt($f64x::splat(TRIGRANGEMAX))))) {
     $f64x dqh = vtruncate_vd_vd(d * $f64x::splat(M_1_PI / D1_24));
     dqh = dqh * $f64x::splat(D1_24);
-    $f64x dql = vrint_vd_vd(vmlapn_vd_vd_vd_vd(d, $f64x::splat(M_1_PI), dqh));
+    $f64x dql = vrint_vd_vd(d.mlapn($f64x::splat(M_1_PI), dqh));
     ql = vrint_vi_vd(dql);
 
     d = dqh.mla($f64x::splat(-PI_A), d);
@@ -393,19 +393,19 @@ pub fn xsin(d: $f64x) -> $f64x {
     let (ddidd, ddii) = rempi(d);
     ql = ddii & $ix::splat(3);
     ql = ql + ql + vsel_vi_vo_vi_vi(vcast_vo32_vo64(ddidd.0.gt($f64x::splat(0.))), $ix::splat(2), $ix::splat(1));
-    ql = vsra_vi_vi_i(ql, 2);
-    $mx o = (ddii & $ix::splat(1)).eq($ix::splat(1));
+    ql = ql >> 2;
+    $bx o = (ddii & $ix::splat(1)).eq($ix::splat(1));
     D2 x = D2::new(vmulsign_vd_vd_vd($f64x::splat(-3.141592653589793116 * 0.5), ddidd.0), 
 				 vmulsign_vd_vd_vd($f64x::splat(-1.2246467991473532072e-16 * 0.5), ddidd.0));
     x = ddidd + x;
     ddidd = vsel_vd2_vo_vd2_vd2(vcast_vo64_vo32(o), x, ddidd);
     d = ddidd.0 + ddidd.1;
-    d = $f64x::from(vor_vm_vo64_vm(visinf_vo_vd(r) | visnan_vo_vd(r), $mx::from(d)));
+    d = $f64x::from_bits(vor_vm_vo64_vm(visinf_vo_vd(r) | visnan_vo_vd(r), $bx::from_bits(d)));
   }
 
   s = d * d;
 
-  d = $f64x::from(vand_vm_vo64_vm(vcast_vo64_vo32((ql & $ix::splat(1)).eq($ix::splat(1))), $mx::from($f64x::splat(-0.))) ^ $mx::from(d));
+  d = $f64x::from_bits(vand_vm_vo64_vm(vcast_vo64_vo32((ql & $ix::splat(1)).eq($ix::splat(1))), $bx::from_bits($f64x::splat(-0.))) ^ $bx::from_bits(d));
 
   u = $f64x::splat(-7.97255955009037868891952e-18)
       .mla(s, $f64x::splat(2.81009972710863200091251e-15))
@@ -437,7 +437,7 @@ pub fn xsin_u1(d: $f64x) -> $f64x {
   } else if (LIKELY(vtestallones_i_vo64(d.abs().lt($f64x::splat(TRIGRANGEMAX))))) {
     $f64x dqh = vtruncate_vd_vd(d*$f64x::splat(M_1_PI / D1_24));
     dqh = dqh*$f64x::splat(D1_24);
-    const $f64x dql = vrint_vd_vd(vmlapn_vd_vd_vd_vd(d, $f64x::splat(M_1_PI), dqh));
+    const $f64x dql = vrint_vd_vd(d.mlapn($f64x::splat(M_1_PI), dqh));
     ql = vrint_vi_vd(dql);
 
     u = dqh.mla($f64x::splat(-PI_A), d);
@@ -451,14 +451,14 @@ pub fn xsin_u1(d: $f64x) -> $f64x {
     let (ddidd, ddii) = rempi(d);
     ql = ddii & $ix::splat(3);
     ql = ql + ql + vsel_vi_vo_vi_vi(vcast_vo32_vo64(ddidd.0.gt($f64x::splat(0.))), $ix::splat(2), $ix::splat(1));
-    ql = vsra_vi_vi_i(ql, 2);
-    $mx o = (ddii & $ix::splat(1)).eq($ix::splat(1));
+    ql = ql >> 2;
+    $bx o = (ddii & $ix::splat(1)).eq($ix::splat(1));
     D2 x = D2::new(vmulsign_vd_vd_vd($f64x::splat(-3.141592653589793116 * 0.5), ddidd.0), 
 				 vmulsign_vd_vd_vd($f64x::splat(-1.2246467991473532072e-16 * 0.5), ddidd.0));
     x = ddidd + x;
     ddidd = vsel_vd2_vo_vd2_vd2(vcast_vo64_vo32(o), x, ddidd);
     s = ddidd.normalize();
-    s.0 = $f64x::from(vor_vm_vo64_vm(visinf_vo_vd(d) | visnan_vo_vd(d), $mx::from(s.0)));
+    s.0 = $f64x::from_bits(vor_vm_vo64_vm(visinf_vo_vd(d) | visnan_vo_vd(d), $bx::from_bits(s.0)));
   }
   
   t = s;
@@ -476,8 +476,8 @@ pub fn xsin_u1(d: $f64x) -> $f64x {
 
   u = t.mul_as_d(x);
   
-  u = $f64x::from(vand_vm_vo64_vm(vcast_vo64_vo32((ql & $ix::splat(1)).eq($ix::splat(1))),
-						       $mx::from($f64x::splat(-0.))) ^ $mx::from(u));
+  u = $f64x::from_bits(vand_vm_vo64_vm(vcast_vo64_vo32((ql & $ix::splat(1)).eq($ix::splat(1))),
+						       $bx::from_bits($f64x::splat(-0.))) ^ $bx::from_bits(u));
   u = vsel_vd_vo_vd_vd(d.eq($f64x::splat(0.)), d, u);
   
   return u;
@@ -514,20 +514,20 @@ pub fn xcos(d: $f64x) -> $f64x {
     let (ddidd, ddii) = rempi(d);
     ql = ddii & $ix::splat(3);
     ql = ql + ql + vsel_vi_vo_vi_vi(vcast_vo32_vo64(ddidd.0.gt($f64x::splat(0.))), $ix::splat(8), $ix::splat(7));
-    ql = vsra_vi_vi_i(ql, 1);
-    $mx o = (ddii & $ix::splat(1)).eq($ix::splat(0));
+    ql = ql >> 1;
+    $bx o = (ddii & $ix::splat(1)).eq($ix::splat(0));
     $f64x y = vsel_vd_vo_vd_vd(ddidd.0.gt($f64x::splat(0.)), $f64x::splat(0.), $f64x::splat(-1.));
     D2 x = D2::new(vmulsign_vd_vd_vd($f64x::splat(-3.141592653589793116 * 0.5), y), 
 				 vmulsign_vd_vd_vd($f64x::splat(-1.2246467991473532072e-16 * 0.5), y));
     x = ddidd + x;
     ddidd = vsel_vd2_vo_vd2_vd2(vcast_vo64_vo32(o), x, ddidd);
     d = ddidd.0 + ddidd.1;
-    d = $f64x::from(vor_vm_vo64_vm(visinf_vo_vd(r) | visnan_vo_vd(r), $mx::from(d)));
+    d = $f64x::from_bits(vor_vm_vo64_vm(visinf_vo_vd(r) | visnan_vo_vd(r), $bx::from_bits(d)));
   }
 
   s = d*d;
 
-  d = $f64x::from(vand_vm_vo64_vm(vcast_vo64_vo32((ql & $ix::splat(2)).eq($ix::splat(0))), $mx::from($f64x::splat(-0.))) ^ $mx::from(d));
+  d = $f64x::from_bits(vand_vm_vo64_vm(vcast_vo64_vo32((ql & $ix::splat(2)).eq($ix::splat(0))), $bx::from_bits($f64x::splat(-0.))) ^ $bx::from_bits(d));
 
   u = $f64x::splat(-7.97255955009037868891952e-18)
       .mla(s, $f64x::splat(2.81009972710863200091251e-15))
@@ -574,15 +574,15 @@ pub fn xcos_u1(d: $f64x) -> $f64x {
     let (ddidd, ddii) = rempi(d);
     ql = ddii & $ix::splat(3);
     ql = ql + ql + vsel_vi_vo_vi_vi(vcast_vo32_vo64(ddidd.0.gt($f64x::splat(0.))), $ix::splat(8), $ix::splat(7));
-    ql = vsra_vi_vi_i(ql, 1);
-    $mx o = (ddii & $ix::splat(1)).eq($ix::splat(0));
+    ql = ql >> 1;
+    $bx o = (ddii & $ix::splat(1)).eq($ix::splat(0));
     $f64x y = vsel_vd_vo_vd_vd(ddidd.0.gt($f64x::splat(0.)), $f64x::splat(0.), $f64x::splat(-1.));
     D2 x = D2::new(vmulsign_vd_vd_vd($f64x::splat(-3.141592653589793116 * 0.5), y), 
 				 vmulsign_vd_vd_vd($f64x::splat(-1.2246467991473532072e-16 * 0.5), y));
     x = ddidd + x;
     ddidd = vsel_vd2_vo_vd2_vd2(vcast_vo64_vo32(o), x, ddidd);
     s = ddidd.normalize();
-    s.0 = $f64x::from(vor_vm_vo64_vm(visinf_vo_vd(d) | visnan_vo_vd(d), $mx::from(s.0)));
+    s.0 = $f64x::from_bits(vor_vm_vo64_vm(visinf_vo_vd(d) | visnan_vo_vd(d), $bx::from_bits(s.0)));
   }
   
   t = s;
@@ -600,14 +600,14 @@ pub fn xcos_u1(d: $f64x) -> $f64x {
 
   u = t.mul_as_d(x);
   
-  u = $f64x::from(vand_vm_vo64_vm(vcast_vo64_vo32((ql & $ix::splat(2)).eq($ix::splat(0))), $mx::from($f64x::splat(-0.))) ^ $mx::from(u));
+  u = $f64x::from_bits(vand_vm_vo64_vm(vcast_vo64_vo32((ql & $ix::splat(2)).eq($ix::splat(0))), $bx::from_bits($f64x::splat(-0.))) ^ $bx::from_bits(u));
   
   return u;
 }
 
 
 pub fn xsincos(d: $f64x) -> ($f64x, $f64x) {
-  $mx o;
+  $bx o;
   $f64x u, t, rx, ry, s;
   D2 r;
   $ix ql;
@@ -634,7 +634,7 @@ pub fn xsincos(d: $f64x) -> ($f64x, $f64x) {
     let (ddidd, ddii) = rempi(d);
     ql = ddii;
     s = ddidd.0 + ddidd.1;
-    s = $f64x::from(vor_vm_vo64_vm(visinf_vo_vd(d) | visnan_vo_vd(d), $mx::from(s)));
+    s = $f64x::from_bits(vor_vm_vo64_vm(visinf_vo_vd(d) | visnan_vo_vd(d), $bx::from_bits(s)));
   }
   
   t = s;
@@ -666,16 +666,16 @@ pub fn xsincos(d: $f64x) -> ($f64x, $f64x) {
   rcos = vsel_vd_vo_vd_vd(o, ry, rx);
 
   o = vcast_vo64_vo32((ql & $ix::splat(2)).eq($ix::splat(2)));
-  rsin = $f64x::from(vand_vm_vo64_vm(o, $mx::from($f64x::splat(-0.))) ^ $mx::from(rsin));
+  rsin = $f64x::from_bits(vand_vm_vo64_vm(o, $bx::from_bits($f64x::splat(-0.))) ^ $bx::from_bits(rsin));
 
   o = vcast_vo64_vo32(((ql + $ix::splat(1)) & $ix::splat(2)).eq($ix::splat(2)));
-  rcos = $f64x::from(vand_vm_vo64_vm(o, $mx::from($f64x::splat(-0.))) ^ $mx::from(rcos));
+  rcos = $f64x::from_bits(vand_vm_vo64_vm(o, $bx::from_bits($f64x::splat(-0.))) ^ $bx::from_bits(rcos));
   
   (rsin, rcos)
 }
 
 pub fn xsincos_u1(d: $f64x) -> ($f64x, $f64x) {
-  $mx o;
+  $bx o;
   $f64x u, rx, ry;
   D2 r, s, t, x;
   $ix ql;
@@ -703,8 +703,8 @@ pub fn xsincos_u1(d: $f64x) -> ($f64x, $f64x) {
     ql = ddii;
     s = ddidd;
     o = visinf_vo_vd(d) | visnan_vo_vd(d);
-    s.0 = $f64x::from(vor_vm_vo64_vm(o, $mx::from(s.0)));
-    s.1 = $f64x::from(vor_vm_vo64_vm(o, $mx::from(s.1)));
+    s.0 = $f64x::from_bits(vor_vm_vo64_vm(o, $bx::from_bits(s.0)));
+    s.1 = $f64x::from_bits(vor_vm_vo64_vm(o, $bx::from_bits(s.1)));
   }
   
   t = s;
@@ -741,16 +741,16 @@ pub fn xsincos_u1(d: $f64x) -> ($f64x, $f64x) {
   rcos = vsel_vd_vo_vd_vd(o, ry, rx);
 
   o = vcast_vo64_vo32((ql & $ix::splat(2)).eq($ix::splat(2)));
-  rsin = $f64x::from(vand_vm_vo64_vm(o, $mx::from($f64x::splat(-0.))) ^ $mx::from(rsin));
+  rsin = $f64x::from_bits(vand_vm_vo64_vm(o, $bx::from_bits($f64x::splat(-0.))) ^ $bx::from_bits(rsin));
 
   o = vcast_vo64_vo32(((ql + $ix::splat(1)) & $ix::splat(2)).eq($ix::splat(2)));
-  rcos = $f64x::from(vand_vm_vo64_vm(o, $mx::from($f64x::splat(-0.))) ^ $mx::from(rcos));
+  rcos = $f64x::from_bits(vand_vm_vo64_vm(o, $bx::from_bits($f64x::splat(-0.))) ^ $bx::from_bits(rcos));
 
   (rsin, rcos)
 }
 
 pub fn xsincospi_u05(d: $f64x) -> ($f64x, $f64x) {
-  $mx o;
+  $bx o;
   $f64x u, s, t, rx, ry;
   D2 r, x, s2;
 
@@ -800,24 +800,24 @@ pub fn xsincospi_u05(d: $f64x) -> ($f64x, $f64x) {
   rcos = vsel_vd_vo_vd_vd(o, ry, rx);
 
   o = vcast_vo64_vo32((q & $ix::splat(4)).eq($ix::splat(4)));
-  rsin = $f64x::from(vand_vm_vo64_vm(o, $mx::from($f64x::splat(-0.))) ^ $mx::from(rsin));
+  rsin = $f64x::from_bits(vand_vm_vo64_vm(o, $bx::from_bits($f64x::splat(-0.))) ^ $bx::from_bits(rsin));
 
   o = vcast_vo64_vo32(((q + $ix::splat(2)) & $ix::splat(4)).eq($ix::splat(4)));
-  rcos = $f64x::from(vand_vm_vo64_vm(o, $mx::from($f64x::splat(-0.))) ^ $mx::from(rcos));
+  rcos = $f64x::from_bits(vand_vm_vo64_vm(o, $bx::from_bits($f64x::splat(-0.))) ^ $bx::from_bits(rcos));
 
   o = d.abs().gt($f64x::splat(TRIGRANGEMAX3/4.));
-  rsin = $f64x::from(vandnot_vm_vo64_vm(o, $mx::from(rsin)));
+  rsin = $f64x::from_bits(vandnot_vm_vo64_vm(o, $bx::from_bits(rsin)));
   rcos = vsel_vd_vo_vd_vd(o, $f64x::splat(1.), rcos);
 
   o = visinf_vo_vd(d);
-  rsin = $f64x::from(vor_vm_vo64_vm(o, $mx::from(rsin)));
-  rcos = $f64x::from(vor_vm_vo64_vm(o, $mx::from(rcos)));
+  rsin = $f64x::from_bits(vor_vm_vo64_vm(o, $bx::from_bits(rsin)));
+  rcos = $f64x::from_bits(vor_vm_vo64_vm(o, $bx::from_bits(rcos)));
 
   (rsin, rcos)
 }
 
 pub fn xsincospi_u35(d: $f64x) -> ($f64x, $f64x) {
-  $mx o;
+  $bx o;
   $f64x u, s, t, rx, ry;
   D2 r;
 
@@ -831,24 +831,24 @@ pub fn xsincospi_u35(d: $f64x) -> ($f64x, $f64x) {
   
   //
 
-  u = $f64x::splat(+0.6880638894766060136e-11)
+  u = $f64x::splat(0.6880638894766060136e-11)
       .mla(s, $f64x::splat(-0.1757159564542310199e-8))
-      .mla(s, $f64x::splat(+0.3133616327257867311e-6))
+      .mla(s, $f64x::splat(0.3133616327257867311e-6))
       .mla(s, $f64x::splat(-0.3657620416388486452e-4))
-      .mla(s, $f64x::splat(+0.2490394570189932103e-2))
+      .mla(s, $f64x::splat(0.2490394570189932103e-2))
       .mla(s, $f64x::splat(-0.8074551218828056320e-1))
-      .mla(s, $f64x::splat(+0.7853981633974482790e+0));
+      .mla(s, $f64x::splat(0.7853981633974482790e+0));
 
   rx = u*t;
 
   //
   
   u = $f64x::splat(-0.3860141213683794352e-12)
-      .mla(s, $f64x::splat(+0.1150057888029681415e-9))
+      .mla(s, $f64x::splat(0.1150057888029681415e-9))
       .mla(s, $f64x::splat(-0.2461136493006663553e-7))
-      .mla(s, $f64x::splat(+0.3590860446623516713e-5))
+      .mla(s, $f64x::splat(0.3590860446623516713e-5))
       .mla(s, $f64x::splat(-0.3259918869269435942e-3))
-      .mla(s, $f64x::splat(+0.1585434424381541169e-1))
+      .mla(s, $f64x::splat(0.1585434424381541169e-1))
       .mla(s, $f64x::splat(-0.3084251375340424373e+0))
       .mla(s, $f64x::splat(1.));
 
@@ -861,18 +861,18 @@ pub fn xsincospi_u35(d: $f64x) -> ($f64x, $f64x) {
   rcos = vsel_vd_vo_vd_vd(o, ry, rx);
 
   o = vcast_vo64_vo32((q & $ix::splat(4)).eq($ix::splat(4)));
-  rsin = $f64x::from(vand_vm_vo64_vm(o, $mx::from($f64x::splat(-0.))) ^ $mx::from(rsin));
+  rsin = $f64x::from_bits(vand_vm_vo64_vm(o, $bx::from_bits($f64x::splat(-0.))) ^ $bx::from_bits(rsin));
 
   o = vcast_vo64_vo32(((q + $ix::splat(2)) & $ix::splat(4)).eq($ix::splat(4)));
-  rcos = $f64x::from(vand_vm_vo64_vm(o, $mx::from($f64x::splat(-0.))) ^ $mx::from(rcos));
+  rcos = $f64x::from_bits(vand_vm_vo64_vm(o, $bx::from_bits($f64x::splat(-0.))) ^ $bx::from_bits(rcos));
 
   o = d.abs().gt($f64x::splat(TRIGRANGEMAX3/4.));
-  rsin = $f64x::from(vandnot_vm_vo64_vm(o, $mx::from(rsin)));
-  rcos = $f64x::from(vandnot_vm_vo64_vm(o, $mx::from(rcos)));
+  rsin = $f64x::from_bits(vandnot_vm_vo64_vm(o, $bx::from_bits(rsin)));
+  rcos = $f64x::from_bits(vandnot_vm_vo64_vm(o, $bx::from_bits(rcos)));
 
   o = visinf_vo_vd(d);
-  rsin = $f64x::from(vor_vm_vo64_vm(o, $mx::from(rsin)));
-  rcos = $f64x::from(vor_vm_vo64_vm(o, $mx::from(rcos)));
+  rsin = $f64x::from_bits(vor_vm_vo64_vm(o, $bx::from_bits(rsin)));
+  rcos = $f64x::from_bits(vor_vm_vo64_vm(o, $bx::from_bits(rcos)));
 
   (rsin, rcos)
 }
@@ -892,7 +892,7 @@ pub fn xmodf(x: $f64x) -> ($f64x, $f64x) {
 
 #[inline]
 fn sinpik(d: $f64x) -> D2 {
-  $mx o;
+  $bx o;
   $f64x u, s, t;
   D2 x, s2;
 
@@ -923,8 +923,8 @@ fn sinpik(d: $f64x) -> D2 {
   x = vsel_vd2_vo_vd2_vd2(o, x + $f64x::splat(1.), x);
 
   o = vcast_vo64_vo32((q & $ix::splat(4)).eq($ix::splat(4)));
-  x.0 = $f64x::from(vand_vm_vo64_vm(o, $mx::from($f64x::splat(-0.))) ^ $mx::from(x.0));
-  x.1 = $f64x::from(vand_vm_vo64_vm(o, $mx::from($f64x::splat(-0.))) ^ $mx::from(x.1));
+  x.0 = $f64x::from_bits(vand_vm_vo64_vm(o, $bx::from_bits($f64x::splat(-0.))) ^ $bx::from_bits(x.0));
+  x.1 = $f64x::from_bits(vand_vm_vo64_vm(o, $bx::from_bits($f64x::splat(-0.))) ^ $bx::from_bits(x.1));
 
   return x;
 }
@@ -934,14 +934,14 @@ pub fn xsinpi_u05(d: $f64x) -> $f64x {
   $f64x r = x.0 + x.1;
 
   r = vsel_vd_vo_vd_vd(visnegzero_vo_vd(d), $f64x::splat(-0.), r);
-  r = $f64x::from(vandnot_vm_vo64_vm(d.abs().gt($f64x::splat(TRIGRANGEMAX3/4.)), $mx::from(r)));
-  r = $f64x::from(vor_vm_vo64_vm(visinf_vo_vd(d), $mx::from(r)));
+  r = $f64x::from_bits(vandnot_vm_vo64_vm(d.abs().gt($f64x::splat(TRIGRANGEMAX3/4.)), $bx::from_bits(r)));
+  r = $f64x::from_bits(vor_vm_vo64_vm(visinf_vo_vd(d), $bx::from_bits(r)));
   
   return r;
 }
 #[inline]
 fn cospik(d: $f64x) -> D2 {
-  $mx o;
+  $bx o;
   $f64x u, s, t;
   D2 x, s2;
 
@@ -973,8 +973,8 @@ fn cospik(d: $f64x) -> D2 {
   x = vsel_vd2_vo_vd2_vd2(o, x + $f64x::splat(1.), x);
 
   o = vcast_vo64_vo32(((q + $ix::splat(2) & $ix::splat(4)).eq($ix::splat(4)));
-  x.0 = $f64x::from(vand_vm_vo64_vm(o, $mx::from($f64x::splat(-0.))) ^ $mx::from(x.0));
-  x.1 = $f64x::from(vand_vm_vo64_vm(o, $mx::from($f64x::splat(-0.))) ^ $mx::from(x.1));
+  x.0 = $f64x::from_bits(vand_vm_vo64_vm(o, $bx::from_bits($f64x::splat(-0.))) ^ $bx::from_bits(x.0));
+  x.1 = $f64x::from_bits(vand_vm_vo64_vm(o, $bx::from_bits($f64x::splat(-0.))) ^ $bx::from_bits(x.1));
 
   return x;
 }
@@ -984,14 +984,14 @@ pub fn xcospi_u05(d: $f64x) -> $f64x {
   $f64x r = x.0 + x.1;
 
   r = vsel_vd_vo_vd_vd(d.abs().gt($f64x::splat(TRIGRANGEMAX3/4.)), $f64x::splat(1.), r);
-  r = $f64x::from(vor_vm_vo64_vm(visinf_vo_vd(d), $mx::from(r)));
+  r = $f64x::from_bits(vor_vm_vo64_vm(visinf_vo_vd(d), $bx::from_bits(r)));
   
   return r;
 }
 
 pub fn xtan(d: $f64x) -> $f64x {
   $f64x u, s, x;
-  $mx o;
+  $bx o;
   $ix ql;
 
   if (LIKELY(vtestallones_i_vo64(d.abs().lt($f64x::splat(TRIGRANGEMAX2))))) {
@@ -1016,14 +1016,14 @@ pub fn xtan(d: $f64x) -> $f64x {
     let (ddidd, ddii) = rempi(d);
     ql = ddii;
     x = ddidd.0 + ddidd.1;
-    x = $f64x::from(vor_vm_vo64_vm(visinf_vo_vd(d), $mx::from(x)));
-    x = $f64x::from(vor_vm_vo64_vm(visinf_vo_vd(d) | visnan_vo_vd(d), $mx::from(x)));
+    x = $f64x::from_bits(vor_vm_vo64_vm(visinf_vo_vd(d), $bx::from_bits(x)));
+    x = $f64x::from_bits(vor_vm_vo64_vm(visinf_vo_vd(d) | visnan_vo_vd(d), $bx::from_bits(x)));
   }
 
   s = x*x;
 
   o = vcast_vo64_vo32((ql & $ix::splat(1)).eq($ix::splat(1)));
-  x = $f64x::from(vand_vm_vo64_vm(o, $mx::from($f64x::splat(-0.))) ^ $mx::from(x));
+  x = $f64x::from_bits(vand_vm_vo64_vm(o, $bx::from_bits($f64x::splat(-0.))) ^ $bx::from_bits(x));
 
 #ifdef SPLIT_KERNEL
   $f64x s2 = s*s;
@@ -1078,7 +1078,7 @@ pub fn xtan(d: $f64x) -> $f64x {
 pub fn xtan_u1(d: $f64x) -> $f64x {
   $f64x u;
   D2 s, t, x;
-  $mx o;
+  $bx o;
   $ix ql;
   
   if (LIKELY(vtestallones_i_vo64(d.abs().lt($f64x::splat(TRIGRANGEMAX2))))) {
@@ -1107,14 +1107,14 @@ pub fn xtan_u1(d: $f64x) -> $f64x {
     ql = ddii;
     s = ddidd;
     o = visinf_vo_vd(d) | visnan_vo_vd(d);
-    s.0 = $f64x::from(vor_vm_vo64_vm(o, $mx::from(s.0)));
-    s.1 = $f64x::from(vor_vm_vo64_vm(o, $mx::from(s.1)));
+    s.0 = $f64x::from_bits(vor_vm_vo64_vm(o, $bx::from_bits(s.0)));
+    s.1 = $f64x::from_bits(vor_vm_vo64_vm(o, $bx::from_bits(s.1)));
   }
   
   o = vcast_vo64_vo32((ql & $ix::splat(1)).eq($ix::splat(1)));
-  vmask n = vand_vm_vo64_vm(o, $mx::from($f64x::splat(-0.)));
-  s.0 = $f64x::from($mx::from(s.0) ^ n);
-  s.1 = $f64x::from($mx::from(s.1) ^ n);
+  vmask n = vand_vm_vo64_vm(o, $bx::from_bits($f64x::splat(-0.)));
+  s.0 = $f64x::from_bits($bx::from_bits(s.0) ^ n);
+  s.1 = $f64x::from_bits($bx::from_bits(s.1) ^ n);
 
   t = s;
   s = s.square();
@@ -1172,7 +1172,7 @@ pub fn xtan_u1(d: $f64x) -> $f64x {
 fn atan2k(y: $f64x, x: $f64x) -> $f64x {
   $f64x s, t, u;
   $ix q;
-  $mx p;
+  $bx p;
 
   q = vsel_vi_vd_vi(x, $ix::splat(-2));
   x = x.abs();
@@ -1243,13 +1243,13 @@ fn atan2k_u1(D2 y, D2 x) -> D2 {
   $f64x u;
   D2 s, t;
   $ix q;
-  $mx p;
+  $bx p;
 
   q = vsel_vi_vd_vi(x.0, $ix::splat(-2));
   p = x.0.lt($f64x::splat(0.));
-  vmask b = vand_vm_vo64_vm(p, $mx::from($f64x::splat(-0.)));
-  x.0 = $f64x::from(b ^ $mx::from(x.0));
-  x.1 = $f64x::from(b ^ $mx::from(x.1));
+  vmask b = vand_vm_vo64_vm(p, $bx::from_bits($f64x::splat(-0.)));
+  x.0 = $f64x::from_bits(b ^ $bx::from_bits(x.0));
+  x.1 = $f64x::from_bits(b ^ $bx::from_bits(x.1));
 
   q = vsel_vi_vd_vd_vi_vi(x.0, y.0, q + $ix::splat(1), q);
   p = x.0.lt(y.0);
@@ -1318,7 +1318,7 @@ fn atan2k_u1(D2 y, D2 x) -> D2 {
 }
 #[inline]
 fn visinf2_vd_vd_vd(d: $f64x, m: $f64x) -> $f64x {
-  return $f64x::from(vand_vm_vo64_vm(visinf_vo_vd(d), ($mx::from(d) & $mx::from($f64x::splat(-0.))) | $mx::from(m))));
+  return $f64x::from_bits(vand_vm_vo64_vm(visinf_vo_vd(d), ($bx::from_bits(d) & $bx::from_bits($f64x::splat(-0.))) | $bx::from_bits(m))));
 }
 
 pub fn xatan2(y: $f64x, x: $f64x) -> $f64x {
@@ -1327,14 +1327,14 @@ pub fn xatan2(y: $f64x, x: $f64x) -> $f64x {
   r = vmulsign_vd_vd_vd(r, x);
   r = vsel_vd_vo_vd_vd(visinf_vo_vd(x) | x.eq($f64x::splat(0.)), $f64x::splat(M_PI/2.) - visinf2_vd_vd_vd(x, vmulsign_vd_vd_vd($f64x::splat(M_PI/2.), x)), r);
   r = vsel_vd_vo_vd_vd(visinf_vo_vd(y), $f64x::splat(M_PI/2.) - visinf2_vd_vd_vd(x, vmulsign_vd_vd_vd($f64x::splat(M_PI/4.), x)), r);
-  r = vsel_vd_vo_vd_vd(y.eq($f64x::splat(0.)), $f64x::from(vand_vm_vo64_vm(vsignbit_vo_vd(x), $mx::from($f64x::splat(M_PI)))), r);
+  r = vsel_vd_vo_vd_vd(y.eq($f64x::splat(0.)), $f64x::from_bits(vand_vm_vo64_vm(vsignbit_vo_vd(x), $bx::from_bits($f64x::splat(M_PI)))), r);
 
-  r = $f64x::from(vor_vm_vo64_vm(visnan_vo_vd(x) | visnan_vo_vd(y), $mx::from(vmulsign_vd_vd_vd(r, y))));
+  r = $f64x::from_bits(vor_vm_vo64_vm(visnan_vo_vd(x) | visnan_vo_vd(y), $bx::from_bits(vmulsign_vd_vd_vd(r, y))));
   return r;
 }
 
 pub fn xatan2_u1(y: $f64x, x: $f64x) -> $f64x {
-  $mx o = x.abs().lt($f64x::splat(5.5626846462680083984e-309)); // nexttoward((1.0 / DBL_MAX), 1)
+  $bx o = x.abs().lt($f64x::splat(5.5626846462680083984e-309)); // nexttoward((1.0 / DBL_MAX), 1)
   x = vsel_vd_vo_vd_vd(o, x*$f64x::splat(D1_53), x);
   y = vsel_vd_vo_vd_vd(o, y*$f64x::splat(D1_23), y);
 
@@ -1344,14 +1344,14 @@ pub fn xatan2_u1(y: $f64x, x: $f64x) -> $f64x {
   r = vmulsign_vd_vd_vd(r, x);
   r = vsel_vd_vo_vd_vd(visinf_vo_vd(x) | x.eq($f64x::splat(0.)), $f64x::splat(M_PI/2.) - visinf2_vd_vd_vd(x, vmulsign_vd_vd_vd($f64x::splat(M_PI/2.), x)), r);
   r = vsel_vd_vo_vd_vd(visinf_vo_vd(y), $f64x::splat(M_PI/2.) - visinf2_vd_vd_vd(x, vmulsign_vd_vd_vd($f64x::splat(M_PI/4.), x)), r);
-  r = vsel_vd_vo_vd_vd(y.eq($f64x::splat(0.)), $f64x::from(vand_vm_vo64_vm(vsignbit_vo_vd(x), $mx::from($f64x::splat(M_PI)))), r);
+  r = vsel_vd_vo_vd_vd(y.eq($f64x::splat(0.)), $f64x::from_bits(vand_vm_vo64_vm(vsignbit_vo_vd(x), $bx::from_bits($f64x::splat(M_PI)))), r);
 
-  r = $f64x::from(vor_vm_vo64_vm(visnan_vo_vd(x) | visnan_vo_vd(y), $mx::from(vmulsign_vd_vd_vd(r, y))));
+  r = $f64x::from_bits(vor_vm_vo64_vm(visnan_vo_vd(x) | visnan_vo_vd(y), $bx::from_bits(vmulsign_vd_vd_vd(r, y))));
   return r;
 }
 
 pub fn xasin(d: $f64x) -> $f64x {
-  $mx o = d.abs().lt($f64x::splat(0.5));
+  $bx o = d.abs().lt($f64x::splat(0.5));
   $f64x x2 = vsel_vd_vo_vd_vd(o, d*d, ($f64x::splat(1.) - d.abs())*$f64x::splat(0.5));
   $f64x x = vsel_vd_vo_vd_vd(o, d.abs(), vsqrt_vd_vd(x2)), u;
 
@@ -1360,33 +1360,33 @@ pub fn xasin(d: $f64x) -> $f64x {
   v;
 
   u = $f64x::splat(-0.1581918243329996643e-1)
-      .mla(x4, $f64x::splat(+0.6606077476277170610e-2))
-      .mla(x4, $f64x::splat(+0.1388715184501609218e-1))
-      .mla(x4, $f64x::splat(+0.2237176181932048341e-1))
-      .mla(x4, $f64x::splat(+0.4464285681377102438e-1))
-      .mla(x4, $f64x::splat(+0.1666666666666497543e+0));
+      .mla(x4, $f64x::splat(0.6606077476277170610e-2))
+      .mla(x4, $f64x::splat(0.1388715184501609218e-1))
+      .mla(x4, $f64x::splat(0.2237176181932048341e-1))
+      .mla(x4, $f64x::splat(0.4464285681377102438e-1))
+      .mla(x4, $f64x::splat(0.1666666666666497543e+0));
   
-  v = $f64x::splat(+0.3161587650653934628e-1)
-      .mla(x4, $f64x::splat(+0.1929045477267910674e-1))
-      .mla(x4, $f64x::splat(+0.1215360525577377331e-1))
-      .mla(x4, $f64x::splat(+0.1735956991223614604e-1))
-      .mla(x4, $f64x::splat(+0.3038195928038132237e-1))
-      .mla(x4, $f64x::splat(+0.7500000000378581611e-1));
+  v = $f64x::splat(0.3161587650653934628e-1)
+      .mla(x4, $f64x::splat(0.1929045477267910674e-1))
+      .mla(x4, $f64x::splat(0.1215360525577377331e-1))
+      .mla(x4, $f64x::splat(0.1735956991223614604e-1))
+      .mla(x4, $f64x::splat(0.3038195928038132237e-1))
+      .mla(x4, $f64x::splat(0.7500000000378581611e-1));
 
   u = v.mla(x2, u);
 #else
-  u = $f64x::splat(+0.3161587650653934628e-1)
+  u = $f64x::splat(0.3161587650653934628e-1)
       .mla(x2, $f64x::splat(-0.1581918243329996643e-1))
-      .mla(x2, $f64x::splat(+0.1929045477267910674e-1))
-      .mla(x2, $f64x::splat(+0.6606077476277170610e-2))
-      .mla(x2, $f64x::splat(+0.1215360525577377331e-1))
-      .mla(x2, $f64x::splat(+0.1388715184501609218e-1))
-      .mla(x2, $f64x::splat(+0.1735956991223614604e-1))
-      .mla(x2, $f64x::splat(+0.2237176181932048341e-1))
-      .mla(x2, $f64x::splat(+0.3038195928038132237e-1))
-      .mla(x2, $f64x::splat(+0.4464285681377102438e-1))
-      .mla(x2, $f64x::splat(+0.7500000000378581611e-1))
-      .mla(x2, $f64x::splat(+0.1666666666666497543e+0));
+      .mla(x2, $f64x::splat(0.1929045477267910674e-1))
+      .mla(x2, $f64x::splat(0.6606077476277170610e-2))
+      .mla(x2, $f64x::splat(0.1215360525577377331e-1))
+      .mla(x2, $f64x::splat(0.1388715184501609218e-1))
+      .mla(x2, $f64x::splat(0.1735956991223614604e-1))
+      .mla(x2, $f64x::splat(0.2237176181932048341e-1))
+      .mla(x2, $f64x::splat(0.3038195928038132237e-1))
+      .mla(x2, $f64x::splat(0.4464285681377102438e-1))
+      .mla(x2, $f64x::splat(0.7500000000378581611e-1))
+      .mla(x2, $f64x::splat(0.1666666666666497543e+0));
 #endif
 
   u = u.mla(x*x2, x);
@@ -1396,7 +1396,7 @@ pub fn xasin(d: $f64x) -> $f64x {
 }
 
 pub fn xasin_u1(d: $f64x) -> $f64x {
-  $mx o = d.abs().lt($f64x::splat(0.5));
+  $bx o = d.abs().lt($f64x::splat(0.5));
   $f64x x2 = vsel_vd_vo_vd_vd(o, d*d, ($f64x::splat(1.)-d.abs())*$f64x::splat(0.5));
   u;
   D2 x = vsel_vd2_vo_vd2_vd2(o, D2::new(d.abs(), $f64x::splat(0.)), x2.sqrt_as_d2());
@@ -1407,33 +1407,33 @@ pub fn xasin_u1(d: $f64x) -> $f64x {
   v;
 
   u = $f64x::splat(-0.1581918243329996643e-1)
-      .mla(x4, $f64x::splat(+0.6606077476277170610e-2))
-      .mla(x4, $f64x::splat(+0.1388715184501609218e-1))
-      .mla(x4, $f64x::splat(+0.2237176181932048341e-1))
-      .mla(x4, $f64x::splat(+0.4464285681377102438e-1))
-      .mla(x4, $f64x::splat(+0.1666666666666497543e+0));
+      .mla(x4, $f64x::splat(0.6606077476277170610e-2))
+      .mla(x4, $f64x::splat(0.1388715184501609218e-1))
+      .mla(x4, $f64x::splat(0.2237176181932048341e-1))
+      .mla(x4, $f64x::splat(0.4464285681377102438e-1))
+      .mla(x4, $f64x::splat(0.1666666666666497543e+0));
   
-  v = $f64x::splat(+0.3161587650653934628e-1)
-      .mla(x4, $f64x::splat(+0.1929045477267910674e-1))
-      .mla(x4, $f64x::splat(+0.1215360525577377331e-1))
-      .mla(x4, $f64x::splat(+0.1735956991223614604e-1))
-      .mla(x4, $f64x::splat(+0.3038195928038132237e-1))
-      .mla(x4, $f64x::splat(+0.7500000000378581611e-1));
+  v = $f64x::splat(0.3161587650653934628e-1)
+      .mla(x4, $f64x::splat(0.1929045477267910674e-1))
+      .mla(x4, $f64x::splat(0.1215360525577377331e-1))
+      .mla(x4, $f64x::splat(0.1735956991223614604e-1))
+      .mla(x4, $f64x::splat(0.3038195928038132237e-1))
+      .mla(x4, $f64x::splat(0.7500000000378581611e-1));
 
   u = v.mla(x2, u);
 #else
-  u = $f64x::splat(+0.3161587650653934628e-1)
+  u = $f64x::splat(0.3161587650653934628e-1)
       .mla(x2, $f64x::splat(-0.1581918243329996643e-1))
-      .mla(x2, $f64x::splat(+0.1929045477267910674e-1))
-      .mla(x2, $f64x::splat(+0.6606077476277170610e-2))
-      .mla(x2, $f64x::splat(+0.1215360525577377331e-1))
-      .mla(x2, $f64x::splat(+0.1388715184501609218e-1))
-      .mla(x2, $f64x::splat(+0.1735956991223614604e-1))
-      .mla(x2, $f64x::splat(+0.2237176181932048341e-1))
-      .mla(x2, $f64x::splat(+0.3038195928038132237e-1))
-      .mla(x2, $f64x::splat(+0.4464285681377102438e-1))
-      .mla(x2, $f64x::splat(+0.7500000000378581611e-1))
-      .mla(x2, $f64x::splat(+0.1666666666666497543e+0));
+      .mla(x2, $f64x::splat(0.1929045477267910674e-1))
+      .mla(x2, $f64x::splat(0.6606077476277170610e-2))
+      .mla(x2, $f64x::splat(0.1215360525577377331e-1))
+      .mla(x2, $f64x::splat(0.1388715184501609218e-1))
+      .mla(x2, $f64x::splat(0.1735956991223614604e-1))
+      .mla(x2, $f64x::splat(0.2237176181932048341e-1))
+      .mla(x2, $f64x::splat(0.3038195928038132237e-1))
+      .mla(x2, $f64x::splat(0.4464285681377102438e-1))
+      .mla(x2, $f64x::splat(0.7500000000378581611e-1))
+      .mla(x2, $f64x::splat(0.1666666666666497543e+0));
 #endif
 
   u *= (x2*x.0);
@@ -1446,7 +1446,7 @@ pub fn xasin_u1(d: $f64x) -> $f64x {
 }
 
 pub fn xacos(d: $f64x) -> $f64x {
-  $mx o = d.abs().lt($f64x::splat(0.5));
+  $bx o = d.abs().lt($f64x::splat(0.5));
   $f64x x2 = vsel_vd_vo_vd_vd(o, d*d,
 				($f64x::splat(1.) - d.abs())*$f64x::splat(0.5)), u;
   $f64x x = vsel_vd_vo_vd_vd(o, d.abs(), vsqrt_vd_vd(x2));
@@ -1457,33 +1457,33 @@ pub fn xacos(d: $f64x) -> $f64x {
   v;
 
   u = $f64x::splat(-0.1581918243329996643e-1)
-      .mla(x4, $f64x::splat(+0.6606077476277170610e-2))
-      .mla(x4, $f64x::splat(+0.1388715184501609218e-1))
-      .mla(x4, $f64x::splat(+0.2237176181932048341e-1))
-      .mla(x4, $f64x::splat(+0.4464285681377102438e-1))
-      .mla(x4, $f64x::splat(+0.1666666666666497543e+0));
+      .mla(x4, $f64x::splat(0.6606077476277170610e-2))
+      .mla(x4, $f64x::splat(0.1388715184501609218e-1))
+      .mla(x4, $f64x::splat(0.2237176181932048341e-1))
+      .mla(x4, $f64x::splat(0.4464285681377102438e-1))
+      .mla(x4, $f64x::splat(0.1666666666666497543e+0));
   
-  v = $f64x::splat(+0.3161587650653934628e-1)
-      .mla(x4, $f64x::splat(+0.1929045477267910674e-1))
-      .mla(x4, $f64x::splat(+0.1215360525577377331e-1))
-      .mla(x4, $f64x::splat(+0.1735956991223614604e-1))
-      .mla(x4, $f64x::splat(+0.3038195928038132237e-1))
-      .mla(x4, $f64x::splat(+0.7500000000378581611e-1));
+  v = $f64x::splat(0.3161587650653934628e-1)
+      .mla(x4, $f64x::splat(0.1929045477267910674e-1))
+      .mla(x4, $f64x::splat(0.1215360525577377331e-1))
+      .mla(x4, $f64x::splat(0.1735956991223614604e-1))
+      .mla(x4, $f64x::splat(0.3038195928038132237e-1))
+      .mla(x4, $f64x::splat(0.7500000000378581611e-1));
 
   u = v.mla(x2, u);
 #else
-  u = $f64x::splat(+0.3161587650653934628e-1)
+  u = $f64x::splat(0.3161587650653934628e-1)
       .mla(x2, $f64x::splat(-0.1581918243329996643e-1))
-      .mla(x2, $f64x::splat(+0.1929045477267910674e-1))
-      .mla(x2, $f64x::splat(+0.6606077476277170610e-2))
-      .mla(x2, $f64x::splat(+0.1215360525577377331e-1))
-      .mla(x2, $f64x::splat(+0.1388715184501609218e-1))
-      .mla(x2, $f64x::splat(+0.1735956991223614604e-1))
-      .mla(x2, $f64x::splat(+0.2237176181932048341e-1))
-      .mla(x2, $f64x::splat(+0.3038195928038132237e-1))
-      .mla(x2, $f64x::splat(+0.4464285681377102438e-1))
-      .mla(x2, $f64x::splat(+0.7500000000378581611e-1))
-      .mla(x2, $f64x::splat(+0.1666666666666497543e+0));
+      .mla(x2, $f64x::splat(0.1929045477267910674e-1))
+      .mla(x2, $f64x::splat(0.6606077476277170610e-2))
+      .mla(x2, $f64x::splat(0.1215360525577377331e-1))
+      .mla(x2, $f64x::splat(0.1388715184501609218e-1))
+      .mla(x2, $f64x::splat(0.1735956991223614604e-1))
+      .mla(x2, $f64x::splat(0.2237176181932048341e-1))
+      .mla(x2, $f64x::splat(0.3038195928038132237e-1))
+      .mla(x2, $f64x::splat(0.4464285681377102438e-1))
+      .mla(x2, $f64x::splat(0.7500000000378581611e-1))
+      .mla(x2, $f64x::splat(0.1666666666666497543e+0));
 #endif
 
   u *= x2*x;
@@ -1496,7 +1496,7 @@ pub fn xacos(d: $f64x) -> $f64x {
 }
 
 pub fn xacos_u1(d: $f64x) -> $f64x {
-  $mx o = d.abs().lt($f64x::splat(0.5));
+  $bx o = d.abs().lt($f64x::splat(0.5));
   $f64x x2 = vsel_vd_vo_vd_vd(o, d*d, ($f64x::splat(1.) - d.abs())*$f64x::splat(0.5)), u;
   D2 x = vsel_vd2_vo_vd2_vd2(o, D2::new(d.abs(), $f64x::splat(0.)), x2.sqrt_as_d2());
   x = vsel_vd2_vo_vd2_vd2(d.abs().eq($f64x::splat(1.)), D2::from((0., 0.)), x);
@@ -1506,33 +1506,33 @@ pub fn xacos_u1(d: $f64x) -> $f64x {
   v;
 
   u = $f64x::splat(-0.1581918243329996643e-1)
-      .mla(x4, $f64x::splat(+0.6606077476277170610e-2))
-      .mla(x4, $f64x::splat(+0.1388715184501609218e-1))
-      .mla(x4, $f64x::splat(+0.2237176181932048341e-1))
-      .mla(x4, $f64x::splat(+0.4464285681377102438e-1))
-      .mla(x4, $f64x::splat(+0.1666666666666497543e+0));
+      .mla(x4, $f64x::splat(0.6606077476277170610e-2))
+      .mla(x4, $f64x::splat(0.1388715184501609218e-1))
+      .mla(x4, $f64x::splat(0.2237176181932048341e-1))
+      .mla(x4, $f64x::splat(0.4464285681377102438e-1))
+      .mla(x4, $f64x::splat(0.1666666666666497543e+0));
   
-  v = $f64x::splat(+0.3161587650653934628e-1)
-      .mla(x4, $f64x::splat(+0.1929045477267910674e-1))
-      .mla(x4, $f64x::splat(+0.1215360525577377331e-1))
-      .mla(x4, $f64x::splat(+0.1735956991223614604e-1))
-      .mla(x4, $f64x::splat(+0.3038195928038132237e-1))
-      .mla(x4, $f64x::splat(+0.7500000000378581611e-1));
+  v = $f64x::splat(0.3161587650653934628e-1)
+      .mla(x4, $f64x::splat(0.1929045477267910674e-1))
+      .mla(x4, $f64x::splat(0.1215360525577377331e-1))
+      .mla(x4, $f64x::splat(0.1735956991223614604e-1))
+      .mla(x4, $f64x::splat(0.3038195928038132237e-1))
+      .mla(x4, $f64x::splat(0.7500000000378581611e-1));
 
   u = v.mla(x2, u);
 #else
-  u = $f64x::splat(+0.3161587650653934628e-1)
+  u = $f64x::splat(0.3161587650653934628e-1)
       .mla(x2, $f64x::splat(-0.1581918243329996643e-1))
-      .mla(x2, $f64x::splat(+0.1929045477267910674e-1))
-      .mla(x2, $f64x::splat(+0.6606077476277170610e-2))
-      .mla(x2, $f64x::splat(+0.1215360525577377331e-1))
-      .mla(x2, $f64x::splat(+0.1388715184501609218e-1))
-      .mla(x2, $f64x::splat(+0.1735956991223614604e-1))
-      .mla(x2, $f64x::splat(+0.2237176181932048341e-1))
-      .mla(x2, $f64x::splat(+0.3038195928038132237e-1))
-      .mla(x2, $f64x::splat(+0.4464285681377102438e-1))
-      .mla(x2, $f64x::splat(+0.7500000000378581611e-1))
-      .mla(x2, $f64x::splat(+0.1666666666666497543e+0));
+      .mla(x2, $f64x::splat(0.1929045477267910674e-1))
+      .mla(x2, $f64x::splat(0.6606077476277170610e-2))
+      .mla(x2, $f64x::splat(0.1215360525577377331e-1))
+      .mla(x2, $f64x::splat(0.1388715184501609218e-1))
+      .mla(x2, $f64x::splat(0.1735956991223614604e-1))
+      .mla(x2, $f64x::splat(0.2237176181932048341e-1))
+      .mla(x2, $f64x::splat(0.3038195928038132237e-1))
+      .mla(x2, $f64x::splat(0.4464285681377102438e-1))
+      .mla(x2, $f64x::splat(0.7500000000378581611e-1))
+      .mla(x2, $f64x::splat(0.1666666666666497543e+0));
 #endif
 
   u *= (x2*x.0);
@@ -1622,7 +1622,7 @@ pub fn xatan(s: $f64x) -> $f64x {
   t = s.mla(t*u, s);
 
   t = vsel_vd_vo_vd_vd(vcast_vo64_vo32((q & $ix::splat(1)).eq($ix::splat(1))), $f64x::splat(M_PI/2.) - t, t);
-  t = $f64x::from(vand_vm_vo64_vm(vcast_vo64_vo32((q & $ix::splat(2)).eq($ix::splat(2))), $mx::from($f64x::splat(-0.))) ^ $mx::from(t));
+  t = $f64x::from_bits(vand_vm_vo64_vm(vcast_vo64_vo32((q & $ix::splat(2)).eq($ix::splat(2))), $bx::from_bits($f64x::splat(-0.))) ^ $bx::from_bits(t));
 
 #if defined(__INTEL_COMPILER) && defined(ENABLE_PURECFMA_SCALAR)
   t = vsel_vd_vo_vd_vd(w.eq($f64x::splat(0.)), w, t);
@@ -1636,7 +1636,7 @@ pub fn xlog(d: $f64x) -> $f64x {
   $f64x t, m;
   
 #if !defined(ENABLE_AVX512F) && !defined(ENABLE_AVX512FNOFMA)
-  $mx o = d.lt($f64x::splat(f64::MIN));
+  $bx o = d.lt($f64x::splat(f64::MIN));
   d = vsel_vd_vo_vd_vd(o, d*$f64x::splat(D1_32 * D1_32), d);
   $ix e = vilogb2k_vi_vd(d*$f64x::splat(1./0.75));
   m = vldexp3_vd_vd_vi(d, -e);
@@ -1686,36 +1686,36 @@ pub fn xexp(d: $f64x) -> $f64x {
   $f64x s2 = s*s;
   v;
 
-  u = $f64x::splat(+0.2081276378237164457e-8);
-  u = vfma_vd_vd_vd_vd(u, s2, $f64x::splat(+0.2755762628169491192e-6));
-  u = vfma_vd_vd_vd_vd(u, s2, $f64x::splat(+0.2480158687479686264e-4));
-  u = vfma_vd_vd_vd_vd(u, s2, $f64x::splat(+0.1388888888914497797e-2));
-  u = vfma_vd_vd_vd_vd(u, s2, $f64x::splat(+0.4166666666666602598e-1));
-  u = vfma_vd_vd_vd_vd(u, s2, $f64x::splat(+0.5000000000000000000e+0));
+  u = $f64x::splat(0.2081276378237164457e-8);
+  u = vfma_vd_vd_vd_vd(u, s2, $f64x::splat(0.2755762628169491192e-6));
+  u = vfma_vd_vd_vd_vd(u, s2, $f64x::splat(0.2480158687479686264e-4));
+  u = vfma_vd_vd_vd_vd(u, s2, $f64x::splat(0.1388888888914497797e-2));
+  u = vfma_vd_vd_vd_vd(u, s2, $f64x::splat(0.4166666666666602598e-1));
+  u = vfma_vd_vd_vd_vd(u, s2, $f64x::splat(0.5000000000000000000e+0));
 
-  v = $f64x::splat(+0.2511210703042288022e-7);
-  v = vfma_vd_vd_vd_vd(v, s2, $f64x::splat(+0.2755723402025388239e-5));
-  v = vfma_vd_vd_vd_vd(v, s2, $f64x::splat(+0.1984126989855865850e-3));
-  v = vfma_vd_vd_vd_vd(v, s2, $f64x::splat(+0.8333333333314938210e-2));
-  v = vfma_vd_vd_vd_vd(v, s2, $f64x::splat(+0.1666666666666669072e+0));
+  v = $f64x::splat(0.2511210703042288022e-7);
+  v = vfma_vd_vd_vd_vd(v, s2, $f64x::splat(0.2755723402025388239e-5));
+  v = vfma_vd_vd_vd_vd(v, s2, $f64x::splat(0.1984126989855865850e-3));
+  v = vfma_vd_vd_vd_vd(v, s2, $f64x::splat(0.8333333333314938210e-2));
+  v = vfma_vd_vd_vd_vd(v, s2, $f64x::splat(0.1666666666666669072e+0));
 
   u = v.mla(s, u);
-  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(+0.1000000000000000000e+1));
-  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(+0.1000000000000000000e+1));
+  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(0.1000000000000000000e+1));
+  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(0.1000000000000000000e+1));
 #else // #ifdef SPLIT_KERNEL
-  u = $f64x::splat(+0.2081276378237164457e-8);
-  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(+0.2511210703042288022e-7));
-  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(+0.2755762628169491192e-6));
-  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(+0.2755723402025388239e-5));
-  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(+0.2480158687479686264e-4));
-  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(+0.1984126989855865850e-3));
-  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(+0.1388888888914497797e-2));
-  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(+0.8333333333314938210e-2));
-  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(+0.4166666666666602598e-1));
-  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(+0.1666666666666669072e+0));
-  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(+0.5000000000000000000e+0));
-  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(+0.1000000000000000000e+1));
-  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(+0.1000000000000000000e+1));
+  u = $f64x::splat(0.2081276378237164457e-8);
+  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(0.2511210703042288022e-7));
+  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(0.2755762628169491192e-6));
+  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(0.2755723402025388239e-5));
+  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(0.2480158687479686264e-4));
+  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(0.1984126989855865850e-3));
+  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(0.1388888888914497797e-2));
+  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(0.8333333333314938210e-2));
+  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(0.4166666666666602598e-1));
+  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(0.1666666666666669072e+0));
+  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(0.5000000000000000000e+0));
+  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(0.1000000000000000000e+1));
+  u = vfma_vd_vd_vd_vd(u, s, $f64x::splat(0.1000000000000000000e+1));
 #endif // #ifdef SPLIT_KERNEL
 #else // #ifdef ENABLE_FMA_DP
   u = $f64x::splat(2.08860621107283687536341e-09)
@@ -1736,7 +1736,7 @@ pub fn xexp(d: $f64x) -> $f64x {
   u = vldexp2_vd_vd_vi(u, q);
 
   u = vsel_vd_vo_vd_vd(d.gt($f64x::splat(709.78271114955742909217217426)), $f64x::splat(SLEEF_INFINITY), u);
-  u = $f64x::from(vandnot_vm_vo64_vm(d.lt($f64x::splat(-1000.)), $mx::from(u)));
+  u = $f64x::from_bits(vandnot_vm_vo64_vm(d.lt($f64x::splat(-1000.)), $bx::from_bits(u)));
 
   return u;
 }
@@ -1772,7 +1772,7 @@ fn logk(d: $f64x) -> D2 {
   $f64x t, m;
 
 #if !defined(ENABLE_AVX512F) && !defined(ENABLE_AVX512FNOFMA)
-  $mx o = d.lt($f64x::splat(f64::MIN));
+  $bx o = d.lt($f64x::splat(f64::MIN));
   d = vsel_vd_vo_vd_vd(o, d*$f64x::splat(D1_32 * D1_32), d);
   $ix e = vilogb2k_vi_vd(d*$f64x::splat(1./0.75));
   m = vldexp3_vd_vd_vi(d, -e);
@@ -1813,7 +1813,7 @@ pub fn xlog_u1(d: $f64x) -> $f64x {
   $f64x t, m, x2;
 
 #if !defined(ENABLE_AVX512F) && !defined(ENABLE_AVX512FNOFMA)
-  $mx o = d.lt($f64x::splat(f64::MIN));
+  $bx o = d.lt($f64x::splat(f64::MIN));
   d = vsel_vd_vo_vd_vd(o, d*$f64x::splat(D1_32 * D1_32), d);
   $ix e = vilogb2k_vi_vd(d*$f64x::splat(1./0.75));
   m = vldexp3_vd_vd_vi(d, -e);
@@ -1885,15 +1885,15 @@ fn expk(D2 d) -> $f64x {
   u = t.0 + t.1;
   u = vldexp2_vd_vd_vi(u, q);
 
-  u = $f64x::from(vandnot_vm_vo64_vm(d.0.lt($f64x::splat(-1000.)), $mx::from(u)));
+  u = $f64x::from_bits(vandnot_vm_vo64_vm(d.0.lt($f64x::splat(-1000.)), $bx::from_bits(u)));
   
   return u;
 }
 
 pub fn xpow(x: $f64x, y: $f64x) -> $f64x {
 #if 1
-  $mx yisint = visint_vo_vd(y);
-  $mx yisodd = visodd_vo_vd(y) & yisint;
+  $bx yisint = visint_vo_vd(y);
+  $bx yisodd = visodd_vo_vd(y) & yisint;
 
   D2 d = logk(x.abs()) * y;
   $f64x result = expk(d);
@@ -1906,19 +1906,19 @@ pub fn xpow(x: $f64x, y: $f64x) -> $f64x {
   $f64x efx = vmulsign_vd_vd_vd(x.abs() - $f64x::splat(1.), y);
 
   result = vsel_vd_vo_vd_vd(visinf_vo_vd(y),
-			    $f64x::from(vandnot_vm_vo64_vm(efx.lt($f64x::splat(0.)),
-								  $mx::from(vsel_vd_vo_vd_vd(efx.eq($f64x::splat(0.)),
+			    $f64x::from_bits(vandnot_vm_vo64_vm(efx.lt($f64x::splat(0.)),
+								  $bx::from_bits(vsel_vd_vo_vd_vd(efx.eq($f64x::splat(0.)),
 												      $f64x::splat(1.),
 												      $f64x::splat(SLEEF_INFINITY))))),
 			    result);
 
   result = vsel_vd_vo_vd_vd(visinf_vo_vd(x) | x.eq($f64x::splat(0.)),
 			    vsel_vd_vo_vd_vd(yisodd, vsign_vd_vd(x), $f64x::splat(1.)) *
-					  $f64x::from(vandnot_vm_vo64_vm(vsel_vd_vo_vd_vd(x.eq($f64x::splat(0.)), -y, y).lt($f64x::splat(0.)),
-										$mx::from($f64x::splat(SLEEF_INFINITY)))),
+					  $f64x::from_bits(vandnot_vm_vo64_vm(vsel_vd_vo_vd_vd(x.eq($f64x::splat(0.)), -y, y).lt($f64x::splat(0.)),
+										$bx::from_bits($f64x::splat(SLEEF_INFINITY)))),
 			    result);
 
-  result = $f64x::from(vor_vm_vo64_vm(visnan_vo_vd(x) | visnan_vo_vd(y), $mx::from(result)));
+  result = $f64x::from_bits(vor_vm_vo64_vm(visnan_vo_vd(x) | visnan_vo_vd(y), $bx::from_bits(result)));
 
   result = vsel_vd_vo_vd_vd(y.eq($f64x::splat(0.)) | x.eq($f64x::splat(1.)), $f64x::splat(1.), result);
 
@@ -1937,18 +1937,18 @@ fn expk2(D2 d) -> D2 {
   s = d + dq*$f64x::splat(-L2U);
   s += dq*$f64x::splat(-L2L);
 
-  u = $f64x::splat(+0.1602472219709932072e-9)
-      .mla(s.0, $f64x::splat(+0.2092255183563157007e-8))
-      .mla(s.0, $f64x::splat(+0.2505230023782644465e-7))
-      .mla(s.0, $f64x::splat(+0.2755724800902135303e-6))
-      .mla(s.0, $f64x::splat(+0.2755731892386044373e-5))
-      .mla(s.0, $f64x::splat(+0.2480158735605815065e-4))
-      .mla(s.0, $f64x::splat(+0.1984126984148071858e-3))
-      .mla(s.0, $f64x::splat(+0.1388888888886763255e-2))
-      .mla(s.0, $f64x::splat(+0.8333333333333347095e-2))
-      .mla(s.0, $f64x::splat(+0.4166666666666669905e-1));
+  u = $f64x::splat(0.1602472219709932072e-9)
+      .mla(s.0, $f64x::splat(0.2092255183563157007e-8))
+      .mla(s.0, $f64x::splat(0.2505230023782644465e-7))
+      .mla(s.0, $f64x::splat(0.2755724800902135303e-6))
+      .mla(s.0, $f64x::splat(0.2755731892386044373e-5))
+      .mla(s.0, $f64x::splat(0.2480158735605815065e-4))
+      .mla(s.0, $f64x::splat(0.1984126984148071858e-3))
+      .mla(s.0, $f64x::splat(0.1388888888886763255e-2))
+      .mla(s.0, $f64x::splat(0.8333333333333347095e-2))
+      .mla(s.0, $f64x::splat(0.4166666666666669905e-1));
 
-  t = s * u + $f64x::splat(+0.1666666666666666574e+0);
+  t = s * u + $f64x::splat(0.1666666666666666574e+0);
   t = s * t + $f64x::splat(0.5);
   t = s + s.square() * t;
 
@@ -1957,8 +1957,8 @@ fn expk2(D2 d) -> D2 {
   t.0 = vldexp2_vd_vd_vi(t.0, q);
   t.1 = vldexp2_vd_vd_vi(t.1, q);
 
-  t.0 = $f64x::from(vandnot_vm_vo64_vm(d.0.lt($f64x::splat(-1000.)), $mx::from(t.0)));
-  t.1 = $f64x::from(vandnot_vm_vo64_vm(d.0.lt($f64x::splat(-1000.)), $mx::from(t.1)));
+  t.0 = $f64x::from_bits(vandnot_vm_vo64_vm(d.0.lt($f64x::splat(-1000.)), $bx::from_bits(t.0)));
+  t.1 = $f64x::from_bits(vandnot_vm_vo64_vm(d.0.lt($f64x::splat(-1000.)), $bx::from_bits(t.1)));
 
   return t;
 }
@@ -1971,7 +1971,7 @@ pub fn xsinh(x: $f64x) -> $f64x {
 
   y = vsel_vd_vo_vd_vd(x.abs().gt($f64x::splat(710.)) | visnan_vo_vd(y), $f64x::splat(SLEEF_INFINITY), y);
   y = vmulsign_vd_vd_vd(y, x);
-  y = $f64x::from(vor_vm_vo64_vm(visnan_vo_vd(x), $mx::from(y)));
+  y = $f64x::from_bits(vor_vm_vo64_vm(visnan_vo_vd(x), $bx::from_bits(y)));
 
   return y;
 }
@@ -1983,7 +1983,7 @@ pub fn xcosh(x: $f64x) -> $f64x {
   y = (d.0 + d.1)*$f64x::splat(0.5);
 
   y = vsel_vd_vo_vd_vd(x.abs().gt($f64x::splat(710.)) | visnan_vo_vd(y), $f64x::splat(SLEEF_INFINITY), y);
-  y = $f64x::from(vor_vm_vo64_vm(visnan_vo_vd(x), $mx::from(y)));
+  y = $f64x::from_bits(vor_vm_vo64_vm(visnan_vo_vd(x), $bx::from_bits(y)));
 
   return y;
 }
@@ -1997,7 +1997,7 @@ pub fn xtanh(x: $f64x) -> $f64x {
 
   y = vsel_vd_vo_vd_vd(x.abs().gt($f64x::splat(18.714973875)) | visnan_vo_vd(y), $f64x::splat(1.), y);
   y = vmulsign_vd_vd_vd(y, x);
-  y = $f64x::from(vor_vm_vo64_vm(visnan_vo_vd(x), $mx::from(y)));
+  y = $f64x::from_bits(vor_vm_vo64_vm(visnan_vo_vd(x), $bx::from_bits(y)));
 
   return y;
 }
@@ -2010,7 +2010,7 @@ pub fn xsinh_u35(x: $f64x) -> $f64x {
 
   y = vsel_vd_vo_vd_vd(x.abs().gt($f64x::splat(709.)) | visnan_vo_vd(y), $f64x::splat(SLEEF_INFINITY), y);
   y = vmulsign_vd_vd_vd(y, x);
-  y = $f64x::from(vor_vm_vo64_vm(visnan_vo_vd(x), $mx::from(y)));
+  y = $f64x::from_bits(vor_vm_vo64_vm(visnan_vo_vd(x), $bx::from_bits(y)));
 
   return y;
 }
@@ -2020,7 +2020,7 @@ pub fn xcosh_u35(x: $f64x) -> $f64x {
   $f64x y = $f64x::splat(0.5).mla(e, $f64x::splat(0.5) / e);
 
   y = vsel_vd_vo_vd_vd(x.abs().gt($f64x::splat(709.)) | visnan_vo_vd(y), $f64x::splat(SLEEF_INFINITY), y);
-  y = $f64x::from(vor_vm_vo64_vm(visnan_vo_vd(x), $mx::from(y)));
+  y = $f64x::from_bits(vor_vm_vo64_vm(visnan_vo_vd(x), $bx::from_bits(y)));
 
   return y;
 }
@@ -2031,7 +2031,7 @@ pub fn xtanh_u35(x: $f64x) -> $f64x {
 
   y = vsel_vd_vo_vd_vd(x.abs().gt($f64x::splat(18.714973875)) | visnan_vo_vd(y), $f64x::splat(1.), y);
   y = vmulsign_vd_vd_vd(y, x);
-  y = $f64x::from(vor_vm_vo64_vm(visnan_vo_vd(x), $mx::from(y)));
+  y = $f64x::from_bits(vor_vm_vo64_vm(visnan_vo_vd(x), $bx::from_bits(y)));
 
   return y;
 }
@@ -2067,7 +2067,7 @@ fn logk2(D2 d) -> D2 {
 
 pub fn xasinh(x: $f64x) -> $f64x {
   $f64x y = x.abs();
-  $mx o = y.gt($f64x::splat(1.));
+  $bx o = y.gt($f64x::splat(1.));
   D2 d;
   
   d = vsel_vd2_vo_vd2_vd2(o, x.rec_as_d2(), D2::new(y, $f64x::splat(0.)));
@@ -2080,7 +2080,7 @@ pub fn xasinh(x: $f64x) -> $f64x {
   y = vsel_vd_vo_vd_vd(x.abs().gt($f64x::splat(SQRT_DBL_MAX)) | visnan_vo_vd(y),
 		       vmulsign_vd_vd_vd($f64x::splat(SLEEF_INFINITY), x), y);
 
-  y = $f64x::from(vor_vm_vo64_vm(visnan_vo_vd(x), $mx::from(y)));
+  y = $f64x::from_bits(vor_vm_vo64_vm(visnan_vo_vd(x), $bx::from_bits(y)));
   y = vsel_vd_vo_vd_vd(visnegzero_vo_vd(x), $f64x::splat(-0.), y);
   
   return y;
@@ -2092,10 +2092,10 @@ pub fn xacosh(x: $f64x) -> $f64x {
 
   y = vsel_vd_vo_vd_vd(x.abs().gt($f64x::splat(SQRT_DBL_MAX)) | visnan_vo_vd(y),
 		       $f64x::splat(SLEEF_INFINITY), y);
-  y = $f64x::from(vandnot_vm_vo64_vm(x.eq($f64x::splat(1.)), $mx::from(y)));
+  y = $f64x::from_bits(vandnot_vm_vo64_vm(x.eq($f64x::splat(1.)), $bx::from_bits(y)));
 
-  y = $f64x::from(vor_vm_vo64_vm(x.lt($f64x::splat(1.)), $mx::from(y)));
-  y = $f64x::from(vor_vm_vo64_vm(visnan_vo_vd(x), $mx::from(y)));
+  y = $f64x::from_bits(vor_vm_vo64_vm(x.lt($f64x::splat(1.)), $bx::from_bits(y)));
+  y = $f64x::from_bits(vor_vm_vo64_vm(visnan_vo_vd(x), $bx::from_bits(y)));
   
   return y;
 }
@@ -2103,11 +2103,11 @@ pub fn xacosh(x: $f64x) -> $f64x {
 pub fn xatanh(x: $f64x) -> $f64x {
   $f64x y = x.abs();
   D2 d = logk2($f64x::splat(1.).add_as_d2(y) / $f64x::splat(1.).add_as_d2(-y));
-  y = $f64x::from(vor_vm_vo64_vm(y.gt($f64x::splat(1.)), $mx::from(vsel_vd_vo_vd_vd(y.eq($f64x::splat(1.)), $f64x::splat(SLEEF_INFINITY), (d.0 + d.1)*$f64x::splat(0.5)))));
+  y = $f64x::from_bits(vor_vm_vo64_vm(y.gt($f64x::splat(1.)), $bx::from_bits(vsel_vd_vo_vd_vd(y.eq($f64x::splat(1.)), $f64x::splat(SLEEF_INFINITY), (d.0 + d.1)*$f64x::splat(0.5)))));
 
   y = vmulsign_vd_vd_vd(y, x);
-  y = $f64x::from(vor_vm_vo64_vm(visinf_vo_vd(x) | visnan_vo_vd(y), $mx::from(y)));
-  y = $f64x::from(vor_vm_vo64_vm(visnan_vo_vd(x), $mx::from(y)));
+  y = $f64x::from_bits(vor_vm_vo64_vm(visinf_vo_vd(x) | visnan_vo_vd(y), $bx::from_bits(y)));
+  y = $f64x::from_bits(vor_vm_vo64_vm(visnan_vo_vd(x), $bx::from_bits(y)));
 
   return y;
 }
@@ -2144,7 +2144,7 @@ pub fn xcbrt(d: $f64x) -> $f64x {
 
   y = x*x;
   y = y*y;
-  x -= vmlapn_vd_vd_vd_vd(d, y, x)*$f64x::splat(1. / 3.);
+  x -= d.mlapn(y, x)*$f64x::splat(1. / 3.);
   y = d*x*x;
   y = (y - $f64x::splat(2. / 3.)*y*y.mla(x, $f64x::splat(-1.)))*q;
 
@@ -2186,7 +2186,7 @@ pub fn xcbrt_u1(d: $f64x) -> $f64x {
 
   y = x*x;
   y = y*y;
-  x -= vmlapn_vd_vd_vd_vd(d, y, x)*$f64x::splat(1. / 3.);
+  x -= d.mlapn(y, x)*$f64x::splat(1. / 3.);
 
   z = x;
 
@@ -2204,7 +2204,7 @@ pub fn xcbrt_u1(d: $f64x) -> $f64x {
 
 #if !defined(ENABLE_AVX512F) && !defined(ENABLE_AVX512FNOFMA)
   z = vsel_vd_vo_vd_vd(visinf_vo_vd(d), vmulsign_vd_vd_vd($f64x::splat(SLEEF_INFINITY), q2.0), z);
-  z = vsel_vd_vo_vd_vd(d.eq($f64x::splat(0.)), $f64x::from(vsignbit_vm_vd(q2.0)), z);
+  z = vsel_vd_vo_vd_vd(d.eq($f64x::splat(0.)), $f64x::from_bits(vsignbit_vm_vd(q2.0)), z);
 #else
   z = vsel_vd_vo_vd_vd(visinf_vo_vd(s), vmulsign_vd_vd_vd($f64x::splat(SLEEF_INFINITY), s), z);
   z = vsel_vd_vo_vd_vd(s.eq($f64x::splat(0.)), vmulsign_vd_vd_vd($f64x::splat(0.), s), z);
@@ -2223,32 +2223,32 @@ pub fn xexp2(d: $f64x) -> $f64x {
   $f64x s2 = s*s;
    v;
 
-  u = $f64x::splat(+0.4434359082926529454e-9)
-      .mla(s2, $f64x::splat(+0.1017819260921760451e-6))
-      .mla(s2, $f64x::splat(+0.1525273353517584730e-4))
-      .mla(s2, $f64x::splat(+0.1333355814670499073e-2))
-      .mla(s2, $f64x::splat(+0.5550410866482046596e-1));
+  u = $f64x::splat(0.4434359082926529454e-9)
+      .mla(s2, $f64x::splat(0.1017819260921760451e-6))
+      .mla(s2, $f64x::splat(0.1525273353517584730e-4))
+      .mla(s2, $f64x::splat(0.1333355814670499073e-2))
+      .mla(s2, $f64x::splat(0.5550410866482046596e-1));
 
-  v = $f64x::splat(+0.7073164598085707425e-8)
-      .mla(s2, $f64x::splat(+0.1321543872511327615e-5))
-      .mla(s2, $f64x::splat(+0.1540353045101147808e-3))
-      .mla(s2, $f64x::splat(+0.9618129107597600536e-2))
-      .mla(s2, $f64x::splat(+0.2402265069591012214e+0));
+  v = $f64x::splat(0.7073164598085707425e-8)
+      .mla(s2, $f64x::splat(0.1321543872511327615e-5))
+      .mla(s2, $f64x::splat(0.1540353045101147808e-3))
+      .mla(s2, $f64x::splat(0.9618129107597600536e-2))
+      .mla(s2, $f64x::splat(0.2402265069591012214e+0));
 
   u = u.mla(s, v)
-      .mla(s, $f64x::splat(+0.6931471805599452862e+0));
+      .mla(s, $f64x::splat(0.6931471805599452862e+0));
 #else
-  u = $f64x::splat(+0.4434359082926529454e-9)
-      .mla(s, $f64x::splat(+0.7073164598085707425e-8))
-      .mla(s, $f64x::splat(+0.1017819260921760451e-6))
-      .mla(s, $f64x::splat(+0.1321543872511327615e-5))
-      .mla(s, $f64x::splat(+0.1525273353517584730e-4))
-      .mla(s, $f64x::splat(+0.1540353045101147808e-3))
-      .mla(s, $f64x::splat(+0.1333355814670499073e-2))
-      .mla(s, $f64x::splat(+0.9618129107597600536e-2))
-      .mla(s, $f64x::splat(+0.5550410866482046596e-1))
-      .mla(s, $f64x::splat(+0.2402265069591012214e+0))
-      .mla(s, $f64x::splat(+0.6931471805599452862e+0));
+  u = $f64x::splat(0.4434359082926529454e-9)
+      .mla(s, $f64x::splat(0.7073164598085707425e-8))
+      .mla(s, $f64x::splat(0.1017819260921760451e-6))
+      .mla(s, $f64x::splat(0.1321543872511327615e-5))
+      .mla(s, $f64x::splat(0.1525273353517584730e-4))
+      .mla(s, $f64x::splat(0.1540353045101147808e-3))
+      .mla(s, $f64x::splat(0.1333355814670499073e-2))
+      .mla(s, $f64x::splat(0.9618129107597600536e-2))
+      .mla(s, $f64x::splat(0.5550410866482046596e-1))
+      .mla(s, $f64x::splat(0.2402265069591012214e+0))
+      .mla(s, $f64x::splat(0.6931471805599452862e+0));
 #endif
   
 #ifdef ENABLE_FMA_DP
@@ -2260,7 +2260,7 @@ pub fn xexp2(d: $f64x) -> $f64x {
   u = vldexp2_vd_vd_vi(u, q);
 
   u = vsel_vd_vo_vd_vd(d.ge($f64x::splat(1024.)), $f64x::splat(SLEEF_INFINITY), u);
-  u = $f64x::from(vandnot_vm_vo64_vm(d.lt($f64x::splat(-2000.)), $mx::from(u)));
+  u = $f64x::from_bits(vandnot_vm_vo64_vm(d.lt($f64x::splat(-2000.)), $bx::from_bits(u)));
 
   return u;
 }
@@ -2277,32 +2277,32 @@ pub fn xexp10(d: $f64x) -> $f64x {
   $f64x s2 = s*s;
   v;
 
-  u = $f64x::splat(+0.2411463498334267652e-3)
-      .mla(s2, $f64x::splat(+0.5013975546789733659e-2))
-      .mla(s2, $f64x::splat(+0.6808936399446784138e-1))
-      .mla(s2, $f64x::splat(+0.5393829292058536229e+0))
-      .mla(s2, $f64x::splat(+0.2034678592293432953e+1));
+  u = $f64x::splat(0.2411463498334267652e-3)
+      .mla(s2, $f64x::splat(0.5013975546789733659e-2))
+      .mla(s2, $f64x::splat(0.6808936399446784138e-1))
+      .mla(s2, $f64x::splat(0.5393829292058536229e+0))
+      .mla(s2, $f64x::splat(0.2034678592293432953e+1));
 
-  v = $f64x::splat(+0.1157488415217187375e-2)
-      .mla(s2, $f64x::splat(+0.1959762320720533080e-1))
-      .mla(s2, $f64x::splat(+0.2069958494722676234e+0))
-      .mla(s2, $f64x::splat(+0.1171255148908541655e+1))
-      .mla(s2, $f64x::splat(+0.2650949055239205876e+1));
+  v = $f64x::splat(0.1157488415217187375e-2)
+      .mla(s2, $f64x::splat(0.1959762320720533080e-1))
+      .mla(s2, $f64x::splat(0.2069958494722676234e+0))
+      .mla(s2, $f64x::splat(0.1171255148908541655e+1))
+      .mla(s2, $f64x::splat(0.2650949055239205876e+1));
 
   u = u.mla(s, v)
-      .mla(s, $f64x::splat(+0.2302585092994045901e+1));
+      .mla(s, $f64x::splat(0.2302585092994045901e+1));
 #else
-  u = $f64x::splat(+0.2411463498334267652e-3)
-      .mla(s, $f64x::splat(+0.1157488415217187375e-2))
-      .mla(s, $f64x::splat(+0.5013975546789733659e-2))
-      .mla(s, $f64x::splat(+0.1959762320720533080e-1))
-      .mla(s, $f64x::splat(+0.6808936399446784138e-1))
-      .mla(s, $f64x::splat(+0.2069958494722676234e+0))
-      .mla(s, $f64x::splat(+0.5393829292058536229e+0))
-      .mla(s, $f64x::splat(+0.1171255148908541655e+1))
-      .mla(s, $f64x::splat(+0.2034678592293432953e+1))
-      .mla(s, $f64x::splat(+0.2650949055239205876e+1))
-      .mla(s, $f64x::splat(+0.2302585092994045901e+1));
+  u = $f64x::splat(0.2411463498334267652e-3)
+      .mla(s, $f64x::splat(0.1157488415217187375e-2))
+      .mla(s, $f64x::splat(0.5013975546789733659e-2))
+      .mla(s, $f64x::splat(0.1959762320720533080e-1))
+      .mla(s, $f64x::splat(0.6808936399446784138e-1))
+      .mla(s, $f64x::splat(0.2069958494722676234e+0))
+      .mla(s, $f64x::splat(0.5393829292058536229e+0))
+      .mla(s, $f64x::splat(0.1171255148908541655e+1))
+      .mla(s, $f64x::splat(0.2034678592293432953e+1))
+      .mla(s, $f64x::splat(0.2650949055239205876e+1))
+      .mla(s, $f64x::splat(0.2302585092994045901e+1));
 #endif
   
 #ifdef ENABLE_FMA_DP
@@ -2314,7 +2314,7 @@ pub fn xexp10(d: $f64x) -> $f64x {
   u = vldexp2_vd_vd_vi(u, q);
 
   u = vsel_vd_vo_vd_vd(d.gt($f64x::splat(308.25471555991671)), $f64x::splat(SLEEF_INFINITY), u);
-  u = $f64x::from(vandnot_vm_vo64_vm(d.lt($f64x::splat(-350.)), $mx::from(u)));
+  u = $f64x::from_bits(vandnot_vm_vo64_vm(d.lt($f64x::splat(-350.)), $bx::from_bits(u)));
 
   return u;
 }
@@ -2333,7 +2333,7 @@ pub fn xlog10(d: $f64x) -> $f64x {
   $f64x t, m, x2;
 
 #if !defined(ENABLE_AVX512F) && !defined(ENABLE_AVX512FNOFMA)
-  $mx o = d.lt($f64x::splat(f64::MIN));
+  $bx o = d.lt($f64x::splat(f64::MIN));
   d = vsel_vd_vo_vd_vd(o, d*$f64x::splat(D1_32 * D1_32), d);
   $ix e = vilogb2k_vi_vd(d*$f64x::splat(1./0.75));
   m = vldexp3_vd_vd_vi(d, -e);
@@ -2347,13 +2347,13 @@ pub fn xlog10(d: $f64x) -> $f64x {
   x = $f64x::splat(-1.).add_as_d2(m) / $f64x::splat(1.).add_as_d2(m);
   x2 = x.0*x.0;
 
-  t = $f64x::splat(+0.6653725819576758460e-1)
-      .mla(x2, $f64x::splat(+0.6625722782820833712e-1))
-      .mla(x2, $f64x::splat(+0.7898105214313944078e-1))
-      .mla(x2, $f64x::splat(+0.9650955035715275132e-1))
-      .mla(x2, $f64x::splat(+0.1240841409721444993e+0))
-      .mla(x2, $f64x::splat(+0.1737177927454605086e+0))
-      .mla(x2, $f64x::splat(+0.2895296546021972617e+0));
+  t = $f64x::splat(0.6653725819576758460e-1)
+      .mla(x2, $f64x::splat(0.6625722782820833712e-1))
+      .mla(x2, $f64x::splat(0.7898105214313944078e-1))
+      .mla(x2, $f64x::splat(0.9650955035715275132e-1))
+      .mla(x2, $f64x::splat(0.1240841409721444993e+0))
+      .mla(x2, $f64x::splat(0.1737177927454605086e+0))
+      .mla(x2, $f64x::splat(0.2895296546021972617e+0));
   
 #if !defined(ENABLE_AVX512F) && !defined(ENABLE_AVX512FNOFMA)
   D2 s = D2::from((0.30102999566398119802, -2.803728127785170339e-18)) * $f64x::from(e);
@@ -2382,7 +2382,7 @@ pub fn xlog2(d: $f64x) -> $f64x {
   $f64x t, m, x2;
 
 #if !defined(ENABLE_AVX512F) && !defined(ENABLE_AVX512FNOFMA)
-  $mx o = d.lt($f64x::splat(f64::MIN));
+  $bx o = d.lt($f64x::splat(f64::MIN));
   d = vsel_vd_vo_vd_vd(o, d*$f64x::splat(D1_32 * D1_32), d);
   $ix e = vilogb2k_vi_vd(d*$f64x::splat(1./0.75));
   m = vldexp3_vd_vd_vi(d, -e);
@@ -2396,13 +2396,13 @@ pub fn xlog2(d: $f64x) -> $f64x {
   x = $f64x::splat(-1.).add_as_d2(m) / $f64x::splat(1.).add_as_d2(m);
   x2 = x.0*x.0;
 
-  t = $f64x::splat(+0.2211941750456081490e+0)
-      .mla(x2, $f64x::splat(+0.2200768693152277689e+0))
-      .mla(x2, $f64x::splat(+0.2623708057488514656e+0))
-      .mla(x2, $f64x::splat(+0.3205977477944495502e+0))
-      .mla(x2, $f64x::splat(+0.4121985945485324709e+0))
-      .mla(x2, $f64x::splat(+0.5770780162997058982e+0))
-      .mla(x2, $f64x::splat(+0.96179669392608091449));
+  t = $f64x::splat(0.2211941750456081490e+0)
+      .mla(x2, $f64x::splat(0.2200768693152277689e+0))
+      .mla(x2, $f64x::splat(0.2623708057488514656e+0))
+      .mla(x2, $f64x::splat(0.3205977477944495502e+0))
+      .mla(x2, $f64x::splat(0.4121985945485324709e+0))
+      .mla(x2, $f64x::splat(0.5770780162997058982e+0))
+      .mla(x2, $f64x::splat(0.96179669392608091449));
   
   if !cfg!("enable_avx512f") && !cfg!("enable_avx512fnofma")
     D2 s = $f64x::from(e) + x * D2::from((2.885390081777926774, 6.0561604995516736434e-18));
@@ -2432,7 +2432,7 @@ pub fn xlog1p(d: $f64x) -> $f64x {
   $f64x dp1 = d + $f64x::splat(1.);
 
 #if !defined(ENABLE_AVX512F) && !defined(ENABLE_AVX512FNOFMA)
-  $mx o = dp1.lt($f64x::splat(f64::MIN));
+  $bx o = dp1.lt($f64x::splat(f64::MIN));
   dp1 = vsel_vd_vo_vd_vd(o, dp1*$f64x::splat(D1_32 * D1_32), dp1);
   $ix e = vilogb2k_vi_vd(dp1*$f64x::splat(1./0.75));
   t = vldexp3_vd_vd_vi($f64x::splat(1.), -e);
@@ -2534,7 +2534,7 @@ pub fn xround(d: $f64x) -> $f64x {
 pub fn xrint(d: $f64x) -> $f64x {
   $f64x x = d + $f64x::splat(0.5);
   $f64x fr = x - $f64x::splat(D1_31)*$f64x::from(vtruncate_vi_vd(x*$f64x::splat(1. / D1_31)));
-  $mx isodd = vcast_vo64_vo32(($ix::splat(1) & vtruncate_vi_vd(fr)).eq($ix::splat(1)));
+  $bx isodd = vcast_vo64_vo32(($ix::splat(1) & vtruncate_vi_vd(fr)).eq($ix::splat(1)));
   fr -= $f64x::from(vtruncate_vi_vd(fr));
   fr = vsel_vd_vo_vd_vd(fr.lt($f64x::splat(0)) | (fr.eq($f64x::splat(0)) & isodd), fr + $f64x::splat(1.), fr);
   x = vsel_vd_vo_vd_vd(d.eq($f64x::splat(0.50000000000000011102)), $f64x::splat(0.), x);
@@ -2545,23 +2545,23 @@ pub fn xrint(d: $f64x) -> $f64x {
 pub fn xnextafter(x: $f64x, y: $f64x) -> $f64x {
   x = vsel_vd_vo_vd_vd(x.eq($f64x::splat(0.)), vmulsign_vd_vd_vd($f64x::splat(0.), y), x);
   $ix2 t, xi2 = $ix2::from(x);
-  $mx c = vsignbit_vo_vd(x) ^ y.ge(x);
+  $bx c = vsignbit_vo_vd(x) ^ y.ge(x);
 
   t = (xi2 ^ vcast_vi2_i_i(0x7fffffff, 0xffffffff)) + vcast_vi2_i_i(0, 1);
   t += vrev21_vi2_vi2(vcast_vi2_i_i(0, 1) & veq_vi2_vi2_vi2(t, vcast_vi2_i_i(-1, 0)));
-  xi2 = $ix2::from(vsel_vd_vo_vd_vd(c, $f64x::from(t), $f64x::from(xi2)));
+  xi2 = $ix2::from(vsel_vd_vo_vd_vd(c, $f64x::from_bits(t), $f64x::from_bits(xi2)));
 
   xi2 -= $ix2::from(vand_vm_vo64_vm(x.ne(y), vcast_vm_i_i(0, 1)));
 
   xi2 = $ix2::from(vsel_vd_vo_vd_vd(x.ne(y),
-					     $f64x::from(xi2 + vrev21_vi2_vi2(vcast_vi2_i_i(0, -1) & veq_vi2_vi2_vi2(xi2, vcast_vi2_i_i(0, -1)))),
-					     $f64x::from(xi2)));
+					     $f64x::from_bits(xi2 + vrev21_vi2_vi2(vcast_vi2_i_i(0, -1) & veq_vi2_vi2_vi2(xi2, vcast_vi2_i_i(0, -1)))),
+					     $f64x::from_bits(xi2)));
 
   t = (xi2 ^ vcast_vi2_i_i(0x7fffffff, 0xffffffff)) + vcast_vi2_i_i(0, 1);
   t += vrev21_vi2_vi2(vcast_vi2_i_i(0, 1) & veq_vi2_vi2_vi2(t, vcast_vi2_i_i(-1, 0)));
-  xi2 = $ix2::from(vsel_vd_vo_vd_vd(c, $f64x::from(t), $f64x::from(xi2)));
+  xi2 = $ix2::from(vsel_vd_vo_vd_vd(c, $f64x::from_bits(t), $f64x::from_bits(xi2)));
 
-  $f64x ret = $f64x::from(xi2);
+  $f64x ret = $f64x::from_bits(xi2);
 
   ret = vsel_vd_vo_vd_vd(ret.eq($f64x::splat(0.)) & x.ne($f64x::splat(0.)), 
 			 vmulsign_vd_vd_vd($f64x::splat(0.), x), ret);
@@ -2576,11 +2576,11 @@ pub fn xnextafter(x: $f64x, y: $f64x) -> $f64x {
 pub fn xfrfrexp(x: $f64x) -> $f64x {
   x = vsel_vd_vo_vd_vd(x.abs().lt($f64x::splat(f64::MIN)), x*$f64x::splat(D1_63), x);
 
-  vmask xm = $mx::from(x);
+  vmask xm = $bx::from_bits(x);
   xm = xm & vcast_vm_i_i(!0x7ff00000, !0);
   xm = vor_vm_vm_vm (xm, vcast_vm_i_i( 0x3fe00000,  0));
 
-  $f64x ret = $f64x::from(xm);
+  $f64x ret = $f64x::from_bits(xm);
 
   ret = vsel_vd_vo_vd_vd(visinf_vo_vd(x), vmulsign_vd_vd_vd($f64x::splat(SLEEF_INFINITY), x), ret);
   ret = vsel_vd_vo_vd_vd(x.eq($f64x::splat(0.)), x, ret);
@@ -2602,7 +2602,7 @@ pub fn xexpfrexp(x: $f64x) -> $ix {
 pub fn xfma($f64x x, $f64x y, $f64x z) -> $f64x {
   $f64x h2 = x*y + z;
   q = $f64x::splat(1.);
-  $mx o = h2.abs().lt($f64x::splat(1e-300));
+  $bx o = h2.abs().lt($f64x::splat(1e-300));
   const C0 : f64 = D1_54;
   const C1 : f64 = C0 * C0;
   const C2 : f64 = C1 * C1;
@@ -2636,7 +2636,7 @@ pub fn xfma($f64x x, $f64x y, $f64x z) -> $f64x {
 
 SQRTU05_FUNCATR $f64x xsqrt_u05(d: $f64x) {
   $f64x q;
-  $mx o;
+  $bx o;
   
   d = vsel_vd_vo_vd_vd(d.lt($f64x::splat(0.)), $f64x::splat(SLEEF_NAN), d);
 
@@ -2648,7 +2648,7 @@ SQRTU05_FUNCATR $f64x xsqrt_u05(d: $f64x) {
   d = vsel_vd_vo_vd_vd(o, d*$f64x::splat(7.4583407312002070e-155), d);
   q = vsel_vd_vo_vd_vd(o, $f64x::splat(1.1579208923731620e+77*0.5), q);
 
-  $f64x x = $f64x::from(vcast_vi2_i_i(0x5fe6ec86, 0) - vsrl_vi2_vi2_i($ix2::from(d + $f64x::splat(1e-320)), 1));
+  $f64x x = $f64x::from_bits(vcast_vi2_i_i(0x5fe6ec86, 0) - vsrl_vi2_vi2_i($ix2::from(d + $f64x::splat(1e-320)), 1));
 
   x *= $f64x::splat(1.5) - $f64x::splat(0.5)*d*x*x;
   x *= $f64x::splat(1.5) - $f64x::splat(0.5)*d*x*x;
@@ -2683,7 +2683,7 @@ pub fn xhypot_u05(x: $f64x, y: $f64x) -> $f64x {
   $f64x max = x.max(y);
   d = max;
 
-  $mx o = max.lt($f64x::splat(f64::MIN));
+  $bx o = max.lt($f64x::splat(f64::MIN));
   n = vsel_vd_vo_vd_vd(o, n*$f64x::splat(D1_54), n);
   d = vsel_vd_vo_vd_vd(o, d*$f64x::splat(D1_54), d);
 
@@ -2714,7 +2714,7 @@ pub fn xhypot_u35(x: $f64x, y: $f64x) -> $f64x {
 }
 #[inline]
 fn vtoward0(x: $f64x) -> $f64x { // returns nextafter(x, 0)
-  $f64x t = $f64x::from(vadd64_vm_vm_vm($mx::from(x), vcast_vm_i_i(-1, -1)));
+  $f64x t = $f64x::from_bits(vadd64_vm_vm_vm($bx::from_bits(x), vcast_vm_i_i(-1, -1)));
   return vsel_vd_vo_vd_vd(x.eq($f64x::splat(0.)), $f64x::splat(0.), t);
 }
 #[inline]
@@ -2733,7 +2733,7 @@ pub fn xfmod(x: $f64x, y: $f64x) -> $f64x {
   $f64x nu = x.abs();
   de = y.abs();
   s = $f64x::splat(1.);
-  $mx o = de.lt($f64x::splat(f64::MIN));
+  $bx o = de.lt($f64x::splat(f64::MIN));
   nu = vsel_vd_vo_vd_vd(o, nu*$f64x::splat(D1_54), nu);
   de = vsel_vd_vo_vd_vd(o, de*$f64x::splat(D1_54), de);
   s  = vsel_vd_vo_vd_vd(o, s*$f64x::splat(1. / D1_54), s);
@@ -2743,7 +2743,7 @@ pub fn xfmod(x: $f64x, y: $f64x) -> $f64x {
   for(int i=0;i<21;i++) { // ceil(log2(DBL_MAX) / 51) + 1
     q = vsel_vd_vo_vd_vd((de + de).gt(r.0) & r.0.ge(de),
 			 $f64x::splat(1.), vtoward0(r.0)*rde);
-    q = $f64x::from($mx::from(vptrunc(q)) & vcast_vm_i_i(0xffffffff, 0xfffffffe));
+    q = $f64x::from_bits($bx::from_bits(vptrunc(q)) & vcast_vm_i_i(0xffffffff, 0xfffffffe));
     r = (r + q.mul_as_d2(-de)).normalize();
     if (vtestallones_i_vo64(r.0.lt(de))) break;
   }
@@ -2778,22 +2778,22 @@ static CONST dd2 gammak(a: $f64x) {
   x, y, z;
   $f64x t, u;
 
-  $mx otiny = a.abs().lt($f64x::splat(1e-306));
+  $bx otiny = a.abs().lt($f64x::splat(1e-306));
   oref = a.lt($f64x::splat(0.5));
 
   x = vsel_vd2_vo_vd2_vd2(otiny, D2::from((0., 0.)),
 			  vsel_vd2_vo_vd2_vd2(oref, $f64x::splat(1.).add_as_d2(-a),
 					      D2::new(a, $f64x::splat(0.))));
 
-  $mx o0 = $f64x::splat(0.5).le(x.0) & x.0.le($f64x::splat(1.1));
-  $mx o2 = $f64x::splat(2.3).le(x.0);
+  $bx o0 = $f64x::splat(0.5).le(x.0) & x.0.le($f64x::splat(1.1));
+  $bx o2 = $f64x::splat(2.3).le(x.0);
   
   y = ((x + $f64x::splat(1.)) * x).normalize();
   y = ((x + $f64x::splat(2.)) * y).normalize();
   y = ((x + $f64x::splat(3.)) * y).normalize();
   y = ((x + $f64x::splat(4.)) * y).normalize();
 
-  $mx o = o2 & x.0.le($f64x::splat(7.));
+  $bx o = o2 & x.0.le($f64x::splat(7.));
   clln = vsel_vd2_vo_vd2_vd2(o, y, clln);
 
   x = vsel_vd2_vo_vd2_vd2(o, x + $f64x::splat(5.), x);
@@ -2860,7 +2860,7 @@ pub fn xtgamma_u1(a: $f64x) -> $f64x {
   dd2 d = gammak(a);
   D2 y = expk2(d.a) * d.b;
   $f64x r = y.0 + y.1;
-  $mx o;
+  $bx o;
 
   o = a.eq($f64x::splat(-SLEEF_INFINITY)) |
 				(a.lt($f64x::splat(0.)) & visint_vo_vd(a)) |
@@ -2879,7 +2879,7 @@ pub fn xlgamma_u1(a: $f64x) -> $f64x {
   dd2 d = gammak(a);
   D2 y = d.a + logk2(d.b.abs());
   $f64x r = y.0 + y.1;
-  $mx o;
+  $bx o;
 
   o = visinf_vo_vd(a) |
 		   (a.le($f64x::splat(0.)) & visint_vo_vd(a)) |
@@ -2895,9 +2895,9 @@ pub fn xerf_u1(a: $f64x) -> $f64x {
   D2 d;
 
   a = a.abs();
-  $mx o0 = a.lt($f64x::splat(1.));
-  $mx o1 = a.lt($f64x::splat(3.7));
-  $mx o2 = a.lt($f64x::splat(6.));
+  $bx o0 = a.lt($f64x::splat(1.));
+  $bx o1 = a.lt($f64x::splat(3.7));
+  $bx o2 = a.lt($f64x::splat(6.));
   u = vsel_vd_vo_vd_vd(o0, a*a, a);
   
   t = vsel_vd_vo_vo_d_d_d(o0, o1, 0.6801072401395392157e-20, 0.2830954522087717660e-13, -0.5846750404269610493e-17)
@@ -2937,10 +2937,10 @@ pub fn xerfc_u15(a: $f64x) -> $f64x {
   $f64x s = a, r = $f64x::splat(0.), t;
   D2 u, d, x;
   a = a.abs();
-  $mx o0 = a.lt($f64x::splat(1.));
-  $mx o1 = a.lt($f64x::splat(2.2));
-  $mx o2 = a.lt($f64x::splat(4.2));
-  $mx o3 = a.lt($f64x::splat(27.3));
+  $bx o0 = a.lt($f64x::splat(1.));
+  $bx o1 = a.lt($f64x::splat(2.2));
+  $bx o2 = a.lt($f64x::splat(4.2));
+  $bx o3 = a.lt($f64x::splat(27.3));
 
   u = vsel_vd2_vo_vd2_vd2(o0, a.mul_as_d2(a), vsel_vd2_vo_vd2_vd2(o1, D2::new(a, $f64x::splat(0.)), D2::from((1., 0.)) / D2::new(a, $f64x::splat(0.))));
 

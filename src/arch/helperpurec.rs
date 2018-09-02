@@ -32,7 +32,7 @@ typedef union {
   int32_t i[VECTLENDP*2];
 } versatileVector;
 
-typedef versatileVector $mx;
+typedef versatileVector $bx;
 typedef versatileVector $mox;
 typedef versatileVector $f64x;
 typedef versatileVector $ix;
@@ -44,7 +44,7 @@ typedef union {
   long double ld[VECTLENDP];
 } longdoubleVector;
 
-typedef longdoubleVector $mxL;
+typedef longdoubleVector $bxL;
 typedef longdoubleVector VLongDouble;
 
 #ifdef Sleef_quad2_DEFINED
@@ -53,14 +53,11 @@ typedef union {
   Sleef_quad q[VECTLENDP];
 } quadVector;
 
-typedef quadVector $mxq;
+typedef quadVector $bxq;
 typedef quadVector VQuad;
 #endif
 
 //
-
-#[inline]
-fn vprefetch_v_p(const void *ptr) -> void { }
 
 #[inline]
 fn vtestallones_i_vo64(g: $mox) -> int {
@@ -102,8 +99,8 @@ fn vcast_vo64_vo32(m: $mox) -> $mox {
 }
 
 #[inline]
-fn vcast_vm_i_i(h: int, l: int) -> $mx {
-  $mx ret;
+fn vcast_vm_i_i(h: int, l: int) -> $bx {
+  $bx ret;
   for(int i=0;i<VECTLENDP;i++) {
     ret.u[i*2+0] = l;
     ret.u[i*2+1] = h;
@@ -166,27 +163,27 @@ fn vrev21_vf_vf(d0: $f32x) -> $f32x {
 fn vandnot_vo_vo_vo(x: $mox, y: $mox) -> $mox { $mox ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = y.u[i] & ~x.u[i]; return ret; }
 
 #[inline]
-fn vandnot_vm_vm_vm  (x: $mx, y: $mx)     -> $mx { $mx   ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = y.u[i] & ~x.u[i]; return ret; }
+fn vandnot_vm_vm_vm  (x: $bx, y: $bx)     -> $bx { $bx   ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = y.u[i] & ~x.u[i]; return ret; }
 #[inline]
-fn vor_vm_vm_vm      (x: $mx, y: $mx)     -> $mx { $mx   ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = x.u[i] |  y.u[i]; return ret; }
+fn vor_vm_vm_vm      (x: $bx, y: $bx)     -> $bx { $bx   ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = x.u[i] |  y.u[i]; return ret; }
 
 #[inline]
-fn vand_vm_vo64_vm(x: $mox, y: $mx)      -> $mx { $mx   ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = x.u[i] &  y.u[i]; return ret; }
+fn vand_vm_vo64_vm(x: $mox, y: $bx)      -> $bx { $bx   ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = x.u[i] &  y.u[i]; return ret; }
 #[inline]
-fn vandnot_vm_vo64_vm(x: $mox, y: $mx)   -> $mx { $mx   ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = y.u[i] & ~x.u[i]; return ret; }
+fn vandnot_vm_vo64_vm(x: $mox, y: $bx)   -> $bx { $bx   ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = y.u[i] & ~x.u[i]; return ret; }
 #[inline]
-fn vor_vm_vo64_vm(x: $mox, y: $mx)       -> $mx { $mx   ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = x.u[i] |  y.u[i]; return ret; }
+fn vor_vm_vo64_vm(x: $mox, y: $bx)       -> $bx { $bx   ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = x.u[i] |  y.u[i]; return ret; }
 #[inline]
-fn vxor_vm_vo64_vm(x: $mox, y: $mx)      -> $mx { $mx   ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = x.u[i] ^  y.u[i]; return ret; }
+fn vxor_vm_vo64_vm(x: $mox, y: $bx)      -> $bx { $bx   ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = x.u[i] ^  y.u[i]; return ret; }
 
 #[inline]
-fn vand_vm_vo32_vm(x: $mox, y: $mx)      -> $mx { $mx   ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = x.u[i] &  y.u[i]; return ret; }
+fn vand_vm_vo32_vm(x: $mox, y: $bx)      -> $bx { $bx   ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = x.u[i] &  y.u[i]; return ret; }
 #[inline]
-fn vandnot_vm_vo32_vm(x: $mox, y: $mx)   -> $mx { $mx   ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = y.u[i] & ~x.u[i]; return ret; }
+fn vandnot_vm_vo32_vm(x: $mox, y: $bx)   -> $bx { $bx   ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = y.u[i] & ~x.u[i]; return ret; }
 #[inline]
-fn vor_vm_vo32_vm(x: $mox, y: $mx)       -> $mx { $mx   ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = x.u[i] |  y.u[i]; return ret; }
+fn vor_vm_vo32_vm(x: $mox, y: $bx)       -> $bx { $bx   ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = x.u[i] |  y.u[i]; return ret; }
 #[inline]
-fn vxor_vm_vo32_vm(x: $mox, y: $mx)      -> $mx { $mx   ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = x.u[i] ^  y.u[i]; return ret; }
+fn vxor_vm_vo32_vm(x: $mox, y: $bx)      -> $bx { $bx   ret; for(int i=0;i<VECTLENDP*2;i++) ret.u[i] = x.u[i] ^  y.u[i]; return ret; }
 
 //
 
@@ -220,9 +217,9 @@ fn vtruncate_vd_vd(vd: $f64x) -> $f64x { return $f64x::from(vtruncate_vi_vd(vd))
 fn vrint_vd_vd(vd: $f64x) -> $f64x { return $f64x::from(vrint_vi_vd(vd)); }
 
 #[inline]
-fn veq64_vo_vm_vm(x: $mx, y: $mx) -> $mox { $mox ret; for(int i=0;i<VECTLENDP;i++) ret.x[i] = x.x[i] == y.x[i] ? -1 : 0; return ret; }
+fn veq64_vo_vm_vm(x: $bx, y: $bx) -> $mox { $mox ret; for(int i=0;i<VECTLENDP;i++) ret.x[i] = x.x[i] == y.x[i] ? -1 : 0; return ret; }
 #[inline]
-fn vadd64_vm_vm_vm(x: $mx, y: $mx) -> $mx { $mx ret; for(int i=0;i<VECTLENDP;i++) ret.x[i] = x.x[i] + y.x[i]; return ret; }
+fn vadd64_vm_vm_vm(x: $bx, y: $bx) -> $bx { $bx ret; for(int i=0;i<VECTLENDP;i++) ret.x[i] = x.x[i] + y.x[i]; return ret; }
 
 //
 
@@ -238,13 +235,15 @@ impl Abs for $f64x {
     }
 }
 impl Mla for $f64x {
+    #[inline]
     fn mla(self, y: Self, z: Self) -> Self {
         $f64x ret; for(int i=0;i<VECTLENDP;i++) ret.d[i] = x.d[i] * y.d[i] + z.d[i]; return ret;
     }
+    #[inline]
+    fn mlapn(self, y: Self, z: Self) -> Self {
+        $f64x ret; for(int i=0;i<VECTLENDP;i++) ret.d[i] = x.d[i] * y.d[i] - z.d[i]; return ret;
+    }
 }
-#[inline]
-fn vmlapn_vd_vd_vd_vd(x: $f64x, y: $f64x, z: $f64x) -> $f64x { $f64x ret; for(int i=0;i<VECTLENDP;i++) ret.d[i] = x.d[i] * y.d[i] - z.d[i]; return ret; }
-
 #[inline]
 fn vposneg_vd_vd(d: $f64x) -> $f64x { $f64x ret; for(int i=0;i<VECTLENDP;i++) ret.d[i] = (i & 1) == 0 ?  d.d[i] : -d.d[i]; return ret; }
 #[inline]
@@ -265,11 +264,7 @@ fn vand_vi_vo_vi(x: $mox, y: $ix)    -> $ix { vreinterpretFirstHalf_vi_vi2(x) & 
 fn vandnot_vi_vo_vi(x: $mox, y: $ix) -> $ix { return vandnot_vi_vi_vi(vreinterpretFirstHalf_vi_vi2(x), y); }
 
 #[inline]
-fn vsll_vi_vi_i(x: $ix, c: int) -> $ix { $ix ret; for(int i=0;i<VECTLENDP;i++) ret.i[i] = x.i[i] << c; return ret; }
-#[inline]
 fn vsrl_vi_vi_i(x: $ix, c: int) -> $ix { $ix ret; for(int i=0;i<VECTLENDP;i++) ret.i[i] = ((uint32_t)x.i[i]) >> c; return ret; }
-#[inline]
-fn vsra_vi_vi_i(x: $ix, c: int) -> $ix { $ix ret; for(int i=0;i<VECTLENDP;i++) ret.i[i] = x.i[i] >> c; return ret; }
 
 
 #[inline]
@@ -378,11 +373,7 @@ fn vand_vi2_vo_vi2(x: $mox, y: $ix2) -> $ix2 {
 fn vandnot_vi2_vo_vi2(x: $mox, y: $ix2) -> $ix2 { return vandnot_vi2_vi2_vi2(x, y); }
 
 #[inline]
-fn vsll_vi2_vi2_i(x: $ix2, c: int) -> $ix2 { $ix2 ret; for(int i=0;i<VECTLENSP;i++) ret.i[i] = x.i[i] << c; return ret; }
-#[inline]
 fn vsrl_vi2_vi2_i(x: $ix2, c: int) -> $ix2 { $ix2 ret; for(int i=0;i<VECTLENSP;i++) ret.i[i] = ((uint32_t)x.i[i]) >> c; return ret; }
-#[inline]
-fn vsra_vi2_vi2_i(x: $ix2, c: int) -> $ix2 { $ix2 ret; for(int i=0;i<VECTLENSP;i++) ret.i[i] = x.i[i] >> c; return ret; }
 
 #[inline]
 fn visinf_vo_vf (d: $f32x) -> $mox { $mox ret; for(int i=0;i<VECTLENSP;i++) ret.u[i] = (d.f[i] == SLEEF_INFINITYf || d.f[i] == -SLEEF_INFINITYf) ? -1 : 0; return ret; }

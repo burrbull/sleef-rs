@@ -83,7 +83,7 @@ typedef union {
   int64_t i2;
 } versatileVector;
 
-typedef uint64_t $mx;
+typedef uint64_t $bx;
 typedef uint32_t $mox;
 typedef double $f64x;
 typedef int32_t $ix;
@@ -91,9 +91,6 @@ typedef float $f32x;
 typedef int64_t $ix2;
 
 //
-
-#[inline]
-fn vprefetch_v_p(const void *ptr) -> void {}
 
 #[inline]
 fn vtestallones_i_vo64(g: $mox) -> int { return g; }
@@ -112,7 +109,7 @@ fn vcast_vo32_vo64(m: $mox) -> $mox { return m; }
 #[inline]
 fn vcast_vo64_vo32(m: $mox) -> $mox { return m; }
 #[inline]
-fn vcast_vm_i_i(h: int, l: int) -> $mx { return (((uint64_t)h) << 32) | (uint32_t)l; }
+fn vcast_vm_i_i(h: int, l: int) -> $bx { return (((uint64_t)h) << 32) | (uint32_t)l; }
 
 
 #[inline]
@@ -125,30 +122,30 @@ fn vrev21_vi2_vi2(vi2: $ix2) -> $ix2 { return (((uint64_t)vi2) << 32) | (((uint6
 fn vandnot_vo_vo_vo(x: $mox, y: $mox) -> $mox { return y & ~x; }
 
 #[inline]
-fn vandnot_vm_vm_vm  (x: $mx, y: $mx)     -> $mx { return y & ~x; }
+fn vandnot_vm_vm_vm  (x: $bx, y: $bx)     -> $bx { return y & ~x; }
 #[inline]
-fn vor_vm_vm_vm      (x: $mx, y: $mx)     -> $mx { return x | y; }
+fn vor_vm_vm_vm      (x: $bx, y: $bx)     -> $bx { return x | y; }
 
 #[inline]
-fn vcast_vm_vo(o: $mox) -> $mx { return ($mx)o | ((($mx)o) << 32); }
+fn vcast_vm_vo(o: $mox) -> $bx { return ($bx)o | ((($bx)o) << 32); }
 
 #[inline]
-fn vand_vm_vo64_vm(x: $mox, y: $mx)      -> $mx { return vcast_vm_vo(x) & y; }
+fn vand_vm_vo64_vm(x: $mox, y: $bx)      -> $bx { return vcast_vm_vo(x) & y; }
 #[inline]
-fn vandnot_vm_vo64_vm(x: $mox, y: $mx)   -> $mx { return y & ~vcast_vm_vo(x); }
+fn vandnot_vm_vo64_vm(x: $mox, y: $bx)   -> $bx { return y & ~vcast_vm_vo(x); }
 #[inline]
-fn vor_vm_vo64_vm(x: $mox, y: $mx)       -> $mx { return vcast_vm_vo(x) | y; }
+fn vor_vm_vo64_vm(x: $mox, y: $bx)       -> $bx { return vcast_vm_vo(x) | y; }
 #[inline]
-fn vxor_vm_vo64_vm(x: $mox, y: $mx)      -> $mx { return vcast_vm_vo(x) ^ y; }
+fn vxor_vm_vo64_vm(x: $mox, y: $bx)      -> $bx { return vcast_vm_vo(x) ^ y; }
 
 #[inline]
-fn vand_vm_vo32_vm(x: $mox, y: $mx)      -> $mx { return vcast_vm_vo(x) & y; }
+fn vand_vm_vo32_vm(x: $mox, y: $bx)      -> $bx { return vcast_vm_vo(x) & y; }
 #[inline]
-fn vandnot_vm_vo32_vm(x: $mox, y: $mx)   -> $mx { return y & ~vcast_vm_vo(x); }
+fn vandnot_vm_vo32_vm(x: $mox, y: $bx)   -> $bx { return y & ~vcast_vm_vo(x); }
 #[inline]
-fn vor_vm_vo32_vm(x: $mox, y: $mx)       -> $mx { return vcast_vm_vo(x) | y; }
+fn vor_vm_vo32_vm(x: $mox, y: $bx)       -> $bx { return vcast_vm_vo(x) | y; }
 #[inline]
-fn vxor_vm_vo32_vm(x: $mox, y: $mx)      -> $mx { return vcast_vm_vo(x) ^ y; }
+fn vxor_vm_vo32_vm(x: $mox, y: $bx)      -> $bx { return vcast_vm_vo(x) ^ y; }
 
 //
 
@@ -196,9 +193,9 @@ fn vtruncate_vd_vd(vd: $f64x) -> $f64x { return $f64x::from(vtruncate_vi_vd(vd))
 #endif
 
 #[inline]
-fn veq64_vo_vm_vm(x: $mx, y: $mx) -> $mox { return x == y ? ~(uint32_t)0 : 0; }
+fn veq64_vo_vm_vm(x: $bx, y: $bx) -> $mox { return x == y ? ~(uint32_t)0 : 0; }
 #[inline]
-fn vadd64_vm_vm_vm(x: $mx, y: $mx) -> $mx { return x + y; }
+fn vadd64_vm_vm_vm(x: $bx, y: $bx) -> $bx { return x + y; }
 
 //
 
@@ -217,32 +214,32 @@ impl Abs for $f64x {
 
 #ifndef ENABLE_FMA_DP
 impl Mla for $f64x {
+    #[inline]
     fn mla(self, y: Self, z: Self) -> Self {
         x * y + z
     }
+    #[inline]
+    fn mlapn(self, y: Self, z: Self) -> Self {
+        x * y - z
+    }
 }
-#[inline]
-fn vmlapn_vd_vd_vd_vd(x: $f64x, y: $f64x, z: $f64x) -> $f64x { return x * y - z; }
 #else
 impl Mla for $f64x {
+    #[inline]
     fn mla(self, y: Self, z: Self) -> Self {
         FMA(x, y, z)
     }
+    #[inline]
+    fn mlapn(self, y: Self, z: Self) -> Self {
+        FMA(x, y, -z)
+    }
 }
 #[inline]
-fn vmlapn_vd_vd_vd_vd(x: $f64x, y: $f64x, z: $f64x) -> $f64x { return FMA(x, y, -z); }
-#[inline]
-fn vmlanp_vd_vd_vd_vd(x: $f64x, y: $f64x, z: $f64x) -> $f64x { return FMA(-x, y, z); }
-#[inline]
 fn vfma_vd_vd_vd_vd(x: $f64x, y: $f64x, z: $f64x) -> $f64x { return FMA(x, y, z); }
-#[inline]
-fn vfmapp_vd_vd_vd_vd(x: $f64x, y: $f64x, z: $f64x) -> $f64x { return FMA(x, y, z); }
 #[inline]
 fn vfmapn_vd_vd_vd_vd(x: $f64x, y: $f64x, z: $f64x) -> $f64x { return FMA(x, y, -z); }
 #[inline]
 fn vfmanp_vd_vd_vd_vd(x: $f64x, y: $f64x, z: $f64x) -> $f64x { return FMA(-x, y, z); }
-#[inline]
-fn vfmann_vd_vd_vd_vd(x: $f64x, y: $f64x, z: $f64x) -> $f64x { return FMA(-x, y, -z); }
 #endif
 
 
@@ -263,11 +260,7 @@ fn vand_vi_vo_vi(x: $mox, y: $ix)    -> $ix { return x & y; }
 fn vandnot_vi_vo_vi(x: $mox, y: $ix) -> $ix { return y & ~x; }
 
 #[inline]
-fn vsll_vi_vi_i(x: $ix, c: int) -> $ix { return (uint32_t)x << c; }
-#[inline]
 fn vsrl_vi_vi_i(x: $ix, c: int) -> $ix { return (uint32_t)x >> c; }
-#[inline]
-fn vsra_vi_vi_i(x: $ix, c: int) -> $ix { return x >> c; }
 
 
 #[inline]
@@ -345,19 +338,13 @@ impl Mla for $f32x {
     }
 }
 #[inline]
-fn vmlapn_vf_vf_vf_vf(x: $f32x, y: $f32x, z: $f32x) -> $f32x { return FMAF(x, y, -z); }
-#[inline]
 fn vmlanp_vf_vf_vf_vf(x: $f32x, y: $f32x, z: $f32x) -> $f32x { return FMAF(-x, y, z); }
 #[inline]
 fn vfma_vf_vf_vf_vf(x: $f32x, y: $f32x, z: $f32x) -> $f32x { return FMAF(x, y, z); }
 #[inline]
-fn vfmapp_vf_vf_vf_vf(x: $f32x, y: $f32x, z: $f32x) -> $f32x { return FMAF(x, y, z); }
-#[inline]
 fn vfmapn_vf_vf_vf_vf(x: $f32x, y: $f32x, z: $f32x) -> $f32x { return FMAF(x, y, -z); }
 #[inline]
 fn vfmanp_vf_vf_vf_vf(x: $f32x, y: $f32x, z: $f32x) -> $f32x { return FMAF(-x, y, z); }
-#[inline]
-fn vfmann_vf_vf_vf_vf(x: $f32x, y: $f32x, z: $f32x) -> $f32x { return FMAF(-x, y, -z); }
 #endif
 
 
@@ -385,11 +372,7 @@ fn vand_vi2_vo_vi2(x: $mox, y: $ix2) -> $ix2 { return vcast_vm_vo(x) & y; }
 fn vandnot_vi2_vo_vi2(x: $mox, y: $ix2) -> $ix2 { return y & ~vcast_vm_vo(x); }
 
 #[inline]
-fn vsll_vi2_vi2_i(x: $ix2, c: int) { versatileVector v = -> $ix2 { .i2 = x }; v.u[0] <<= c; v.u[1] <<= c; return v.i2; }
-#[inline]
 fn vsrl_vi2_vi2_i(x: $ix2, c: int) { versatileVector v = -> $ix2 { .i2 = x }; v.u[0] >>= c; v.u[1] >>= c; return v.i2; }
-#[inline]
-fn vsra_vi2_vi2_i(x: $ix2, c: int) { versatileVector v = -> $ix2 { .i2 = x }; v.i[0] >>= c; v.i[1] >>= c; return v.i2; }
 
 #[inline]
 fn visinf_vo_vf (d: $f32x) -> $mox { return (d == SLEEF_INFINITYf || d == -SLEEF_INFINITYf) ? ~(uint32_t)0 : 0; }

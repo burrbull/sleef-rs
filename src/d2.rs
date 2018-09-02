@@ -1,6 +1,6 @@
 #[inline]
 fn vupper_vd_vd(d: $f64x) -> $f64x {
-  $f64x::from($mx::from(d) & vcast_vm_i_i(0xffffffff, 0xf8000000))
+  $f64x::from_bits($bx::from_bits(d) & $bx::from_bits_u32((0xffffffff, 0xf8000000)))
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -20,7 +20,7 @@ impl D2<$f64x> {
     #[inline]
     pub fn abs(self) -> Self {
         Self::new(self.0.abs(),
-            $f64x::from($mx::from(self.1) ^ ($mx::from(self.0) & $mx::from($f64x::splat((-0.)))))
+            $f64x::from_bits($bx::from_bits(self.1) ^ ($bx::from_bits(self.0) & $bx::from_bits($f64x::splat((-0.)))))
     }
 
     #[inline]
@@ -28,13 +28,13 @@ impl D2<$f64x> {
         Self::new(self.0 * other, self.1 * other)
     }
 
-    #[cfg(feature="enable_fma_dp")]
+    #[target_feature(enable = "fma")]
     #[inline]
     pub fn square(self) -> Self {
         let r0 = self.0 * self.0;
         Self::new(r0, vfma_vd_vd_vd_vd(self.0 + self.0, self.1, vfmapn_vd_vd_vd_vd(self.0, self.0, r0)) )
     }
-    #[cfg(not(feature="enable_fma_dp"))]
+    #[target_feature(not(enable = "fma"))]
     #[inline]
     pub fn square(self) -> Self {
         let xh = vupper_vd_vd(self.0);
@@ -43,12 +43,12 @@ impl D2<$f64x> {
         Self::new(r0, xh * xh + (-r0) + (xh + xh) * xl + xl * xl + self.0 * (self.1 + self.1) )
     }
 
-    #[cfg(feature="enable_fma_dp")]
+    #[target_feature(enable = "fma")]
     #[inline]
     pub fn square_as_d(self) -> $f64x {
         vfma_vd_vd_vd_vd(self.0, self.0, self.0 * self.1 + self.0 * self.1)
     }
-    #[cfg(not(feature="enable_fma_dp"))]
+    #[target_feature(not(enable = "fma"))]
     #[inline]
     pub fn square_as_d(self) -> $f64x {
         let xh = vupper_vd_vd(self.0);
@@ -63,12 +63,12 @@ impl D2<$f64x> {
         ((d + t.mul_as_d2(t)) * t.rec_as_d2()).scale($f64x::splat(0.5))
     }
 
-    #[cfg(feature="enable_fma_dp")]
+    #[target_feature(enable = "fma")]
     #[inline]
     pub fn mul_as_d(self, other: Self) -> $f64x {
         vfma_vd_vd_vd_vd(self.0, other.0, vfma_vd_vd_vd_vd(self.1, other.0, self.0 * other.1))
     }
-    #[cfg(not(feature="enable_fma_dp"))]
+    #[target_feature(not(enable = "fma"))]
     #[inline]
     pub fn mul_as_d(self, other: Self) -> $f64x {
         let xh = vupper_vd_vd(self.0);

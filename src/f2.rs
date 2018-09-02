@@ -20,7 +20,7 @@ impl F2<$f32x> {
     #[inline]
     pub fn abs(self) -> Self {
         Self::new(self.0.abs(),
-            $f32x::from_bits($bx::from_bits(self.1) ^ ($bx::from_bits(self.0) & $bx::from_bits($f32x::splat(-0.))))
+            $f32x::from_bits($ux::from_bits(self.1) ^ ($ux::from_bits(self.0) & $ux::from_bits($f32x::splat(-0.))))
     }
 
     #[inline]
@@ -32,7 +32,7 @@ impl F2<$f32x> {
     #[inline]
     pub fn square(self) -> Self {
         let r0 = self.0 * self.0;
-        Self::new(r0, vfma_vf_vf_vf_vf(self.0 + self.0, self.1, vfmapn_vf_vf_vf_vf(self.0, self.0, r0)) )
+        Self::new(r0, (self.0 + self.0).fma(self.1, self.0.fmapn(self.0, r0)) )
     }
     #[target_feature(not(enable = "fma"))]
     #[inline]
@@ -51,7 +51,7 @@ impl F2<$f32x> {
     #[target_feature(enable = "fma")]
     #[inline]
     pub fn square_as_f(self) -> $f32x {
-        vfma_vf_vf_vf_vf(self.0, self.0, self.0 * self.1 + self.0 * self.1)
+        self.0.fma(self.0, self.0 * self.1 + self.0 * self.1)
     }
     #[target_feature(not(enable = "fma"))]
     #[inline]
@@ -71,14 +71,14 @@ impl F2<$f32x> {
     #[cfg(not(feature="enable_recsqrt_sp"))]
     #[inline]
     pub fn sqrt(self) -> Self {
-        let t = vsqrt_vf_vf(self.0 + self.1);
+        let t = (self.0 + self.1).sqrt();
         ((self + t.mul_as_f2(t)) * t.rec()).scale($f32x::splat(0.5))
     }
 
     #[target_feature(enable = "fma")]
     #[inline]
     pub fn mul_as_f(self, other: Self) -> $f32x {
-        vfma_vf_vf_vf_vf(self.0, other.0, vfma_vf_vf_vf_vf(self.1, other.0, self.0 * other.1))
+        self.0.fma(other.0, self.1.fma(other.0, self.0 * other.1))
     }
     #[target_feature(not(enable = "fma"))]
     #[inline]
@@ -157,13 +157,13 @@ impl std::ops::Add<F2<$f32x>> for $f32x {
 
 impl std::ops::Mul for F2<$f32x> {
     type Output = Self;
-    #[cfg(feature="enable_fma_dp")]
+    #[target_feature(enable = "fma")]
     #[inline]
     fn mul(self, other: Self) -> Self {
         let r0 = self.0 * other.0;
-        Self::new(r0, vfma_vf_vf_vf_vf(self.0, other.1, vfma_vf_vf_vf_vf(self.1, other.0, vfmapn_vf_vf_vf_vf(self.0, other.0, r0))) )
+        Self::new(r0, self.0.fma(other.1, self.1.fma(other.0, self.0.fmapn(other.0, r0))) )
     }
-    #[cfg(not(feature="enable_fma_dp"))]
+    #[target_feature(not(enable = "fma"))]
     #[inline]
     fn mul(self, other: Self) -> Self {
         let xh = vupper_vf_vf(self.0);
@@ -190,13 +190,13 @@ impl std::ops::MulAssign for F2<$f32x> {
 
 impl std::ops::Mul<$f32x> for F2<$f32x> {
     type Output = Self;
-    #[cfg(feature="enable_fma_dp")]
+    #[target_feature(enable = "fma")]
     #[inline]
     fn mul(self, other: $f32x) -> Self {
         let r0 = self.0 * other;
-        Self::new(r0, vfma_vf_vf_vf_vf(self.1, other, vfmapn_vf_vf_vf_vf(self.0, other, r0)) )
+        Self::new(r0, self.1.fma(other, self.0.fmanp(other, r0)) )
     }
-    #[cfg(not(feature="enable_fma_dp"))]
+    #[target_feature(not(enable = "fma"))]
     #[inline]
     fn mul(self, other: $f32x) -> Self {
         let xh = vupper_vf_vf(self.0);
@@ -222,19 +222,19 @@ impl std::ops::MulAssign<$f32x> for F2<$f32x> {
 
 impl std::ops::Div for F2<$f32x> {
     type Output = Self;
-    #[cfg(feature="enable_fma_dp")]
+    #[target_feature(enable = "fma")]
     #[inline]
     fn div(self, other: Self) -> Self {
         let t = other.0.rec();
 
         let q0 = self.0 * t;
-        let u = vfmapn_vf_vf_vf_vf(t, self.0, q0);
-        let mut q1 = vfmanp_vf_vf_vf_vf(other.1, t, vfmanp_vf_vf_vf_vf(other.0, t, $f32x::splat(1)));
-        q1 = vfma_vf_vf_vf_vf(q0, q1, vfma_vf_vf_vf_vf(self.1, t, u));
+        let u = t.fmapn(self.0, q0);
+        let mut q1 = other.1.fmanp(t, other.0.fmanp(t, $f32x::splat(1)));
+        q1 = q0.fma(q1, self.1.fma(t, u));
 
         Self::new(q0, q1)
     }
-    #[cfg(not(feature="enable_fma_dp"))]
+    #[target_feature(not(enable = "fma"))]
     #[inline]
     fn div(self, other: Self) -> Self {
         let t = (other.0.rec();
@@ -345,13 +345,13 @@ impl SubChecked<$f32x> for F2<$f32x> {
 
 
 impl MulAsF2 for $f32x {
-    #[cfg(feature="enable_fma_dp")]
+    #[target_feature(enable = "fma")]
     #[inline]
     fn mul_as_f2(self, other: Self) -> F2<Self> {
         let r0 = self * other;
-        Self::new(r0, vfmapn_vf_vf_vf_vf(self, other, r0) )
+        Self::new(r0, self.fmapn(other, r0) )
     }
-    #[cfg(not(feature="enable_fma_dp"))]
+    #[target_feature(not(enable = "fma"))]
     #[inline]
     fn mul_as_f2(self, other: Self) -> F2<Self> {
         let xh = vupper_vf_vf(self);
@@ -372,20 +372,20 @@ impl MulAsF2 for $f32x {
 impl SqrtAsF2 for $f32x {
     #[inline]
     fn sqrt_as_d2(self) -> F2<Self> {
-        let t = vsqrt_vf_vf(self);
+        let t = self.sqrt();
         ((self + selffmul_vf2_vf_vf(t, t)) * t.rec()).scale(Self::splat(0.5))
     }
 }
 
 
 impl Rec for F2<$f32x> {
-    #[cfg(feature="enable_fma_dp")]
+    #[target_feature(enable = "fma")]
     #[inline]
     fn rec(self) -> Self {
         let q0 = self.0.rec();
-        Self::new(r0, q0 * vfmanp_vf_vf_vf_vf(self.1, q0, vfmanp_vf_vf_vf_vf(self.0, q0, $f32x::splat(1))) )
+        Self::new(r0, q0 * self.1.fmanp(q0, self.0.fmanp(q0, $f32x::splat(1))) )
     }
-    #[cfg(not(feature="enable_fma_dp"))]
+    #[target_feature(not(enable = "fma"))]
     #[inline]
     fn rec(self) -> Self {
         let t = self.0.rec();
@@ -406,13 +406,13 @@ impl Rec for F2<$f32x> {
 }
 
 impl RecAsF2<F2<$f32x>> for $f32x {
-    #[cfg(feature="enable_fma_dp")]
+    #[target_feature(enable = "fma")]
     #[inline]
     fn rec_as_f2(self) -> F2<Self> {
         let q0 = self.rec();
-        F2<Self>::new(q0, q0 * vfmanp_vf_vf_vf_vf(self, q0, Self::splat(1)) )
+        F2<Self>::new(q0, q0 * self.fmanp(q0, Self::splat(1)) )
     }
-    #[cfg(not(feature="enable_fma_dp"))]
+    #[target_feature(not(enable = "fma"))]
     #[inline]
     fn rec_as_f2(self) -> F2<Self> {
         let t = self.rec();
@@ -434,21 +434,21 @@ impl RecAsF2<F2<$f32x>> for $f32x {
 
 
 #[inline]
-fn vsel_vf2_vo_vf2_vf2(m: $mox, x: F2<$f32x>, y: F2<$f32x>) -> F2<$f32x> {
-  Self::new( vsel_vf_vo_vf_vf(m, x.0, y.0), vsel_vf_vo_vf_vf(m, x.1, y.1) )
+fn vsel_vf2_vo_vf2_vf2(m: $ox, x: F2<$f32x>, y: F2<$f32x>) -> F2<$f32x> {
+  Self::new( m.select(x.0, y.0), m.select(x.1, y.1) )
 }
 
 #[inline]
-fn vsel_vf2_vo_f_f_f_f(o: $mox, x1: f32, y1: f32, x0: f32, y0: f32) -> F2<$f32x> {
+fn vsel_vf2_vo_f_f_f_f(o: $ox, x1: f32, y1: f32, x0: f32, y0: f32) -> F2<$f32x> {
   Self::new( vsel_vf_vo_f_f(o, x1, x0),  vsel_vf_vo_f_f(o, y1, y0) )
 }
 
 #[inline]
-fn vsel_vf2_vo_vo_d_d_d(o0: $mox, o1: $mox, d0: f64, d1: f64, d2: f64) -> F2<$f32x> {
+fn vsel_vf2_vo_vo_d_d_d(o0: $ox, o1: $ox, d0: f64, d1: f64, d2: f64) -> F2<$f32x> {
   vsel_vf2_vo_vf2_vf2(o0, F2::from(d0), vsel_vf2_vo_vf2_vf2(o1, F2::from(d1), F2::from(d2)))
 }
 
 #[inline]
-fn vsel_vf2_vo_vo_vo_d_d_d_d(o0: $mox, o1: $mox, o2: $mox, d0: f64, d1: f64, d2: f64, d3: f64) -> F2 {
+fn vsel_vf2_vo_vo_vo_d_d_d_d(o0: $ox, o1: $ox, o2: $ox, d0: f64, d1: f64, d2: f64, d3: f64) -> F2 {
   vsel_vf2_vo_vf2_vf2(o0, F2::from(d0), vsel_vf2_vo_vf2_vf2(o1, F2::from(d1), vsel_vf2_vo_vf2_vf2(o2, F2::from(d2), F2::from(d3))))
 }

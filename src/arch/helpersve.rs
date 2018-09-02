@@ -66,8 +66,8 @@
 #define ACCURATE_SQRT
 
 // Mask definition
-typedef svint32_t $bx;
-typedef svbool_t $mox;
+typedef svint32_t $ux;
+typedef svbool_t $ox;
 
 // Single precision definitions
 typedef svfloat32_t $f32x;
@@ -89,13 +89,13 @@ typedef svint32_t $ix;
 //
 //
 #[inline]
-fn vtestallones_i_vo32(g: $mox) -> int {
+fn vtestallones_i_vo32(g: $ox) -> int {
   svbool_t pg = svptrue_b32();
   return (svcntp_b32(pg, g) == svcntw());
 }
 
 #[inline]
-fn vtestallones_i_vo64(g: $mox) -> int {
+fn vtestallones_i_vo64(g: $ox) -> int {
   svbool_t pg = svptrue_b64();
   return (svcntp_b64(pg, g) == svcntd());
 }
@@ -112,12 +112,12 @@ fn vstoreu_v_p_vi2(int32_t *p, $ix2 v) -> void { svst1_s32(ptrue, p, v); }
 
 // Basic logical operations for mask
 #[inline]
-fn vandnot_vm_vm_vm(x: $bx, y: $bx) -> $bx {
+fn vandnot_vm_vm_vm(x: $ux, y: $ux) -> $ux {
   return svbic_s32_x(ptrue, y, x);
 }
 
 #[inline]
-fn vadd64_vm_vm_vm(x: $bx, y: $bx) -> $bx {
+fn vadd64_vm_vm_vm(x: $ux, y: $ux) -> $ux {
   return svreinterpret_s32_s64(
            svadd_s64_x(ptrue, svreinterpret_s64_s32(x),
                               svreinterpret_s64_s32(y)));
@@ -126,7 +126,7 @@ fn vadd64_vm_vm_vm(x: $bx, y: $bx) -> $bx {
 
 // Conditional select
 #[inline]
-fn vsel_vi2_vm_vi2_vi2($bx m, $ix2 x, $ix2 y) -> $ix2 {
+fn vsel_vi2_vm_vi2_vi2($ux m, $ix2 x, $ix2 y) -> $ix2 {
   return svsel_s32(svcmpeq_s32(ptrue, m, ALL_TRUE_MASK), x, y);
 }
 
@@ -142,8 +142,12 @@ impl Rec for $f32x {
         svdivr_n_f32_x(ptrue, self, 1.)
     }
 }
-#[inline]
-fn vsqrt_vf_vf(d: $f32x) -> $f32x { return svsqrt_f32_x(ptrue, d); }
+impl Sqrt for $f32x {
+    #[inline]
+    fn sqrt(self) -> Self {
+        svsqrt_f32_x(ptrue, d)
+    }
+}
 
 // |x|, -x
 impl Abs for $f32x {
@@ -188,53 +192,39 @@ fn vmlanp_vf_vf_vf_vf(x: $f32x, y: $f32x, z: $f32x) -> $f32x { return z - x * y;
 #endif
 
 // fused multiply add / sub
-#[inline]
-fn $f32x vfma_vf_vf_vf_vf($f32x x, $f32x y,
-                                      $f32x z) { // z + x * y
-  return svmad_f32_x(ptrue, x, y, z);
-}
-#[inline]
-fn $f32x vfmanp_vf_vf_vf_vf($f32x x, $f32x y,
-                                        $f32x z) { // z - x * y
-  return svmsb_f32_x(ptrue, x, y, z);
-}
-#[inline]
-fn $f32x vfmapn_vf_vf_vf_vf($f32x x, $f32x y,
-                                        $f32x z) { // x * y - z
-  return svnmsb_f32_x(ptrue, x, y, z);
+impl Fma for $f32x {
+    #[inline]
+    fn fma(self, y: Self, z: Self) -> Self {
+        svmad_f32_x(ptrue, x, y, z)
+    }
+    #[inline]
+    fn fmapn(self, y: Self, z: Self) -> Self {
+        svnmsb_f32_x(ptrue, x, y, z)
+    }
+    #[inline]
+    fn fmanp(self, y: Self, z: Self) -> Self {
+        svmsb_f32_x(ptrue, x, y, z)
+    }
 }
 
 // conditional select
-#[inline]
-fn vsel_vf_vo_vf_vf(mask: $mox, x: $f32x, y: $f32x) -> $f32x {
-  return svsel_f32(mask, x, y);
-}
 
 //
-//
-//
-//
-//
-//
 #[inline]
-fn vsel_vf_vo_f_f(o: $mox, v1: f32, v0: f32) -> CONST -> $f32x {
-  return vsel_vf_vo_vf_vf(o, $f32x::splat(v1), $f32x::splat(v0));
+fn vsel_vf_vo_f_f(o: $ox, v1: f32, v0: f32) -> $f32x {
+  o.select($f32x::splat(v1), $f32x::splat(v0))
 }
 
 #[inline]
-fn vsel_vf_vo_vo_f_f_f(o0: $mox, o1: $mox, d0: f32, d1: f32, d2: f32) -> $f32x {
-  return vsel_vf_vo_vf_vf(o0, $f32x::splat(d0), vsel_vf_vo_f_f(o1, d1, d2));
+fn vsel_vf_vo_vo_f_f_f(o0: $ox, o1: $ox, d0: f32, d1: f32, d2: f32) -> $f32x {
+  o0.select($f32x::splat(d0), vsel_vf_vo_f_f(o1, d1, d2))
 }
 
 #[inline]
-fn vsel_vf_vo_vo_vo_f_f_f_f(o0: $mox, o1: $mox, o2: $mox, d0: f32, d1: f32, d2: f32, d3: f32) -> $f32x {
-  return vsel_vf_vo_vf_vf(o0, $f32x::splat(d0), vsel_vf_vo_vf_vf(o1, $f32x::splat(d1), vsel_vf_vo_f_f(o2, d2, d3)));
+fn vsel_vf_vo_vo_vo_f_f_f_f(o0: $ox, o1: $ox, o2: $ox, d0: f32, d1: f32, d2: f32, d3: f32) -> $f32x {
+  o0.select($f32x::splat(d0), o1.select($f32x::splat(d1), vsel_vf_vo_f_f(o2, d2, d3)))
 }
-//
-//
-//
-//
-//
+
 //
 
 // truncate
@@ -285,37 +275,33 @@ fn vgt_vi2_vi2_vi2($ix2 x, $ix2 y) -> $ix2 {
 }
 
 // conditional select
-#[inline]
-fn vsel_vi2_vo_vi2_vi2(m: $mox, x: $ix2, y: $ix2) -> $ix2 {
-  return svsel_s32(m, x, y);
-}
 
 
 #[inline]
-fn visinf_vo_vf(d: $f32x) -> $mox {
+fn visinf_vo_vf(d: $f32x) -> $ox {
   return svcmpeq_n_f32(ptrue, d.abs(), SLEEF_INFINITYf);
 }
 #[inline]
-fn vispinf_vo_vf(d: $f32x) -> $mox {
+fn vispinf_vo_vf(d: $f32x) -> $ox {
   return svcmpeq_n_f32(ptrue, d, SLEEF_INFINITYf);
 }
 #[inline]
-fn visminf_vo_vf(d: $f32x) -> $mox {
+fn visminf_vo_vf(d: $f32x) -> $ox {
   return svcmpeq_n_f32(ptrue, d, -SLEEF_INFINITYf);
 }
 #[inline]
-fn visnan_vo_vf(d: $f32x) -> $mox { return d.ne(d); }
+fn visnan_vo_vf(d: $f32x) -> $ox { return d.ne(d); }
 
 // integers
 
 // logical opmask
 #[inline]
-fn vandnot_vo_vo_vo(x: $mox, y: $mox) -> $mox {
+fn vandnot_vo_vo_vo(x: $ox, y: $ox) -> $ox {
   return svbic_b_z(ptrue, y, x);
 }
 
 #[inline]
-fn vand_vi2_vo_vi2(x: $mox, y: $ix2) -> $ix2 {
+fn vand_vi2_vo_vi2(x: $ox, y: $ix2) -> $ix2 {
   // This needs to be zeroing to prevent asinf and atanf denormal test
   // failing.
   return svand_s32_z(x, y, y);
@@ -323,21 +309,21 @@ fn vand_vi2_vo_vi2(x: $mox, y: $ix2) -> $ix2 {
 
 // bitmask logical operations
 #[inline]
-fn vand_vm_vo32_vm(x: $mox, y: $bx) -> $bx {
+fn vand_vm_vo32_vm(x: $ox, y: $ux) -> $ux {
   return svsel_s32(x, y, ALL_FALSE_MASK);
 }
 #[inline]
-fn vandnot_vm_vo32_vm(x: $mox, y: $bx) -> $bx {
+fn vandnot_vm_vo32_vm(x: $ox, y: $ux) -> $ux {
   return svsel_s32(x, ALL_FALSE_MASK, y);
 }
 #[inline]
-fn vor_vm_vo32_vm(x: $mox, y: $bx) -> $bx {
+fn vor_vm_vo32_vm(x: $ox, y: $ux) -> $ux {
   return svsel_s32(x, ALL_TRUE_MASK, y);
 }
 
 // broadcast bitmask
 #[inline]
-fn vcast_vm_i_i(i0: int, i1: int) -> $bx {
+fn vcast_vm_i_i(i0: int, i1: int) -> $ux {
   return svreinterpret_s32_u64(
       svdup_n_u64((0xffffffff & (uint64_t)i1) | (((uint64_t)i0) << 32)));
 }
@@ -355,34 +341,28 @@ fn vstoreu_v_p_vi(int *ptr, $ix v) -> void {
 
 
 // Conditional select
+
 #[inline]
-fn vsel_vd_vo_vd_vd(o: $mox, x: $f64x, y: $f64x) -> $f64x {
-  return svsel_f64(o, x, y);
+fn vsel_vd_vo_d_d(o: $ox, v1: f64, v0: f64) -> CONST -> $f64x {
+  o.select($f64x::splat(v1), $f64x::splat(v0));
 }
 
 #[inline]
-fn vsel_vd_vo_d_d(o: $mox, v1: f64, v0: f64) -> CONST -> $f64x {
-  return vsel_vd_vo_vd_vd(o, $f64x::splat(v1), $f64x::splat(v0));
+fn vsel_vd_vo_vo_d_d_d(o0: $ox, o1: $ox, d0: f64, d1: f64, d2: f64) -> $f64x {
+  o0.select($f64x::splat(d0), vsel_vd_vo_d_d(o1, d1, d2))
 }
 
 #[inline]
-fn vsel_vd_vo_vo_d_d_d(o0: $mox, o1: $mox, d0: f64, d1: f64, d2: f64) -> $f64x {
-  return vsel_vd_vo_vd_vd(o0, $f64x::splat(d0), vsel_vd_vo_d_d(o1, d1, d2));
+fn vsel_vd_vo_vo_vo_d_d_d_d(o0: $ox, o1: $ox, o2: $ox, d0: f64, d1: f64, d2: f64, d3: f64) -> $f64x {
+  o0.select($f64x::splat(d0), o1.select($f64x::splat(d1), vsel_vd_vo_d_d(o2, d2, d3)))
 }
 
-#[inline]
-fn vsel_vd_vo_vo_vo_d_d_d_d(o0: $mox, o1: $mox, o2: $mox, d0: f64, d1: f64, d2: f64, d3: f64) -> $f64x {
-  return vsel_vd_vo_vd_vd(o0, $f64x::splat(d0), vsel_vd_vo_vd_vd(o1, $f64x::splat(d1), vsel_vd_vo_d_d(o2, d2, d3)));
-}
-
-#[inline]
-fn vsel_vi_vo_vi_vi(o: $mox, x: $ix, y: $ix) -> $ix {
-  return svsel_s32(o, x, y);
-}
 // truncate
-#[inline]
-fn vtruncate_vd_vd(vd: $f64x) -> $f64x {
-  return svrintz_f64_x(ptrue, vd);
+impl Truncate for $f64x {
+    #[inline]
+    fn truncate(self) -> Self {
+        svrintz_f64_x(ptrue, vd)
+    }
 }
 #[inline]
 fn vtruncate_vi_vd(vd: $f64x) -> $ix {
@@ -392,9 +372,12 @@ fn vtruncate_vi_vd(vd: $f64x) -> $ix {
 fn vrint_vi_vd(vd: $f64x) -> $ix {
   return svcvt_s32_f64_x(ptrue, svrintn_f64_x(ptrue, vd));
 }
-#[inline]
-fn vrint_vd_vd(vd: $f64x) -> $f64x {
-  return svrintn_f64_x(ptrue, vd);
+
+impl RInt for $f64x {
+    #[inline]
+    fn rint(self) -> Self {
+        svrintn_f64_x(ptrue, vd)
+    }
 }
 
 // FP math operations
@@ -406,8 +389,12 @@ impl Rec for $f64x {
         svdivr_n_f64_x(ptrue, self, 1.)
     }
 }
-#[inline]
-fn vsqrt_vd_vd(x: $f64x) -> $f64x { return svsqrt_f64_x(ptrue, x); }
+impl Sqrt for $f64x {
+    #[inline]
+    fn sqrt(self) -> Self {
+        svsqrt_f64_x(ptrue, x)
+    }
+}
 impl Abs for $f64x {
     fn abs(self) -> Self {
         svabs_f64_x(ptrue, x)
@@ -440,53 +427,52 @@ impl Mla for $f64x {
 }
 #endif
 
-#[inline]
-fn vfma_vd_vd_vd_vd(x: $f64x, y: $f64x, z: $f64x) -> $f64x { // z + x * y
-  return svmad_f64_x(ptrue, x, y, z);
-}
-#[inline]
-fn vfmanp_vd_vd_vd_vd(x: $f64x, y: $f64x, z: $f64x) -> $f64x{ // z - x * y
-  return svmsb_f64_x(ptrue, x, y, z);
-}
-#[inline]
-fn vfmapn_vd_vd_vd_vd(x: $f64x, y: $f64x, z: $f64x) -> $f64x{ // x * y - z
-  return svnmsb_f64_x(ptrue, x, y, z);
+
+impl Fma for $f64x {
+    #[inline]
+    fn fma(self, y: Self, z: Self) -> Self { // z + x * y
+      svmad_f64_x(ptrue, x, y, z)
+    }
+    #[inline]
+    fn fmapn(self, y: Self, z: Self) -> Self { // z - x * y
+      svmsb_f64_x(ptrue, x, y, z)
+    }
+    #[inline]
+    fn fmanp(self, y: Self, z: Self) -> Self { // x * y - z
+      svnmsb_f64_x(ptrue, x, y, z)
+    }
 }
 
 
 // predicates
 #[inline]
-fn visnan_vo_vd(vd: $f64x) -> $mox {
+fn visnan_vo_vd(vd: $f64x) -> $ox {
   return svcmpne_f64(ptrue, vd, vd);
 }
 #[inline]
-fn visinf_vo_vd(vd: $f64x) -> $mox {
+fn visinf_vo_vd(vd: $f64x) -> $ox {
   return svcmpeq_n_f64(ptrue, svabs_f64_x(ptrue, vd), SLEEF_INFINITY);
 }
 #[inline]
-fn vispinf_vo_vd(vd: $f64x) -> $mox {
+fn vispinf_vo_vd(vd: $f64x) -> $ox {
   return svcmpeq_n_f64(ptrue, vd, SLEEF_INFINITY);
-}
-#[inline]
-fn visminf_vo_vd(vd: $f64x) -> $mox {
-  return svcmpeq_n_f64(ptrue, vd, -SLEEF_INFINITY);
 }
 
 // Comparing bit masks
 #[inline]
-fn veq64_vo_vm_vm(x: $bx, y: $bx) -> $mox {
+fn veq64_vo_vm_vm(x: $ux, y: $ux) -> $ox {
   return svcmpeq_s64(ptrue, svreinterpret_s64_s32(x), svreinterpret_s64_s32(y));
 }
 
 // pure predicate operations
 #[inline]
-fn vcast_vo32_vo64(o: $mox) -> $mox { return o; }
+fn vcast_vo32_vo64(o: $ox) -> $ox { return o; }
 #[inline]
-fn vcast_vo64_vo32(o: $mox) -> $mox { return o; }
+fn vcast_vo64_vo32(o: $ox) -> $ox { return o; }
 
 // logical integer operations
 #[inline]
-fn vand_vi_vo_vi(x: $mox, y: $ix) -> $ix {
+fn vand_vi_vo_vi(x: $ox, y: $ix) -> $ix {
   // This needs to be a zeroing instruction because we need to make
   // sure that the inactive elements for the unpacked integers vector
   // are zero.
@@ -494,7 +480,7 @@ fn vand_vi_vo_vi(x: $mox, y: $ix) -> $ix {
 }
 
 #[inline]
-fn vandnot_vi_vo_vi(x: $mox, y: $ix) -> $ix {
+fn vandnot_vi_vo_vi(x: $ox, y: $ix) -> $ix {
   return svsel_s32(x, ALL_FALSE_MASK, y);
 }
 #define vsrl_vi_vi_i(x, c) svlsr_n_s32_x(ptrue, x, c)
@@ -507,7 +493,7 @@ fn vandnot_vi_vi_vi(x: $ix, y: $ix) -> $ix {
 
 // bitmask logical operations
 #[inline]
-fn vand_vm_vo64_vm(x: $mox, y: $bx) -> $bx {
+fn vand_vm_vo64_vm(x: $ox, y: $ux) -> $ux {
   // This needs to be a zeroing instruction because we need to make
   // sure that the inactive elements for the unpacked integers vector
   // are zero.
@@ -515,12 +501,12 @@ fn vand_vm_vo64_vm(x: $mox, y: $bx) -> $bx {
       svand_s64_z(x, svreinterpret_s64_s32(y), svreinterpret_s64_s32(y)));
 }
 #[inline]
-fn vandnot_vm_vo64_vm(x: $mox, y: $bx) -> $bx {
+fn vandnot_vm_vo64_vm(x: $ox, y: $ux) -> $ux {
   return svreinterpret_s32_s64(svsel_s64(
       x, svreinterpret_s64_s32(ALL_FALSE_MASK), svreinterpret_s64_s32(y)));
 }
 #[inline]
-fn vor_vm_vo64_vm(x: $mox, y: $bx) -> $bx {
+fn vor_vm_vo64_vm(x: $ox, y: $ux) -> $ux {
   return svreinterpret_s32_s64(svsel_s64(
       x, svreinterpret_s64_s32(ALL_TRUE_MASK), svreinterpret_s64_s32(y)));
 }
@@ -551,36 +537,8 @@ fn vgather_vf_p_vi2(const float *ptr, $ix2 vi2) -> $f32x {
   return svld1_gather_s32index_f32(ptrue, ptr, vi2);
 }
 
-// Operations for DFT
 
-#[inline]
-fn vposneg_vd_vd(d: $f64x) -> $f64x {
-  return svneg_f64_m(d, svdupq_n_b64(false, true), d);
-}
 
-#[inline]
-fn vnegpos_vd_vd(d: $f64x) -> $f64x {
-  return svneg_f64_m(d, svdupq_n_b64(true, false), d);
-}
-
-#[inline]
-fn vposneg_vf_vf(d: $f32x) -> $f32x {
-  return svneg_f32_m(d, svdupq_n_b32(false, true, false, true), d);
-}
-
-#[inline]
-fn vnegpos_vf_vf(d: $f32x) -> $f32x {
-  return svneg_f32_m(d, svdupq_n_b32(true, false, true, false), d);
-}
-
-#[inline]
-fn vsubadd_vd_vd_vd(x: $f64x, y: $f64x) -> $f64x { return x + vnegpos_vd_vd(y); }
-#[inline]
-fn vsubadd_vf_vf_vf(d0: $f32x, d1: $f32x) -> $f32x { return d0 + vnegpos_vf_vf(d1); }
-#[inline]
-fn vmlsubadd_vd_vd_vd_vd(x: $f64x, y: $f64x, z: $f64x) -> $f64x { return vfma_vd_vd_vd_vd(x, y, vnegpos_vd_vd(z)); }
-#[inline]
-fn vmlsubadd_vf_vf_vf_vf(x: $f32x, y: $f32x, z: $f32x) -> $f32x { return vfma_vf_vf_vf_vf(x, y, vnegpos_vf_vf(z)); }
 
 //
 

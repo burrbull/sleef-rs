@@ -30,8 +30,8 @@
 
 #include "misc.h"
 
-type $bx = uint32x4_t;
-type $mox = uint32x4_t;
+type $ux = uint32x4_t;
+type $ox = uint32x4_t;
 
 //type $ix = int32x4_t;
 
@@ -41,7 +41,7 @@ type $ix2 = int32x4_t;
 //
 
 #[inline]
-fn vtestallones_i_vo32($mox g) -> int {
+fn vtestallones_i_vo32($ox g) -> int {
   uint32x2_t x0 = vand_u32(vget_low_u32(g), vget_high_u32(g));
   uint32x2_t x1 = vpmin_u32(x0, x0);
   return vget_lane_u32(x1, 0);
@@ -52,40 +52,36 @@ static void vstoreu_v_p_vi2(int32_t *p, $ix2 v) { vst1q_s32(p, v); }
 //
 
 #[inline]
-fn vandnot_vm_vm_vm(x: $bx, y: $bx) -> $bx { return vbicq_u32(y, x); }
+fn vandnot_vm_vm_vm(x: $ux, y: $ux) -> $ux { return vbicq_u32(y, x); }
 
 #[inline]
-fn vandnot_vo_vo_vo($mox x, $mox y) -> $mox { return vbicq_u32(y, x); }
+fn vandnot_vo_vo_vo($ox x, $ox y) -> $ox { return vbicq_u32(y, x); }
 
 #[inline]
-fn vand_vm_vo64_vm($mox x, $bx y) -> $bx { return vandq_u32(x, y); }
+fn vand_vm_vo64_vm($ox x, $ux y) -> $ux { return vandq_u32(x, y); }
 #[inline]
-fn vandnot_vm_vo64_vm($mox x, $bx y) -> $bx { return vbicq_u32(y, x); }
+fn vandnot_vm_vo64_vm($ox x, $ux y) -> $ux { return vbicq_u32(y, x); }
 #[inline]
-fn vor_vm_vo64_vm($mox x, $bx y) -> $bx { return vorrq_u32(x, y); }
-#[inline]
-fn vxor_vm_vo64_vm($mox x, $bx y) -> $bx { return veorq_u32(x, y); }
+fn vor_vm_vo64_vm($ox x, $ux y) -> $ux { return vorrq_u32(x, y); }
 
 #[inline]
-fn vand_vm_vo32_vm($mox x, $bx y) -> $bx { return vandq_u32(x, y); }
+fn vand_vm_vo32_vm($ox x, $ux y) -> $ux { return vandq_u32(x, y); }
 #[inline]
-fn vandnot_vm_vo32_vm($mox x, $bx y) -> $bx { return vbicq_u32(y, x); }
+fn vandnot_vm_vo32_vm($ox x, $ux y) -> $ux { return vbicq_u32(y, x); }
 #[inline]
-fn vor_vm_vo32_vm($mox x, $bx y) -> $bx { return vorrq_u32(x, y); }
-#[inline]
-fn vxor_vm_vo32_vm($mox x, $bx y) -> $bx { return veorq_u32(x, y); }
+fn vor_vm_vo32_vm($ox x, $ux y) -> $ux { return vorrq_u32(x, y); }
 
 #[inline]
-fn vcast_vo32_vo64($mox m) -> $mox { return vuzpq_u32(m, m).val[0]; }
+fn vcast_vo32_vo64($ox m) -> $ox { return vuzpq_u32(m, m).val[0]; }
 #[inline]
-fn vcast_vo64_vo32($mox m) -> $mox { return vzipq_u32(m, m).val[0]; }
+fn vcast_vo64_vo32($ox m) -> $ox { return vzipq_u32(m, m).val[0]; }
 
 //
 
 #[inline]
-fn vcast_vm_i_i(i0: int, i1: int) -> $bx { return ($bx)vdupq_n_u64((uint64_t)i0 | (((uint64_t)i1) << 32)); }
+fn vcast_vm_i_i(i0: int, i1: int) -> $ux { return ($ux)vdupq_n_u64((uint64_t)i0 | (((uint64_t)i1) << 32)); }
 #[inline]
-fn veq64_vo_vm_vm(x: $bx, y: $bx) -> $mox {
+fn veq64_vo_vm_vm(x: $ux, y: $ux) -> $ox {
   uint32x4_t t = vceqq_u32(x, y);
   return vandq_u32(t, vrev64q_u32(t));
 }
@@ -117,22 +113,35 @@ impl Mla for f32x4 {
 }
 #[inline]
 fn vmlanp_vf_vf_vf_vf(x: f32x4, y: f32x4, z: f32x4) -> f32x4 { return vfmsq_f32(z, x, y); }
-#[inline]
-fn vfma_vf_vf_vf_vf  (x: f32x4, y: f32x4, z: f32x4) -> f32x4 { return vfmaq_f32(z, x, y); }
-#[inline]
-fn vfmanp_vf_vf_vf_vf(x: f32x4, y: f32x4, z: f32x4) -> f32x4 { return vfmsq_f32(z, x, y); }
-#[inline]
-fn vfmapn_vf_vf_vf_vf(x: f32x4, y: f32x4, z: f32x4) -> f32x4 { return -vfmanp_vf_vf_vf_vf(x, y, z); }
 
 
-#[inline]
-fn vsqrt_vf_vf(d: f32x4) -> f32x4 {
+impl Fma for f32x4 {
+    #[inline]
+    fn fma(self, y: Self, z: Self) -> Self {
+        vfmaq_f32(z, x, y)
+    }
+    #[inline]
+    fn fmapn(self, y: Self, z: Self) -> Self {
+        -(x.fmanp(y, z)
+    }
+    #[inline]
+    fn fmanp(self, y: Self, z: Self) -> Self {
+        vfmsq_f32(z, x, y)
+    }
+}
+
+impl Sqrt for f32x4 {
+    #[inline]
+    fn sqrt(self) -> Self {
   float32x4_t x = vrsqrteq_f32(d);
   x = vmulq_f32(x, vrsqrtsq_f32(d, vmulq_f32(x, x)));
   x = vmulq_f32(x, vrsqrtsq_f32(d, vmulq_f32(x, x)));
   float32x4_t u = vmulq_f32(x, d);
   u = vfmaq_f32(u, vfmsq_f32(d, u, u), vmulq_f32(x, vdupq_n_f32(0.5)));
   return vreinterpretq_f32_u32(vbicq_u32(vreinterpretq_u32_f32(u), vceqq_f32(d, vdupq_n_f32(0.))));
+        
+    }
+}
 }
 impl Rec for f32x4 {
     #[inline]
@@ -161,13 +170,16 @@ impl Mla for f32x4 {
 fn vmlanp_vf_vf_vf_vf(x: f32x4, y: f32x4, z: f32x4) -> f32x4 { return vmlsq_f32(z, x, y); }
 
 
-#[inline]
-fn vsqrt_vf_vf(d: f32x4) -> f32x4 {
+impl Sqrt for f32x4 {
+    #[inline]
+    fn sqrt(self) -> Self {
   float32x4_t x = vrsqrteq_f32(d);
   x = vmulq_f32(x, vrsqrtsq_f32(d, vmulq_f32(x, x)));
   float32x4_t u = vmulq_f32(x, d);
   u = vmlaq_f32(u, vmlsq_f32(d, u, u), vmulq_f32(x, vdupq_n_f32(0.5)));
   return vreinterpretq_f32_u32(vbicq_u32(vreinterpretq_u32_f32(u), vceqq_f32(d, vdupq_n_f32(0.))));
+        
+    }
 }
 impl Rec for f32x4 {
     #[inline]
@@ -191,9 +203,9 @@ fn vrecsqrt_vf_vf(d: f32x4) -> f32x4 {
 fn vandnot_vi2_vi2_vi2($ix2 x, $ix2 y) -> $ix2 { return vbicq_s32(y, x); }
 
 #[inline]
-fn vand_vi2_vo_vi2($mox x, $ix2 y) -> $ix2 { return ($ix2)vandq_u32(x, ($mox)y); }
+fn vand_vi2_vo_vi2($ox x, $ix2 y) -> $ix2 { return ($ix2)vandq_u32(x, ($ox)y); }
 #[inline]
-fn vandnot_vi2_vo_vi2($mox x, $ix2 y) -> $ix2 { return ($ix2)vbicq_u32(($mox)y, x); }
+fn vandnot_vi2_vo_vi2($ox x, $ix2 y) -> $ix2 { return ($ix2)vbicq_u32(($ox)y, x); }
 
 #define vsrl_vi2_vi2_i(x, c) vreinterpretq_s32_u32(vshrq_n_u32(vreinterpretq_u32_s32(x), c))
 
@@ -202,37 +214,31 @@ fn veq_vi2_vi2_vi2($ix2 x, $ix2 y) -> $ix2 { return ($ix2)vceqq_s32(x, y); }
 #[inline]
 fn vgt_vi2_vi2_vi2($ix2 x, $ix2 y) -> $ix2 { return ($ix2)vcgtq_s32(x, y); }
 
-#[inline]
-fn vsel_vi2_vo_vi2_vi2($mox m, $ix2 x, $ix2 y) -> $ix2 { return ($ix2)vbslq_u32(m, ($bx)x, ($bx)y); }
+
 
 #[inline]
-fn vsel_vf_vo_vf_vf($mox mask, f32x4 x, f32x4 y) -> f32x4 {
-  return (f32x4)vbslq_u32(mask, ($bx)x, ($bx)y);
+fn vsel_vf_vo_f_f(o: $ox, v1: f32, v0: f32) -> f32x4 {
+  o.select(f32x4::splat(v1), f32x4::splat(v0))
 }
 
 #[inline]
-fn vsel_vf_vo_f_f(o: $mox, v1: f32, v0: f32) -> f32x4 {
-  return vsel_vf_vo_vf_vf(o, f32x4::splat(v1), f32x4::splat(v0));
+fn vsel_vf_vo_vo_f_f_f(o0: $ox, o1: $ox, d0: f32, d1: f32, d2: f32) -> f32x4 {
+  o0.select(f32x4::splat(d0), vsel_vf_vo_f_f(o1, d1, d2))
 }
 
 #[inline]
-fn vsel_vf_vo_vo_f_f_f(o0: $mox, o1: $mox, d0: f32, d1: f32, d2: f32) -> f32x4 {
-  return vsel_vf_vo_vf_vf(o0, f32x4::splat(d0), vsel_vf_vo_f_f(o1, d1, d2));
+fn vsel_vf_vo_vo_vo_f_f_f_f(o0: $ox, o1: $ox, o2: $ox, d0: f32, d1: f32, d2: f32, d3: f32) -> f32x4 {
+  o0.select(f32x4::splat(d0), o1.select(f32x4::splat(d1), vsel_vf_vo_f_f(o2, d2, d3)))
 }
 
 #[inline]
-fn vsel_vf_vo_vo_vo_f_f_f_f(o0: $mox, o1: $mox, o2: $mox, d0: f32, d1: f32, d2: f32, d3: f32) -> f32x4 {
-  return vsel_vf_vo_vf_vf(o0, f32x4::splat(d0), vsel_vf_vo_vf_vf(o1, f32x4::splat(d1), vsel_vf_vo_f_f(o2, d2, d3)));
-}
-
+fn visinf_vo_vf(d: f32x4) -> $ox { return d.abs().ne(f32x4::splat(SLEEF_INFINITYf)); }
 #[inline]
-fn visinf_vo_vf(d: f32x4) -> $mox { return d.abs().ne(f32x4::splat(SLEEF_INFINITYf)); }
+fn vispinf_vo_vf(d: f32x4) -> $ox { return d.ne(f32x4::splat(SLEEF_INFINITYf)); }
 #[inline]
-fn vispinf_vo_vf(d: f32x4) -> $mox { return d.ne(f32x4::splat(SLEEF_INFINITYf)); }
+fn visminf_vo_vf(d: f32x4) -> $ox { return d.ne(f32x4::splat(-SLEEF_INFINITYf)); }
 #[inline]
-fn visminf_vo_vf(d: f32x4) -> $mox { return d.ne(f32x4::splat(-SLEEF_INFINITYf)); }
-#[inline]
-fn visnan_vo_vf(d: f32x4) -> $mox { return d.ne(d); }
+fn visnan_vo_vf(d: f32x4) -> $ox { return d.ne(d); }
 
 #[inline]
 fn vgather_vf_p_vi2(const float *ptr, $ix2 vi2) -> f32x4 {
@@ -247,15 +253,7 @@ fn vgather_vf_p_vi2(const float *ptr, $ix2 vi2) -> f32x4 {
 #define PNMASK_F ((f32x4) { 0., -0., 0., -0. })
 #define NPMASK_F ((f32x4) { -0., 0., -0., 0. })
 
-#[inline]
-fn vposneg_vf_vf(d: f32x4) -> f32x4 { return (f32x4)(($bx)d ^ ($bx)PNMASK_F); }
-#[inline]
-fn vnegpos_vf_vf(d: f32x4) -> f32x4 { return (f32x4)(($bx)d ^ ($bx)NPMASK_F); }
 
-#[inline]
-fn vsubadd_vf_vf_vf(d0: f32x4, d1: f32x4) -> f32x4 { return d0 + vnegpos_vf_vf(d1); }
-#[inline]
-fn vmlsubadd_vf_vf_vf_vf(x: f32x4, y: f32x4, z: f32x4) -> f32x4 { return vsubadd_vf_vf_vf(x * y, z); }
 
 #[inline]
 fn vrev21_vf_vf(d0: f32x4) -> f32x4 { return vrev64q_f32(d0); }

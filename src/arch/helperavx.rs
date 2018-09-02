@@ -39,8 +39,8 @@
 #include <stdint.h>
 #include "misc.h"
 
-type $bx = __m256i;
-type $mox = __m256i;
+type $ux = __m256i;
+type $ox = __m256i;
 
 type f64x4 = __m256d;
 type $ix = __m128i;
@@ -49,12 +49,12 @@ type f32x8 = __m256;
 typedef struct { __m128i x, y; } $ix2;
 
 #[inline]
-fn vtestallones_i_vo32(g: $mox) -> int {
+fn vtestallones_i_vo32(g: $ox) -> int {
   return _mm_test_all_ones(_mm_and_si128(_mm256_extractf128_si256(g, 0), _mm256_extractf128_si256(g, 1)));
 }
 
 #[inline]
-fn vtestallones_i_vo64(g: $mox) -> int {
+fn vtestallones_i_vo64(g: $ox) -> int {
   return _mm_test_all_ones(_mm_and_si128(_mm256_extractf128_si256(g, 0), _mm256_extractf128_si256(g, 1)));
 }
 
@@ -72,37 +72,33 @@ static void vstoreu_v_p_vi(int32_t *p, $ix v) { _mm_storeu_si128((__m128i *)p, v
 //
 
 #[inline]
-fn vandnot_vm_vm_vm(x: $bx, y: $bx) -> $bx { return $bx::from_bits(_mm256_andnot_pd(f64x4::from(x), f64x4::from(y))); }
+fn vandnot_vm_vm_vm(x: $ux, y: $ux) -> $ux { return $ux::from_bits(_mm256_andnot_pd(f64x4::from(x), f64x4::from(y))); }
 
 #[inline]
-fn vandnot_vo_vo_vo(x: $mox, y: $mox) -> $mox { return $bx::from_bits(_mm256_andnot_pd(f64x4::from(x), f64x4::from(y))); }
+fn vandnot_vo_vo_vo(x: $ox, y: $ox) -> $ox { return $ux::from_bits(_mm256_andnot_pd(f64x4::from(x), f64x4::from(y))); }
 
 #[inline]
-fn vand_vm_vo64_vm(x: $mox, y: $bx) -> $bx { return $bx::from_bits(_mm256_and_pd(f64x4::from(x), f64x4::from(y))); }
+fn vand_vm_vo64_vm(x: $ox, y: $ux) -> $ux { return $ux::from_bits(_mm256_and_pd(f64x4::from(x), f64x4::from(y))); }
 #[inline]
-fn vandnot_vm_vo64_vm(x: $mox, y: $bx) -> $bx { return $bx::from_bits(_mm256_andnot_pd(f64x4::from(x), f64x4::from(y))); }
+fn vandnot_vm_vo64_vm(x: $ox, y: $ux) -> $ux { return $ux::from_bits(_mm256_andnot_pd(f64x4::from(x), f64x4::from(y))); }
 #[inline]
-fn vor_vm_vo64_vm(x: $mox, y: $bx) -> $bx { return $bx::from_bits(_mm256_or_pd(f64x4::from(x), f64x4::from(y))); }
-#[inline]
-fn vxor_vm_vo64_vm(x: $mox, y: $bx) -> $bx { return $bx::from_bits(_mm256_xor_pd(f64x4::from(x), f64x4::from(y))); }
+fn vor_vm_vo64_vm(x: $ox, y: $ux) -> $ux { return $ux::from_bits(_mm256_or_pd(f64x4::from(x), f64x4::from(y))); }
 
 #[inline]
-fn vand_vm_vo32_vm(x: $mox, y: $bx) -> $bx { return $bx::from_bits(_mm256_and_pd(f64x4::from(x), f64x4::from(y))); }
+fn vand_vm_vo32_vm(x: $ox, y: $ux) -> $ux { return $ux::from_bits(_mm256_and_pd(f64x4::from(x), f64x4::from(y))); }
 #[inline]
-fn vandnot_vm_vo32_vm(x: $mox, y: $bx) -> $bx { return $bx::from_bits(_mm256_andnot_pd(f64x4::from(x), f64x4::from(y))); }
+fn vandnot_vm_vo32_vm(x: $ox, y: $ux) -> $ux { return $ux::from_bits(_mm256_andnot_pd(f64x4::from(x), f64x4::from(y))); }
 #[inline]
-fn vor_vm_vo32_vm(x: $mox, y: $bx) -> $bx { return $bx::from_bits(_mm256_or_pd(f64x4::from(x), f64x4::from(y))); }
-#[inline]
-fn vxor_vm_vo32_vm(x: $mox, y: $bx) -> $bx { return $bx::from_bits(_mm256_xor_pd(f64x4::from(x), f64x4::from(y))); }
+fn vor_vm_vo32_vm(x: $ox, y: $ux) -> $ux { return $ux::from_bits(_mm256_or_pd(f64x4::from(x), f64x4::from(y))); }
 
 #[inline]
-fn vcast_vo32_vo64(o: $mox) -> $mox {
+fn vcast_vo32_vo64(o: $ox) -> $ox {
   return _mm256_castsi128_si256(_mm256_cvtpd_epi32(_mm256_and_pd(f64x4::from(o), _mm256_set1_pd(-1.0))));
 }
 
 #[inline]
-fn vcast_vo64_vo32(o: $mox) -> $mox {
-  return $bx::from_bits(_mm256_cmp_pd(_mm256_cvtepi32_pd(_mm256_castsi256_si128(o)), _mm256_set1_pd(-1.0), _CMP_EQ_OQ));
+fn vcast_vo64_vo32(o: $ox) -> $ox {
+  return $ux::from_bits(_mm256_cmp_pd(_mm256_cvtepi32_pd(_mm256_castsi256_si128(o)), _mm256_set1_pd(-1.0), _CMP_EQ_OQ));
 }
 
 //
@@ -111,28 +107,38 @@ fn vcast_vo64_vo32(o: $mox) -> $mox {
 fn vrint_vi_vd(vd: f64x4) -> $ix { return _mm256_cvtpd_epi32(vd); }
 #[inline]
 fn vtruncate_vi_vd(vd: f64x4) -> $ix { return _mm256_cvttpd_epi32(vd); }
-#[inline]
-fn vrint_vd_vd(vd: f64x4) -> f64x4 { return _mm256_round_pd(vd, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC); }
-#[inline]
-fn vtruncate_vd_vd(vd: f64x4) -> f64x4 { return _mm256_round_pd(vd, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC); }
+
+impl RInt for f64x4 {
+    #[inline]
+    fn rint(self) -> Self {
+        _mm256_round_pd(vd, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC)
+    }
+}
+
+impl Truncate for f64x4 {
+    #[inline]
+    fn truncate(self) -> Self {
+        _mm256_round_pd(vd, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC)
+    }
+}
 #[inline]
 fn vrint_vf_vf(vd: f32x8) -> f32x8 { return _mm256_round_ps(vd, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC); }
 #[inline]
 fn vtruncate_vf_vf(vf: f32x8) -> f32x8 { return _mm256_round_ps(vf, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC); }
 
-impl FromU32 for m64x4 {
+impl FromU32 for u64x4 {
   fn from_u32(i: (u32, u32)) -> Self {
-      m64x4::from(m32x8::new(i0, i1, i0, i1, i0, i1, i0, i1))
+      u64x4::from(m32x8::new(i0, i1, i0, i1, i0, i1, i0, i1))
   }
 }
 /*#[inline]
-fn vcast_vm_i_i(i0: int, i1: int) -> $bx {
+fn vcast_vm_i_i(i0: int, i1: int) -> $ux {
   return _mm256_set_epi32(i0, i1, i0, i1, i0, i1, i0, i1);
 }*/
 
 #[inline]
-fn veq64_vo_vm_vm(x: $bx, y: $bx) -> $mox {
-  return $bx::from_bits(_mm256_cmp_pd(f64x4::from(x | y | $bx::from_bits(_mm256_set1_pd(1.))), _mm256_set1_pd(1.), _CMP_EQ_OQ));
+fn veq64_vo_vm_vm(x: $ux, y: $ux) -> $ox {
+  return $ux::from_bits(_mm256_cmp_pd(f64x4::from(x | y | $ux::from_bits(_mm256_set1_pd(1.))), _mm256_set1_pd(1.), _CMP_EQ_OQ));
 }
 
 
@@ -142,8 +148,12 @@ impl Rec for f64x4 {
         _mm256_div_pd(_mm256_set1_pd(1.), self)
     }
 }
-#[inline]
-fn vsqrt_vd_vd(x: f64x4) -> f64x4 { return _mm256_sqrt_pd(x); }
+impl Sqrt for f64x4 {
+    #[inline]
+    fn sqrt(self) -> Self {
+        _mm256_sqrt_pd(x)
+    }
+}
 impl Abs for f64x4 {
     fn abs(self) -> Self {
         _mm256_andnot_pd(_mm256_set1_pd(-0.0), d)
@@ -172,13 +182,20 @@ impl Mla for f64x4 {
         _mm256_msub_pd(x, y, z)
     }
 }
-#[inline]
-fn vfma_vd_vd_vd_vd(x: f64x4, y: f64x4, z: f64x4) -> f64x4 { return _mm256_macc_pd(x, y, z); }
-#[inline]
-fn vfmapn_vd_vd_vd_vd(x: f64x4, y: f64x4, z: f64x4) -> f64x4 { return _mm256_msub_pd(x, y, z); }
-#[inline]
-fn vfmanp_vd_vd_vd_vd(x: f64x4, y: f64x4, z: f64x4) -> f64x4 { return _mm256_nmacc_pd(x, y, z); }
-#endif
+impl Fma for f64x4 {
+    #[inline]
+    fn fma(self, y: Self, z: Self) -> Self {
+      _mm256_macc_pd(x, y, z)
+    }
+    #[inline]
+    fn fmapn(self, y: Self, z: Self) -> Self {
+      _mm256_msub_pd(x, y, z)
+    }
+    #[inline]
+    fn fmanp(self, y: Self, z: Self) -> Self {
+      _mm256_nmacc_pd(x, y, z)
+    }
+}
 
 
 //
@@ -188,53 +205,41 @@ fn vfmanp_vd_vd_vd_vd(x: f64x4, y: f64x4, z: f64x4) -> f64x4 { return _mm256_nma
 fn vandnot_vi_vi_vi(x: $ix, y: $ix) -> $ix { return _mm_andnot_si128(x, y); }
 
 #[inline]
-fn vandnot_vi_vo_vi(m: $mox, y: $ix) -> $ix { return _mm_andnot_si128(_mm256_castsi256_si128(m), y); }
+fn vandnot_vi_vo_vi(m: $ox, y: $ix) -> $ix { return _mm_andnot_si128(_mm256_castsi256_si128(m), y); }
 #[inline]
-fn vand_vi_vo_vi(m: $mox, y: $ix) -> $ix { return _mm_and_si128(_mm256_castsi256_si128(m), y); }
+fn vand_vi_vo_vi(m: $ox, y: $ix) -> $ix { return _mm_and_si128(_mm256_castsi256_si128(m), y); }
 
 #[inline]
 fn vsrl_vi_vi_i(x: $ix, c: int) -> $ix { return _mm_srli_epi32(x, c); }
 
-
 #[inline]
-fn vsel_vi_vo_vi_vi(o: $mox, x: $ix, y: $ix) -> $ix { return _mm_blendv_epi8(y, x, _mm256_castsi256_si128(o)); }
-
-#[inline]
-fn vsel_vd_vo_vd_vd(o: $mox, x: f64x4, y: f64x4) -> f64x4 { return _mm256_blendv_pd(y, x, _mm256_castsi256_pd(o)); }
-
-#[inline]
-fn vsel_vd_vo_d_d(o: $mox, v1: f64, v0: f64) -> CONST -> f64x4 {
-  return vsel_vd_vo_vd_vd(o, f64x4::splat(v1), f64x4::splat(v0));
+fn vsel_vd_vo_d_d(o: $ox, v1: f64, v0: f64) -> CONST -> f64x4 {
+  o.select(f64x4::splat(v1), f64x4::splat(v0))
 }
 
 #[inline]
-fn vsel_vd_vo_vo_d_d_d(o0: $mox, o1: $mox, d0: f64, d1: f64, d2: f64) -> f64x4 {
-  return vsel_vd_vo_vd_vd(o0, f64x4::splat(d0), vsel_vd_vo_d_d(o1, d1, d2));
+fn vsel_vd_vo_vo_d_d_d(o0: $ox, o1: $ox, d0: f64, d1: f64, d2: f64) -> f64x4 {
+  o0.select(f64x4::splat(d0), vsel_vd_vo_d_d(o1, d1, d2))
 }
 
 #[inline]
-fn vsel_vd_vo_vo_vo_d_d_d_d(o0: $mox, o1: $mox, o2: $mox, d0: f64, d1: f64, d2: f64, d3: f64) -> f64x4 {
-  return vsel_vd_vo_vd_vd(o0, f64x4::splat(d0), vsel_vd_vo_vd_vd(o1, f64x4::splat(d1), vsel_vd_vo_d_d(o2, d2, d3)));
+fn vsel_vd_vo_vo_vo_d_d_d_d(o0: $ox, o1: $ox, o2: $ox, d0: f64, d1: f64, d2: f64, d3: f64) -> f64x4 {
+  o0.select(f64x4::splat(d0), o1.select(f64x4::splat(d1), vsel_vd_vo_d_d(o2, d2, d3)))
 }
 
 #[inline]
-fn visinf_vo_vd(d: f64x4) -> $mox {
-  return $bx::from_bits(_mm256_cmp_pd(d.abs(), _mm256_set1_pd(SLEEF_INFINITY), _CMP_EQ_OQ));
+fn visinf_vo_vd(d: f64x4) -> $ox {
+  return $ux::from_bits(_mm256_cmp_pd(d.abs(), _mm256_set1_pd(SLEEF_INFINITY), _CMP_EQ_OQ));
 }
 
 #[inline]
-fn vispinf_vo_vd(d: f64x4) -> $mox {
-  return $bx::from_bits(_mm256_cmp_pd(d, _mm256_set1_pd(SLEEF_INFINITY), _CMP_EQ_OQ));
+fn vispinf_vo_vd(d: f64x4) -> $ox {
+  return $ux::from_bits(_mm256_cmp_pd(d, _mm256_set1_pd(SLEEF_INFINITY), _CMP_EQ_OQ));
 }
 
 #[inline]
-fn visminf_vo_vd(d: f64x4) -> $mox {
-  return $bx::from_bits(_mm256_cmp_pd(d, _mm256_set1_pd(-SLEEF_INFINITY), _CMP_EQ_OQ));
-}
-
-#[inline]
-fn visnan_vo_vd(d: f64x4) -> $mox {
-  return $bx::from_bits(_mm256_cmp_pd(d, d, _CMP_NEQ_UQ));
+fn visnan_vo_vd(d: f64x4) -> $ox {
+  return $ux::from_bits(_mm256_cmp_pd(d, d, _CMP_NEQ_UQ));
 }
 
 #[inline]
@@ -256,12 +261,16 @@ impl Rec for f32x8 {
         Self::splat(1.) / self
     }
 }
-#[inline]
-fn vsqrt_vf_vf(x: f32x8) -> f32x8 { return _mm256_sqrt_ps(x); }
+impl Sqrt for f32x8 {
+    #[inline]
+    fn sqrt(self) -> Self {
+        _mm256_sqrt_ps(x)
+    }
+}
 
 impl Abs for f32x8 {
     fn abs(self) -> Self {
-        f32x8::from(vandnot_vm_vm_vm($bx::from_bits(f32x8::splat(-0.)), $bx::from_bits(f)))
+        f32x8::from(vandnot_vm_vm_vm($ux::from_bits(f32x8::splat(-0.)), $ux::from_bits(f)))
     }
 }
 
@@ -282,14 +291,22 @@ impl Mla for f32x8 {
 }
 #[inline]
 fn vmlanp_vf_vf_vf_vf(x: f32x8, y: f32x8, z: f32x8) -> f32x8 { return _mm256_nmacc_ps(x, y, z); }
-#[inline]
-fn vfma_vf_vf_vf_vf(x: f32x8, y: f32x8, z: f32x8) -> f32x8 { return _mm256_macc_ps(x, y, z); }
-#[inline]
-fn vfmapn_vf_vf_vf_vf(x: f32x8, y: f32x8, z: f32x8) -> f32x8 { return _mm256_msub_ps(x, y, z); }
-#[inline]
-fn vfmanp_vf_vf_vf_vf(x: f32x8, y: f32x8, z: f32x8) -> f32x8 { return _mm256_nmacc_ps(x, y, z); }
-#endif
 
+
+impl Fma for f32x8 {
+    #[inline]
+    fn fma(self, y: Self, z: Self) -> Self {
+        _mm256_macc_ps(x, y, z)
+    }
+    #[inline]
+    fn fmapn(self, y: Self, z: Self) -> Self {
+        _mm256_msub_ps(x, y, z)
+    }
+    #[inline]
+    fn fmanp(self, y: Self, z: Self) -> Self {
+        _mm256_nmacc_ps(x, y, z)
+    }
+}
 
 #[inline]
 fn vandnot_vi2_vi2_vi2($ix2 x, $ix2 y) -> $ix2 {
@@ -299,9 +316,9 @@ fn vandnot_vi2_vi2_vi2($ix2 x, $ix2 y) -> $ix2 {
 
 
 #[inline]
-fn vand_vi2_vo_vi2(x: $mox, y: $ix2) -> $ix2 { return $ix2::from(x) & y }
+fn vand_vi2_vo_vi2(x: $ox, y: $ix2) -> $ix2 { return $ix2::from(x) & y }
 #[inline]
-fn vandnot_vi2_vo_vi2(x: $mox, y: $ix2) -> $ix2 { return vandnot_vi2_vi2_vi2($ix2::from(x), y); }
+fn vandnot_vi2_vo_vi2(x: $ox, y: $ix2) -> $ix2 { return vandnot_vi2_vi2_vi2($ix2::from(x), y); }
 
 
 #[inline]
@@ -326,47 +343,30 @@ fn vgt_vi2_vi2_vi2($ix2 x, $ix2 y) -> $ix2 {
   return r;
 }
 
+
 #[inline]
-fn vsel_vi2_vo_vi2_vi2(m: $mox, x: $ix2, y: $ix2) -> $ix2 {
-  $ix2 n = $ix2::from(m);
-  $ix2 r = { _mm_blendv_epi8(y.x, x.x, n.x), _mm_blendv_epi8(y.y, x.y, n.y) };
-  return r;
+fn vsel_vf_vo_f_f(o: $ox, v1: f32, v0: f32) -> f32x8 {
+  o.select(f32x8::splat(v1), f32x8::splat(v0))
 }
 
 #[inline]
-fn vadd64_vm_vm_vm(x: $bx, y: $bx) -> $bx {
-  $ix2 ix = $ix2::from(x), iy = $ix2::from(y), iz;
-  iz.x = _mm_add_epi64(ix.x, iy.x);
-  iz.y = _mm_add_epi64(ix.y, iy.y);
-  return $bx::from_bits(iz);
+fn vsel_vf_vo_vo_f_f_f(o0: $ox, o1: $ox, d0: f32, d1: f32, d2: f32) -> f32x8 {
+  o0.select(f32x8::splat(d0), vsel_vf_vo_f_f(o1, d1, d2))
 }
 
 #[inline]
-fn vsel_vf_vo_vf_vf(o: $mox, x: f32x8, y: f32x8) -> f32x8 { return _mm256_blendv_ps(y, x, _mm256_castsi256_ps(o)); }
-
-#[inline]
-fn vsel_vf_vo_f_f(o: $mox, v1: f32, v0: f32) -> f32x8 {
-  return vsel_vf_vo_vf_vf(o, f32x8::splat(v1), f32x8::splat(v0));
+fn vsel_vf_vo_vo_vo_f_f_f_f(o0: $ox, o1: $ox, o2: $ox, d0: f32, d1: f32, d2: f32, d3: f32) -> f32x8 {
+  o0.select(f32x8::splat(d0), o1.select(f32x8::splat(d1), vsel_vf_vo_f_f(o2, d2, d3)))
 }
 
 #[inline]
-fn vsel_vf_vo_vo_f_f_f(o0: $mox, o1: $mox, d0: f32, d1: f32, d2: f32) -> f32x8 {
-  return vsel_vf_vo_vf_vf(o0, f32x8::splat(d0), vsel_vf_vo_f_f(o1, d1, d2));
-}
-
+fn visinf_vo_vf(d: f32x8) -> $ox { return d.abs().ne(f32x8::splat(SLEEF_INFINITYf)); }
 #[inline]
-fn vsel_vf_vo_vo_vo_f_f_f_f(o0: $mox, o1: $mox, o2: $mox, d0: f32, d1: f32, d2: f32, d3: f32) -> f32x8 {
-  return vsel_vf_vo_vf_vf(o0, f32x8::splat(d0), vsel_vf_vo_vf_vf(o1, f32x8::splat(d1), vsel_vf_vo_f_f(o2, d2, d3)));
-}
-
+fn vispinf_vo_vf(d: f32x8) -> $ox { return d.ne(f32x8::splat(SLEEF_INFINITYf)); }
 #[inline]
-fn visinf_vo_vf(d: f32x8) -> $mox { return d.abs().ne(f32x8::splat(SLEEF_INFINITYf)); }
+fn visminf_vo_vf(d: f32x8) -> $ox { return d.ne(f32x8::splat(-SLEEF_INFINITYf)); }
 #[inline]
-fn vispinf_vo_vf(d: f32x8) -> $mox { return d.ne(f32x8::splat(SLEEF_INFINITYf)); }
-#[inline]
-fn visminf_vo_vf(d: f32x8) -> $mox { return d.ne(f32x8::splat(-SLEEF_INFINITYf)); }
-#[inline]
-fn visnan_vo_vf(d: f32x8) -> $mox { return d.ne(d); }
+fn visnan_vo_vf(d: f32x8) -> $ox { return d.ne(d); }
 
 #[inline]
 fn vgather_vf_p_vi2(const float *ptr, $ix2 vi2) -> f32x8 {
@@ -375,39 +375,6 @@ fn vgather_vf_p_vi2(const float *ptr, $ix2 vi2) -> f32x8 {
   return _mm256_set_ps(ptr[a[7]], ptr[a[6]], ptr[a[5]], ptr[a[4]],
 		       ptr[a[3]], ptr[a[2]], ptr[a[1]], ptr[a[0]]);
 }
-
-#define PNMASK ((f64x4) { 0.0, -0.0, 0.0, -0.0 })
-#define NPMASK ((f64x4) { -0.0, 0.0, -0.0, 0.0 })
-#define PNMASK_F ((f32x8) { 0., -0., 0., -0., 0., -0., 0., -0. })
-#define NPMASK_F ((f32x8) { -0., 0., -0., 0., -0., 0., -0., 0. })
-
-#[inline]
-fn vposneg_vd_vd(d: f64x4) -> f64x4 { return f64x4::from($bx::from_bits(d) ^ $bx::from_bits(PNMASK)); }
-#[inline]
-fn vnegpos_vd_vd(d: f64x4) -> f64x4 { return f64x4::from($bx::from_bits(d) ^ $bx::from_bits(NPMASK)); }
-#[inline]
-fn vposneg_vf_vf(d: f32x8) -> f32x8 { return f32x8::from($bx::from_bits(d) ^ $bx::from_bits(PNMASK_F)); }
-#[inline]
-fn vnegpos_vf_vf(d: f32x8) -> f32x8 { return f32x8::from($bx::from_bits(d) ^ $bx::from_bits(NPMASK_F)); }
-
-#[inline]
-fn vsubadd_vd_vd_vd(x: f64x4, y: f64x4) -> f64x4 { return _mm256_addsub_pd(x, y); }
-#[inline]
-fn vsubadd_vf_vf_vf(x: f32x8, y: f32x8) -> f32x8 { return _mm256_addsub_ps(x, y); }
-
-#if CONFIG == 1
-#[inline]
-fn vmlsubadd_vd_vd_vd_vd(x: f64x4, y: f64x4, z: f64x4) -> f64x4 { return vsubadd_vd_vd_vd(x*y, z); }
-#[inline]
-fn vmlsubadd_vf_vf_vf_vf(x: f32x8, y: f32x8, z: f32x8) -> f32x8 { return vsubadd_vf_vf_vf(x * y, z); }
-#else
-#[inline]
-fn vmlsubadd_vd_vd_vd_vd(x: f64x4, y: f64x4, z: f64x4) -> f64x4 { return x.mla(y, vnegpos_vd_vd(z)); }
-#[inline]
-fn vmlsubadd_vf_vf_vf_vf(x: f32x8, y: f32x8, z: f32x8) -> f32x8 { return x.mla(y, vnegpos_vf_vf(z)); }
-#endif
-
-
 
 //
 

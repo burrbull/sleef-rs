@@ -89,8 +89,12 @@ impl Truncate for $f64x {
         vec_trunc(vd)
     }
 }
-#[inline]
-fn vtruncate_vf_vf(vf: $f32x) -> $f32x { return vec_trunc(vf); }
+impl Truncate for $f32x {
+    #[inline]
+    fn truncate(self) -> Self {
+        vec_trunc(vf)
+    }
+}
 
 impl RInt for $f64x {
     #[inline]
@@ -98,8 +102,12 @@ impl RInt for $f64x {
         vec_round(vd)
     }
 }
-#[inline]
-fn vrint_vf_vf(vf: $f32x) -> $f32x { return vec_round(vf); }
+impl RInt for $f32x {
+    #[inline]
+    fn rint(self) -> Self {
+      vec_round(vf)
+    }
+}
 
 impl Rec for $f64x {
     #[inline]
@@ -142,9 +150,9 @@ fn vtestallones_i_vo64(g: $ox) -> int {
 fn vtestallones_i_vo32(g: $ox) -> int { return vec_all_ne(g, (vector unsigned int)(0, 0, 0, 0)); }
 
 #[inline]
-fn vcast_vo32_vo64(m: $ox) -> $ox { return vec_perm(m, m, (vector unsigned char)(4, 5, 6, 7, 12, 13, 14, 15, 8, 9, 10, 11, 12, 13, 14, 15 )); }
+fn $m32x::from(m: $ox) -> $ox { return vec_perm(m, m, (vector unsigned char)(4, 5, 6, 7, 12, 13, 14, 15, 8, 9, 10, 11, 12, 13, 14, 15 )); }
 #[inline]
-fn vcast_vo64_vo32(m: $ox) -> $ox { return vec_perm(m, m, (vector unsigned char)(0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 4, 5, 6, 7)); }
+fn $mx::from(m: $ox) -> $ox { return vec_perm(m, m, (vector unsigned char)(0, 1, 2, 3, 0, 1, 2, 3, 4, 5, 6, 7, 4, 5, 6, 7)); }
 
 #[inline]
 fn vcast_vm_i_i(h: int, l: int) -> $ux { return ($ux){ l, h, l, h }; }

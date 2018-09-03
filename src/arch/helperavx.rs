@@ -92,12 +92,12 @@ fn vandnot_vm_vo32_vm(x: $ox, y: $ux) -> $ux { return $ux::from_bits(_mm256_andn
 fn vor_vm_vo32_vm(x: $ox, y: $ux) -> $ux { return $ux::from_bits(_mm256_or_pd(f64x4::from(x), f64x4::from(y))); }
 
 #[inline]
-fn vcast_vo32_vo64(o: $ox) -> $ox {
+fn $m32x::from(o: $ox) -> $ox {
   return _mm256_castsi128_si256(_mm256_cvtpd_epi32(_mm256_and_pd(f64x4::from(o), _mm256_set1_pd(-1.0))));
 }
 
 #[inline]
-fn vcast_vo64_vo32(o: $ox) -> $ox {
+fn $mx::from(o: $ox) -> $ox {
   return $ux::from_bits(_mm256_cmp_pd(_mm256_cvtepi32_pd(_mm256_castsi256_si128(o)), _mm256_set1_pd(-1.0), _CMP_EQ_OQ));
 }
 
@@ -121,14 +121,23 @@ impl Truncate for f64x4 {
         _mm256_round_pd(vd, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC)
     }
 }
-#[inline]
-fn vrint_vf_vf(vd: f32x8) -> f32x8 { return _mm256_round_ps(vd, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC); }
-#[inline]
-fn vtruncate_vf_vf(vf: f32x8) -> f32x8 { return _mm256_round_ps(vf, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC); }
+impl RInt for f32x8 {
+    #[inline]
+    fn rint(self) -> Self {
+      _mm256_round_ps(vd, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC)
+    }
+}
+
+impl Truncate for f32x8 {
+    #[inline]
+    fn truncate(self) -> Self {
+        _mm256_round_ps(vf, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC)
+    }
+}
 
 impl FromU32 for u64x4 {
   fn from_u32(i: (u32, u32)) -> Self {
-      u64x4::from(m32x8::new(i0, i1, i0, i1, i0, i1, i0, i1))
+      u64x4::from(u32x8::new(i0, i1, i0, i1, i0, i1, i0, i1))
   }
 }
 /*#[inline]

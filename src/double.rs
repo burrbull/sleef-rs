@@ -2,7 +2,6 @@
 use std::f64;
 use std::isize;
 
-
 use common::*;
 use consts::*;
 
@@ -10,11 +9,7 @@ use consts::*;
 
 #[inline]
 fn rintk(x: f64) -> f64 {
-    (if x < 0. {
-        (x - 0.5)
-    } else {
-        (x + 0.5)
-    }) as isize as f64
+    (if x < 0. { (x - 0.5) } else { (x + 0.5) }) as isize as f64
 }
 #[inline]
 fn ceilk(x: f64) -> isize {
@@ -98,11 +93,7 @@ fn ilogbk(mut d: f64) -> isize {
     let m = d < 4.9090934652977266E-91;
     d = if m { 2.037035976334486E90 * d } else { d };
     let q = (double_to_raw_long_bits(d) >> 52) & 0x7ff;
-    (if m {
-        q - (300 + 0x03ff)
-    } else {
-        q - 0x03ff
-    }) as isize
+    (if m { q - (300 + 0x03ff) } else { q - 0x03ff }) as isize
 }
 
 // ilogb2k is similar to ilogbk, but the argument has to be a
@@ -115,14 +106,17 @@ fn ilogb2k(d: f64) -> isize {
 pub fn xilogb(d: f64) -> isize {
     let mut e = ilogbk(fabsk(d));
     e = if d == 0. { SLEEF_FP_ILOGB0 as isize } else { e };
-    e = if xisnan(d) { SLEEF_FP_ILOGBNAN as isize } else { e };
+    e = if xisnan(d) {
+        SLEEF_FP_ILOGBNAN as isize
+    } else {
+        e
+    };
     if xisinf(d) {
         isize::MAX
     } else {
         e
     }
 }
-
 
 #[inline]
 fn atan2k(mut y: f64, mut x: f64) -> f64 {
@@ -179,7 +173,12 @@ pub fn xatan2(y: f64, x: f64) -> f64 {
                 0.
             })
     } else if xisinf(x) || (x == 0.) {
-        M_PI / 2. - (if xisinf(x) { (sign(x) * (M_PI / 2.)) } else { 0. })
+        M_PI / 2.
+            - (if xisinf(x) {
+                (sign(x) * (M_PI / 2.))
+            } else {
+                0.
+            })
     } else {
         mulsign(r, x)
     };
@@ -318,7 +317,7 @@ fn rempi(a: f64) -> (f64n2, i32) {
     if ex < 0 {
         ex = 0;
     }
-    let ex = (ex*4) as usize;
+    let ex = (ex * 4) as usize;
     let mut x = a.mul_as_d2(REMPITABDP[ex]);
     let (did, dii) = rempisub(x.0);
     let mut q = dii;
@@ -822,7 +821,7 @@ pub fn xexp(d: f64) -> f64 {
 #[inline]
 fn expm1k(d: f64) -> f64 {
     let q = rintk(d * R_LN2);
-    
+
     let s = mla(q, -L2U, d);
     let s = mla(q, -L2L, s);
 
@@ -838,7 +837,7 @@ fn expm1k(d: f64) -> f64 {
         .mla(s, 0.166666666666666851703837)
         .mla(s, 0.5);
     u = s * s * u + s;
-    
+
     let q = q as isize;
     if q != 0 {
         ldexp2k(u + 1., q) - 1.
@@ -1334,9 +1333,7 @@ pub fn xlog1p(d: f64) -> f64 {
         .mla(x2, 0.3999999999635251990e+0)
         .mla(x2, 0.6666666666667333541e+0);
 
-    let s = (
-        dd(0.693147180559945286226764, 2.319046813846299558417771e-17) * (e as f64)
-    )
+    let s = (dd(0.693147180559945286226764, 2.319046813846299558417771e-17) * (e as f64))
         .add_checked(x.scale(2.))
         .add_checked(x2 * x.0 * t);
 
@@ -1925,11 +1922,11 @@ fn gammak(a: f64) -> (f64n2, f64n2) {
 }
 
 pub mod u1 {
-    use common::*;
-    use super::rintk;
-    use super::rempi;
-    use super::trunck;
     use super::gammak;
+    use super::rempi;
+    use super::rintk;
+    use super::trunck;
+    use common::*;
 
     pub fn xacos(d: f64) -> f64 {
         let o = fabsk(d) < 0.5;
@@ -2041,7 +2038,12 @@ pub mod u1 {
                     0.
                 })
         } else if xisinf(x) || (x == 0.) {
-            M_PI / 2. - (if xisinf(x) { (sign(x) * (M_PI / 2.)) } else { 0. })
+            M_PI / 2.
+                - (if xisinf(x) {
+                    (sign(x) * (M_PI / 2.))
+                } else {
+                    0.
+                })
         } else {
             mulsign(r, x)
         };
@@ -2290,7 +2292,7 @@ pub mod u1 {
             let dqh = trunck(d * (M_2_PI / D1_24)) * D1_24;
             s = dd(M_2_PI_H, M_2_PI_L) * d + ((if d < 0. { -0.5 } else { 0.5 }) - dqh);
             ql = (s.0 + s.1) as isize;
-            
+
             let qlf = ql as f64;
 
             s = mla(dqh, -PI_A * 0.5, d).add_checked_as_d2(qlf * (-PI_A * 0.5));
@@ -3053,7 +3055,8 @@ pub mod u05 {
         }
 
         // http://en.wikipedia.org/wiki/Fast_inverse_square_root
-        let mut x = long_bits_to_double(0x5fe6ec85e7de30da - (double_to_raw_long_bits(d + 1e-320) >> 1));
+        let mut x =
+            long_bits_to_double(0x5fe6ec85e7de30da - (double_to_raw_long_bits(d + 1e-320) >> 1));
 
         x = x * (1.5 - 0.5 * d * x * x);
         x = x * (1.5 - 0.5 * d * x * x);

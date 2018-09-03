@@ -3,14 +3,9 @@
 use super::common::*;
 use super::consts::*;
 
-
 #[inline]
 fn rintfk(x: f32) -> f32 {
-    (if x < 0. {
-        (x - 0.5)
-    } else {
-        (x + 0.5)
-    }) as i32 as f32
+    (if x < 0. { (x - 0.5) } else { (x + 0.5) }) as i32 as f32
 }
 #[inline]
 fn ceilfk(x: f32) -> i32 {
@@ -32,7 +27,6 @@ fn fmaxfk(x: f32, y: f32) -> f32 {
         y
     }
 }
-
 
 #[inline]
 fn ilogbkf(mut d: f32) -> i32 {
@@ -1696,10 +1690,10 @@ pub mod u35 {
 }
 
 pub mod u1 {
-    use common::*;
-    use super::rintfk;
     use super::rempif;
-    
+    use super::rintfk;
+    use common::*;
+
     pub fn xsinf(d: f32) -> f32 {
         let q: i32;
         let mut s: f32n2;
@@ -2205,7 +2199,11 @@ pub mod u1 {
             df(-0.112461487742845562801052956293e+1, 0.)
         };
         d *= a;
-        d = if o0 { d } else { (1.).add_checked(-super::expk2f(d)) };
+        d = if o0 {
+            d
+        } else {
+            (1.).add_checked(-super::expk2f(d))
+        };
         u = mulsignf(if o2 { d.0 + d.1 } else { 1. }, s);
         if xisnanf(a) {
             SLEEF_NAN_F

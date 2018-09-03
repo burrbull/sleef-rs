@@ -339,8 +339,12 @@ impl RInt for $f64x {
         vrndnq_f64(d)
     }
 }
-#[inline]
-fn vrint_vf_vf(d: f32x4) -> f32x4 { return vrndnq_f32(d); }
+impl RInt for f32x4 {
+    #[inline]
+    fn rint(self) -> Self {
+      vrndnq_f32(d)
+    }
+}
 
 /****************************************/
 /* int <--> float conversions           */
@@ -428,11 +432,11 @@ fn visminf_vo_vf(d: f32x4) -> $ox {
 fn visnan_vo_vf(d: f32x4) -> $ox { return d.ne(d); }
 
 #[inline]
-fn vcast_vo32_vo64(m: $ox) -> $ox {
+fn $m32x::from(m: $ox) -> $ox {
   return vuzpq_u32(m, m).val[0];
 }
 #[inline]
-fn vcast_vo64_vo32(m: $ox) -> $ox {
+fn $mx::from(m: $ox) -> $ox {
   return vzipq_u32(m, m).val[0];
 }
 
@@ -478,8 +482,12 @@ fn vor_vm_vo64_vm(x: $ox, y: $ux) -> $ux {
   return vorrq_u32(x, y);
 }
 
-#[inline]
-fn vtruncate_vf_vf(vd: f32x4) -> f32x4 { return vrndq_f32(vd); }
+impl Truncate for f32x4 {
+    #[inline]
+    fn truncate(self) -> Self {
+        vrndq_f32(vd)
+    }
+}
 
 #[inline]
 fn vcast_vm_i_i(i0: int, i1: int) -> $ux {

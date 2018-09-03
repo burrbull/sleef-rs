@@ -72,9 +72,9 @@ fn vandnot_vm_vo32_vm($ox x, $ux y) -> $ux { return vbicq_u32(y, x); }
 fn vor_vm_vo32_vm($ox x, $ux y) -> $ux { return vorrq_u32(x, y); }
 
 #[inline]
-fn vcast_vo32_vo64($ox m) -> $ox { return vuzpq_u32(m, m).val[0]; }
+fn $m32x::from($ox m) -> $ox { return vuzpq_u32(m, m).val[0]; }
 #[inline]
-fn vcast_vo64_vo32($ox m) -> $ox { return vzipq_u32(m, m).val[0]; }
+fn $mx::from($ox m) -> $ox { return vzipq_u32(m, m).val[0]; }
 
 //
 
@@ -94,10 +94,18 @@ fn vrint_vi2_vf(d: f32x4) -> $ix2 {
 #[inline]
 fn vtruncate_vi2_vf(vf: f32x4) -> $ix2 { return vcvtq_s32_f32(vf); }
 
-#[inline]
-fn vtruncate_vf_vf(vd: f32x4) -> f32x4 { return vcast_vf_vi2(vtruncate_vi2_vf(vd)); }
-#[inline]
-fn vrint_vf_vf(vd: f32x4) -> f32x4 { return vcast_vf_vi2(vrint_vi2_vf(vd)); }
+impl Truncate for f32x4 {
+    #[inline]
+    fn truncate(self) -> Self {
+        vcast_vf_vi2(vtruncate_vi2_vf(vd))
+    }
+}
+impl RInt for f32x4 {
+    #[inline]
+    fn rint(self) -> Self {
+      vcast_vf_vi2(vrint_vi2_vf(vd))
+    }
+}
 
 impl Abs for f32x4 {
     fn abs(self) -> Self {

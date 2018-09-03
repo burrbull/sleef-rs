@@ -84,7 +84,7 @@ static void vstoreu_v_p_vi(int32_t *p, $ix v) {
 //
 
 #[inline]
-fn vcast_vo32_vo64(m: $ox) -> $ox {
+fn $m32x::from(m: $ox) -> $ox {
   $ox ret;
   for(int i=0;i<VECTLENDP;i++) ret.u[i] = m.u[i*2+1];
   for(int i=VECTLENDP;i<VECTLENDP*2;i++) ret.u[i] = 0;
@@ -92,7 +92,7 @@ fn vcast_vo32_vo64(m: $ox) -> $ox {
 }
 
 #[inline]
-fn vcast_vo64_vo32(m: $ox) -> $ox {
+fn $mx::from(m: $ox) -> $ox {
   $ox ret;
   for(int i=0;i<VECTLENDP;i++) ret.u[i*2] = ret.u[i*2+1] = m.u[i];
   return ret;
@@ -288,10 +288,19 @@ fn vgather_vd_p_vi(const double *ptr, $ix vi) -> $f64x {
 fn vtruncate_vi2_vf(vf: $f32x) -> $ix2 { $ix2 ret; for(int i=0;i<VECTLENSP;i++) ret.i[i] = (int)vf.f[i]; return ret; }
 #[inline]
 fn vrint_vi2_vf(vf: $f32x) -> $ix2 { $ix ret; for(int i=0;i<VECTLENSP;i++) ret.i[i] = vf.f[i] > 0 ? (int)(vf.f[i] + 0.5) : (int)(vf.f[i] - 0.5); return ret; }
-#[inline]
-fn vtruncate_vf_vf(vd: $f32x) -> $f32x { return vcast_vf_vi2(vtruncate_vi2_vf(vd)); }
-#[inline]
-fn vrint_vf_vf(vd: $f32x) -> $f32x { return vcast_vf_vi2(vrint_vi2_vf(vd)); }
+
+impl Truncate for $f32x {
+    #[inline]
+    fn truncate(self) -> Self {
+        vcast_vf_vi2(vtruncate_vi2_vf(vd))
+    }
+}
+impl RInt for $f32x {
+    #[inline]
+    fn rint(self) -> Self {
+      vcast_vf_vi2(vrint_vi2_vf(vd))
+    }
+}
 
 #[inline]
 fn vrev21_vi2_vi2(i: $ix2) -> $ix2 { return $ix2::from(vrev21_vf_vf($f32x::from(i))); }

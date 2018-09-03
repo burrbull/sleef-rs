@@ -79,9 +79,9 @@ fn vandnot_vm_vo32_vm(x: $ox, y: u64x2) -> u64x2 { return u64x2::from(_mm_andnot
 fn vor_vm_vo32_vm(x: $ox, y: u64x2) -> u64x2 { return u64x2::from(_mm_or_pd(f64x2::from(x), f64x2::from(y))); }
 
 #[inline]
-fn vcast_vo32_vo64(m: m64x2) -> m32x2 { return _mm_shuffle_epi32(m, 0x08); }
+fn $m32x::from(m: m64x2) -> m32x2 { return _mm_shuffle_epi32(m, 0x08); }
 #[inline]
-fn vcast_vo64_vo32(m: m32x2) -> m64x2 { return _mm_shuffle_epi32(m, 0x50); }
+fn $mx::from(m: m32x2) -> m64x2 { return _mm_shuffle_epi32(m, 0x50); }
 
 //
 
@@ -95,8 +95,12 @@ impl RInt for f64x2 {
         _mm_round_pd(vd, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC)
     }
 }
-#[inline]
-fn vrint_vf_vf(vd: f32x4) -> f32x4 { return _mm_round_ps(vd, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC); }
+impl RInt for f32x4 {
+    #[inline]
+    fn rint(self) -> Self {
+      _mm_round_ps(vd, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC)
+    }
+}
 
 impl Truncate for f64x2 {
     #[inline]
@@ -104,13 +108,17 @@ impl Truncate for f64x2 {
         _mm_round_pd(vd, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC)
     }
 }
-#[inline]
-fn vtruncate_vf_vf(vf: f32x4) -> f32x4 { return _mm_round_ps(vf, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC); }
+impl Truncate for f32x4 {
+    #[inline]
+    fn truncate(self) -> Self {
+        _mm_round_ps(vf, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC)
+    }
+}
 
 
 impl FromU32 for u64x2 {
   fn from_u32(i: (u32, u32)) -> Self {
-      u64x2::from(m32x4::new(i0, i1, i0, i1))
+      u64x2::from(u32x4::new(i0, i1, i0, i1))
   }
 }
 /*
@@ -234,7 +242,7 @@ impl Sqrt for $f32x {
 
 impl Abs for f32x4 {
     fn abs(self) -> Self {
-        f32x4::from(vandnot_vm_vm_vm(m32x4::from(f32x4::splat(-0.)), m32x4::from(f)))
+        f32x4::from(vandnot_vm_vm_vm(u32x4::from(f32x4::splat(-0.)), m32x4::from(f)))
     }
 }
 impl Mla for f32x4 {

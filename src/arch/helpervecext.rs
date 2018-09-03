@@ -59,9 +59,9 @@ typedef Sleef_quad VQuad __attribute__((vector_size(sizeof(Sleef_quad)*VECTLENDP
 
 #if VECTLENDP == 2
 #[inline]
-fn vcast_vo32_vo64(m: $ox) -> $ox { return ($ox){ m[1], m[3], 0, 0 }; }
+fn $m32x::from(m: $ox) -> $ox { return ($ox){ m[1], m[3], 0, 0 }; }
 #[inline]
-fn vcast_vo64_vo32(m: $ox) -> $ox { return ($ox){ m[0], m[0], m[1], m[1] }; }
+fn $mx::from(m: $ox) -> $ox { return ($ox){ m[0], m[0], m[1], m[1] }; }
 
 
 #ifdef Sleef_quad2_DEFINED
@@ -98,9 +98,9 @@ fn vnegpos_vq_vq(vd: VQuad) { return (VQuad) -> VQuad { -vd[0], +vd[1] }; }
 #define NPMASK_F (($f32x) { -0., 0., -0., 0. })
 #elif VECTLENDP == 4
 #[inline]
-fn vcast_vo32_vo64(m: $ox) -> $ox { return ($ox){ m[1], m[3], m[5], m[7], 0, 0, 0, 0 }; }
+fn $m32x::from(m: $ox) -> $ox { return ($ox){ m[1], m[3], m[5], m[7], 0, 0, 0, 0 }; }
 #[inline]
-fn vcast_vo64_vo32(m: $ox) -> $ox { return ($ox){ m[0], m[0], m[1], m[1], m[2], m[2], m[3], m[3] }; }
+fn $mx::from(m: $ox) -> $ox { return ($ox){ m[0], m[0], m[1], m[1], m[2], m[2], m[3], m[3] }; }
 
 #[inline]
 fn vcast_vm_i_i(h: int, l: int) -> $ux { return ($ux){ l, h, l, h, l, h, l, h }; }
@@ -116,9 +116,9 @@ fn vrev21_vf_vf(vd: $f32x) { return ($f32x) -> $f32x { vd[1], vd[0], vd[3], vd[2
 
 #elif VECTLENDP == 8
 #[inline]
-fn vcast_vo32_vo64(m: $ox) -> $ox { return ($ox){ m[1], m[3], m[5], m[7], m[9], m[11], m[13], m[15], 0, 0, 0, 0, 0, 0, 0, 0 }; }
+fn $m32x::from(m: $ox) -> $ox { return ($ox){ m[1], m[3], m[5], m[7], m[9], m[11], m[13], m[15], 0, 0, 0, 0, 0, 0, 0, 0 }; }
 #[inline]
-fn vcast_vo64_vo32(m: $ox) -> $ox { return ($ox){ m[0], m[0], m[1], m[1], m[2], m[2], m[3], m[3], m[4], m[4], m[5], m[5], m[6], m[6], m[7], m[7] }; }
+fn $mx::from(m: $ox) -> $ox { return ($ox){ m[0], m[0], m[1], m[1], m[2], m[2], m[3], m[3], m[4], m[4], m[5], m[5], m[6], m[6], m[7], m[7] }; }
 
 
 #[inline]
@@ -142,7 +142,7 @@ fn vrev21_vf_vf(vd: $f32x) -> $f32x {
 
 
 #[inline]
-fn vcast_vo32_vo64(m: $ox) -> $ox {
+fn $m32x::from(m: $ox) -> $ox {
   $ox ret;
   for(int i=0;i<VECTLENDP;i++) ret[i] = m[i*2+1];
   for(int i=VECTLENDP;i<VECTLENDP*2;i++) ret[i] = 0;
@@ -150,7 +150,7 @@ fn vcast_vo32_vo64(m: $ox) -> $ox {
 }
 
 #[inline]
-fn vcast_vo64_vo32(m: $ox) -> $ox {
+fn $mx::from(m: $ox) -> $ox {
   $ox ret;
   for(int i=0;i<VECTLENDP;i++) ret[i*2] = ret[i*2+1] = m[i];
   return ret;
@@ -425,10 +425,19 @@ fn vtruncate_vi2_vf(vf: $f32x) -> $ix2 {
 
 #[inline]
 fn vrint_vi2_vf(vf: $f32x) -> $ix2 { return vtruncate_vi2_vf(($ox)(vf < 0).select(vf - 0.5, vf + 0.5)); }
-#[inline]
-fn vtruncate_vf_vf(vd: $f32x) -> $f32x { return vcast_vf_vi2(vtruncate_vi2_vf(vd)); }
-#[inline]
-fn vrint_vf_vf(vd: $f32x) -> $f32x { return vcast_vf_vi2(vrint_vi2_vf(vd)); }
+
+impl Truncate for $f32x {
+    #[inline]
+    fn truncate(self) -> Self {
+        vcast_vf_vi2(vtruncate_vi2_vf(vd))
+    }
+}
+impl RInt for $f32x {
+    #[inline]
+    fn rint(self) -> Self {
+      vcast_vf_vi2(vrint_vi2_vf(vd))
+    }
+}
 
 #[inline]
 fn vrev21_vi2_vi2(i: $ix2) -> $ix2 { return $ix2::from(vrev21_vf_vf($f32x::from(i))); }

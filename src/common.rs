@@ -1,10 +1,9 @@
-use std;
 pub use consts::*;
+use std;
 pub use std::f32;
-pub use std::i32;
 pub use std::f64;
+pub use std::i32;
 pub use std::i64;
-
 
 // ------------------
 
@@ -33,7 +32,6 @@ pub(crate) const F1_23: f32 = (1u32 << 23) as f32;
 pub(crate) const F1_12: f32 = (1u32 << 12) as f32;
 pub(crate) const F1_10: f32 = (1u32 << 10) as f32;
 
-
 pub(crate) const D1_63: f64 = (1u64 << 63) as f64;
 pub(crate) const D1_60: f64 = (1u64 << 60) as f64;
 pub(crate) const D1_54: f64 = (1u64 << 54) as f64;
@@ -50,7 +48,6 @@ pub(crate) fn dd(h: f64, l: f64) -> f64n2 {
     f64n2::new(h, l)
 }
 
-
 #[inline]
 pub(crate) fn df(h: f32, l: f32) -> f32n2 {
     f32n2::new(h, l)
@@ -60,7 +57,6 @@ pub(crate) fn df(h: f32, l: f32) -> f32n2 {
 fn upperf(d: f32) -> f32 {
     return int_bits_to_float(float_to_raw_int_bits(d) & 0xfffff000);
 }
-
 
 #[inline]
 pub(crate) fn float_to_raw_int_bits(d: f32) -> i32 {
@@ -127,12 +123,10 @@ pub(crate) fn mlaf(x: f32, y: f32, z: f32) -> f32 {
     x * y + z
 }
 
-
 #[inline]
 fn upper(d: f64) -> f64 {
     return long_bits_to_double(double_to_raw_long_bits(d) & 0xfffffffff8000000);
 }
-
 
 #[inline]
 pub(crate) fn double_to_raw_long_bits(d: f64) -> i64 {
@@ -148,7 +142,6 @@ pub(crate) fn long_bits_to_double(i: i64) -> f64 {
 pub(crate) fn fabsk(x: f64) -> f64 {
     long_bits_to_double(0x7fffffffffffffff & double_to_raw_long_bits(x))
 }
-
 
 #[inline]
 pub(crate) fn xisnan(x: f64) -> bool {
@@ -194,7 +187,9 @@ pub(crate) fn mulsign(x: f64, y: f64) -> f64 {
 
 #[inline]
 pub(crate) fn copysignk(x: f64, y: f64) -> f64 {
-    long_bits_to_double((double_to_raw_long_bits(x) & !(1 << 63)) ^ (double_to_raw_long_bits(y) & (1 << 63)))
+    long_bits_to_double(
+        (double_to_raw_long_bits(x) & !(1 << 63)) ^ (double_to_raw_long_bits(y) & (1 << 63)),
+    )
 }
 
 #[inline]
@@ -246,10 +241,9 @@ pub trait SqrtAsF2 {
     fn sqrt_as_f2(self) -> f32n2;
 }
 
-pub trait Rec<T=Self> {
+pub trait Rec<T = Self> {
     fn rec(self) -> T;
 }
-
 
 // ---- Advanced Traits -----------------
 
@@ -292,7 +286,6 @@ impl Check for f64 {
         xisinf(self) || xisnan(self)
     }
 }
-
 
 #[allow(non_camel_case_types)]
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -615,9 +608,6 @@ impl Rec<f32n2> for f32 {
     }
 }
 
-
-
-
 #[allow(non_camel_case_types)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct f64n2(pub f64, pub f64);
@@ -803,7 +793,6 @@ impl std::ops::Div for f64n2 {
     }
 }
 
-
 impl AddChecked for f64n2 {
     type Output = Self;
     #[inline]
@@ -964,4 +953,3 @@ impl Rec<f64n2> for f64 {
         f64n2::new(q0, t * (1. - dh * th - dh * tl - dl * th - dl * tl))
     }
 }
-

@@ -1,5 +1,5 @@
 mod common;
 mod consts;
 
-pub mod float;
 pub mod double;
+pub mod float;

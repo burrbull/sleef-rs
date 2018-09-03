@@ -89,9 +89,9 @@ fn vor_vm_vo32_vm(x: $ox, y: $ux) -> $ux { return _mm_or_si128(x, y); }
 fn vandnot_vm_vo32_vm(x: $ux, y: $ux) -> $ux { return _mm_andnot_si128(x, y); }
 
 #[inline]
-fn vcast_vo32_vo64(m: $ox) -> $ox { return _mm_shuffle_epi32(m, 0x08); }
+fn $m32x::from(m: $ox) -> $ox { return _mm_shuffle_epi32(m, 0x08); }
 #[inline]
-fn vcast_vo64_vo32(m: $ox) -> $ox { return _mm_shuffle_epi32(m, 0x50); }
+fn $mx::from(m: $ox) -> $ox { return _mm_shuffle_epi32(m, 0x50); }
 
 //
 
@@ -114,10 +114,18 @@ impl RInt for f64x2 {
         _mm_round_pd(vd, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC)
     }
 }
-#[inline]
-fn vtruncate_vf_vf(vf: f32x4) -> f32x4 { return _mm_round_ps(vf, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC); }
-#[inline]
-fn vrint_vf_vf(vd: f32x4) -> f32x4 { return _mm_round_ps(vd, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC); }
+impl Truncate for f32x4 {
+    #[inline]
+    fn truncate(self) -> Self {
+        _mm_round_ps(vf, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC)
+    }
+}
+impl RInt for f32x4 {
+    #[inline]
+    fn rint(self) -> Self {
+      _mm_round_ps(vd, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC)
+    }
+}
 #[inline]
 fn veq64_vo_vm_vm(x: $ux, y: $ux) -> $ox { return _mm_cmpeq_epi64(x, y); }
 #define FULL_FP_ROUNDING
@@ -148,7 +156,7 @@ fn vadd64_vm_vm_vm(x: $ux, y: $ux) -> $ux { return _mm_add_epi64(x, y); }
 
 impl FromU32 for u64x2 {
   fn from_u32(i: (u32, u32)) -> Self {
-      u64x2::from(m32x4::new(i0, i1, i0, i1))
+      u64x2::from(u32x4::new(i0, i1, i0, i1))
   }
 }
 /*#[inline]
@@ -242,10 +250,18 @@ fn vrint_vi2_vf(vf: f32x4) -> $ix2 { return _mm_cvtps_epi32(vf); }
 fn vtruncate_vi2_vf(vf: f32x4) -> $ix2 { return _mm_cvttps_epi32(vf); }
 
 #ifndef __SSE4_1__
-#[inline]
-fn vtruncate_vf_vf(vd: f32x4) -> f32x4 { return vcast_vf_vi2(vtruncate_vi2_vf(vd)); }
-#[inline]
-fn vrint_vf_vf(vf: f32x4) -> f32x4 { return vcast_vf_vi2(vrint_vi2_vf(vf)); }
+impl Truncate for f32x4 {
+    #[inline]
+    fn truncate(self) -> Self {
+        vcast_vf_vi2(vtruncate_vi2_vf(vd))
+    }
+}
+impl RInt for f32x4 {
+    #[inline]
+    fn rint(self) -> Self {
+      vcast_vf_vi2(vrint_vi2_vf(vf))
+    }
+}
 #endif
 impl Rec for f32x4 {
     #[inline]

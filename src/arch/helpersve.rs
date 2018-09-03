@@ -228,9 +228,11 @@ fn vsel_vf_vo_vo_vo_f_f_f_f(o0: $ox, o1: $ox, o2: $ox, d0: f32, d1: f32, d2: f32
 //
 
 // truncate
-#[inline]
-fn vtruncate_vf_vf(vd: $f32x) -> $f32x {
-  return svrintz_f32_x(ptrue, vd);
+impl Truncate for $f32x {
+    #[inline]
+    fn truncate(self) -> Self {
+        svrintz_f32_x(ptrue, vd)
+    }
 }
 
 //
@@ -240,9 +242,12 @@ fn vtruncate_vf_vf(vd: $f32x) -> $f32x {
 //
 //
 //
-#[inline]
-fn vrint_vf_vf(vf: $f32x) -> $f32x {
-  return svrintn_f32_x(svptrue_b32(), vf);
+
+impl RInt for $f32x {
+    #[inline]
+    fn rint(self) -> Self {
+      svrintn_f32_x(svptrue_b32(), vf)
+    }
 }
 //
 //
@@ -466,9 +471,9 @@ fn veq64_vo_vm_vm(x: $ux, y: $ux) -> $ox {
 
 // pure predicate operations
 #[inline]
-fn vcast_vo32_vo64(o: $ox) -> $ox { return o; }
+fn $m32x::from(o: $ox) -> $ox { return o; }
 #[inline]
-fn vcast_vo64_vo32(o: $ox) -> $ox { return o; }
+fn $mx::from(o: $ox) -> $ox { return o; }
 
 // logical integer operations
 #[inline]

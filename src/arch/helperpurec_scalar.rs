@@ -105,9 +105,9 @@ static void vstoreu_v_p_vi(int32_t *p, $ix v) { *p = v; }
 //
 
 #[inline]
-fn vcast_vo32_vo64(m: $ox) -> $ox { return m; }
+fn $m32x::from(m: $ox) -> $ox { return m; }
 #[inline]
-fn vcast_vo64_vo32(m: $ox) -> $ox { return m; }
+fn $mx::from(m: $ox) -> $ox { return m; }
 #[inline]
 fn vcast_vm_i_i(h: int, l: int) -> $ux { return (((uint64_t)h) << 32) | (uint32_t)l; }
 
@@ -307,10 +307,19 @@ fn vgather_vd_p_vi(const double *ptr, $ix vi) -> $f64x { return ptr[vi]; }
 #ifdef FULL_FP_ROUNDING
 #[inline]
 fn vrint_vi2_vf(d: $f32x) -> $ix2 { return (int)RINTF(d); }
-#[inline]
-fn vrint_vf_vf(vd: $f32x) -> $f32x { return RINTF(vd); }
-#[inline]
-fn vtruncate_vf_vf(vd: $f32x) -> $f32x { return TRUNCF(vd); }
+impl RInt for $f32x {
+    #[inline]
+    fn rint(self) -> Self {
+      RINTF(vd)
+    }
+}
+
+impl Truncate for $f32x {
+    #[inline]
+    fn truncate(self) -> Self {
+        TRUNCF(vd)
+    }
+}
 #[inline]
 fn vtruncate_vi2_vf(vf: $f32x) -> $ix2 { return (int32_t)TRUNCF(vf); }
 #else
@@ -320,12 +329,22 @@ fn vrint_vi2_vf(a: $f32x) -> $ix2 {
   versatileVector v = { .f = a }; v.u[0] -= 1 & (int)a;
   return (int32_t)v.f;
 }
-#[inline]
-fn vrint_vf_vf(vd: $f32x) -> $f32x { return vcast_vf_vi2(vrint_vi2_vf(vd)); }
+impl RInt for $f32x {
+    #[inline]
+    fn rint(self) -> Self {
+      vcast_vf_vi2(vrint_vi2_vf(vd))
+    }
+}
 #[inline]
 fn vtruncate_vi2_vf(vf: $f32x) -> $ix2 { return vf; }
-#[inline]
-fn vtruncate_vf_vf(vd: $f32x) -> $f32x { return vcast_vf_vi2(vtruncate_vi2_vf(vd)); }
+
+
+impl Truncate for $f32x {
+    #[inline]
+    fn truncate(self) -> Self {
+        vcast_vf_vi2(vtruncate_vi2_vf(vd))
+    }
+}
 #endif
 impl Rec for $f32x {
     #[inline]

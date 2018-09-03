@@ -89,9 +89,9 @@ fn vandnot_vm_vo32_vm(o: m1x16, m: u32x16) -> u32x16 { _mm512_mask_and_epi32(m, 
 fn vor_vm_vo32_vm(o: m1x16, m: u32x16) -> u32x16 { _mm512_mask_or_epi32(m, o, _mm512_set1_epi32(-1), _mm512_set1_epi32(-1)) }
 
 #[inline]
-fn vcast_vo32_vo64(o: m1x8) -> $ox { o }
+fn $m32x::from(o: m1x8) -> $ox { o }
 #[inline]
-fn vcast_vo64_vo32(o: m1x16) -> $ox { o }
+fn $mx::from(o: m1x16) -> $ox { o }
 
 //
 
@@ -115,7 +115,7 @@ impl Truncate for f64x8 {
         _mm512_insertf64x4(_mm512_castpd256_pd512(lo), hi, 1)
     }
 }
-}
+
 impl RInt for f64x8 {
     #[inline]
     fn rint(self) -> Self {
@@ -296,23 +296,27 @@ fn vrint_vi2_vf(vf: f32x16) -> i32x16 { i32x16::from(_mm512_cvtps_epi32(vf)) }
 #[inline]
 fn vtruncate_vi2_vf(vf: f32x16) -> i32x16 { i32x16::from(_mm512_cvttps_epi32(vf)) }
 
-#[inline]
-fn vtruncate_vf_vf(vd: f32x16) -> f32x16 {
-  __m256 hi = _mm256_castpd_ps(_mm512_extractf64x4_pd(f64x8::from(vd), 1));
-  __m256 lo = _mm256_castpd_ps(_mm512_extractf64x4_pd(f64x8::from(vd), 0));
-  hi = _mm256_round_ps(hi, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC);
-  lo = _mm256_round_ps(lo, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC);
-  f32x16::from(_mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_castps_pd(lo)), _mm256_castps_pd(hi), 1))
+impl Truncate for f32x16 {
+    #[inline]
+    fn truncate(self) -> Self {
+        __m256 hi = _mm256_castpd_ps(_mm512_extractf64x4_pd(f64x8::from(vd), 1));
+        __m256 lo = _mm256_castpd_ps(_mm512_extractf64x4_pd(f64x8::from(vd), 0));
+        hi = _mm256_round_ps(hi, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC);
+        lo = _mm256_round_ps(lo, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC);
+        f32x16::from(_mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_castps_pd(lo)), _mm256_castps_pd(hi), 1))
+    }
+}
+impl RInt for $f32x {
+    #[inline]
+    fn rint(self) -> Self {
+      __m256 hi = _mm256_castpd_ps(_mm512_extractf64x4_pd(f64x8::from(vd), 1));
+      __m256 lo = _mm256_castpd_ps(_mm512_extractf64x4_pd(f64x8::from(vd), 0));
+      hi = _mm256_round_ps(hi, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);
+      lo = _mm256_round_ps(lo, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);
+      f32x16::from(_mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_castps_pd(lo)), _mm256_castps_pd(hi), 1))
+    }
 }
  
-#[inline]
-fn vrint_vf_vf(vd: f32x16) -> f32x16 {
-  __m256 hi = _mm256_castpd_ps(_mm512_extractf64x4_pd(f64x8::from(vd), 1));
-  __m256 lo = _mm256_castpd_ps(_mm512_extractf64x4_pd(f64x8::from(vd), 0));
-  hi = _mm256_round_ps(hi, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);
-  lo = _mm256_round_ps(lo, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);
-  f32x16::from(_mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_castps_pd(lo)), _mm256_castps_pd(hi), 1))
-}
 impl Rec for f32x16 {
     #[inline]
     fn rec(self) -> Self {

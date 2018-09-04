@@ -2,10 +2,10 @@
 pub struct F2<T>(pub T, pub T);
 
 macro_rules! impl_mathf32 {
-    ($f32x:ty, $ux:ty, $ox:ty, $ix2:ty) => {
+    ($f32x:ty, $u32x:ty, $ox:ty) => {
         #[inline]
         fn vupper_vf_vf(d: $f32x) -> $f32x {
-            $f32x::from_bits($ix2::from(d) & $ix2::splat(0xfffff000))
+            $f32x::from_bits($u32x::from_bits(d) & $u32x::splat(0xfffff000))
         }
 
         impl F2<$f32x> {
@@ -24,8 +24,8 @@ macro_rules! impl_mathf32 {
                 Self::new(
                     self.0.abs(),
                     $f32x::from_bits(
-                        $ux::from_bits(self.1)
-                            ^ ($ux::from_bits(self.0) & $ux::from_bits($f32x::splat(-0.))),
+                        $u32x::from_bits(self.1)
+                            ^ ($u32x::from_bits(self.0) & $u32x::from_bits($f32x::splat(-0.))),
                     ),
                 )
             }
@@ -39,7 +39,7 @@ macro_rules! impl_mathf32 {
             #[inline]
             pub fn square(self) -> Self {
                 let r0 = self.0 * self.0;
-                Self::new(r0, (self.0 + self.0).fma(self.1, self.0.fmapn(self.0, r0)))
+                Self::new(r0, (self.0 + self.0).mul_adde(self.1, self.0.mul_sube(self.0, r0)))
             }
             #[target_feature(not(enable = "fma"))]
             #[inline]
@@ -48,17 +48,17 @@ macro_rules! impl_mathf32 {
                 let xl = self.0 - xh;
                 let r0 = self.0 * self.0;
 
-                let mut t = xh.mla(xh, -r0);
-                t = (xh + xh).mla(xl, t);
-                t = xl.mla(xl, t);
-                t = self.0.mla(self.1 + self.1, t);
+                let mut t = xh.mul_add(xh, -r0);
+                t = (xh + xh).mul_add(xl, t);
+                t = xl.mul_add(xl, t);
+                t = self.0.mul_add(self.1 + self.1, t);
                 Self::new(r0, t)
             }
 
             #[target_feature(enable = "fma")]
             #[inline]
             pub fn square_as_f(self) -> $f32x {
-                self.0.fma(self.0, self.0 * self.1 + self.0 * self.1)
+                self.0.mul_adde(self.0, self.0 * self.1 + self.0 * self.1)
             }
             #[target_feature(not(enable = "fma"))]
             #[inline]
@@ -71,7 +71,7 @@ macro_rules! impl_mathf32 {
             #[cfg(feature = "enable_recsqrt_sp")]
             #[inline]
             pub fn sqrt(self) -> Self {
-                let x = vrecsqrt_vf_vf(self.0 + self.1);
+                let x = (self.0 + self.1).rsqrte();
                 let r = self * x;
                 (r * (r * x + $f32x::splat(-3.0))).scale($f32x::splat(-0.5))
             }
@@ -79,13 +79,13 @@ macro_rules! impl_mathf32 {
             #[inline]
             pub fn sqrt(self) -> Self {
                 let t = (self.0 + self.1).sqrt();
-                ((self + t.mul_as_f2(t)) * t.rec()).scale($f32x::splat(0.5))
+                ((self + t.mul_as_f2(t)) * t.recpre()).scale($f32x::splat(0.5))
             }
 
             #[target_feature(enable = "fma")]
             #[inline]
             pub fn mul_as_f(self, other: Self) -> $f32x {
-                self.0.fma(other.0, self.1.fma(other.0, self.0 * other.1))
+                self.0.mul_adde(other.0, self.1.mul_adde(other.0, self.0 * other.1))
             }
             #[target_feature(not(enable = "fma"))]
             #[inline]
@@ -172,7 +172,7 @@ macro_rules! impl_mathf32 {
                 Self::new(
                     r0,
                     self.0
-                        .fma(other.1, self.1.fma(other.0, self.0.fmapn(other.0, r0))),
+                        .mul_adde(other.1, self.1.mul_adde(other.0, self.0.mul_sube(other.0, r0))),
                 )
             }
             #[target_feature(not(enable = "fma"))]
@@ -184,12 +184,12 @@ macro_rules! impl_mathf32 {
                 let yl = other.0 - yh;
                 let r0 = self.0 * other.0;
 
-                let mut t = xh.mla(yh, -r0);
-                t = xl.mla(yh, t);
-                t = xh.mla(yl, t);
-                t = xl.mla(yl, t);
-                t = self.0.mla(other.1, t);
-                t = self.1.mla(other.0, t);
+                let mut t = xh.mul_add(yh, -r0);
+                t = xl.mul_add(yh, t);
+                t = xh.mul_add(yl, t);
+                t = xl.mul_add(yl, t);
+                t = self.0.mul_add(other.1, t);
+                t = self.1.mul_add(other.0, t);
                 Self::new(r0, t)
             }
         }
@@ -206,7 +206,7 @@ macro_rules! impl_mathf32 {
             #[inline]
             fn mul(self, other: $f32x) -> Self {
                 let r0 = self.0 * other;
-                Self::new(r0, self.1.fma(other, self.0.fmanp(other, r0)))
+                Self::new(r0, self.1.mul_adde(other, self.0.fmanp(other, r0)))
             }
             #[target_feature(not(enable = "fma"))]
             #[inline]
@@ -217,11 +217,11 @@ macro_rules! impl_mathf32 {
                 let yl = other - yh;
                 let r0 = self.0 * other;
 
-                let mut t = xh.mla(yh, -r0);
-                t = xl.mla(yh, t);
-                t = xh.mla(yl, t);
-                t = xl.mla(yl, t);
-                t = self.1.mla(other, t);
+                let mut t = xh.mul_add(yh, -r0);
+                t = xl.mul_add(yh, t);
+                t = xh.mul_add(yl, t);
+                t = xl.mul_add(yl, t);
+                t = self.1.mul_add(other, t);
                 Self::new(r0, t)
             }
         }
@@ -237,19 +237,19 @@ macro_rules! impl_mathf32 {
             #[target_feature(enable = "fma")]
             #[inline]
             fn div(self, other: Self) -> Self {
-                let t = other.0.rec();
+                let t = other.0.recpre();
 
                 let q0 = self.0 * t;
-                let u = t.fmapn(self.0, q0);
+                let u = t.mul_sube(self.0, q0);
                 let mut q1 = other.1.fmanp(t, other.0.fmanp(t, $f32x::splat(1)));
-                q1 = q0.fma(q1, self.1.fma(t, u));
+                q1 = q0.mul_adde(q1, self.1.mul_adde(t, u));
 
                 Self::new(q0, q1)
             }
             #[target_feature(not(enable = "fma"))]
             #[inline]
             fn div(self, other: Self) -> Self {
-                let t = other.0.rec();
+                let t = other.0.recpre();
                 let dh = vupper_vf_vf(other.0);
                 let dl = other.0 - dh;
                 let th = vupper_vf_vf(t);
@@ -260,19 +260,19 @@ macro_rules! impl_mathf32 {
                 let q0 = self.0 * t;
 
                 let mut w = $f32x::splat(-1);
-                w = dh.mla(th, w);
-                w = dh.mla(tl, w);
-                w = dl.mla(th, w);
-                w = dl.mla(tl, w);
+                w = dh.mul_add(th, w);
+                w = dh.mul_add(tl, w);
+                w = dl.mul_add(th, w);
+                w = dl.mul_add(tl, w);
                 w = -w;
 
-                let mut u = nhh.mla(th, -q0);
-                u = nhh.mla(tl, u);
-                u = nhl.mla(th, u);
-                u = nhl.mla(tl, u);
-                u = q0.mla(w, u);
+                let mut u = nhh.mul_add(th, -q0);
+                u = nhh.mul_add(tl, u);
+                u = nhl.mul_add(th, u);
+                u = nhl.mul_add(tl, u);
+                u = q0.mul_add(w, u);
 
-                Self::new(q0, t.mla(self.1 - q0 * other.1, u))
+                Self::new(q0, t.mul_add(self.1 - q0 * other.1, u))
             }
         }
 
@@ -357,7 +357,7 @@ macro_rules! impl_mathf32 {
             #[inline]
             fn mul_as_f2(self, other: Self) -> F2 {
                 let r0 = self * other;
-                Self::new(r0, self.fmapn(other, r0))
+                Self::new(r0, self.mul_sube(other, r0))
             }
             #[target_feature(not(enable = "fma"))]
             #[inline]
@@ -368,10 +368,10 @@ macro_rules! impl_mathf32 {
                 let yl = other - yh;
                 let r0 = self * other;
 
-                let mut t = xh.mla(yh, -r0);
-                t = xl.mla(yh, t);
-                t = xh.mla(yl, t);
-                t = xl.mla(yl, t);
+                let mut t = xh.mul_add(yh, -r0);
+                t = xl.mul_add(yh, t);
+                t = xh.mul_add(yl, t);
+                t = xl.mul_add(yl, t);
                 Self::new(r0, t)
             }
         }
@@ -380,21 +380,21 @@ macro_rules! impl_mathf32 {
             #[inline]
             fn sqrt_as_d2(self) -> F2 {
                 let t = self.sqrt();
-                ((self + selffmul_vf2_vf_vf(t, t)) * t.rec()).scale(Self::splat(0.5))
+                ((self + selffmul_vf2_vf_vf(t, t)) * t.recpre()).scale(Self::splat(0.5))
             }
         }
 
         impl Rec for F2<$f32x> {
             #[target_feature(enable = "fma")]
             #[inline]
-            fn rec(self) -> Self {
-                let q0 = self.0.rec();
+            fn recpre(self) -> Self {
+                let q0 = self.0.recpre();
                 Self::new(r0, q0 * self.1.fmanp(q0, self.0.fmanp(q0, $f32x::splat(1))))
             }
             #[target_feature(not(enable = "fma"))]
             #[inline]
-            fn rec(self) -> Self {
-                let t = self.0.rec();
+            fn recpre(self) -> Self {
+                let t = self.0.recpre();
                 let dh = vupper_vf_vf(self.0);
                 let dl = self.0 - dh;
                 let th = vupper_vf_vf(t);
@@ -402,11 +402,11 @@ macro_rules! impl_mathf32 {
                 let q0 = t;
 
                 let mut u = $f32x::splat(-1);
-                u = dh.mla(th, u);
-                u = dh.mla(tl, u);
-                u = dl.mla(th, u);
-                u = dl.mla(tl, u);
-                u = self.1.mla(t, u);
+                u = dh.mul_add(th, u);
+                u = dh.mul_add(tl, u);
+                u = dl.mul_add(th, u);
+                u = dl.mul_add(tl, u);
+                u = self.1.mul_add(t, u);
                 Self::new(q0, (-t) * u)
             }
         }
@@ -414,14 +414,14 @@ macro_rules! impl_mathf32 {
         impl RecAsF2<F2<$f32x>> for $f32x {
             #[target_feature(enable = "fma")]
             #[inline]
-            fn rec_as_f2(self) -> F2 {
-                let q0 = self.rec();
+            fn recpre_as_f2(self) -> F2 {
+                let q0 = self.recpre();
                 F2::new(q0, q0 * self.fmanp(q0, Self::splat(1)))
             }
             #[target_feature(not(enable = "fma"))]
             #[inline]
-            fn rec_as_f2(self) -> F2 {
-                let t = self.rec();
+            fn recpre_as_f2(self) -> F2 {
+                let t = self.recpre();
                 let dh = vupper_vf_vf(self);
                 let dl = self - dh;
                 let th = vupper_vf_vf(t);
@@ -429,10 +429,10 @@ macro_rules! impl_mathf32 {
                 let q0 = t;
 
                 let mut u = Self::splat(-1);
-                u = dh.mla(th, u);
-                u = dh.mla(tl, u);
-                u = dl.mla(th, u);
-                u = dl.mla(tl, u);
+                u = dh.mul_add(th, u);
+                u = dh.mul_add(tl, u);
+                u = dl.mul_add(th, u);
+                u = dl.mul_add(tl, u);
                 F2::new(q0, (-t) * u)
             }
         }
@@ -479,4 +479,4 @@ macro_rules! impl_mathf32 {
     };
 }
 
-impl_f2!(f32x16, u32x16, m1x16, i32x16);
+impl_f2!(f32x16, u32x16, m1x16);

@@ -1,6 +1,6 @@
 #[inline]
 fn vupper_vd_vd(d: $f64x) -> $f64x {
-  $f64x::from_bits($ux::from_bits(d) & $ux::from_u32((0xffffffff, 0xf8000000)))
+  $f64x::from_bits($u64x::from_bits(d) & $u64x::from_u32((0xffffffff, 0xf8000000)))
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -20,7 +20,7 @@ impl D2<$f64x> {
     #[inline]
     pub fn abs(self) -> Self {
         Self::new(self.0.abs(),
-            $f64x::from_bits($ux::from_bits(self.1) ^ ($ux::from_bits(self.0) & $ux::from_bits($f64x::splat((-0.)))))
+            $f64x::from_bits($u64x::from_bits(self.1) ^ ($u64x::from_bits(self.0) & $u64x::from_bits($f64x::splat((-0.)))))
     }
 
     #[inline]
@@ -32,7 +32,7 @@ impl D2<$f64x> {
     #[inline]
     pub fn square(self) -> Self {
         let r0 = self.0 * self.0;
-        Self::new(r0, (self.0 + self.0).fma(self.1, self.0.fmapn(self.0, r0)) )
+        Self::new(r0, (self.0 + self.0).mul_adde(self.1, self.0.mul_sube(self.0, r0)) )
     }
     #[target_feature(not(enable = "fma"))]
     #[inline]
@@ -46,7 +46,7 @@ impl D2<$f64x> {
     #[target_feature(enable = "fma")]
     #[inline]
     pub fn square_as_d(self) -> $f64x {
-        self.0.fma(self.0, self.0 * self.1 + self.0 * self.1)
+        self.0.mul_adde(self.0, self.0 * self.1 + self.0 * self.1)
     }
     #[target_feature(not(enable = "fma"))]
     #[inline]
@@ -60,13 +60,13 @@ impl D2<$f64x> {
     #[inline]
     pub fn sqrt(self) -> Self {
         let t = (self.0 + self.1).sqrt();
-        ((d + t.mul_as_d2(t)) * t.rec_as_d2()).scale($f64x::splat(0.5))
+        ((d + t.mul_as_d2(t)) * t.recpre_as_d2()).scale($f64x::splat(0.5))
     }
 
     #[target_feature(enable = "fma")]
     #[inline]
     pub fn mul_as_d(self, other: Self) -> $f64x {
-        self.0.fma(other.0, self.1.fma(other.0, self.0 * other.1))
+        self.0.mul_adde(other.0, self.1.mul_adde(other.0, self.0 * other.1))
     }
     #[target_feature(not(enable = "fma"))]
     #[inline]
@@ -144,7 +144,7 @@ impl std::ops::Mul for D2<$f64x> {
     #[inline]
     fn mul(self, other: Self) -> Self {
         let r0 = self.0 * other.0;
-        Self::new(r0, self.0.fma(other.1, self.1.fma(other.0, self.0.fmapn(other.0, r0))) )
+        Self::new(r0, self.0.mul_adde(other.1, self.1.mul_adde(other.0, self.0.mul_sube(other.0, r0))) )
     }
     #[target_feature(not(enable = "fma"))]
     #[inline]
@@ -171,7 +171,7 @@ impl std::ops::Mul<$f64x> for D2<$f64x> {
     #[inline]
     fn mul(self, other: $f64x) -> Self {
         let r0 = self.0 * other;
-        Self::new(r0, self.1.fma(other, self.0.fmapn(other, r0)) )
+        Self::new(r0, self.1.mul_adde(other, self.0.mul_sube(other, r0)) )
     }
     #[target_feature(not(enable = "fma"))]
     #[inline]
@@ -196,19 +196,19 @@ impl std::ops::Div for D2<$f64x> {
     #[target_feature(enable = "fma")]
     #[inline]
     fn div(self, other: Self) -> Self {
-        let t = other.0.rec();
+        let t = other.0.recpre();
 
         let q0 = self.0 * t;
-        let u = t.fmapn(self.0, q0);
+        let u = t.mul_sube(self.0, q0);
         let mut q1 = other.1.fmanp(t, other.0.fmanp(t, $f64x::splat(1.)));
-        q1 = q0.fma(q1, self.1.fma(t, u));
+        q1 = q0.mul_adde(q1, self.1.mul_adde(t, u));
 
         Self::new(q0, q1)
     }
     #[target_feature(not(enable = "fma"))]
     #[inline]
     fn div(self, other: Self) -> Self {
-        let t = other.0.rec();
+        let t = other.0.recpre();
         let dh  = vupper_vd_vd(other.0);
         let dl  = other.0 -  dh;
         let th  = vupper_vd_vd(t  );
@@ -221,7 +221,7 @@ impl std::ops::Div for D2<$f64x> {
         $f64x u = (nhh * th - q0 + nhh * tl + nhl * th + nhl * tl +
               q0 * ($f64x::splat(1) - dh * th - dh * tl - dl * th - dl * tl));
 
-        Self::new(q0, t.mla(self.1 - q0 * other.1, u) )
+        Self::new(q0, t.mul_add(self.1 - q0 * other.1, u) )
     }
 }
 
@@ -312,7 +312,7 @@ impl MulAsD2 for $f64x {
     #[inline]
     fn mul_as_d2(self, other: Self) -> D2<Self> {
         let r0 = self * other;
-        D2<Self>::new(r0, self.fmapn(other, r0) )
+        D2<Self>::new(r0, self.mul_sube(other, r0) )
     }
     #[target_feature(not(enable = "fma"))]
     #[inline]
@@ -330,7 +330,7 @@ impl SqrtAsD2 for $f64x {
     #[inline]
     fn sqrt_as_d2(self) -> D2<Self> {
         let t = d.sqrt();
-        ((d + t.mul_as_d2(t)) * t.rec_as_d2()).scale(Self::splat(0.5))
+        ((d + t.mul_as_d2(t)) * t.recpre_as_d2()).scale(Self::splat(0.5))
     }
 }
 
@@ -338,14 +338,14 @@ impl SqrtAsD2 for $f64x {
 impl Rec for D2<$f64x> {
     #[target_feature(enable = "fma")]
     #[inline]
-    fn rec(self) -> Self {
-        let q0 = self.0.rec();
+    fn recpre(self) -> Self {
+        let q0 = self.0.recpre();
         Self::new(q0, q0 * self.1.fmanp(q0, self.0.fmanp(q0, $f64x::splat(1))) )
     }
     #[target_feature(not(enable = "fma"))]
     #[inline]
-    fn rec(self) -> D2<$f64x> {
-        let t = self.0.rec();
+    fn recpre(self) -> D2<$f64x> {
+        let t = self.0.recpre();
         let dh = vupper_vd_vd(self.0);
         let dl = self.0 - dh;
         let th = vupper_vd_vd(t  );
@@ -358,13 +358,13 @@ impl Rec for D2<$f64x> {
 impl RecAsD2<D2<$f64x> for $f64x {
     #[target_feature(enable = "fma")]
     #[inline]
-    fn rec_as_d2(self) -> D2<Self> {
+    fn recpre_as_d2(self) -> D2<Self> {
         let q0 = vrec_vself_vself(self);
         D2<Self>::new(q0, q0 * vfmanp_vself_vself_vself_vself(self, q0, Self::splat(1.)) )
     }
     #[target_feature(not(enable = "fma"))]
     #[inline]
-    fn rec_as_d2(self) -> D2<Self> {
+    fn recpre_as_d2(self) -> D2<Self> {
         let t = vrec_vself_vself(self);
         let selfh = vupper_vself_vself(self);
         let selfl = self - selfh;

@@ -35,45 +35,41 @@
 
 // Mask definition
 type $ux = uint32x4_t;
-type VopMask = uint32x4_t;
+type $ox = uint32x4_t;
 
 // Single precision definitions
 type f32x4 = float32x4_t;
-type $ix32 = int32x4_t;
+type i32x4 = int32x4_t;
 
 // Double precision definitions
 type f64x2 = float64x2_t;
-type $ix = int32x2_t;
+type i32x2 = int32x2_t;
 
 #define DFTPRIORITY 10
-
+/*
 #[inline]
-fn vtestallones_i_vo32(g: $ox) -> int {
+fn vtestallones_i_vo32(g: $ox) -> bool {
   uint32x2_t x0 = vand_u32(vget_low_u32(g), vget_high_u32(g));
   uint32x2_t x1 = vpmin_u32(x0, x0);
   return vget_lane_u32(x1, 0);
 }
 
 #[inline]
-fn vtestallones_i_vo64(g: $ox) -> int {
+fn vtestallones_i_vo64(g: $ox) -> bool {
   uint32x2_t x0 = vand_u32(vget_low_u32(g), vget_high_u32(g));
   uint32x2_t x1 = vpmin_u32(x0, x0);
   return vget_lane_u32(x1, 0);
 }
-
+*/
 // Vector load / store
-#[inline]
-fn vstoreu_v_p_vi2(int32_t *p, $ix2 v) -> void { vst1q_s32(p, v); }
-#[inline]
-fn vstoreu_v_p_vi(int32_t *p, $ix v) -> void { vst1_s32(p, v); }
 
 #[inline]
-fn vgather_vd_p_vi(const double *ptr, $ix vi) -> f64x2 {
+fn vgather_vd_p_vi(const double *ptr, i32x2 vi) -> f64x2 {
   return ((f64x2) { ptr[vget_lane_s32(vi, 0)], ptr[vget_lane_s32(vi, 1)]} );
 }
 
 #[inline]
-fn vgather_vf_p_vi2(const float *ptr, $ix2 vi2) -> f32x4 {
+fn vgather_vf_p_vi2(const float *ptr, i32x4 vi2) -> f32x4 {
   return ((f32x4) {
       ptr[vgetq_lane_s32(vi2, 0)],
       ptr[vgetq_lane_s32(vi2, 1)],
@@ -93,48 +89,19 @@ fn vandnot_vm_vm_vm(x: $ux, y: $ux) -> $ux {
 /****************************************/
 // Broadcast
 
-// Add, Sub, Mul, Reciprocal 1/x, Division, Square root
-impl Rec for f32x4 {
-    #[inline]
-    fn rec(self) -> Self {
-        vdivq_f32(Self::splat(1.), self)
-    }
-}
-impl Sqrt for f32x4 {
-    #[inline]
-    fn sqrt(self) -> Self {
-        vsqrtq_f32(d)
-    }
-}
+
 
 #if CONFIG == 1
-// Multiply accumulate: z = z + x * y
-impl Mla for f32x4 {
-    fn mla(self, y: Self, z: Self) -> Self {
-        vfmaq_f32(z, x, y)
-    }
-}
 // Multiply subtract: z = z = x * y
 #[inline]
 fn vmlanp_vf_vf_vf_vf(x: f32x4, y: f32x4, z: f32x4) -> f32x4 {
   return vfmsq_f32(z, x, y);
 }
 #else
-impl Mla for f32x4 {
-    fn mla(self, y: Self, z: Self) -> Self {
-        x * y + z
-    }
-}
 #[inline]
 fn vmlanp_vf_vf_vf_vf(x: f32x4, y: f32x4, z: f32x4) -> f32x4 { return z - x * y); }
 #endif
 
-// |x|, -x
-impl Abs for f32x4 {
-    fn abs(self) -> Self {
-        vabsq_f32(f)
-    }
-}
 
 
 // Comparisons
@@ -154,17 +121,13 @@ fn vgt_vm_vf_vf(x: f32x4, y: f32x4) -> $ux { return vcgtq_f32(x, y); }
 fn vge_vm_vf_vf(x: f32x4, y: f32x4) -> $ux { return vcgeq_f32(x, y); }
 
 // Conditional select
-#[inline]
-fn vsel_vf_vm_vf_vf($ux mask, f32x4 x, f32x4 y) -> f32x4 {
-  return vbslq_f32(mask, x, y);
-}
 
 // int <--> float conversions
 #[inline]
-fn vtruncate_vi2_vf(vf: f32x4) -> $ix2 { return vcvtq_s32_f32(vf); }
+fn vtruncate_vi2_vf(vf: f32x4) -> i32x4 { return vcvtq_s32_f32(vf); }
 
 #[inline]
-fn vrint_vi2_vf(d: f32x4) -> $ix2 {
+fn vrint_vi2_vf(d: f32x4) -> i32x4 {
   return vcvtq_s32_f32(vrndnq_f32(d));
 }
 
@@ -176,35 +139,29 @@ fn vrint_vi2_vf(d: f32x4) -> $ix2 {
 // Logical operations
 
 #[inline]
-fn vandnot_vi2_vi2_vi2($ix2 x, $ix2 y) -> $ix2 {
+fn vandnot_vi2_vi2_vi2(i32x4 x, i32x4 y) -> i32x4 {
   return vbicq_s32(y, x);
 }
 
-// Shifts
-#define vsrl_vi2_vi2_i(x, c)                                                   \
-  vreinterpretq_s32_u32(vshrq_n_u32(vreinterpretq_u32_s32(x), c))
-
-#define vsrl_vi_vi_i(x, c)                                                     \
-  vreinterpret_s32_u32(vshr_n_u32(vreinterpret_u32_s32(x), c))
 
 // Comparison returning masks
 #[inline]
-fn veq_vm_vi2_vi2($ix2 x, $ix2 y) -> $ux { return vceqq_s32(x, y); }
+fn veq_vm_vi2_vi2(i32x4 x, i32x4 y) -> $ux { return vceqq_s32(x, y); }
 #[inline]
-fn vgt_vm_vi2_vi2($ix2 x, $ix2 y) -> $ux { return vcgeq_s32(x, y); }
+fn vgt_vm_vi2_vi2(i32x4 x, i32x4 y) -> $ux { return vcgeq_s32(x, y); }
 // Comparison returning integers
 #[inline]
-fn vgt_vi2_vi2_vi2($ix2 x, $ix2 y) -> $ix2 {
+fn vgt_vi2_vi2_vi2(i32x4 x, i32x4 y) -> i32x4 {
   return vreinterpretq_s32_u32(vcgeq_s32(x, y));
 }
 #[inline]
-fn veq_vi2_vi2_vi2($ix2 x, $ix2 y) -> $ix2 {
+fn veq_vi2_vi2_vi2(i32x4 x, i32x4 y) -> i32x4 {
   return vreinterpretq_s32_u32(vceqq_s32(x, y));
 }
 
 // Conditional select
 #[inline]
-fn vsel_vi2_vm_vi2_vi2($ux m, $ix2 x, $ix2 y) -> $ix2 {
+fn vsel_vi2_vm_vi2_vi2($ux m, i32x4 x, i32x4 y) -> i32x4 {
   return vbslq_s32(m, x, y);
 }
 
@@ -219,40 +176,11 @@ fn vsel_vi2_vm_vi2_vi2($ux m, $ix2 x, $ix2 y) -> $ix2 {
 // Broadcast
 
 
-// Add, Sub, Mul, Reciprocal 1/x, Division, Square root
-
-impl Rec for f64x2 {
-    #[inline]
-    fn rec(self) -> Self {
-        vdivq_f64(f64x2::splat(1.), self)
-    }
-}
-
-impl Sqrt for f64x2 {
-    #[inline]
-    fn sqrt(self) -> Self {
-        vsqrtq_f64(d)
-    }
-}
-
-// |x|, -x
-impl Abs for f64x2 {
-    fn abs(self) -> Self {
-        vabsq_f64(f)
-    }
-}
-
-
-
 #if CONFIG == 1
 // Multiply accumulate: z = z + x * y
 impl Mla for f64x2 {
     #[inline]
-    fn mla(self, y: Self, z: Self) -> Self {
-        vfmaq_f64(z, x, y)
-    }
-    #[inline]
-    fn mla(self, y: Self, z: Self) -> Self {
+    fn mul_sub(self, y: Self, z: Self) -> Self {
         -vfmsq_f64(z, x, y)
     }
 }
@@ -261,23 +189,16 @@ impl Mla for f64x2 {
 #else
 impl Mla for f64x2 {
     #[inline]
-    fn mla(self, y: Self, z: Self) -> Self {
-        self*y + z
-    }
-    #[inline]
-    fn mlapn(self, y: Self, z: Self) -> Self {
+    fn mul_sub(self, y: Self, z: Self) -> Self {
         self*y - z
     }
 }
 #endif
 
-impl Fma for $f64x {
+#[target_feature(enable = "fma")]
+impl Fma for f64x2 {
     #[inline]
-    fn fma(self, y: Self, z: Self) -> Self {
-      vfmaq_f64(z, self, y)
-    }
-    #[inline]
-    fn fmapn(self, y: Self, z: Self) -> Self {
+    fn mul_sube(self, y: Self, z: Self) -> Self {
       vfmsq_f64(z, self, y)
     }
     #[inline]
@@ -333,7 +254,7 @@ fn vsel_vd_vo_vo_d_d_d(o0: $ox, o1: $ox, d0: f64, d1: f64, d2: f64) -> f64x2 {
 }
 #endif
 
-impl RInt for $f64x {
+impl RInt for f64x2 {
     #[inline]
     fn rint(self) -> Self {
         vrndnq_f64(d)
@@ -350,12 +271,12 @@ impl RInt for f32x4 {
 /* int <--> float conversions           */
 /****************************************/
 #[inline]
-fn vtruncate_vi_vd(vf: f64x2) -> $ix {
+fn vtruncate_vi_vd(vf: f64x2) -> i32x2 {
   return vmovn_s64(vcvtq_s64_f64(vf));
 }
 
 #[inline]
-fn vrint_vi_vd(d: f64x2) -> $ix {
+fn vrint_vi_vd(d: f64x2) -> i32x2 {
   return vqmovn_s64(vcvtq_s64_f64(vrndnq_f64(d)));
 }
 
@@ -367,14 +288,14 @@ fn vrint_vi_vd(d: f64x2) -> $ix {
 
 // Logical operations
 #[inline]
-fn vandnot_vi_vi_vi(x: $ix, y: $ix) -> $ix { return vbic_s32(y, x); }
+fn vandnot_vi_vi_vi(x: i32x2, y: i32x2) -> i32x2 { return vbic_s32(y, x); }
 
 // Comparison returning masks
 
 
 // Conditional select
 #[inline]
-fn vsel_vi_vm_vi_vi($ux m, $ix x, $ix y) -> $ix {
+fn vsel_vi_vm_vi_vi($ux m, i32x2 x, i32x2 y) -> i32x2 {
   return vbsl_s32(vget_low_u32(m), x, y);
 }
 
@@ -432,29 +353,20 @@ fn visminf_vo_vf(d: f32x4) -> $ox {
 fn visnan_vo_vf(d: f32x4) -> $ox { return d.ne(d); }
 
 #[inline]
-fn $m32x::from(m: $ox) -> $ox {
-  return vuzpq_u32(m, m).val[0];
-}
-#[inline]
-fn $mx::from(m: $ox) -> $ox {
-  return vzipq_u32(m, m).val[0];
-}
-
-#[inline]
 fn vandnot_vo_vo_vo(x: $ox, y: $ox) -> $ox {
   return vbicq_u32(y, x);
 }
 
 #[inline]
-fn vand_vi2_vo_vi2(x: $ox, y: $ix2) -> $ix2 {
+fn vand_vi2_vo_vi2(x: $ox, y: i32x4) -> i32x4 {
   return vandq_s32(vreinterpretq_s32_u32(x), y);
 }
 #[inline]
-fn vandnot_vi2_vo_vi2(x: $ox, y: $ix2) -> $ix2 {
+fn vandnot_vi2_vo_vi2(x: $ox, y: i32x4) -> i32x4 {
   return vbicq_s32(y, vreinterpretq_s32_u32(x));
 }
 #[inline]
-fn vandnot_vi_vo_vi(x: $ox, y: $ix) -> $ix {
+fn vandnot_vi_vo_vi(x: $ox, y: i32x2) -> i32x2 {
   return vbic_s32(y, vget_low_s32(vreinterpretq_s32_u32(x)));
 }
 #[inline]
@@ -494,19 +406,9 @@ fn vcast_vm_i_i(i0: int, i1: int) -> $ux {
   return vreinterpretq_u32_u64(vdupq_n_u64((0xffffffff & (i1 as u64)) | (((i0 as u64)) << 32)));
 }
 
-#[inline]
-fn veq64_vo_vm_vm(x: $ux, y: $ux) -> $ox {
-  return vreinterpretq_u32_u64(vceqq_s64(vreinterpretq_s64_u32(x), vreinterpretq_s64_u32(y)));
-}
-
-#[inline]
-fn vadd64_vm_vm_vm(x: $ux, y: $ux) -> $ux {
-  return vreinterpretq_u32_s64(vaddq_s64(vreinterpretq_s64_u32(x), vreinterpretq_s64_u32(y)));
-}
-
 // Logical operations
 #[inline]
-fn vand_vi_vo_vi(x: $ox, y: $ix) -> $ix {
+fn vand_vi_vo_vi(x: $ox, y: i32x2) -> i32x2 {
   return vand_s32(vreinterpret_s32_u32(vget_low_u32(x)), y);
 }
 
@@ -523,4 +425,4 @@ impl Truncate for $f64x {
 #[inline]
 fn vrev21_vf_vf(d0: f32x4) -> f32x4 { return vrev64q_f32(d0); }
 #[inline]
-fn vrev21_vi2_vi2(i: $ix2) -> $ix2 { return $ix2::from(vrev21_vf_vf(f32x4::from(i))); }
+fn vrev21_vi2_vi2(i: i32x4) -> i32x4 { return i32x4::from(vrev21_vf_vf(f32x4::from(i))); }

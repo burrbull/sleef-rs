@@ -48,31 +48,19 @@ type i32x8 = __m256i;
 type f32x16 = __m512;
 type i32x16 = __m512i;
 
-
-#ifdef __INTEL_COMPILER
-#[inline]
-fn vtestallones_i_vo64(g: m1x8) -> int { _mm512_mask2int(g) == 0xff }
-#[inline]
-fn vtestallones_i_vo32(g: m1x16) -> int { _mm512_mask2int(g) == 0xffff }
-#else
-#[inline]
-fn vtestallones_i_vo64(g: m1x8) -> int { g == 0xff }
-#[inline]
-fn vtestallones_i_vo32(g: m1x16) -> int { g == 0xffff }
-#endif
-
-//
-
-static void vstoreu_v_p_vi2(int32_t *p, i32x16 v) { _mm512_storeu_si512((__m512i *)p, v); }
-static void vstoreu_v_p_vi(int32_t *p, i32x8 v) { _mm256_storeu_si256((__m256i *)p, v); }
-
 //
 
 #[inline]
-fn vandnot_vm_vm_vm(x: $ux, y: $ux) -> $ux { _mm512_andnot_si512(x, y) }
+fn vandnot_vm_vm_vm(x: u64x8, y: u64x8) -> u64x8 { _mm512_andnot_si512(x, y) }
 
 #[inline]
-fn vandnot_vo_vo_vo(x: $ox, y: $ox) -> $ox { _mm512_kandn(x, y) }
+fn vandnot_vm_vm_vm(x: u32x16, y: u32x16) -> u32x16 { _mm512_andnot_si512(x, y) }
+
+#[inline]
+fn vandnot_vo_vo_vo(x: m1x8, y: m1x8) -> m1x8 { _mm512_kandn(x, y) }
+
+#[inline]
+fn vandnot_vo_vo_vo(x: m1x16, y: m1x16) -> m1x16 { _mm512_kandn(x, y) }
 
 #[inline]
 fn vand_vm_vo64_vm(o: m1x8, m: u64x8) -> u64x8 { _mm512_mask_and_epi64(_mm512_set1_epi32(0), o, m, m) }
@@ -88,120 +76,6 @@ fn vandnot_vm_vo32_vm(o: m1x16, m: u32x16) -> u32x16 { _mm512_mask_and_epi32(m, 
 #[inline]
 fn vor_vm_vo32_vm(o: m1x16, m: u32x16) -> u32x16 { _mm512_mask_or_epi32(m, o, _mm512_set1_epi32(-1), _mm512_set1_epi32(-1)) }
 
-#[inline]
-fn $m32x::from(o: m1x8) -> $ox { o }
-#[inline]
-fn $mx::from(o: m1x16) -> $ox { o }
-
-//
-
-#[inline]
-fn vrint_vi_vd(vd: f64x8) -> i32x8 {
-  _mm512_cvt_roundpd_epi32(vd, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC)
-}
-
-#[inline]
-fn vtruncate_vi_vd(vd: f64x8) -> i32x8 {
-  _mm512_cvt_roundpd_epi32(vd, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC)
-}
-
-impl Truncate for f64x8 {
-    #[inline]
-    fn truncate(self) -> Self {
-        let hi = _mm512_extractf64x4_pd(vd, 1);
-        let lo = _mm512_extractf64x4_pd(vd, 0);
-        let hi = _mm256_round_pd(hi, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC);
-        let lo = _mm256_round_pd(lo, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC);
-        _mm512_insertf64x4(_mm512_castpd256_pd512(lo), hi, 1)
-    }
-}
-
-impl RInt for f64x8 {
-    #[inline]
-    fn rint(self) -> Self {
-        let hi = _mm512_extractf64x4_pd(vd, 1);
-        let lo = _mm512_extractf64x4_pd(vd, 0);
-        let hi = _mm256_round_pd(hi, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);
-        let lo = _mm256_round_pd(lo, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);
-        _mm512_insertf64x4(_mm512_castpd256_pd512(lo), hi, 1)
-    }
-}
-
-impl FromU32 for u64x8 {
-  fn from_u32(i: (u32, u32)) -> Self {
-      u64x8::from(m1x16::new(i0, i1, i0, i1, i0, i1, i0, i1, i0, i1, i0, i1, i0, i1, i0, i1))
-  }
-}
-/*#[inline]
-fn vcast_vm_i_i(i0: int, i1: int) -> $ux { _mm512_set_epi32(i0, i1, i0, i1, i0, i1, i0, i1, i0, i1, i0, i1, i0, i1, i0, i1) }
-*/
-#[inline]
-fn veq64_vo_vm_vm(x: $ux, y: $ux) -> m1x8 { _mm512_cmp_epi64_mask(x, y, _MM_CMPINT_EQ) }
-#[inline]
-fn vadd64_vm_vm_vm(x: $ux, y: $ux) -> $ux { _mm512_add_epi64(x, y) }
-
-//
-
-impl Rec for f64x8 {
-    #[inline]
-    fn rec(self) -> Self {
-        _mm512_div_pd(_mm512_set1_pd(1.), self)
-    }
-}
-
-impl Sqrt for f64x8 {
-    #[inline]
-    fn sqrt(self) -> Self {
-        _mm512_sqrt_pd(x)
-    }
-}
-impl Abs for f64x8 {
-    fn abs(self) -> Self {
-        f64x8::from(_mm512_andnot_si512($ux::from_bits(_mm512_set1_pd(-0.0)), $ux::from_bits(d)))
-    }
-}
-
-#if CONFIG == 1
-impl Mla for f64x8 {
-    #[inline]
-    fn mla(self, y: Self, z: Self) -> Self {
-        _mm512_fmadd_pd(x, y, z)
-    }
-    #[inline]
-    fn mlapn(self, y: Self, z: Self) -> Self {
-        _mm512_fmsub_pd(x, y, z)
-    }
-}
-#else
-impl Mla for f64x8 {
-    #[inline]
-    fn mla(self, y: Self, z: Self) -> Self {
-        x*y + z
-    }
-    #[inline]
-    fn mlapn(self, y: Self, z: Self) -> Self {
-        x*y - z
-    }
-}
-#endif
-
-impl Fma for f64x8 {
-    #[inline]
-    fn fma(self, y: Self, z: Self) -> Self {
-        _mm512_fmadd_pd(x, y, z)
-    }
-    #[inline]
-    fn fmapn(self, y: Self, z: Self) -> Self {
-        _mm512_fmsub_pd(x, y, z)
-    }
-    #[inline]
-    fn fmanp(self, y: Self, z: Self) -> Self {
-        _mm512_fnmadd_pd(x, y, z)
-    }
-}
-
-
-//
 
 
 #[inline]
@@ -216,8 +90,94 @@ fn vand_vi_vo_vi(o: m1x8, y: i32x8) -> i32x8 {
   _mm512_castsi512_si256(_mm512_mask_and_epi32(_mm512_set1_epi32(0), o, _mm512_castsi256_si512(y), _mm512_castsi256_si512(y)))
 }
 
-#define vsrl_vi_vi_i(x, c) _mm256_srli_epi32(x, c)
 
+
+#[inline]
+fn vandnot_vi2_vi2_vi2(i32x16 x, i32x16 y) -> i32x16 { _mm512_andnot_si512(x, y) }
+
+#[inline]
+fn vand_vi2_vo_vi2(o: m1x16, m: i32x16) -> i32x16 {
+  _mm512_mask_and_epi32(_mm512_set1_epi32(0), o, m, m)
+}
+
+#[inline]
+fn vandnot_vi2_vo_vi2(o: m1x16, m: i32x16) -> i32x16 {
+  _mm512_mask_and_epi32(m, o, _mm512_set1_epi32(0), _mm512_set1_epi32(0))
+}
+
+#[inline]
+fn vgt_vi2_vi2_vi2(x: i32x16, y: i32x16) -> i32x16 {
+  __mmask16 m = _mm512_cmp_epi32_mask(y, x, _MM_CMPINT_LT);
+  _mm512_mask_and_epi32(_mm512_set1_epi32(0), m, _mm512_set1_epi32(-1), _mm512_set1_epi32(-1))
+}
+
+
+
+impl Round for f64x8 {
+    type Int = i64x8;
+    fn truncate(self) -> Self {
+        let hi = _mm512_extractf64x4_pd(self, 1);
+        let lo = _mm512_extractf64x4_pd(self, 0);
+        let hi = _mm256_round_pd(hi, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC);
+        let lo = _mm256_round_pd(lo, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC);
+        _mm512_insertf64x4(_mm512_castpd256_pd512(lo), hi, 1)
+    }
+    fn truncatei(self) -> Self::Int {
+      _mm512_cvt_roundpd_epi32(self, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC)
+    }
+    fn rint(self) -> Self {
+        let hi = _mm512_extractf64x4_pd(self, 1);
+        let lo = _mm512_extractf64x4_pd(self, 0);
+        let hi = _mm256_round_pd(hi, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);
+        let lo = _mm256_round_pd(lo, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);
+        _mm512_insertf64x4(_mm512_castpd256_pd512(lo), hi, 1)
+    }
+    fn rinti(self) -> Self::Int {
+        _mm512_cvt_roundpd_epi32(self, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC)
+    }
+}
+
+impl FromU32 for u64x8 {
+  fn from_u32(i: (u32, u32)) -> Self {
+      u64x8::from(m1x16::new(i0, i1, i0, i1, i0, i1, i0, i1, i0, i1, i0, i1, i0, i1, i0, i1))
+  }
+}
+/*#[inline]
+fn vcast_vm_i_i(i0: int, i1: int) -> $ux { _mm512_set_epi32(i0, i1, i0, i1, i0, i1, i0, i1, i0, i1, i0, i1, i0, i1, i0, i1) }
+*/
+
+//
+
+#if CONFIG == 1
+impl Mla for f64x8 {
+    #[inline]
+    fn mul_sub(self, y: Self, z: Self) -> Self {
+        _mm512_fmsub_pd(x, y, z)
+    }
+}
+#else
+impl Mla for f64x8 {
+    #[inline]
+    fn mul_sub(self, y: Self, z: Self) -> Self {
+        x*y - z
+    }
+}
+#endif
+
+#[target_feature(enable = "fma")]
+impl Fma for f64x8 {
+    #[inline]
+    fn mul_sube(self, y: Self, z: Self) -> Self {
+        _mm512_fmsub_pd(x, y, z)
+    }
+    #[inline]
+    fn fmanp(self, y: Self, z: Self) -> Self {
+        _mm512_fnmadd_pd(x, y, z)
+    }
+}
+
+
+//
 
 #[inline]
 fn vsel_vd_vo_d_d(o: m1x8, v1: f64, v0: f64) -> CONST -> f64x8 {
@@ -290,105 +250,53 @@ fn vgetmant_vf_vf(d: f32x16) -> f32x16 { _mm512_getmant_ps(d, _MM_MANT_NORM_p75_
 #[inline]
 fn vgather_vd_p_vi(const double *ptr, i32x8 vi) -> f64x8 { _mm512_i32gather_pd(vi, ptr, 8) }
 
-
-#[inline]
-fn vrint_vi2_vf(vf: f32x16) -> i32x16 { i32x16::from(_mm512_cvtps_epi32(vf)) }
-#[inline]
-fn vtruncate_vi2_vf(vf: f32x16) -> i32x16 { i32x16::from(_mm512_cvttps_epi32(vf)) }
-
-impl Truncate for f32x16 {
+impl Round for f32x16 {
+    type Int = i32x16;
     #[inline]
     fn truncate(self) -> Self {
-        __m256 hi = _mm256_castpd_ps(_mm512_extractf64x4_pd(f64x8::from(vd), 1));
-        __m256 lo = _mm256_castpd_ps(_mm512_extractf64x4_pd(f64x8::from(vd), 0));
+        __m256 hi = _mm256_castpd_ps(_mm512_extractf64x4_pd(f64x8::from(self), 1));
+        __m256 lo = _mm256_castpd_ps(_mm512_extractf64x4_pd(f64x8::from(self), 0));
         hi = _mm256_round_ps(hi, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC);
         lo = _mm256_round_ps(lo, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC);
-        f32x16::from(_mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_castps_pd(lo)), _mm256_castps_pd(hi), 1))
+        Self::from(_mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_castps_pd(lo)), _mm256_castps_pd(hi), 1))
     }
-}
-impl RInt for $f32x {
+    #[inline]
+    fn truncatei(self) -> Self::Int {
+        Self::Int::from(_mm512_cvttps_epi32(self))
+    }
     #[inline]
     fn rint(self) -> Self {
-      __m256 hi = _mm256_castpd_ps(_mm512_extractf64x4_pd(f64x8::from(vd), 1));
-      __m256 lo = _mm256_castpd_ps(_mm512_extractf64x4_pd(f64x8::from(vd), 0));
+      __m256 hi = _mm256_castpd_ps(_mm512_extractf64x4_pd(f64x8::from(self), 1));
+      __m256 lo = _mm256_castpd_ps(_mm512_extractf64x4_pd(f64x8::from(self), 0));
       hi = _mm256_round_ps(hi, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);
       lo = _mm256_round_ps(lo, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);
-      f32x16::from(_mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_castps_pd(lo)), _mm256_castps_pd(hi), 1))
+      Self::from(_mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_castps_pd(lo)), _mm256_castps_pd(hi), 1))
     }
-}
- 
-impl Rec for f32x16 {
     #[inline]
-    fn rec(self) -> Self {
-        Self::splat(1.) / self
-    }
-}
-impl Sqrt for f32x16 {
-    #[inline]
-    fn sqrt(self) -> Self {
-        _mm512_sqrt_ps(x)
-    }
-}
-impl Abs for f32x16 {
-    fn abs(self) -> Self {
-        f32x16::from(vandnot_vm_vm_vm($ux::from_bits(f32x16::splat(-0.)), $ux::from_bits(f)))
+    fn rinti(self) -> Self::Int {
+        Self::Int::from(_mm512_cvtps_epi32(self))
     }
 }
 
+
 #if CONFIG == 1
-impl Mla for f32x16 {
-    #[inline]
-    fn mla(self, y: Self, z: Self) -> Self {
-        _mm512_fmadd_ps(x, y, z)
-    }
-}
 #[inline]
 fn vmlanp_vf_vf_vf_vf(x: f32x16, y: f32x16, z: f32x16) -> f32x16 { _mm512_fnmadd_ps(x, y, z) }
 #else
-impl Mla for f32x16 {
-    #[inline]
-    fn mla(self, y: Self, z: Self) -> Self {
-        x*y+z
-    }
-}
 #[inline]
 fn vmlanp_vf_vf_vf_vf(x: f32x16, y: f32x16, z: f32x16) -> f32x16 { z - x * y }
 #endif
 
+#[target_feature(enable = "fma")]
 impl Fma for f32x16 {
     #[inline]
-    fn fma(self, y: Self, z: Self) -> Self {
-        _mm512_fmadd_ps(x, y, z)
-    }
-    #[inline]
-    fn fmapn(self, y: Self, z: Self) -> Self {
+    fn mul_sube(self, y: Self, z: Self) -> Self {
         _mm512_fmsub_ps(x, y, z)
     }
     #[inline]
     fn fmanp(self, y: Self, z: Self) -> Self {
         _mm512_fnmadd_ps(x, y, z)
     }
-}
-
-#[inline]
-fn vandnot_vi2_vi2_vi2(i32x16 x, i32x16 y) -> i32x16 { _mm512_andnot_si512(x, y) }
-
-#[inline]
-fn vand_vi2_vo_vi2(o: m1x16, m: i32x16) -> i32x16 {
-  _mm512_mask_and_epi32(_mm512_set1_epi32(0), o, m, m)
-}
-
-#[inline]
-fn vandnot_vi2_vo_vi2(o: m1x16, m: i32x16) -> i32x16 {
-  _mm512_mask_and_epi32(m, o, _mm512_set1_epi32(0), _mm512_set1_epi32(0))
-}
-
-#define vsrl_vi2_vi2_i(x, c) _mm512_srli_epi32(x, c)
-
-#[inline]
-fn vgt_vi2_vi2_vi2(x: i32x16, y: i32x16) -> i32x16 {
-  __mmask16 m = _mm512_cmp_epi32_mask(y, x, _MM_CMPINT_LT);
-  _mm512_mask_and_epi32(_mm512_set1_epi32(0), m, _mm512_set1_epi32(-1), _mm512_set1_epi32(-1))
 }
 
 // At this point, the following three functions are implemented in a generic way,

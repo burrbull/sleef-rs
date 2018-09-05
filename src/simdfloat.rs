@@ -1592,7 +1592,7 @@ macro_rules! impl_mathf32 {
         }
 
         pub fn xpowf(x: $f32x, y: $f32x) -> $f32x {
-            if True {
+            if true {
                 let yisint = y.truncate().eq(y) | y.abs().gt($f32x::splat(F1_24));
                 let yisodd = (y.truncatei() & $i32x::splat(1)).eq($i32x::splat(1))
                     & yisint
@@ -1643,10 +1643,8 @@ macro_rules! impl_mathf32 {
                     $ux::from_bits(result),
                 ));
 
-                result = (y.eq($f32x::splat(0.)) | x.eq($f32x::splat(1.)))
-                    .select($f32x::splat(1.), result);
-
-                result
+                (y.eq($f32x::splat(0.)) | x.eq($f32x::splat(1.)))
+                    .select($f32x::splat(1.), result)
             } else {
                 expkf(logkf(x) * y)
             }

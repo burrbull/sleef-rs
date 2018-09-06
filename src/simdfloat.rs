@@ -1,217 +1,3 @@
-//          Copyright Naoki Shibata 2010 - 2018.
-// Distributed under the Boost Software License, Version 1.0.
-//    (See accompanying file LICENSE.txt or copy at
-//          http://www.boost.org/LICENSE_1_0.txt)
-
-// Always use -ffp-contract=off option to compile SLEEF.
-/*
-#include <stdint.h>
-#include <assert.h>
-#include <limits.h>
-#include <float.h>
-
-#include "misc.h"
-
-extern const float rempitabsp[];
-
-#define __SLEEFSIMDSP_C__
-
-#if (defined(_MSC_VER))
-#pragma fp_contract (off)
-#endif
-
-#ifdef ENABLE_SSE2
-#define CONFIG 2
-#include "helpersse2.h"
-#ifdef DORENAME
-#ifdef ENABLE_GNUABI
-#include "renamesse2_gnuabi.h"
-#else
-#include "renamesse2.h"
-#endif
-#endif
-#endif
-
-#ifdef ENABLE_SSE4
-#define CONFIG 4
-#include "helpersse2.h"
-#ifdef DORENAME
-#include "renamesse4.h"
-#endif
-#endif
-
-#ifdef ENABLE_AVX
-#define CONFIG 1
-#include "helperavx.h"
-#ifdef DORENAME
-#ifdef ENABLE_GNUABI
-#include "renameavx_gnuabi.h"
-#else
-#include "renameavx.h"
-#endif
-#endif
-#endif
-
-#ifdef ENABLE_FMA4
-#define CONFIG 4
-#include "helperavx.h"
-#ifdef DORENAME
-#ifdef ENABLE_GNUABI
-#include "renamefma4_gnuabi.h"
-#else
-#include "renamefma4.h"
-#endif
-#endif
-#endif
-
-#ifdef ENABLE_AVX2
-#define CONFIG 1
-#include "helperavx2.h"
-#ifdef DORENAME
-#ifdef ENABLE_GNUABI
-#include "renameavx2_gnuabi.h"
-#else
-#include "renameavx2.h"
-#endif
-#endif
-#endif
-
-#ifdef ENABLE_AVX2128
-#define CONFIG 1
-#include "helperavx2_128.h"
-#ifdef DORENAME
-#include "renameavx2128.h"
-#endif
-#endif
-
-#ifdef ENABLE_AVX512F
-#define CONFIG 1
-#include "helperavx512f.h"
-#ifdef DORENAME
-#ifdef ENABLE_GNUABI
-#include "renameavx512f_gnuabi.h"
-#else
-#include "renameavx512f.h"
-#endif
-#endif
-#endif
-
-#ifdef ENABLE_AVX512FNOFMA
-#define CONFIG 2
-#include "helperavx512f.h"
-#ifdef DORENAME
-#include "renameavx512fnofma.h"
-#endif
-#endif
-
-#ifdef ENABLE_ADVSIMD
-#define CONFIG 1
-#include "helperadvsimd.h"
-#ifdef DORENAME
-#ifdef ENABLE_GNUABI
-#include "renameadvsimd_gnuabi.h"
-#else
-#include "renameadvsimd.h"
-#endif
-#endif
-#endif
-
-#ifdef ENABLE_ADVSIMDNOFMA
-#define CONFIG 2
-#include "helperadvsimd.h"
-#ifdef DORENAME
-#include "renameadvsimdnofma.h"
-#endif
-#endif
-
-#ifdef ENABLE_NEON32
-#define CONFIG 1
-#include "helperneon32.h"
-#ifdef DORENAME
-#include "renameneon32.h"
-#endif
-#endif
-
-#ifdef ENABLE_NEON32VFPV4
-#define CONFIG 4
-#include "helperneon32.h"
-#ifdef DORENAME
-#include "renameneon32vfpv4.h"
-#endif
-#endif
-
-#ifdef ENABLE_VSX
-#define CONFIG 1
-#include "helperpower_128.h"
-#ifdef DORENAME
-#include "renamevsx.h"
-#endif
-#endif
-
-#ifdef ENABLE_VSXNOFMA
-#define CONFIG 2
-#include "helperpower_128.h"
-#ifdef DORENAME
-#include "renamevsxnofma.h"
-#endif
-#endif
-
-//
-
-#ifdef ENABLE_VECEXT
-#define CONFIG 1
-#include "helpervecext.h"
-#ifdef DORENAME
-#include "renamevecext.h"
-#endif
-#endif
-
-#ifdef ENABLE_PUREC
-#define CONFIG 1
-#include "helperpurec.h"
-#ifdef DORENAME
-#include "renamepurec.h"
-#endif
-#endif
-
-#ifdef ENABLE_PUREC_SCALAR
-#define CONFIG 1
-#include "helperpurec_scalar.h"
-#ifdef DORENAME
-#include "renamepurec_scalar.h"
-#endif
-#endif
-
-#ifdef ENABLE_PURECFMA_SCALAR
-#define CONFIG 2
-#include "helperpurec_scalar.h"
-#ifdef DORENAME
-#include "renamepurecfma_scalar.h"
-#endif
-#endif
-
-//
-
-#ifdef ENABLE_SVE
-#define CONFIG 1
-#include "helpersve.h"
-#ifdef DORENAME
-#ifdef ENABLE_GNUABI
-#include "renamesve_gnuabi.h"
-#else
-#include "renamesve.h"
-#endif /* ENABLE_GNUABI */
-#endif /* DORENAME */
-#endif /* ENABLE_SVE */
-
-#ifdef ENABLE_SVENOFMA
-#define CONFIG 2
-#include "helpersve.h"
-#ifdef DORENAME
-#include "renamesvenofma.h"
-#endif /* DORENAME */
-#endif /* ENABLE_SVE */
-*/
 
 macro_rules! impl_math_f32 {
     ($f32x:ident, $u32x:ident, $m32x:ident, $i32x:ident) => {
@@ -239,7 +25,7 @@ macro_rules! impl_math_f32 {
         fn vand_vi2_vo_vi2(x: $m32x, y: $i32x) -> $i32x { $i32x::from_bits(x) & y }
 
         #[inline]
-        fn vgt_vi2_vi2_vi2(_x: $i32x, _y: $i32x) -> $i32x { unimplemented!() }
+        fn vgt_vi2_vi2_vi2(x: $i32x, y: $i32x) -> $i32x { $i32x::from_bits(x.gt(y)) }
 
 
         impl Round for $f32x {
@@ -250,15 +36,15 @@ macro_rules! impl_math_f32 {
             }
             #[inline]
             fn truncatei(self) -> Self::Int {
-                unimplemented!()
+                Self::Int::from_cast(self)
             }
             #[inline]
             fn rint(self) -> Self {
-                Self::from_cast(self.rinti())
+                xroundf(self)
             }
             #[inline]
             fn rinti(self) -> Self::Int {
-                Self::Int::from_cast(self)
+                Self::Int::from_cast(self.rint())
             }
         }
 

@@ -6,6 +6,10 @@ fn vupper_vd_vd(d: $f64x) -> $f64x {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct D2<T>(pub T, pub T);
 
+
+macro_rules! impl_d2 {
+    ($f64x:ty, $u64x:ty, $m64x:ty) => {
+
 impl D2<$f64x> {
     pub fn new(x0: $f64x, x1: $f64x) {
       D2(x0, x1)
@@ -377,11 +381,14 @@ impl RecAsD2<D2<$f64x> for $f64x {
 
 
 #[inline]
-fn vsel_vd2_vo_vd2_vd2(m: $ox, x: D2<$f64x>, y: D2<$f64x>) -> D2<$f64x> {
+fn vsel_vd2_vo_vd2_vd2(m: $m64x, x: D2<$f64x>, y: D2<$f64x>) -> D2<$f64x> {
   D2::new(m.select(x.0, y.0), m.select(x.1, y.1))
 }
 
 #[inline]
-fn vsel_vd2_vo_d_d_d_d(o: $ox, x1: f64, y1: f64, x0: f64, y0: f64) -> D2<$f64x> {
+fn vsel_vd2_vo_d_d_d_d(o: $m64x, x1: f64, y1: f64, x0: f64, y0: f64) -> D2<$f64x> {
   D2::new(vsel_vd_vo_d_d(o, x1, x0), vsel_vd_vo_d_d(o, y1, y0))
+}
+
+    };
 }

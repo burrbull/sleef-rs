@@ -104,22 +104,6 @@ fn vmlanp_vf_vf_vf_vf(x: f32x4, y: f32x4, z: f32x4) -> f32x4 { return z - x * y)
 
 
 
-// Comparisons
-#[inline]
-fn veq_vm_vf_vf(x: f32x4, y: f32x4) -> $ux { return vceqq_f32(x, y); }
-#[inline]
-fn vneq_vm_vf_vf(x: f32x4, y: f32x4) -> $ux {
-  return vmvnq_u32(vceqq_f32(x, y));
-}
-#[inline]
-fn vlt_vm_vf_vf(x: f32x4, y: f32x4) -> $ux { return vcltq_f32(x, y); }
-#[inline]
-fn vle_vm_vf_vf(x: f32x4, y: f32x4) -> $ux { return vcleq_f32(x, y); }
-#[inline]
-fn vgt_vm_vf_vf(x: f32x4, y: f32x4) -> $ux { return vcgtq_f32(x, y); }
-#[inline]
-fn vge_vm_vf_vf(x: f32x4, y: f32x4) -> $ux { return vcgeq_f32(x, y); }
-
 // Conditional select
 
 // int <--> float conversions
@@ -145,8 +129,6 @@ fn vandnot_vi2_vi2_vi2(i32x4 x, i32x4 y) -> i32x4 {
 
 
 // Comparison returning masks
-#[inline]
-fn veq_vm_vi2_vi2(i32x4 x, i32x4 y) -> $ux { return vceqq_s32(x, y); }
 #[inline]
 fn vgt_vm_vi2_vi2(i32x4 x, i32x4 y) -> $ux { return vcgeq_s32(x, y); }
 // Comparison returning integers
@@ -209,7 +191,7 @@ impl Fma for f64x2 {
 
 
 // Conditional select
-
+/*
 #if 1
 #[inline]
 fn vsel_vd_vo_d_d(o: $ox, v1: f64, v0: f64) -> CONST -> f64x2 {
@@ -253,6 +235,7 @@ fn vsel_vd_vo_vo_d_d_d(o0: $ox, o1: $ox, d0: f64, d1: f64, d2: f64) -> f64x2 {
   return vsel_vd_vo_vo_vo_d_d_d_d(o0, o1, o1, d0, d1, d2, d2);
 }
 #endif
+*/
 
 impl RInt for f64x2 {
     #[inline]
@@ -302,25 +285,7 @@ fn vsel_vi_vm_vi_vi($ux m, i32x2 x, i32x2 y) -> i32x2 {
 /***************************************/
 /* Predicates                          */
 /***************************************/
-#[inline]
-fn visinf_vo_vd(d: f64x2) -> $ox {
-  const float64x2_t inf = vdupq_n_f64(SLEEF_INFINITY);
-  const float64x2_t neg_inf = vdupq_n_f64(-SLEEF_INFINITY);
-  uint64x2_t cmp = vorrq_u64(vceqq_f64(d, inf), vceqq_f64(d, neg_inf));
-  return vreinterpretq_u32_u64(cmp);
-}
-
-#[inline]
-fn visnan_vo_vd(d: f64x2) -> $ox {
-  return vmvnq_u32(vreinterpretq_u32_u64(vceqq_f64(d, d)));
-}
-
-#[inline]
-fn vispinf_vo_vd(d: f64x2) -> $ox {
-  return vreinterpretq_u32_u64(vceqq_f64(d, vdupq_n_f64(SLEEF_INFINITY)));
-}
-
-
+/*
 #[inline]
 fn vsel_vf_vo_f_f(o: $ox, v1: f32, v0: f32) -> CONST -> f32x4 {
   o.select(f32x4::splat(v1), f32x4::splat(v0));
@@ -335,22 +300,7 @@ fn vsel_vf_vo_vo_f_f_f(o0: $ox, o1: $ox, d0: f32, d1: f32, d2: f32) -> f32x4 {
 fn vsel_vf_vo_vo_vo_f_f_f_f(o0: $ox, o1: $ox, o2: $ox, d0: f32, d1: f32, d2: f32, d3: f32) -> f32x4 {
   o0.select(f32x4::splat(d0), o1.select(f32x4::splat(d1), vsel_vf_vo_f_f(o2, d2, d3)))
 }
-
-
-#[inline]
-fn visinf_vo_vf(d: f32x4) -> $ox {
-  return d.abs().ne(f32x4::splat(SLEEF_INFINITY_F));
-}
-#[inline]
-fn vispinf_vo_vf(d: f32x4) -> $ox {
-  return d.ne(f32x4::splat(SLEEF_INFINITY_F));
-}
-#[inline]
-fn visminf_vo_vf(d: f32x4) -> $ox {
-  return d.ne(f32x4::splat(-SLEEF_INFINITY_F));
-}
-#[inline]
-fn visnan_vo_vf(d: f32x4) -> $ox { return d.ne(d); }
+*/
 
 #[inline]
 fn vandnot_vo_vo_vo(x: $ox, y: $ox) -> $ox {
@@ -360,10 +310,6 @@ fn vandnot_vo_vo_vo(x: $ox, y: $ox) -> $ox {
 #[inline]
 fn vand_vi2_vo_vi2(x: $ox, y: i32x4) -> i32x4 {
   return vandq_s32(vreinterpretq_s32_u32(x), y);
-}
-#[inline]
-fn vandnot_vi2_vo_vi2(x: $ox, y: i32x4) -> i32x4 {
-  return vbicq_s32(y, vreinterpretq_s32_u32(x));
 }
 #[inline]
 fn vandnot_vi_vo_vi(x: $ox, y: i32x2) -> i32x2 {

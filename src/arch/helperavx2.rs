@@ -128,7 +128,7 @@ fn vandnot_vi_vi_vi(x: i32x4, y: i32x4) -> i32x4 { return _mm_andnot_si128(x, y)
 fn vandnot_vi_vo_vi(m: $ox, y: i32x4) -> i32x4 { return _mm_andnot_si128(_mm256_castsi256_si128(m), y); }
 #[inline]
 fn vand_vi_vo_vi(m: $ox, y: i32x4) -> i32x4 { return _mm_and_si128(_mm256_castsi256_si128(m), y); }
-
+/*
 #[inline]
 fn vsel_vd_vo_d_d(o: $ox, v1: f64, v0: f64) -> f64x4 { return _mm256_permutevar_pd(_mm256_set_pd(v1, v0, v1, v0), o); }
 
@@ -145,21 +145,7 @@ fn vsel_vd_vo_vo_vo_d_d_d_d($ox o0, $ox o1, $ox o2, d0: f64, d1: f64, d2: f64, d
 fn vsel_vd_vo_vo_d_d_d(o0: $ox, o1: $ox, d0: f64, d1: f64, d2: f64) -> f64x4 {
   return vsel_vd_vo_vo_vo_d_d_d_d(o0, o1, o1, d0, d1, d2, d2);
 }
-
-#[inline]
-fn visinf_vo_vd(d: f64x4) -> $ox {
-  return $ux::from_bits(_mm256_cmp_pd(d.abs(), _mm256_set1_pd(SLEEF_INFINITY), _CMP_EQ_OQ));
-}
-
-#[inline]
-fn vispinf_vo_vd(d: f64x4) -> $ox {
-  return $ux::from_bits(_mm256_cmp_pd(d, _mm256_set1_pd(SLEEF_INFINITY), _CMP_EQ_OQ));
-}
-
-#[inline]
-fn visnan_vo_vd(d: f64x4) -> $ox {
-  return $ux::from_bits(_mm256_cmp_pd(d, d, _CMP_NEQ_UQ));
-}
+*/
 
 #[inline]
 fn vgather_vd_p_vi(const double *ptr, i32x4 vi) -> f64x4 { return _mm256_i32gather_pd(ptr, vi, 8); }
@@ -205,15 +191,13 @@ fn vandnot_vi2_vi2_vi2(i32x8 x, i32x8 y) -> i32x8 { return _mm256_andnot_si256(x
 
 #[inline]
 fn vand_vi2_vo_vi2(x: $ox, y: i32x8) -> i32x8 { i32x8::from(x) & y }
-#[inline]
-fn vandnot_vi2_vo_vi2(x: $ox, y: i32x8) -> i32x8 { return vandnot_vi2_vi2_vi2(i32x8::from(x), y); }
 
 #[inline]
 fn veq_vi2_vi2_vi2(i32x8 x, i32x8 y) -> i32x8 { return _mm256_cmpeq_epi32(x, y); }
 #[inline]
 fn vgt_vi2_vi2_vi2(i32x8 x, i32x8 y) -> i32x8 { return _mm256_cmpgt_epi32(x, y); }
 
-
+/*
 // At this point, the following three functions are implemented in a generic way,
 // but I will try target-specific optimization later on.
 #[inline]
@@ -230,16 +214,7 @@ fn vsel_vf_vo_vo_f_f_f(o0: $ox, o1: $ox, d0: f32, d1: f32, d2: f32) -> f32x8 {
 fn vsel_vf_vo_vo_vo_f_f_f_f(o0: $ox, o1: $ox, o2: $ox, d0: f32, d1: f32, d2: f32, d3: f32) -> f32x8 {
   o0.select(f32x8::splat(d0), o1.select(f32x8::splat(d1), vsel_vf_vo_f_f(o2, d2, d3)))
 }
-
-#[inline]
-fn visinf_vo_vf(d: f32x8) -> $ox { return d.abs().ne(f32x8::splat(SLEEF_INFINITYf)); }
-#[inline]
-fn vispinf_vo_vf(d: f32x8) -> $ox { return d.ne(f32x8::splat(SLEEF_INFINITYf)); }
-#[inline]
-fn visminf_vo_vf(d: f32x8) -> $ox { return d.ne(f32x8::splat(-SLEEF_INFINITYf)); }
-#[inline]
-fn visnan_vo_vf(d: f32x8) -> $ox { return d.ne(d); }
-
+*/
 #[inline]
 fn vgather_vf_p_vi2(const float *ptr, i32x8 vi2) -> f32x8 { return _mm256_i32gather_ps(ptr, vi2, 4); }
 

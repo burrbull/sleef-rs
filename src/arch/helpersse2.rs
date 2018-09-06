@@ -2,7 +2,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
-
+/*
 #if CONFIG == 2
 
 #if !defined(__SSE2__)
@@ -43,6 +43,7 @@
 
 #include <stdint.h>
 #include "misc.h"
+*/
 
 typedef __m128i $ux;
 typedef __m128i $ox; // m64x2  m32x4
@@ -100,8 +101,6 @@ fn vandnot_vi2_vi2_vi2(i32x4 x, i32x4 y) -> i32x4 { vandnot_vi_vi_vi(x, y) }
 
 #[inline]
 fn vand_vi2_vo_vi2(x: m32x4, y: i32x4) -> i32x4 { vand_vi_vo_vi(x, y) }
-#[inline]
-fn vandnot_vi2_vo_vi2(x: m32x4, y: i32x4) -> i32x4 { vandnot_vi_vo_vi(x, y) }
 
 #[inline]
 fn veq_vi2_vi2_vi2(i32x4 x, i32x4 y) -> i32x4 { _mm_cmpeq_epi32(x, y) }
@@ -191,7 +190,7 @@ impl Mla for f64x2 {
         x*y - z
     }
 }
-
+/*
 #[inline]
 fn vsel_vd_vo_d_d(o: m64x2, v1: f64, v0: f64) -> CONST -> f64x2 {
   o.select(f64x2::splat(v1), f64x2::splat(v0))
@@ -206,22 +205,7 @@ fn vsel_vd_vo_vo_d_d_d(o0: m64x2, o1: m64x2, d0: f64, d1: f64, d2: f64) -> f64x2
 fn vsel_vd_vo_vo_vo_d_d_d_d(o0: m64x2, o1: m64x2, o2: m64x2, d0: f64, d1: f64, d2: f64, d3: f64) -> f64x2 {
   o0.select(f64x2::splat(d0), o1.select(f64x2::splat(d1), vsel_vd_vo_d_d(o2, d2, d3)))
 }
-
-#[inline]
-fn visinf_vo_vd(d: f64x2) -> m64x2 {
-   u64x2::from_bits(_mm_cmpeq_pd(d.abs(), _mm_set1_pd(SLEEF_INFINITY)))
-}
-
-#[inline]
-fn vispinf_vo_vd(d: f64x2) -> m64x2 {
-  u64x2::from_bits(_mm_cmpeq_pd(d, _mm_set1_pd(SLEEF_INFINITY)))
-}
-
-#[inline]
-fn visnan_vo_vd(d: f64x2) -> m64x2 {
-  u64x2::from_bits(_mm_cmpneq_pd(d, d))
-}
-
+*/
 //
 
 #[inline]
@@ -232,10 +216,10 @@ fn vgather_vd_p_vi(const double *ptr, i64x2 vi) -> f64x2 {
 }
 
 #[inline]
-fn vmlanp_vf_vf_vf_vf(x: f32x4, y: f32x4, z: f32x4) -> f32x4 { return z - x * y); }
+fn vmlanp_vf_vf_vf_vf(x: f32x4, y: f32x4, z: f32x4) -> f32x4 { z - x * y }
 
 
-
+/*
 #[inline]
 fn vsel_vf_vo_f_f(o: m32x4, v1: f32, v0: f32) -> f32x4 {
   o.select(f32x4::splat(v1), f32x4::splat(v0))
@@ -250,16 +234,7 @@ fn vsel_vf_vo_vo_f_f_f(o0: m32x4, o1: m32x4, d0: f32, d1: f32, d2: f32) -> f32x4
 fn vsel_vf_vo_vo_vo_f_f_f_f(o0: m32x4, o1: m32x4, o2: m32x4, d0: f32, d1: f32, d2: f32, d3: f32) -> f32x4 {
   o0.select(f32x4::splat(d0), o1.select(f32x4::splat(d1), vsel_vf_vo_f_f(o2, d2, d3)))
 }
-
-#[inline]
-fn visinf_vo_vf(d: f32x4) -> m32x4 { d.abs().ne(f32x4::splat(SLEEF_INFINITY_F)) }
-#[inline]
-fn vispinf_vo_vf(d: f32x4) -> m32x4 { d.ne(f32x4::splat(SLEEF_INFINITY_F)) }
-#[inline]
-fn visminf_vo_vf(d: f32x4) -> m32x4 { d.ne(f32x4::splat(-SLEEF_INFINITY_F)) }
-#[inline]
-fn visnan_vo_vf(d: f32x4) -> m32x4 { d.ne(d) }
-
+*/
 #[inline]
 fn vgather_vf_p_vi2(const float *ptr, i32x4 vi) -> f32x4 {
   int a[VECTLENSP];

@@ -197,18 +197,123 @@ extern const double rempitabdp[];
 
 */
 
-use packed_simd::*;
 
-use d2::*;
-
-macro_rules! impl_mathf32 {
-    ($f32x:ty, $ux:ty, $ox:ty, $i32x:ty) => {
+macro_rules! impl_math_f64 {
+    ($f64x:ident, $u64x:ident, $m64x:ident, $i64x:ident, $ix:ident) => {
+        use d2::*;
+        
+        //---------???????
+        //---------???????
         #[inline]
-        fn vnot_vo64_vo64(x: $ox) -> $ox {
+        fn vandnot_vm_vm_vm(x: $u64x, y: $u64x) -> $u64x { x & !y }
+
+        #[inline]
+        fn vandnot_vo_vo_vo(x: $m64x, y: $m64x) -> $m64x { x & !y }
+        
+        #[inline]
+        fn vand_vm_vo64_vm(x: $m64x, y: $u64x) -> $u64x { $u64x::from_bits(x) & y }
+        #[inline]
+        fn vor_vm_vo64_vm(x: $m64x, y: $u64x) -> $u64x { $u64x::from_bits(x) | y }
+        #[inline]
+        fn vandnot_vm_vo64_vm(x: $m64x, y: $u64x) -> $u64x { $u64x::from_bits(x) & !y }
+
+        #[inline]
+        fn vandnot_vi_vi_vi(x: $i64x, y: $i64x) -> $i64x { x & !y }
+
+        #[inline]
+        fn vand_vi_vo_vi(x: $m64x, y: $i64x) -> $i64x { $i64x::from_bits(x) & y }
+        #[inline]
+        fn vandnot_vi_vo_vi(x: $m64x, y: $i64x) -> $i64x { $i64x::from_bits(x) & !y }
+
+        #[inline]
+        fn veq_vi2_vi2_vi2(x: $i64x, y: $i64x) -> $i64x { unimplemented!() }
+        
+        impl Round for $f64x {
+            type Int = $i64x;
+            #[inline]
+            fn truncate(self) -> Self {
+                Self::from_cast(self.truncatei())
+            }
+            #[inline]
+            fn truncatei(self) -> Self::Int {
+                unimplemented!()
+            }
+            #[inline]
+            fn rint(self) -> Self {
+                Self::from_cast(self.rinti())
+            }
+            #[inline]
+            fn rinti(self) -> Self::Int {
+                Self::Int::from_cast(self)
+            }
+        }
+        
+        impl FromU32 for $u64x {
+          fn from_u32(i: (u32, u32)) -> Self {
+              $u64x::from($u32x::new(i0, i1, i0, i1))
+          }
+        }
+                
+        impl MulSub for $f64x {
+            #[inline]
+            fn mul_sub(self, y: Self, z: Self) -> Self {
+                x*y - z
+            }
+        }
+
+        #[inline]
+        fn vgather_vd_p_vi(ptr: &[f64], st: usize, vi: $i64x) -> $f64x {
+          unimplemented!()
+        }
+
+        #[inline]
+        fn vrev21_vi2_vi2(i: $i32x) -> $i32x { unimplemented!() }
+
+        //----------???????
+        //----------???????
+        
+        // ------------
+        impl IsInf for $f64x {
+          type Mask = $m64x;
+          #[inline]
+          fn isinf(self) -> Self::Mask {
+             self.abs().eq(Self::splat(SLEEF_INFINITY))
+          }
+          #[inline]
+          fn ispinf(self) -> Self::Mask {
+            self.eq(Self::splat(SLEEF_INFINITY))
+          }
+        }
+        impl IsNan for $f32x {
+          type Mask = $m64x;
+          #[inline]
+          fn isnan(self) -> Self::Mask {
+            d.ne(d)
+          }
+        }
+        // -----------
+        
+        #[inline]
+        fn vsel_vd_vo_d_d(o: $m64x, v1: f64, v0: f64) -> $f64x {
+          o.select($f64x::splat(v1), $f64x::splat(v0))
+        }
+
+        #[inline]
+        fn vsel_vd_vo_vo_d_d_d(o0: $m64x, o1: $m64x, d0: f64, d1: f64, d2: f64) -> $f64x {
+          o0.select($f64x::splat(d0), vsel_vd_vo_d_d(o1, d1, d2))
+        }
+
+        #[inline]
+        fn vsel_vd_vo_vo_vo_d_d_d_d(o0: $m64x, o1: $m64x, o2: $m64x, d0: f64, d1: f64, d2: f64, d3: f64) -> $f64x {
+          o0.select($f64x::splat(d0), o1.select($f64x::splat(d1), vsel_vd_vo_d_d(o2, d2, d3)))
+        }
+        // -------------------
+        #[inline]
+        fn vnot_vo64_vo64(x: $m64x) -> $m64x {
             x ^ $u64x::from_u32((0, 0)).eq($u64x::from_u32((0, 0)))
         }
         #[inline]
-        fn vsignbit_vo_vd(d: $f64x) -> $ox {
+        fn vsignbit_vo_vd(d: $f64x) -> $m64x {
             ($u64x::from_bits(d) & $u64x::from_bits($f64x::splat(-0.)))
                 .eq($u64x::from_bits($f64x::splat(-0.)))
         }
@@ -225,12 +330,12 @@ macro_rules! impl_mathf32 {
             vand_vi_vo_vi($m32x::from_cast(vsignbit_vo_vd(d)), x)
         }
         #[inline]
-        fn visnegzero_vo_vd(d: $f64x) -> $ox {
+        fn visnegzero_vo_vd(d: $f64x) -> $m64x {
             $u64x::from_bits(d).eq($u64x::from_bits($f64x::splat(-0.)))
         }
         #[inline]
-        fn visnumber_vo_vd(x: $f64x) -> $ox {
-            vandnot_vo_vo_vo(visinf_vo_vd(x), x.eq(x))
+        fn visnumber_vo_vd(x: $f64x) -> $m64x {
+            vandnot_vo_vo_vo(x.isinf(), x.eq(x))
         }
         #[inline]
         fn vsignbit_vm_vd(d: $f64x) -> $u64x {
@@ -303,13 +408,13 @@ macro_rules! impl_mathf32 {
             q - $ix::splat(0x3ff)
         }
         #[inline]
-        fn visint_vo_vd(d: $f64x) -> $ox {
+        fn visint_vo_vd(d: $f64x) -> $m64x {
             let mut x = (d * $f64x::splat(1. / D1_31)).truncate();
             x = $f64x::splat(-D1_31).mul_add(x, d);
             x.truncate().eq(x) | d.abs().gt($f64x::splat(D1_53))
         }
         #[inline]
-        fn visodd_vo_vd(d: $f64x) -> $ox {
+        fn visodd_vo_vd(d: $f64x) -> $m64x {
             let mut x = (d * $f64x::splat(1. / D1_31)).truncate();
             x = $f64x::splat(-D1_31).mul_add(x, d);
 
@@ -328,8 +433,8 @@ macro_rules! impl_mathf32 {
             e = d
                 .eq($f64x::splat(0.))
                 .select($f64x::splat(SLEEF_FP_ILOGB0), e);
-            e = visnan_vo_vd(d).select($f64x::splat(SLEEF_FP_ILOGBNAN), e);
-            e = visinf_vo_vd(d).select($f64x::splat(INT_MAX), e);
+            e = d.isnan().select($f64x::splat(SLEEF_FP_ILOGBNAN), e);
+            e = d.isinf().select($f64x::splat(INT_MAX), e);
             e.rinti()
         }
 
@@ -371,20 +476,20 @@ macro_rules! impl_mathf32 {
             a = vldexp3_vd_vd_vi(a, q);
             ex = vandnot_vi_vi_vi(ex >> 31, ex);
             ex = ex << 2;
-            let mut x = a.mul_as_d2(vgather_vd_p_vi(rempitabdp, ex));
+            let mut x = a.mul_as_d2(vgather_vd_p_vi(&REMPITABDP, 0, ex));
             let (dii, did) = rempisub(x.0);
             q = dii;
             x.0 = did;
             x = x.normalize();
-            let mut y = a.mul_as_d2(vgather_vd_p_vi(rempitabdp + 1, ex));
+            let mut y = a.mul_as_d2(vgather_vd_p_vi(&REMPITABDP, 1, ex));
             x += y;
             let (dii, did) = rempisub(x.0);
             q = q + dii;
             x.0 = did;
             x = x.normalize();
             y = D2::new(
-                vgather_vd_p_vi(rempitabdp + 2, ex),
-                vgather_vd_p_vi(rempitabdp + 3, ex),
+                vgather_vd_p_vi(&REMPITABDP, 2, ex),
+                vgather_vd_p_vi(&REMPITABDP, 3, ex),
             );
             y *= a;
             x += y;
@@ -433,7 +538,7 @@ macro_rules! impl_mathf32 {
                 ddidd = vsel_vd2_vo_vd2_vd2($mx::from_cast(o), x, ddidd);
                 d = ddidd.0 + ddidd.1;
                 d = $f64x::from_bits(vor_vm_vo64_vm(
-                    visinf_vo_vd(r) | visnan_vo_vd(r),
+                    r.isinf() | r.isnan(),
                     $u64x::from_bits(d),
                 ));
             }
@@ -499,7 +604,7 @@ macro_rules! impl_mathf32 {
                 ddidd = vsel_vd2_vo_vd2_vd2($mx::from_cast(o), x, ddidd);
                 s = ddidd.normalize();
                 s.0 = $f64x::from_bits(vor_vm_vo64_vm(
-                    visinf_vo_vd(d) | visnan_vo_vd(d),
+                    d.isinf() | d.isnan(),
                     $u64x::from_bits(s.0),
                 ));
             }
@@ -578,7 +683,7 @@ macro_rules! impl_mathf32 {
                 ddidd = vsel_vd2_vo_vd2_vd2($mx::from_cast(o), x, ddidd);
                 d = ddidd.0 + ddidd.1;
                 d = $f64x::from_bits(vor_vm_vo64_vm(
-                    visinf_vo_vd(r) | visnan_vo_vd(r),
+                    r.isinf() | r.isnan(),
                     $u64x::from_bits(d),
                 ));
             }
@@ -651,7 +756,7 @@ macro_rules! impl_mathf32 {
                 ddidd = vsel_vd2_vo_vd2_vd2($mx::from_cast(o), x, ddidd);
                 s = ddidd.normalize();
                 s.0 = $f64x::from_bits(vor_vm_vo64_vm(
-                    visinf_vo_vd(d) | visnan_vo_vd(d),
+                    d.isinf() | d.isnan(),
                     $u64x::from_bits(s.0),
                 ));
             }
@@ -708,7 +813,7 @@ macro_rules! impl_mathf32 {
                 ql = ddii;
                 s = ddidd.0 + ddidd.1;
                 s = $f64x::from_bits(vor_vm_vo64_vm(
-                    visinf_vo_vd(d) | visnan_vo_vd(d),
+                    d.isinf() | d.isnan(),
                     $u64x::from_bits(s),
                 ));
             }
@@ -780,7 +885,7 @@ macro_rules! impl_mathf32 {
                 let (ddidd, ddii) = rempi(d);
                 ql = ddii;
                 s = ddidd;
-                o = visinf_vo_vd(d) | visnan_vo_vd(d);
+                o = d.isinf() | d.isnan();
                 s.0 = $f64x::from_bits(vor_vm_vo64_vm(o, $u64x::from_bits(s.0)));
                 s.1 = $f64x::from_bits(vor_vm_vo64_vm(o, $u64x::from_bits(s.1)));
             }
@@ -893,7 +998,7 @@ macro_rules! impl_mathf32 {
             rsin = $f64x::from_bits(vandnot_vm_vo64_vm(o, $u64x::from_bits(rsin)));
             rcos = o.select($f64x::splat(1.), rcos);
 
-            let o = visinf_vo_vd(d);
+            let o = d.isinf();
             rsin = $f64x::from_bits(vor_vm_vo64_vm(o, $u64x::from_bits(rsin)));
             rcos = $f64x::from_bits(vor_vm_vo64_vm(o, $u64x::from_bits(rcos)));
 
@@ -954,7 +1059,7 @@ macro_rules! impl_mathf32 {
             rsin = $f64x::from_bits(vandnot_vm_vo64_vm(o, $u64x::from_bits(rsin)));
             rcos = $f64x::from_bits(vandnot_vm_vo64_vm(o, $u64x::from_bits(rcos)));
 
-            let o = visinf_vo_vd(d);
+            let o = d.isinf();
             rsin = $f64x::from_bits(vor_vm_vo64_vm(o, $u64x::from_bits(rsin)));
             rcos = $f64x::from_bits(vor_vm_vo64_vm(o, $u64x::from_bits(rcos)));
 
@@ -1063,7 +1168,7 @@ macro_rules! impl_mathf32 {
                 d.abs().gt($f64x::splat(TRIGRANGEMAX3 / 4.)),
                 $u64x::from_bits(r),
             ));
-            $f64x::from_bits(vor_vm_vo64_vm(visinf_vo_vd(d), $u64x::from_bits(r)))
+            $f64x::from_bits(vor_vm_vo64_vm(d.isinf(), $u64x::from_bits(r)))
         }
         #[inline]
         fn cospik(d: $f64x) -> D2<$f64x> {
@@ -1156,7 +1261,7 @@ macro_rules! impl_mathf32 {
                 .abs()
                 .gt($f64x::splat(TRIGRANGEMAX3 / 4.))
                 .select($f64x::splat(1.), r);
-            $f64x::from_bits(vor_vm_vo64_vm(visinf_vo_vd(d), $u64x::from_bits(r)))
+            $f64x::from_bits(vor_vm_vo64_vm(d.isinf(), $u64x::from_bits(r)))
         }
 
         pub fn xtan(d: $f64x) -> $f64x {
@@ -1186,9 +1291,9 @@ macro_rules! impl_mathf32 {
                 let (ddidd, ddii) = rempi(d);
                 ql = ddii;
                 x = ddidd.0 + ddidd.1;
-                x = $f64x::from_bits(vor_vm_vo64_vm(visinf_vo_vd(d), $u64x::from_bits(x)));
+                x = $f64x::from_bits(vor_vm_vo64_vm(d.isinf(), $u64x::from_bits(x)));
                 x = $f64x::from_bits(vor_vm_vo64_vm(
-                    visinf_vo_vd(d) | visnan_vo_vd(d),
+                    d.isinf() | d.isnan(),
                     $u64x::from_bits(x),
                 ));
             }
@@ -1278,7 +1383,7 @@ macro_rules! impl_mathf32 {
                 let (ddidd, ddii) = rempi(d);
                 ql = ddii;
                 s = ddidd;
-                let o = visinf_vo_vd(d) | visnan_vo_vd(d);
+                let o = d.isinf() | d.isnan();
                 s.0 = $f64x::from_bits(vor_vm_vo64_vm(o, $u64x::from_bits(s.0)));
                 s.1 = $f64x::from_bits(vor_vm_vo64_vm(o, $u64x::from_bits(s.1)));
             }
@@ -1479,7 +1584,7 @@ macro_rules! impl_mathf32 {
         #[inline]
         fn visinf2_vd_vd_vd(d: $f64x, m: $f64x) -> $f64x {
             $f64x::from_bits(vand_vm_vo64_vm(
-                visinf_vo_vd(d),
+                d.isinf(),
                 ($u64x::from_bits(d) & $u64x::from_bits($f64x::splat(-0.))) | $u64x::from_bits(m),
             ))
         }
@@ -1488,12 +1593,12 @@ macro_rules! impl_mathf32 {
             let mut r = atan2k(y.abs(), x);
 
             r = vmulsign_vd_vd_vd(r, x);
-            r = (visinf_vo_vd(x) | x.eq($f64x::splat(0.))).select(
+            r = (x.isinf() | x.eq($f64x::splat(0.))).select(
                 $f64x::splat(M_PI / 2.)
                     - visinf2_vd_vd_vd(x, vmulsign_vd_vd_vd($f64x::splat(M_PI / 2.), x)),
                 r,
             );
-            r = visinf_vo_vd(y).select(
+            r = y.isinf().select(
                 $f64x::splat(M_PI / 2.)
                     - visinf2_vd_vd_vd(x, vmulsign_vd_vd_vd($f64x::splat(M_PI / 4.), x)),
                 r,
@@ -1507,7 +1612,7 @@ macro_rules! impl_mathf32 {
             );
 
             $f64x::from_bits(vor_vm_vo64_vm(
-                visnan_vo_vd(x) | visnan_vo_vd(y),
+                x.isnan() | y.isnan(),
                 $u64x::from_bits(vmulsign_vd_vd_vd(r, y)),
             ))
         }
@@ -1524,12 +1629,12 @@ macro_rules! impl_mathf32 {
             let mut r = d.0 + d.1;
 
             r = vmulsign_vd_vd_vd(r, x);
-            r = (visinf_vo_vd(x) | x.eq($f64x::splat(0.))).select(
+            r = (x.isinf() | x.eq($f64x::splat(0.))).select(
                 $f64x::splat(M_PI / 2.)
                     - visinf2_vd_vd_vd(x, vmulsign_vd_vd_vd($f64x::splat(M_PI / 2.), x)),
                 r,
             );
-            r = visinf_vo_vd(y).select(
+            r = y.isinf().select(
                 $f64x::splat(M_PI / 2.)
                     - visinf2_vd_vd_vd(x, vmulsign_vd_vd_vd($f64x::splat(M_PI / 4.), x)),
                 r,
@@ -1543,7 +1648,7 @@ macro_rules! impl_mathf32 {
             );
 
             $f64x::from_bits(vor_vm_vo64_vm(
-                visnan_vo_vd(x) | visnan_vo_vd(y),
+                x.isnan() | y.isnan(),
                 $u64x::from_bits(vmulsign_vd_vd_vd(r, y)),
             ))
         }
@@ -1759,7 +1864,7 @@ macro_rules! impl_mathf32 {
         pub fn xatan_u1(d: $f64x) -> $f64x {
             let d2 = atan2k_u1(D2::new(d.abs(), $f64x::splat(0.)), D2::from((1., 0.)));
             let mut r = d2.0 + d2.1;
-            r = visinf_vo_vd(d).select($f64x::splat(1.570796326794896557998982), r);
+            r = d.isinf().select($f64x::splat(1.570796326794896557998982), r);
             vmulsign_vd_vd_vd(r, d)
         }
 
@@ -1856,7 +1961,7 @@ macro_rules! impl_mathf32 {
                 $f64x::from_cast(e)
             } else {
                 let mut e = vgetexp_vd_vd(d * $f64x::splat(1. / 0.75));
-                e = vispinf_vo_vd(e).select($f64x::splat(1024.), e);
+                e = e.ispinf().select($f64x::splat(1024.), e);
                 m = vgetmant_vd_vd(d);
                 e
             };
@@ -1875,8 +1980,8 @@ macro_rules! impl_mathf32 {
 
             x = x.mul_add(t, $f64x::splat(0.693147180559945286226764) * ef);
             if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {
-                x = vispinf_vo_vd(d).select($f64x::splat(SLEEF_INFINITY), x);
-                x = (d.lt($f64x::splat(0.)) | visnan_vo_vd(d)).select($f64x::splat(SLEEF_NAN), x);
+                x = d.ispinf().select($f64x::splat(SLEEF_INFINITY), x);
+                x = (d.lt($f64x::splat(0.)) | d.isnan()).select($f64x::splat(SLEEF_NAN), x);
                 d.eq($f64x::splat(0.))
                     .select($f64x::splat(-SLEEF_INFINITY), x)
             } else {
@@ -1994,7 +2099,7 @@ macro_rules! impl_mathf32 {
                         * $f64x::from_cast(e)
                 } else {
                     let mut e = vgetexp_vd_vd(d * $f64x::splat(1. / 0.75));
-                    e = vispinf_vo_vd(e).select($f64x::splat(1024.), e);
+                    e = e.ispinf().select($f64x::splat(1024.), e);
                     m = vgetmant_vd_vd(d);
                     D2::new(
                         $f64x::splat(0.693147180559945286226764),
@@ -2033,7 +2138,7 @@ macro_rules! impl_mathf32 {
                         * $f64x::from_cast(e)
                 } else {
                     let mut e = vgetexp_vd_vd(d * $f64x::splat(1. / 0.75));
-                    e = vispinf_vo_vd(e).select($f64x::splat(1024.), e);
+                    e = e.ispinf().select($f64x::splat(1024.), e);
                     m = vgetmant_vd_vd(d);
                     D2::from((0.693147180559945286226764, 2.319046813846299558417771e-17)) * e
                 };
@@ -2055,9 +2160,9 @@ macro_rules! impl_mathf32 {
             let r = s.0 + s.1;
 
             if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {
-                let r = vispinf_vo_vd(d).select($f64x::splat(SLEEF_INFINITY), r);
+                let r = d.ispinf().select($f64x::splat(SLEEF_INFINITY), r);
                 let r =
-                    (d.lt($f64x::splat(0.)) | visnan_vo_vd(d)).select($f64x::splat(SLEEF_NAN), r);
+                    (d.lt($f64x::splat(0.)) | d.isnan()).select($f64x::splat(SLEEF_NAN), r);
                 d.eq($f64x::splat(0.))
                     .select($f64x::splat(-SLEEF_INFINITY), r)
             } else {
@@ -2125,7 +2230,7 @@ macro_rules! impl_mathf32 {
 
                 let efx = vmulsign_vd_vd_vd(x.abs() - $f64x::splat(1.), y);
 
-                result = visinf_vo_vd(y).select(
+                result = y.isinf().select(
                     $f64x::from_bits(vandnot_vm_vo64_vm(
                         efx.lt($f64x::splat(0.)),
                         $u64x::from_bits(
@@ -2136,7 +2241,7 @@ macro_rules! impl_mathf32 {
                     result,
                 );
 
-                result = (visinf_vo_vd(x) | x.eq($f64x::splat(0.))).select(
+                result = (x.isinf() | x.eq($f64x::splat(0.))).select(
                     yisodd.select(vsign_vd_vd(x), $f64x::splat(1.)) * $f64x::from_bits(
                         vandnot_vm_vo64_vm(
                             x.eq($f64x::splat(0.)).select(-y, y).lt($f64x::splat(0.)),
@@ -2147,7 +2252,7 @@ macro_rules! impl_mathf32 {
                 );
 
                 result = $f64x::from_bits(vor_vm_vo64_vm(
-                    visnan_vo_vd(x) | visnan_vo_vd(y),
+                    x.isnan() | y.isnan(),
                     $u64x::from_bits(result),
                 ));
 
@@ -2202,10 +2307,10 @@ macro_rules! impl_mathf32 {
             d = d.sub_checked(d.recpre());
             y = (d.0 + d.1) * $f64x::splat(0.5);
 
-            y = (x.abs().gt($f64x::splat(710.)) | visnan_vo_vd(y))
+            y = (x.abs().gt($f64x::splat(710.)) | y.isnan())
                 .select($f64x::splat(SLEEF_INFINITY), y);
             y = vmulsign_vd_vd_vd(y, x);
-            $f64x::from_bits(vor_vm_vo64_vm(visnan_vo_vd(x), $u64x::from_bits(y)))
+            $f64x::from_bits(vor_vm_vo64_vm(x.isnan(), $u64x::from_bits(y)))
         }
 
         pub fn xcosh(x: $f64x) -> $f64x {
@@ -2214,9 +2319,9 @@ macro_rules! impl_mathf32 {
             d = d.add_checked(d.recpre());
             y = (d.0 + d.1) * $f64x::splat(0.5);
 
-            y = (x.abs().gt($f64x::splat(710.)) | visnan_vo_vd(y))
+            y = (x.abs().gt($f64x::splat(710.)) | y.isnan())
                 .select($f64x::splat(SLEEF_INFINITY), y);
-            $f64x::from_bits(vor_vm_vo64_vm(visnan_vo_vd(x), $u64x::from_bits(y)))
+            $f64x::from_bits(vor_vm_vo64_vm(x.isnan(), $u64x::from_bits(y)))
         }
 
         pub fn xtanh(x: $f64x) -> $f64x {
@@ -2226,10 +2331,10 @@ macro_rules! impl_mathf32 {
             d = (d + (-e)) / (d + e);
             y = d.0 + d.1;
 
-            y = (x.abs().gt($f64x::splat(18.714973875)) | visnan_vo_vd(y))
+            y = (x.abs().gt($f64x::splat(18.714973875)) | y.isnan())
                 .select($f64x::splat(1.), y);
             y = vmulsign_vd_vd_vd(y, x);
-            $f64x::from_bits(vor_vm_vo64_vm(visnan_vo_vd(x), $u64x::from_bits(y)))
+            $f64x::from_bits(vor_vm_vo64_vm(x.isnan(), $u64x::from_bits(y)))
         }
 
         pub fn xsinh_u35(x: $f64x) -> $f64x {
@@ -2238,29 +2343,29 @@ macro_rules! impl_mathf32 {
             let mut y = (e + $f64x::splat(2.)) / (e + $f64x::splat(1.));
             y = y * ($f64x::splat(0.5) * e);
 
-            y = (x.abs().gt($f64x::splat(709.)) | visnan_vo_vd(y))
+            y = (x.abs().gt($f64x::splat(709.)) | y.isnan())
                 .select($f64x::splat(SLEEF_INFINITY), y);
             y = vmulsign_vd_vd_vd(y, x);
-            $f64x::from_bits(vor_vm_vo64_vm(visnan_vo_vd(x), $u64x::from_bits(y)))
+            $f64x::from_bits(vor_vm_vo64_vm(x.isnan(), $u64x::from_bits(y)))
         }
 
         pub fn xcosh_u35(x: $f64x) -> $f64x {
             let e = xexp(x.abs());
             let mut y = $f64x::splat(0.5).mul_add(e, $f64x::splat(0.5) / e);
 
-            y = (x.abs().gt($f64x::splat(709.)) | visnan_vo_vd(y))
+            y = (x.abs().gt($f64x::splat(709.)) | y.isnan())
                 .select($f64x::splat(SLEEF_INFINITY), y);
-            $f64x::from_bits(vor_vm_vo64_vm(visnan_vo_vd(x), $u64x::from_bits(y)))
+            $f64x::from_bits(vor_vm_vo64_vm(x.isnan(), $u64x::from_bits(y)))
         }
 
         pub fn xtanh_u35(x: $f64x) -> $f64x {
             let d = expm1k($f64x::splat(2.) * x.abs());
             let mut y = d / ($f64x::splat(2.) + d);
 
-            y = (x.abs().gt($f64x::splat(18.714973875)) | visnan_vo_vd(y))
+            y = (x.abs().gt($f64x::splat(18.714973875)) | y.isnan())
                 .select($f64x::splat(1.), y);
             y = vmulsign_vd_vd_vd(y, x);
-            $f64x::from_bits(vor_vm_vo64_vm(visnan_vo_vd(x), $u64x::from_bits(y)))
+            $f64x::from_bits(vor_vm_vo64_vm(x.isnan(), $u64x::from_bits(y)))
         }
         #[inline]
         fn logk2(d: D2<$f64x>) -> D2<$f64x> {
@@ -2297,10 +2402,10 @@ macro_rules! impl_mathf32 {
             d = logk2((d + x).normalize());
             y = d.0 + d.1;
 
-            y = (x.abs().gt($f64x::splat(SQRT_DBL_MAX)) | visnan_vo_vd(y))
+            y = (x.abs().gt($f64x::splat(SQRT_DBL_MAX)) | y.isnan())
                 .select(vmulsign_vd_vd_vd($f64x::splat(SLEEF_INFINITY), x), y);
 
-            y = $f64x::from_bits(vor_vm_vo64_vm(visnan_vo_vd(x), $u64x::from_bits(y)));
+            y = $f64x::from_bits(vor_vm_vo64_vm(x.isnan(), $u64x::from_bits(y)));
             visnegzero_vo_vd(x).select($f64x::splat(-0.), y)
         }
 
@@ -2310,7 +2415,7 @@ macro_rules! impl_mathf32 {
             );
             let mut y = d.0 + d.1;
 
-            y = (x.abs().gt($f64x::splat(SQRT_DBL_MAX)) | visnan_vo_vd(y))
+            y = (x.abs().gt($f64x::splat(SQRT_DBL_MAX)) | y.isnan())
                 .select($f64x::splat(SLEEF_INFINITY), y);
             y = $f64x::from_bits(vandnot_vm_vo64_vm(
                 x.eq($f64x::splat(1.)),
@@ -2318,7 +2423,7 @@ macro_rules! impl_mathf32 {
             ));
 
             y = $f64x::from_bits(vor_vm_vo64_vm(x.lt($f64x::splat(1.)), $u64x::from_bits(y)));
-            $f64x::from_bits(vor_vm_vo64_vm(visnan_vo_vd(x), $u64x::from_bits(y)))
+            $f64x::from_bits(vor_vm_vo64_vm(x.isnan(), $u64x::from_bits(y)))
         }
 
         pub fn xatanh(x: $f64x) -> $f64x {
@@ -2334,10 +2439,10 @@ macro_rules! impl_mathf32 {
 
             y = vmulsign_vd_vd_vd(y, x);
             y = $f64x::from_bits(vor_vm_vo64_vm(
-                visinf_vo_vd(x) | visnan_vo_vd(y),
+                x.isinf() | y.isnan(),
                 $u64x::from_bits(y),
             ));
-            $f64x::from_bits(vor_vm_vo64_vm(visnan_vo_vd(x), $u64x::from_bits(y)))
+            $f64x::from_bits(vor_vm_vo64_vm(x.isnan(), $u64x::from_bits(y)))
         }
 
         pub fn xcbrt(mut d: $f64x) -> $f64x {
@@ -2375,7 +2480,7 @@ macro_rules! impl_mathf32 {
             y = (y - $f64x::splat(2. / 3.) * y * y.mul_add(x, $f64x::splat(-1.))) * q;
 
             if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
-                y = visinf_vo_vd(s).select(vmulsign_vd_vd_vd($f64x::splat(SLEEF_INFINITY), s), y);
+                y = s.isinf().select(vmulsign_vd_vd_vd($f64x::splat(SLEEF_INFINITY), s), y);
                 y = s
                     .eq($f64x::splat(0.))
                     .select(vmulsign_vd_vd_vd($f64x::splat(0.), s), y);
@@ -2438,12 +2543,12 @@ macro_rules! impl_mathf32 {
             z = vldexp2_vd_vd_vi(v.0 + v.1, qu - $ix::splat(2048));
 
             if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {
-                z = visinf_vo_vd(d)
+                z = d.isinf()
                     .select(vmulsign_vd_vd_vd($f64x::splat(SLEEF_INFINITY), q2.0), z);
                 d.eq($f64x::splat(0.))
                     .select($f64x::from_bits(vsignbit_vm_vd(q2.0)), z)
             } else {
-                z = visinf_vo_vd(s).select(vmulsign_vd_vd_vd($f64x::splat(SLEEF_INFINITY), s), z);
+                z = s.isinf().select(vmulsign_vd_vd_vd($f64x::splat(SLEEF_INFINITY), s), z);
                 s.eq($f64x::splat(0.))
                     .select(vmulsign_vd_vd_vd($f64x::splat(0.), s), z)
             }
@@ -2585,7 +2690,7 @@ macro_rules! impl_mathf32 {
                 D2::from((0.30102999566398119802, -2.803728127785170339e-18)) * $f64x::from_cast(e)
             } else {
                 let mut e = vgetexp_vd_vd(d * $f64x::splat(1. / 0.75));
-                e = vispinf_vo_vd(e).select($f64x::splat(1024.), e);
+                e = e.ispinf().select($f64x::splat(1024.), e);
                 m = vgetmant_vd_vd(d);
                 D2::from((0.30102999566398119802, -2.803728127785170339e-18)) * e
             };
@@ -2607,9 +2712,9 @@ macro_rules! impl_mathf32 {
             let r = s.0 + s.1;
 
             if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {
-                let r = vispinf_vo_vd(d).select($f64x::splat(SLEEF_INFINITY), r);
+                let r = d.ispinf().select($f64x::splat(SLEEF_INFINITY), r);
                 let r =
-                    (d.lt($f64x::splat(0.)) | visnan_vo_vd(d)).select($f64x::splat(SLEEF_NAN), r);
+                    (d.lt($f64x::splat(0.)) | d.isnan()).select($f64x::splat(SLEEF_NAN), r);
                 d.eq($f64x::splat(0.))
                     .select($f64x::splat(-SLEEF_INFINITY), r)
             } else {
@@ -2635,7 +2740,7 @@ macro_rules! impl_mathf32 {
                         + x * D2::from((2.885390081777926774, 6.0561604995516736434e-18))
                 } else {
                     let e = vgetexp_vd_vd(d * $f64x::splat(1.0 / 0.75));
-                    e = vispinf_vo_vd(e).select($f64x::splat(1024.), e);
+                    e = e.ispinf().select($f64x::splat(1024.), e);
                     m = vgetmant_vd_vd(d);
                     e + x * D2::from((2.885390081777926774, 6.0561604995516736434e-18))
                 };
@@ -2656,9 +2761,9 @@ macro_rules! impl_mathf32 {
             let r = s.0 + s.1;
 
             if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {
-                let r = vispinf_vo_vd(d).select($f64x::splat(SLEEF_INFINITY), r);
+                let r = d.ispinf().select($f64x::splat(SLEEF_INFINITY), r);
                 let r =
-                    (d.lt($f64x::splat(0.)) | visnan_vo_vd(d)).select($f64x::splat(SLEEF_NAN), r);
+                    (d.lt($f64x::splat(0.)) | d.isnan()).select($f64x::splat(SLEEF_NAN), r);
                 d.eq($f64x::splat(0.))
                     .select($f64x::splat(-SLEEF_INFINITY), r)
             } else {
@@ -2688,7 +2793,7 @@ macro_rules! impl_mathf32 {
                         * $f64x::from_cast(e)
                 } else {
                     let e = vgetexp_vd_vd(dp1, $f64x::splat(1. / 0.75));
-                    e = vispinf_vo_vd(e).select($f64x::splat(1024.), e);
+                    e = e.ispinf().select($f64x::splat(1024.), e);
                     let t = vldexp3_vd_vd_vi($f64x::splat(1.), -e.rinti());
                     m = d.mul_add(t, t - $f64x::splat(1.));
                     D2::from((0.693147180559945286226764, 2.319046813846299558417771e-17)) * e
@@ -2713,7 +2818,7 @@ macro_rules! impl_mathf32 {
             r = d
                 .gt($f64x::splat(1e+307))
                 .select($f64x::splat(SLEEF_INFINITY), r);
-            r = (d.lt($f64x::splat(-1.)) | visnan_vo_vd(d)).select($f64x::splat(SLEEF_NAN), r);
+            r = (d.lt($f64x::splat(-1.)) | d.isnan()).select($f64x::splat(SLEEF_NAN), r);
             r = d
                 .eq($f64x::splat(-1.))
                 .select($f64x::splat(-SLEEF_INFINITY), r);
@@ -2736,19 +2841,19 @@ macro_rules! impl_mathf32 {
 
         #[cfg(any(target_arch = "x86", target_arch = "x86_64"))] //  && !defined(ENABLE_VECEXT) && !defined(ENABLE_PUREC)
         pub fn xfmax(x: $f64x, y: $f64x) -> $f64x {
-            visnan_vo_vd(y).select(x, x.max(y))
+            y.isnan().select(x, x.max(y))
         }
         #[cfg(all(not(target_arch = "x86"), not(target_arch = "x86_64")))]
         pub fn xfmax(x: $f64x, y: $f64x) -> $f64x {
-            visnan_vo_vd(y).select(x, x.gt(y).select(x, y))
+            y.isnan().select(x, x.gt(y).select(x, y))
         }
         #[cfg(any(target_arch = "x86", target_arch = "x86_64"))] //  && !defined(ENABLE_VECEXT) && !defined(ENABLE_PUREC)
         pub fn xfmin(x: $f64x, y: $f64x) -> $f64x {
-            visnan_vo_vd(y).select(x, x.min(y))
+            y.isnan().select(x, x.min(y))
         }
         #[cfg(all(not(target_arch = "x86"), not(target_arch = "x86_64")))]
         pub fn xfmin(x: $f64x, y: $f64x) -> $f64x {
-            visnan_vo_vd(y).select(x, y.gt(x).select(x, y))
+            y.isnan().select(x, y.gt(x).select(x, y))
         }
 
         pub fn xfdim(x: $f64x, y: $f64x) -> $f64x {
@@ -2761,7 +2866,7 @@ macro_rules! impl_mathf32 {
                 - $f64x::splat(D1_31)
                     * $f64x::from_cast((x * $f64x::splat(1. / D1_31)).truncatei());
             fr -= $f64x::from_cast(fr.truncatei());
-            (visinf_vo_vd(x) | x.abs().ge($f64x::splat(D1_52)))
+            (x.isinf() | x.abs().ge($f64x::splat(D1_52)))
                 .select(x, vcopysign_vd_vd_vd(x - fr, x))
         }
 
@@ -2771,7 +2876,7 @@ macro_rules! impl_mathf32 {
                     * $f64x::from_cast((x * $f64x::splat(1. / D1_31)).truncatei());
             fr -= $f64x::from_cast(fr.truncatei());
             fr = fr.lt($f64x::splat(0.)).select(fr + $f64x::splat(1.), fr);
-            (visinf_vo_vd(x) | x.abs().ge($f64x::splat(D1_52)))
+            (x.isinf() | x.abs().ge($f64x::splat(D1_52)))
                 .select(x, vcopysign_vd_vd_vd(x - fr, x))
         }
 
@@ -2781,7 +2886,7 @@ macro_rules! impl_mathf32 {
                     * $f64x::from_cast((x * $f64x::splat(1. / D1_31)).truncatei());
             fr -= $f64x::from_cast(fr.truncatei());
             fr = fr.le($f64x::splat(0.)).select(fr, fr - $f64x::splat(1.));
-            (visinf_vo_vd(x) | x.abs().ge($f64x::splat(D1_52)))
+            (x.isinf() | x.abs().ge($f64x::splat(D1_52)))
                 .select(x, vcopysign_vd_vd_vd(x - fr, x))
         }
 
@@ -2796,7 +2901,7 @@ macro_rules! impl_mathf32 {
             x = d
                 .eq($f64x::splat(0.49999999999999994449))
                 .select($f64x::splat(0.), x);
-            (visinf_vo_vd(d) | d.abs().ge($f64x::splat(D1_52)))
+            (d.isinf() | d.abs().ge($f64x::splat(D1_52)))
                 .select(d, vcopysign_vd_vd_vd(x - fr, d))
         }
 
@@ -2812,7 +2917,7 @@ macro_rules! impl_mathf32 {
             x = d
                 .eq($f64x::splat(0.50000000000000011102))
                 .select($f64x::splat(0.), x);
-            (visinf_vo_vd(d) | d.abs().ge($f64x::splat(D1_52)))
+            (d.isinf() | d.abs().ge($f64x::splat(D1_52)))
                 .select(d, vcopysign_vd_vd_vd(x - fr, d))
         }
 
@@ -2849,7 +2954,7 @@ macro_rules! impl_mathf32 {
 
             ret = (x.eq($f64x::splat(0.)) & y.eq($f64x::splat(0.))).select(y, ret);
 
-            (visnan_vo_vd(x) | visnan_vo_vd(y)).select($f64x::splat(SLEEF_NAN), ret)
+            (x.isnan() | y.isnan()).select($f64x::splat(SLEEF_NAN), ret)
         }
 
         pub fn xfrfrexp(x: $f64x) -> $f64x {
@@ -2865,7 +2970,7 @@ macro_rules! impl_mathf32 {
             let ret = $f64x::from_bits(xm);
 
             let ret =
-                visinf_vo_vd(x).select(vmulsign_vd_vd_vd($f64x::splat(SLEEF_INFINITY), x), ret);
+                x.isinf().select(vmulsign_vd_vd_vd($f64x::splat(SLEEF_INFINITY), x), ret);
             x.eq($f64x::splat(0.)).select(x, ret)
         }
 
@@ -2879,7 +2984,7 @@ macro_rules! impl_mathf32 {
             ret = ($ix::from_bits($u64x::from_bits(ret) >> 20) & $ix::splat(0x7ff))
                 - $ix::splat(0x3fe);
 
-            (x.eq($f64x::splat(0.)) | visnan_vo_vd(x) | visinf_vo_vd(x)).select($ix::splat(0), ret)
+            (x.eq($f64x::splat(0.)) | x.isnan() | x.isinf()).select($ix::splat(0), ret)
         }
 
         pub fn xfma(mut x: $f64x, mut y: $f64x, mut z: $f64x) -> $f64x {
@@ -2904,14 +3009,14 @@ macro_rules! impl_mathf32 {
             }
             let d = x.mul_as_d2(y) + z;
             let ret = (x.eq($f64x::splat(0.)) | y.eq($f64x::splat(0.))).select(z, d.0 + d.1);
-            let mut o = visinf_vo_vd(z);
-            o = vandnot_vo_vo_vo(visinf_vo_vd(x), o);
-            o = vandnot_vo_vo_vo(visnan_vo_vd(x), o);
-            o = vandnot_vo_vo_vo(visinf_vo_vd(y), o);
-            o = vandnot_vo_vo_vo(visnan_vo_vd(y), o);
+            let mut o = z.isinf();
+            o = vandnot_vo_vo_vo(x.isinf(), o);
+            o = vandnot_vo_vo_vo(x.isnan(), o);
+            o = vandnot_vo_vo_vo(y.isinf(), o);
+            o = vandnot_vo_vo_vo(y.isnan(), o);
             h2 = o.select(z, h2);
 
-            let o = visinf_vo_vd(h2) | visnan_vo_vd(h2);
+            let o = h2.isinf() | h2.isnan();
 
             o.select(h2, ret * q)
         }
@@ -2944,19 +3049,19 @@ macro_rules! impl_mathf32 {
 
             x = (d2.0 + d2.1) * q;
 
-            x = vispinf_vo_vd(d).select($f64x::splat(SLEEF_INFINITY), x);
+            x = d.ispinf().select($f64x::splat(SLEEF_INFINITY), x);
             d.eq($f64x::splat(0.)).select(d, x)
         }
 
-        #[cfg(feature = "accurate_sqrt")]
+        //#[cfg(feature = "accurate_sqrt")]
         pub fn xsqrt(d: $f64x) -> $f64x {
             d.sqrt()
         }
         // fall back to approximation if ACCURATE_SQRT is undefined
-        #[cfg(not(feature = "accurate_sqrt"))]
+        /*#[cfg(not(feature = "accurate_sqrt"))]
         pub fn xsqrt(d: $f64x) -> $f64x {
             xsqrt_u05(d)
-        }
+        }*/
 
         pub fn xsqrt_u35(d: $f64x) -> $f64x {
             return xsqrt_u05(d);
@@ -2977,9 +3082,9 @@ macro_rules! impl_mathf32 {
             let t = D2::new(n, $f64x::splat(0.)) / D2::new(d, $f64x::splat(0.));
             let t = (t.square() + $f64x::splat(1.)).sqrt() * max;
             let mut ret = t.0 + t.1;
-            ret = visnan_vo_vd(ret).select($f64x::splat(SLEEF_INFINITY), ret);
+            ret = ret.isnan().select($f64x::splat(SLEEF_INFINITY), ret);
             ret = min.eq($f64x::splat(0.)).select(max, ret);
-            ret = (visnan_vo_vd(x) | visnan_vo_vd(y)).select($f64x::splat(SLEEF_NAN), ret);
+            ret = (x.isnan() | y.isnan()).select($f64x::splat(SLEEF_NAN), ret);
             (x.eq($f64x::splat(SLEEF_INFINITY)) | y.eq($f64x::splat(SLEEF_INFINITY)))
                 .select($f64x::splat(SLEEF_INFINITY), ret)
         }
@@ -2993,7 +3098,7 @@ macro_rules! impl_mathf32 {
             let t = min / max;
             let mut ret = max * t.mul_add(t, $f64x::splat(1.)).sqrt();
             ret = min.eq($f64x::splat(0.)).select(max, ret);
-            ret = (visnan_vo_vd(x) | visnan_vo_vd(y)).select($f64x::splat(SLEEF_NAN), ret);
+            ret = (x.isnan() | y.isnan()).select($f64x::splat(SLEEF_NAN), ret);
             (x.eq($f64x::splat(SLEEF_INFINITY)) | y.eq($f64x::splat(SLEEF_INFINITY)))
                 .select($f64x::splat(SLEEF_INFINITY), ret)
         }
@@ -3345,12 +3450,12 @@ macro_rules! impl_mathf32 {
             let r = y.0 + y.1;
             let o = a.eq($f64x::splat(-SLEEF_INFINITY))
                 | (a.lt($f64x::splat(0.)) & visint_vo_vd(a))
-                | (visnumber_vo_vd(a) & a.lt($f64x::splat(0.)) & visnan_vo_vd(r));
+                | (visnumber_vo_vd(a) & a.lt($f64x::splat(0.)) & r.isnan());
             let r = o.select($f64x::splat(SLEEF_NAN), r);
 
             let o = ((a.eq($f64x::splat(SLEEF_INFINITY)) | visnumber_vo_vd(a))
                 & a.ge($f64x::splat(-f64::MIN)))
-                & (a.eq($f64x::splat(0.)) | a.gt($f64x::splat(200)) | visnan_vo_vd(r));
+                & (a.eq($f64x::splat(0.)) | a.gt($f64x::splat(200)) | r.isnan());
             o.select(vmulsign_vd_vd_vd($f64x::splat(SLEEF_INFINITY), a), r)
         }
 
@@ -3359,9 +3464,9 @@ macro_rules! impl_mathf32 {
             let y = da + logk2(db.abs());
             let r = y.0 + y.1;
 
-            let o = visinf_vo_vd(a)
+            let o = a.isinf()
                 | (a.le($f64x::splat(0.)) & visint_vo_vd(a))
-                | (visnumber_vo_vd(a) & visnan_vo_vd(r));
+                | (visnumber_vo_vd(a) & r.isnan());
             o.select($f64x::splat(SLEEF_INFINITY), r)
         }
 
@@ -3574,7 +3679,7 @@ macro_rules! impl_mathf32 {
             d = vsel_vd2_vo_vd2_vd2(o0, d * a, $f64x::splat(1.).add_checked(-expk2(d)));
 
             let u = vmulsign_vd_vd_vd(o2.select(d.0 + d.1, $f64x::splat(1.)), s);
-            visnan_vo_vd(a).select($f64x::splat(SLEEF_NAN), u)
+            a.isnan().select($f64x::splat(SLEEF_NAN), u)
         }
 
         /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
@@ -3864,7 +3969,26 @@ macro_rules! impl_mathf32 {
 
             let r = o3.select(x.0 + x.1, $f64x::splat(0.));
             r = vsignbit_vo_vd(s).select($f64x::splat(2.) - r, r);
-            visnan_vo_vd(s).select($f64x::splat(SLEEF_NAN), r)
+            s.isnan().select($f64x::splat(SLEEF_NAN), r)
         }
+      
     };
 }
+
+use packed_simd::*;
+
+// SSE2
+impl_mathf32!(f64x2, f64x2, u64x2, m64x2, i64x2, i64x2);
+
+// AArch64 AdvSIMD
+impl_mathf32!(f64x2, f64x2, u64x2, m64x2, i64x2, i32x2);
+
+// AVX2
+impl_mathf32!(f64x2, f64x2, u64x2, m64x2, i64x2, i64x2);
+impl_mathf32!(f64x4, f64x4, u64x4, m64x4, i64x4, i32x4);
+
+// AVX
+impl_mathf32!(f64x4, f64x4, u64x4, m64x4, i64x4s, i32x4);
+
+// AVX512
+impl_mathf32!(f64x8, f64x8, u64x8, m1x8, i64x8, i32x8);

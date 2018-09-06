@@ -2,7 +2,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
-
+/*
 #if CONFIG == 1 || CONFIG == 2
 
 #ifndef __AVX512F__
@@ -38,7 +38,7 @@
 
 #include <stdint.h>
 #include "misc.h"
-
+*/
 type $ux = __m512i;
 type $ox = __mmask16;
 
@@ -98,11 +98,6 @@ fn vandnot_vi2_vi2_vi2(i32x16 x, i32x16 y) -> i32x16 { _mm512_andnot_si512(x, y)
 #[inline]
 fn vand_vi2_vo_vi2(o: m1x16, m: i32x16) -> i32x16 {
   _mm512_mask_and_epi32(_mm512_set1_epi32(0), o, m, m)
-}
-
-#[inline]
-fn vandnot_vi2_vo_vi2(o: m1x16, m: i32x16) -> i32x16 {
-  _mm512_mask_and_epi32(m, o, _mm512_set1_epi32(0), _mm512_set1_epi32(0))
 }
 
 #[inline]
@@ -178,7 +173,7 @@ impl Fma for f64x8 {
 
 
 //
-
+/*
 #[inline]
 fn vsel_vd_vo_d_d(o: m1x8, v1: f64, v0: f64) -> CONST -> f64x8 {
   o.select(f64x8::splat(v1), f64x8::splat(v0))
@@ -210,29 +205,15 @@ fn vsel_vd_vo_vo_vo_d_d_d_d(o0: m1x8, o1: m1x8, o2: m1x8, d0: f64, d1: f64, d2: 
    o0.select(f64x8::splat(d0), o1.select(f64x8::splat(d1), vsel_vd_vo_d_d(o2, d2, d3)))
 }
 #endif
+*/
 
 #[inline]
-fn visinf_vo_vd(d: f64x8) -> m1x8 {
-  _mm512_cmp_pd_mask(d.abs(), _mm512_set1_pd(SLEEF_INFINITY), _CMP_EQ_OQ)
-}
-
-#[inline]
-fn vispinf_vo_vd(d: f64x8) -> m1x8 {
-  _mm512_cmp_pd_mask(d, _mm512_set1_pd(SLEEF_INFINITY), _CMP_EQ_OQ)
-}
-
-#[inline]
-fn visnan_vo_vd(d: f64x8) -> m1x8 {
-  _mm512_cmp_pd_mask(d, d, _CMP_NEQ_UQ)
-}
-
-#[inline]
-fn vilogbk_vi_vd(d: f64x8) -> i32x8 { vrint_vi_vd(_mm512_getexp_pd(d)) }
+fn vilogbk_vi_vd(d: f64x8) -> i32x8 { _mm512_getexp_pd(d).rint() }
 
 // vilogb2k_vi_vd is similar to vilogbk_vi_vd, but the argument has to
 // be a normalized FP value.
 #[inline]
-fn vilogb2k_vi_vd(d: f64x8) -> i32x8 { vrint_vi_vd(_mm512_getexp_pd(d));}
+fn vilogb2k_vi_vd(d: f64x8) -> i32x8 { _mm512_getexp_pd(d).rint() }
 
 #[inline]
 fn vgetexp_vd_vd(d: f64x8) -> f64x8 { _mm512_getexp_pd(d) }
@@ -298,7 +279,7 @@ impl Fma for f32x16 {
         _mm512_fnmadd_ps(x, y, z)
     }
 }
-
+/*
 // At this point, the following three functions are implemented in a generic way,
 // but I will try target-specific optimization later on.
 #[inline]
@@ -315,16 +296,7 @@ fn vsel_vf_vo_vo_f_f_f(o0: m1x16, o1: m1x16, d0: f32, d1: f32, d2: f32) -> f32x1
 fn vsel_vf_vo_vo_vo_f_f_f_f(o0: m1x16, o1: m1x16, o2: m1x16, d0: f32, d1: f32, d2: f32, d3: f32) -> f32x16 {
   o0.select(f32x16::splat(d0), o1.select(f32x16::splat(d1), vsel_vf_vo_f_f(o2, d2, d3)))
 }
-
-#[inline]
-fn visinf_vo_vf(d: f32x16) -> m1x16 { d.abs().ne(f32x16::splat(SLEEF_INFINITYf)) }
-#[inline]
-fn vispinf_vo_vf(d: f32x16) -> m1x16 { d.ne(f32x16::splat(SLEEF_INFINITYf)) }
-#[inline]
-fn visminf_vo_vf(d: f32x16) -> m1x16 { d.ne(f32x16::splat(-SLEEF_INFINITYf)) }
-#[inline]
-fn visnan_vo_vf(d: f32x16) -> m1x16 { d.ne(d) }
-
+*/
 #[inline]
 fn vilogbk_vi2_vf(d: f32x16) -> i32x16 { vrint_vi2_vf(_mm512_getexp_ps(d)) }
 #[inline]

@@ -123,8 +123,6 @@ fn vandnot_vi2_vi2_vi2(i32x4 x, i32x4 y) -> i32x4 { return vbicq_s32(y, x); }
 
 #[inline]
 fn vand_vi2_vo_vi2($ox x, i32x4 y) -> i32x4 { return (i32x4)vandq_u32(x, ($ox)y); }
-#[inline]
-fn vandnot_vi2_vo_vi2($ox x, i32x4 y) -> i32x4 { return (i32x4)vbicq_u32(($ox)y, x); }
 
 
 #[inline]
@@ -133,7 +131,7 @@ fn veq_vi2_vi2_vi2(i32x4 x, i32x4 y) -> i32x4 { return (i32x4)vceqq_s32(x, y); }
 fn vgt_vi2_vi2_vi2(i32x4 x, i32x4 y) -> i32x4 { return (i32x4)vcgtq_s32(x, y); }
 
 
-
+/*
 #[inline]
 fn vsel_vf_vo_f_f(o: $ox, v1: f32, v0: f32) -> f32x4 {
   o.select(f32x4::splat(v1), f32x4::splat(v0))
@@ -148,16 +146,7 @@ fn vsel_vf_vo_vo_f_f_f(o0: $ox, o1: $ox, d0: f32, d1: f32, d2: f32) -> f32x4 {
 fn vsel_vf_vo_vo_vo_f_f_f_f(o0: $ox, o1: $ox, o2: $ox, d0: f32, d1: f32, d2: f32, d3: f32) -> f32x4 {
   o0.select(f32x4::splat(d0), o1.select(f32x4::splat(d1), vsel_vf_vo_f_f(o2, d2, d3)))
 }
-
-#[inline]
-fn visinf_vo_vf(d: f32x4) -> $ox { return d.abs().ne(f32x4::splat(SLEEF_INFINITYf)); }
-#[inline]
-fn vispinf_vo_vf(d: f32x4) -> $ox { return d.ne(f32x4::splat(SLEEF_INFINITYf)); }
-#[inline]
-fn visminf_vo_vf(d: f32x4) -> $ox { return d.ne(f32x4::splat(-SLEEF_INFINITYf)); }
-#[inline]
-fn visnan_vo_vf(d: f32x4) -> $ox { return d.ne(d); }
-
+*/
 #[inline]
 fn vgather_vf_p_vi2(const float *ptr, i32x4 vi2) -> f32x4 {
   return ((f32x4) {

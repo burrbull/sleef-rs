@@ -205,20 +205,20 @@ macro_rules! impl_math_f64 {
         //---------???????
         //---------???????
         #[inline]
-        fn vandnot_vm_vm_vm(x: $u64x, y: $u64x) -> $u64x { x & !y }
+        fn vandnot_vm_vm_vm(x: $u64x, y: $u64x) -> $u64x { y & !x }
 
         #[inline]
-        fn vandnot_vo_vo_vo(x: $m64x, y: $m64x) -> $m64x { x & !y }
+        fn vandnot_vo_vo_vo(x: $m64x, y: $m64x) -> $m64x { y & !x }
         
         #[inline]
         fn vand_vm_vo64_vm(x: $m64x, y: $u64x) -> $u64x { $u64x::from_bits(x) & y }
         #[inline]
         fn vor_vm_vo64_vm(x: $m64x, y: $u64x) -> $u64x { $u64x::from_bits(x) | y }
         #[inline]
-        fn vandnot_vm_vo64_vm(x: $m64x, y: $u64x) -> $u64x { $u64x::from_bits(x) & !y }
+        fn vandnot_vm_vo64_vm(x: $m64x, y: $u64x) -> $u64x { y & !$u64x::from_bits(x) }
 
         #[inline]
-        fn vandnot_vi_vi_vi(x: $i64x, y: $i64x) -> $i64x { x & !y }
+        fn vandnot_vi_vi_vi(x: $i64x, y: $i64x) -> $i64x { y & !x }
 
         #[inline]
         fn vand_vi_vo_vi(x: $m64x, y: $i64x) -> $i64x { $i64x::from_bits(x) & y }
@@ -292,22 +292,6 @@ macro_rules! impl_math_f64 {
           }
         }
         // -----------
-        
-        #[inline]
-        fn vsel_vd_vo_d_d(o: $m64x, v1: f64, v0: f64) -> $f64x {
-          o.select($f64x::splat(v1), $f64x::splat(v0))
-        }
-
-        #[inline]
-        fn vsel_vd_vo_vo_d_d_d(o0: $m64x, o1: $m64x, d0: f64, d1: f64, d2: f64) -> $f64x {
-          o0.select($f64x::splat(d0), vsel_vd_vo_d_d(o1, d1, d2))
-        }
-
-        #[inline]
-        fn vsel_vd_vo_vo_vo_d_d_d_d(o0: $m64x, o1: $m64x, o2: $m64x, d0: f64, d1: f64, d2: f64, d3: f64) -> $f64x {
-          o0.select($f64x::splat(d0), o1.select($f64x::splat(d1), vsel_vd_vo_d_d(o2, d2, d3)))
-        }
-        // -------------------
         #[inline]
         fn vnot_vo64_vo64(x: $m64x) -> $m64x {
             x ^ $u64x::from_u32((0, 0)).eq($u64x::from_u32((0, 0)))
@@ -380,7 +364,7 @@ macro_rules! impl_math_f64 {
         }
         #[inline]
         fn vldexp3_vd_vd_vi(d: $f64x, q: $ix) -> $f64x {
-            $f64x::from_bits($i64x::from_cast(d) + ($i64x::from_cast(q) << 20))
+            $f64x::from_bits($i64x::from_bits(d) + ($i64x::from_cast(q) << 20))
         }
 
         #[cfg(all(
@@ -391,7 +375,7 @@ macro_rules! impl_math_f64 {
         fn vilogbk_vi_vd(d: $f64x) -> $ix {
             let o = d.lt($f64x::splat(4.9090934652977266e-91));
             d = o.select($f64x::splat(2.037035976334486e90) * d, d);
-            let mut q = $ix::splat($i64x::from_cast(d));
+            let mut q = $ix::splat($i64x::from_bits(d));
             q = q & $ix::splat(((1 << 12) - 1) << 20);
             q = $ix::from_bits($u64x::from_bits(q) >> 20);
             q - $m32x::from_cast(o).select($ix::splat(300 + 0x3ff), $ix::splat(0x3ff))
@@ -402,7 +386,7 @@ macro_rules! impl_math_f64 {
         ))]
         #[inline]
         fn vilogb2k_vi_vd(d: $f64x) -> $ix {
-            let mut q = $ix::splat($i64x::from_cast(d));
+            let mut q = $ix::splat($i64x::from_bits(d));
             q = $ix::from_bits($u64x::from_bits(q) >> 20);
             q = q & $ix::splat(0x7ff);
             q - $ix::splat(0x3ff)
@@ -2925,16 +2909,16 @@ macro_rules! impl_math_f64 {
             let x = x
                 .eq($f64x::splat(0.))
                 .select(vmulsign_vd_vd_vd($f64x::splat(0.), y), x);
-            let mut xi2 = $i64x::from_cast(x);
+            let mut xi2 = $i64x::from_bits(x);
             let c = vsignbit_vo_vd(x) ^ y.ge(x);
 
             let mut t = (xi2 ^ vcast_vi2_i_i(0x7fffffff, 0xffffffff)) + vcast_vi2_i_i(0, 1);
             t += vrev21_vi2_vi2(vcast_vi2_i_i(0, 1) & veq_vi2_vi2_vi2(t, vcast_vi2_i_i(-1, 0)));
-            xi2 = $i64x::from_cast(c.select($f64x::from_bits(t), $f64x::from_bits(xi2)));
+            xi2 = $i64x::from_bits(c.select($f64x::from_bits(t), $f64x::from_bits(xi2)));
 
             xi2 -= $i64x::from_cast(vand_vm_vo64_vm(x.ne(y), $u64x::from_u32((0, 1))));
 
-            xi2 = $i64x::from_cast(x.ne(y).select(
+            xi2 = $i64x::from_bits(x.ne(y).select(
                 $f64x::from_bits(
                     xi2 + vrev21_vi2_vi2(
                         vcast_vi2_i_i(0, -1) & veq_vi2_vi2_vi2(xi2, vcast_vi2_i_i(0, -1)),
@@ -2945,7 +2929,7 @@ macro_rules! impl_math_f64 {
 
             let mut t = (xi2 ^ vcast_vi2_i_i(0x7fffffff, 0xffffffff)) + vcast_vi2_i_i(0, 1);
             t += vrev21_vi2_vi2(vcast_vi2_i_i(0, 1) & veq_vi2_vi2_vi2(t, vcast_vi2_i_i(-1, 0)));
-            xi2 = $i64x::from_cast(c.select($f64x::from_bits(t), $f64x::from_bits(xi2)));
+            xi2 = $i64x::from_bits(c.select($f64x::from_bits(t), $f64x::from_bits(xi2)));
 
             let mut ret = $f64x::from_bits(xi2);
 
@@ -2980,7 +2964,7 @@ macro_rules! impl_math_f64 {
                 .lt($f64x::splat(f64::MIN))
                 .select(x * $f64x::splat(D1_63), x);
 
-            let mut ret = $ix::from_cast($i64x::from_cast(x));
+            let mut ret = $ix::from_cast($i64x::from_bits(x));
             ret = ($ix::from_bits($u64x::from_bits(ret) >> 20) & $ix::splat(0x7ff))
                 - $ix::splat(0x3fe);
 
@@ -3037,7 +3021,7 @@ macro_rules! impl_math_f64 {
 
             let mut x = $f64x::from_bits(
                 vcast_vi2_i_i(0x5fe6ec86, 0)
-                    - $i64x::from_bits($u64x::from_cast(d + $f64x::splat(1e-320)) >> 1),
+                    - $i64x::from_bits($u64x::from_bits(d + $f64x::splat(1e-320)) >> 1),
             );
 
             x *= $f64x::splat(1.5) - $f64x::splat(0.5) * d * x * x;

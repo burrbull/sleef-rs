@@ -220,20 +220,20 @@ macro_rules! impl_math_f32 {
         //---------???????
         //--------- Naive implementation ???????
         #[inline]
-        fn vandnot_vm_vm_vm(x: $u32x, y: $u32x) -> $u32x { x & !y }
+        fn vandnot_vm_vm_vm(x: $u32x, y: $u32x) -> $u32x { y & !x }
 
         #[inline]
-        fn vandnot_vo_vo_vo(x: $m32x, y: $m32x) -> $m32x { x & !y }
+        fn vandnot_vo_vo_vo(x: $m32x, y: $m32x) -> $m32x { y & !x }
 
         #[inline]
         fn vand_vm_vo32_vm(x: $m32x, y: $u32x) -> $u32x { $u32x::from_bits(x) & y }
         #[inline]
         fn vor_vm_vo32_vm(x: $m32x, y: $u32x) -> $u32x {  $u32x::from_bits(x) | y }
         #[inline]
-        fn vandnot_vm_vo32_vm(x: $m32x, y: $u32x) -> $u32x {  $u32x::from_bits(x) & !y }
+        fn vandnot_vm_vo32_vm(x: $m32x, y: $u32x) -> $u32x { y & !$u32x::from_bits(x) }
 
         #[inline]
-        fn vandnot_vi2_vi2_vi2(x: $i32x, y: $i32x) -> $i32x { x & !y }
+        fn vandnot_vi2_vi2_vi2(x: $i32x, y: $i32x) -> $i32x { y & !x }
 
         #[inline]
         fn vand_vi2_vo_vi2(x: $m32x, y: $i32x) -> $i32x { $i32x::from_bits(x) & y }
@@ -297,7 +297,7 @@ macro_rules! impl_math_f32 {
 
         #[inline]
         fn visnegzero_vo_vf(d: $f32x) -> $m32x {
-            $i32x::from_cast(d).eq($i32x::from_cast($f32x::splat(-0.)))
+            $i32x::from_bits(d).eq($i32x::from_bits($f32x::splat(-0.)))
         }
 
         #[inline]
@@ -328,7 +328,7 @@ macro_rules! impl_math_f32 {
         }
         #[inline]
         fn vsignbit_vo_vf(d: $f32x) -> $m32x {
-            ($i32x::from_cast(d) & $i32x::splat(0x80000000)).eq($i32x::splat(0x80000000))
+            ($i32x::from_bits(d) & $i32x::splat(0x80000000)).eq($i32x::splat(0x80000000))
         }
         #[inline]
         fn vsel_vi2_vf_vf_vi2_vi2(f0: $f32x, f1: $f32x, x: $i32x, y: $i32x) -> $i32x {
@@ -364,8 +364,8 @@ macro_rules! impl_math_f32 {
         ))]*/
         #[inline]
         fn vilogb2k_vi2_vf(d: $f32x) -> $i32x {
-            let mut q = $i32x::from_cast(d);
-            q = $i32x::from_bits($u32x::from_bits(q) >> 23);
+            let q = $u32x::from_bits(d);
+            let mut q = $i32x::from_bits(q >> 23);
             q = q & $i32x::splat(0xff);
             q - $i32x::splat(0x7f)
         }
@@ -404,7 +404,7 @@ macro_rules! impl_math_f32 {
         }
         #[inline]
         fn vldexp3_vf_vf_vi2(d: $f32x, q: $i32x) -> $f32x {
-            $f32x::from_bits($i32x::from_cast(d) + (q << 23))
+            $f32x::from_bits($i32x::from_bits(d) + (q << 23))
         }
 
         pub fn xldexpf(x: $f32x, q: $i32x) -> $f32x {
@@ -1416,10 +1416,10 @@ macro_rules! impl_math_f32 {
         pub fn xsqrtf_u35(d: $f32x) -> $f32x {
             let e = $f32x::from_bits(
                 $u32x::splat(0x20000000)
-                    + ($u32x::splat(0x7f000000) & ($u32x::from_bits($i32x::from_cast(d)) >> 1)),
+                    + ($u32x::splat(0x7f000000) & ($u32x::from_bits(d) >> 1)),
             );
             let m = $f32x::from_bits(
-                $i32x::splat(0x3f000000) + ($i32x::splat(0x01ffffff) & $i32x::from_cast(d)),
+                $i32x::splat(0x3f000000) + ($i32x::splat(0x01ffffff) & $i32x::from_bits(d)),
             );
             let mut x = vrsqrteq_f32(m);
             x = vmulq_f32(x, vrsqrtsq_f32(m, vmulq_f32(x, x)));
@@ -2246,7 +2246,7 @@ macro_rules! impl_math_f32 {
             let mut x = $f32x::from_bits(
                 $i32x::splat(0x5f375a86)
                     - $i32x::from_bits(
-                        $u32x::from_bits($i32x::from_cast(d + $f32x::splat(1e-45))) >> 1,
+                        $u32x::from_bits(d + $f32x::splat(1e-45)) >> 1,
                     ),
             );
 
@@ -2312,7 +2312,7 @@ macro_rules! impl_math_f32 {
             let x = x
                 .eq($f32x::splat(0.))
                 .select(vmulsign_vf_vf_vf($f32x::splat(0.), y), x);
-            let mut xi2 = $i32x::from_cast(x);
+            let mut xi2 = $i32x::from_bits(x);
             let c = vsignbit_vo_vf(x) ^ y.ge(x);
 
             xi2 = c.select($i32x::splat(0) - (xi2 ^ $i32x::splat(1 << 31)), xi2);
@@ -2352,7 +2352,7 @@ macro_rules! impl_math_f32 {
             /*
                                   x = x.abs().lt($f32x::splat(f32::MIN)).select(x * $f32x::splat(F1_63), x);
 
-                                  let mut ret = $i32x::from_cast($ix::splat(x);
+                                  let mut ret = $i32x::from_cast($ix::from_bits(x);
                                   ret = (vsrl_vi_vi_i(ret, 20) & $ix::splat(0x7ff)) - $ix::splat(0x3fe);
 
                                   (x.eq($f32x::splat(0.)) | x.isnan() | x.isinf()).select($ix::splat(0), ret)
@@ -2361,7 +2361,7 @@ macro_rules! impl_math_f32 {
         }
         #[inline]
         fn vtoward0f(x: $f32x) -> $f32x {
-            let t = $f32x::from_bits($i32x::from_cast(x) - $i32x::splat(1));
+            let t = $f32x::from_bits($i32x::from_bits(x) - $i32x::splat(1));
             x.eq($f32x::splat(0.)).select($f32x::splat(0.), t)
         }
         #[inline]

@@ -9,6 +9,22 @@ pub struct D2<T>(pub T, pub T);
 
 macro_rules! impl_d2 {
     ($f64x:ty, $u64x:ty, $m64x:ty) => {
+        
+        #[inline]
+        fn vsel_vd_vo_d_d(o: $m64x, v1: f64, v0: f64) -> $f64x {
+          o.select($f64x::splat(v1), $f64x::splat(v0))
+        }
+
+        #[inline]
+        fn vsel_vd_vo_vo_d_d_d(o0: $m64x, o1: $m64x, d0: f64, d1: f64, d2: f64) -> $f64x {
+          o0.select($f64x::splat(d0), vsel_vd_vo_d_d(o1, d1, d2))
+        }
+
+        #[inline]
+        fn vsel_vd_vo_vo_vo_d_d_d_d(o0: $m64x, o1: $m64x, o2: $m64x, d0: f64, d1: f64, d2: f64, d3: f64) -> $f64x {
+          o0.select($f64x::splat(d0), o1.select($f64x::splat(d1), vsel_vd_vo_d_d(o2, d2, d3)))
+        }
+        // -------------------
 
 impl D2<$f64x> {
     pub fn new(x0: $f64x, x1: $f64x) {

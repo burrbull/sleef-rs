@@ -1,16 +1,12 @@
 #![allow(dead_code)]
 
 use super::common::*;
-use super::consts::*;
 
+use f2::*;
 
 #[inline]
 fn rintfk(x: f32) -> f32 {
-    (if x < 0. {
-        (x - 0.5)
-    } else {
-        (x + 0.5)
-    }) as i32 as f32
+    (if x < 0. { (x - 0.5) } else { (x + 0.5) }) as i32 as f32
 }
 #[inline]
 fn ceilfk(x: f32) -> i32 {
@@ -32,7 +28,6 @@ fn fmaxfk(x: f32, y: f32) -> f32 {
         y
     }
 }
-
 
 #[inline]
 fn ilogbkf(mut d: f32) -> i32 {
@@ -56,8 +51,8 @@ fn ilogb2kf(d: f32) -> i32 {
 pub fn xilogbf(d: f32) -> i32 {
     let mut e = ilogbkf(fabsfk(d));
     e = if d == 0. { SLEEF_FP_ILOGB0 } else { e };
-    e = if xisnanf(d) { SLEEF_FP_ILOGBNAN } else { e };
-    if xisinff(d) {
+    e = if d.isnan() { SLEEF_FP_ILOGBNAN } else { e };
+    if d.isinf() {
         i32::MAX
     } else {
         e
@@ -114,7 +109,7 @@ fn rempisubf(x: f32) -> (f32, i32) {
     (fr, reti)
 }
 
-fn rempif(a: f32) -> (f32n2, i32) {
+fn rempif(a: f32) -> (F2<f32>, i32) {
     let mut ex = ilogb2kf(a) - 25;
     let mut q = if ex > (90 - 25) { -64 } else { 0 };
     let a = ldexp3kf(a, q);
@@ -147,16 +142,16 @@ pub fn xsinf(mut d: f32) -> f32 {
     if fabsfk(d) < TRIGRANGEMAX2_F {
         let qf = rintfk(d * M_1_PI_F);
         q = qf as i32;
-        d = mlaf(qf, -PI_A2_F, d);
-        d = mlaf(qf, -PI_B2_F, d);
-        d = mlaf(qf, -PI_C2_F, d);
+        d = qf.mul_add(-PI_A2_F, d);
+        d = qf.mul_add(-PI_B2_F, d);
+        d = qf.mul_add(-PI_C2_F, d);
     } else if fabsfk(d) < TRIGRANGEMAX_F {
         let qf = rintfk(d * M_1_PI_F);
         q = qf as i32;
-        d = mlaf(qf, -PI_A_F, d);
-        d = mlaf(qf, -PI_B_F, d);
-        d = mlaf(qf, -PI_C_F, d);
-        d = mlaf(qf, -PI_D_F, d);
+        d = qf.mul_add(-PI_A_F, d);
+        d = qf.mul_add(-PI_B_F, d);
+        d = qf.mul_add(-PI_C_F, d);
+        d = qf.mul_add(-PI_D_F, d);
     } else {
         let (mut dfidf, dfii) = rempif(t);
         q = ((dfii & 3) * 2 + ((dfidf.0 > 0.) as i32) + 1) >> 2;
@@ -167,7 +162,7 @@ pub fn xsinf(mut d: f32) -> f32 {
             );
         }
         d = dfidf.0 + dfidf.1;
-        if xisinff(t) || xisnanf(t) {
+        if t.isinf() || t.isnan() {
             d = SLEEF_NAN_F;
         }
     }
@@ -179,14 +174,14 @@ pub fn xsinf(mut d: f32) -> f32 {
     }
 
     let u = 2.6083159809786593541503e-06
-        .mla(s, -0.0001981069071916863322258)
-        .mla(s, 0.00833307858556509017944336)
-        .mla(s, -0.166666597127914428710938);
+        .mul_add(s, -0.0001981069071916863322258)
+        .mul_add(s, 0.00833307858556509017944336)
+        .mul_add(s, -0.166666597127914428710938);
 
     if xisnegzerof(t) {
         -0.
     } else {
-        mlaf(s, u * d, d)
+        s.mul_add(u * d, d)
     }
 }
 
@@ -197,16 +192,16 @@ pub fn xcosf(mut d: f32) -> f32 {
     if fabsfk(d) < TRIGRANGEMAX2_F {
         q = 1 + 2 * (rintfk(d * M_1_PI_F - 0.5) as i32);
         let qf = q as f32;
-        d = mlaf(qf, -PI_A2_F * 0.5, d);
-        d = mlaf(qf, -PI_B2_F * 0.5, d);
-        d = mlaf(qf, -PI_C2_F * 0.5, d);
+        d = qf.mul_add(-PI_A2_F * 0.5, d);
+        d = qf.mul_add(-PI_B2_F * 0.5, d);
+        d = qf.mul_add(-PI_C2_F * 0.5, d);
     } else if fabsfk(d) < TRIGRANGEMAX_F {
         q = 1 + 2 * (rintfk(d * M_1_PI_F - 0.5) as i32);
         let qf = q as f32;
-        d = mlaf(qf, -PI_A_F * 0.5, d);
-        d = mlaf(qf, -PI_B_F * 0.5, d);
-        d = mlaf(qf, -PI_C_F * 0.5, d);
-        d = mlaf(qf, -PI_D_F * 0.5, d);
+        d = qf.mul_add(-PI_A_F * 0.5, d);
+        d = qf.mul_add(-PI_B_F * 0.5, d);
+        d = qf.mul_add(-PI_C_F * 0.5, d);
+        d = qf.mul_add(-PI_D_F * 0.5, d);
     } else {
         let (mut dfidf, dfii) = rempif(t);
         q = ((dfii & 3) * 2 + ((dfidf.0 > 0.) as i32) + 7) >> 1;
@@ -223,7 +218,7 @@ pub fn xcosf(mut d: f32) -> f32 {
             );
         }
         d = dfidf.0 + dfidf.1;
-        if xisinff(t) || xisnanf(t) {
+        if t.isinf() || t.isnan() {
             d = SLEEF_NAN_F;
         }
     }
@@ -235,11 +230,11 @@ pub fn xcosf(mut d: f32) -> f32 {
     }
 
     let u = 2.6083159809786593541503e-06
-        .mla(s, -0.0001981069071916863322258)
-        .mla(s, 0.00833307858556509017944336)
-        .mla(s, -0.166666597127914428710938);
+        .mul_add(s, -0.0001981069071916863322258)
+        .mul_add(s, 0.00833307858556509017944336)
+        .mul_add(s, -0.166666597127914428710938);
 
-    mlaf(s, u * d, d)
+    s.mul_add(u * d, d)
 }
 
 pub fn xsincosf(d: f32) -> (f32, f32) {
@@ -250,21 +245,21 @@ pub fn xsincosf(d: f32) -> (f32, f32) {
     if fabsfk(d) < TRIGRANGEMAX2_F {
         let qf = rintfk(d * M_2_PI_F);
         q = qf as i32;
-        s = mlaf(qf, -PI_A2_F * 0.5, s);
-        s = mlaf(qf, -PI_B2_F * 0.5, s);
-        s = mlaf(qf, -PI_C2_F * 0.5, s);
+        s = qf.mul_add(-PI_A2_F * 0.5, s);
+        s = qf.mul_add(-PI_B2_F * 0.5, s);
+        s = qf.mul_add(-PI_C2_F * 0.5, s);
     } else if fabsfk(d) < TRIGRANGEMAX_F {
         let qf = rintfk(d * M_2_PI_F);
         q = qf as i32;
-        s = mlaf(qf, -PI_A_F * 0.5, s);
-        s = mlaf(qf, -PI_B_F * 0.5, s);
-        s = mlaf(qf, -PI_C_F * 0.5, s);
-        s = mlaf(qf, -PI_D_F * 0.5, s);
+        s = qf.mul_add(-PI_A_F * 0.5, s);
+        s = qf.mul_add(-PI_B_F * 0.5, s);
+        s = qf.mul_add(-PI_C_F * 0.5, s);
+        s = qf.mul_add(-PI_D_F * 0.5, s);
     } else {
         let (dfidf, dfii) = rempif(d);
         q = dfii;
         s = dfidf.0 + dfidf.1;
-        if xisinff(d) || xisnanf(d) {
+        if d.isinf() || d.isnan() {
             s = SLEEF_NAN_F;
         }
     }
@@ -274,8 +269,8 @@ pub fn xsincosf(d: f32) -> (f32, f32) {
     s = s * s;
 
     let mut u = (-0.000195169282960705459117889)
-        .mla(s, 0.00833215750753879547119141)
-        .mla(s, -0.166666537523269653320312);
+        .mul_add(s, 0.00833215750753879547119141)
+        .mul_add(s, -0.166666537523269653320312);
     u = u * s * t;
 
     let mut rsin = t + u;
@@ -285,10 +280,10 @@ pub fn xsincosf(d: f32) -> (f32, f32) {
     }
 
     u = (-2.71811842367242206819355e-07)
-        .mla(s, 2.47990446951007470488548e-05)
-        .mla(s, -0.00138888787478208541870117)
-        .mla(s, 0.0416666641831398010253906)
-        .mla(s, -0.5);
+        .mul_add(s, 2.47990446951007470488548e-05)
+        .mul_add(s, -0.00138888787478208541870117)
+        .mul_add(s, 0.0416666641831398010253906)
+        .mul_add(s, -0.5);
 
     let mut rcos = u * s + 1.;
 
@@ -315,21 +310,21 @@ pub fn xtanf(d: f32) -> f32 {
     if fabsfk(d) < TRIGRANGEMAX2_F * 0.5 {
         let qf = rintfk(d * M_2_PI_F);
         q = qf as i32;
-        x = mlaf(qf, -PI_A2_F * 0.5, x);
-        x = mlaf(qf, -PI_B2_F * 0.5, x);
-        x = mlaf(qf, -PI_C2_F * 0.5, x);
+        x = qf.mul_add(-PI_A2_F * 0.5, x);
+        x = qf.mul_add(-PI_B2_F * 0.5, x);
+        x = qf.mul_add(-PI_C2_F * 0.5, x);
     } else if fabsfk(d) < TRIGRANGEMAX_F {
         let qf = rintfk(d * M_2_PI_F);
         q = qf as i32;
-        x = mlaf(qf, -PI_A_F * 0.5, x);
-        x = mlaf(qf, -PI_B_F * 0.5, x);
-        x = mlaf(qf, -PI_C_F * 0.5, x);
-        x = mlaf(qf, -PI_D_F * 0.5, x);
+        x = qf.mul_add(-PI_A_F * 0.5, x);
+        x = qf.mul_add(-PI_B_F * 0.5, x);
+        x = qf.mul_add(-PI_C_F * 0.5, x);
+        x = qf.mul_add(-PI_D_F * 0.5, x);
     } else {
         let (dfidf, dfii) = rempif(d);
         q = dfii;
         x = dfidf.0 + dfidf.1;
-        if xisinff(d) || xisnanf(d) {
+        if d.isinf() || d.isnan() {
             x = SLEEF_NAN_F;
         }
     }
@@ -341,13 +336,13 @@ pub fn xtanf(d: f32) -> f32 {
     }
 
     let mut u = 0.00927245803177356719970703
-        .mla(s, 0.00331984995864331722259521)
-        .mla(s, 0.0242998078465461730957031)
-        .mla(s, 0.0534495301544666290283203)
-        .mla(s, 0.133383005857467651367188)
-        .mla(s, 0.333331853151321411132812);
+        .mul_add(s, 0.00331984995864331722259521)
+        .mul_add(s, 0.0242998078465461730957031)
+        .mul_add(s, 0.0534495301544666290283203)
+        .mul_add(s, 0.133383005857467651367188)
+        .mul_add(s, 0.333331853151321411132812);
 
-    u = mlaf(s, u * x, x);
+    u = s.mul_add(u * x, x);
 
     if (q & 1) != 0 {
         1. / u
@@ -371,13 +366,13 @@ pub fn xatanf(mut s: f32) -> f32 {
     let mut t = s * s;
 
     let u = 0.00282363896258175373077393
-        .mla(t, -0.0159569028764963150024414)
-        .mla(t, 0.0425049886107444763183594)
-        .mla(t, -0.0748900920152664184570312)
-        .mla(t, 0.106347933411598205566406)
-        .mla(t, -0.142027363181114196777344)
-        .mla(t, 0.199926957488059997558594)
-        .mla(t, -0.333331018686294555664062);
+        .mul_add(t, -0.0159569028764963150024414)
+        .mul_add(t, 0.0425049886107444763183594)
+        .mul_add(t, -0.0748900920152664184570312)
+        .mul_add(t, 0.106347933411598205566406)
+        .mul_add(t, -0.142027363181114196777344)
+        .mul_add(t, 0.199926957488059997558594)
+        .mul_add(t, -0.333331018686294555664062);
 
     t = s + s * (t * u);
 
@@ -410,13 +405,13 @@ fn atan2kf(mut y: f32, mut x: f32) -> f32 {
     let mut t = s * s;
 
     let u = 0.00282363896258175373077393
-        .mla(t, -0.0159569028764963150024414)
-        .mla(t, 0.0425049886107444763183594)
-        .mla(t, -0.0748900920152664184570312)
-        .mla(t, 0.106347933411598205566406)
-        .mla(t, -0.142027363181114196777344)
-        .mla(t, 0.199926957488059997558594)
-        .mla(t, -0.333331018686294555664062);
+        .mul_add(t, -0.0159569028764963150024414)
+        .mul_add(t, 0.0425049886107444763183594)
+        .mul_add(t, -0.0748900920152664184570312)
+        .mul_add(t, 0.106347933411598205566406)
+        .mul_add(t, -0.142027363181114196777344)
+        .mul_add(t, 0.199926957488059997558594)
+        .mul_add(t, -0.333331018686294555664062);
 
     t = u * t * s + s;
     (q as f32) * M_PI_2_F + t
@@ -425,17 +420,17 @@ fn atan2kf(mut y: f32, mut x: f32) -> f32 {
 pub fn xatan2f(y: f32, x: f32) -> f32 {
     let mut r = atan2kf(fabsfk(y), x);
 
-    r = if xisinff(x) || (x == 0.) {
-        M_PI_2_F - (if xisinff(x) { signf(x) * M_PI_2_F } else { 0. })
-    } else if xisinff(y) {
-        M_PI_2_F - (if xisinff(x) { signf(x) * M_PI_4_F } else { 0. })
+    r = if x.isinf() || (x == 0.) {
+        M_PI_2_F - (if x.isinf() { signf(x) * M_PI_2_F } else { 0. })
+    } else if y.isinf() {
+        M_PI_2_F - (if x.isinf() { signf(x) * M_PI_4_F } else { 0. })
     } else if y == 0. {
         (if signf(x) == -1. { M_PI_F } else { 0. })
     } else {
         mulsignf(r, x)
     };
 
-    if xisnanf(x) || xisnanf(y) {
+    if x.isnan() || y.isnan() {
         SLEEF_NAN_F
     } else {
         mulsignf(r, y)
@@ -448,11 +443,11 @@ pub fn xasinf(d: f32) -> f32 {
     let x = if o { fabsfk(d) } else { SQRTF(x2) };
 
     let u = 0.4197454825e-1
-        .mla(x2, 0.2424046025e-1)
-        .mla(x2, 0.4547423869e-1)
-        .mla(x2, 0.7495029271e-1)
-        .mla(x2, 0.1666677296e+0)
-        .mla(x * x2, x);
+        .mul_add(x2, 0.2424046025e-1)
+        .mul_add(x2, 0.4547423869e-1)
+        .mul_add(x2, 0.7495029271e-1)
+        .mul_add(x2, 0.1666677296e+0)
+        .mul_add(x * x2, x);
 
     let r = if o { u } else { (M_PI_F / 2. - 2. * u) };
     mulsignf(r, d)
@@ -465,10 +460,10 @@ pub fn xacosf(d: f32) -> f32 {
     x = if fabsfk(d) == 1. { 0. } else { x };
 
     let mut u = 0.4197454825e-1
-        .mla(x2, 0.2424046025e-1)
-        .mla(x2, 0.4547423869e-1)
-        .mla(x2, 0.7495029271e-1)
-        .mla(x2, 0.1666677296e+0);
+        .mul_add(x2, 0.2424046025e-1)
+        .mul_add(x2, 0.4547423869e-1)
+        .mul_add(x2, 0.7495029271e-1)
+        .mul_add(x2, 0.1666677296e+0);
 
     u *= x * x2;
 
@@ -501,16 +496,16 @@ pub fn xlogf(mut d: f32) -> f32 {
     let x2 = x * x;
 
     let t = 0.2392828464508056640625
-        .mla(x2, 0.28518211841583251953125)
-        .mla(x2, 0.400005877017974853515625)
-        .mla(x2, 0.666666686534881591796875)
-        .mla(x2, 2.);
+        .mul_add(x2, 0.28518211841583251953125)
+        .mul_add(x2, 0.400005877017974853515625)
+        .mul_add(x2, 0.666666686534881591796875)
+        .mul_add(x2, 2.);
 
     if d == 0. {
         -SLEEF_INFINITY_F
-    } else if (d < 0.) || xisnanf(d) {
+    } else if (d < 0.) || d.isnan() {
         SLEEF_NAN_F
-    } else if xisinff(d) {
+    } else if d.isinf() {
         SLEEF_INFINITY_F
     } else {
         x * t + 0.693147180559945286226764 * (e as f32)
@@ -520,15 +515,15 @@ pub fn xlogf(mut d: f32) -> f32 {
 pub fn xexpf(d: f32) -> f32 {
     let qf = rintfk(d * R_LN2_F);
     let q = qf as i32;
-    let s = mlaf(qf, -L2U_F, d);
-    let s = mlaf(qf, -L2L_F, s);
+    let s = qf.mul_add(-L2U_F, d);
+    let s = qf.mul_add(-L2L_F, s);
 
     let mut u = 0.000198527617612853646278381
-        .mla(s, 0.00139304355252534151077271)
-        .mla(s, 0.00833336077630519866943359)
-        .mla(s, 0.0416664853692054748535156)
-        .mla(s, 0.166666671633720397949219)
-        .mla(s, 0.5);
+        .mul_add(s, 0.00139304355252534151077271)
+        .mul_add(s, 0.00833336077630519866943359)
+        .mul_add(s, 0.0416664853692054748535156)
+        .mul_add(s, 0.166666671633720397949219)
+        .mul_add(s, 0.5);
 
     u = s * s * u + s + 1.;
 
@@ -542,7 +537,7 @@ pub fn xexpf(d: f32) -> f32 {
 }
 
 #[inline]
-fn expkf(d: f32n2) -> f32 {
+fn expkf(d: F2<f32>) -> f32 {
     let qf = rintfk((d.0 + d.1) * R_LN2_F);
 
     let q = qf as i32;
@@ -552,10 +547,10 @@ fn expkf(d: f32n2) -> f32 {
     s = s.normalize();
 
     let u = 0.00136324646882712841033936
-        .mla(s.0, 0.00836596917361021041870117)
-        .mla(s.0, 0.0416710823774337768554688)
-        .mla(s.0, 0.166665524244308471679688)
-        .mla(s.0, 0.499999850988388061523438);
+        .mul_add(s.0, 0.00836596917361021041870117)
+        .mul_add(s.0, 0.0416710823774337768554688)
+        .mul_add(s.0, 0.166665524244308471679688)
+        .mul_add(s.0, 0.499999850988388061523438);
 
     let mut t = s.add_checked(s.square() * u);
 
@@ -573,15 +568,15 @@ fn expm1kf(d: f32) -> f32 {
     let qf = rintfk(d * R_LN2_F);
 
     let q = qf as i32;
-    let s = mlaf(qf, -L2U_F, d);
-    let s = mlaf(qf, -L2L_F, s);
+    let s = qf.mul_add(-L2U_F, d);
+    let s = qf.mul_add(-L2L_F, s);
 
     let mut u = 0.000198527617612853646278381
-        .mla(s, 0.00139304355252534151077271)
-        .mla(s, 0.00833336077630519866943359)
-        .mla(s, 0.0416664853692054748535156)
-        .mla(s, 0.166666671633720397949219)
-        .mla(s, 0.5);
+        .mul_add(s, 0.00139304355252534151077271)
+        .mul_add(s, 0.00833336077630519866943359)
+        .mul_add(s, 0.0416664853692054748535156)
+        .mul_add(s, 0.166666671633720397949219)
+        .mul_add(s, 0.5);
     u = s * s * u + s;
 
     if q != 0 {
@@ -592,7 +587,7 @@ fn expm1kf(d: f32) -> f32 {
 }
 
 #[inline]
-fn logkf(mut d: f32) -> f32n2 {
+fn logkf(mut d: f32) -> F2<f32> {
     let o = d < f32::MIN;
     if o {
         d *= F1_32 * F1_32;
@@ -609,8 +604,8 @@ fn logkf(mut d: f32) -> f32n2 {
     let x2 = x.square();
 
     let t = 0.240320354700088500976562
-        .mla(x2.0, 0.285112679004669189453125)
-        .mla(x2.0, 0.400007992982864379882812);
+        .mul_add(x2.0, 0.285112679004669189453125)
+        .mul_add(x2.0, 0.400007992982864379882812);
     let c = df(0.66666662693023681640625, 3.69183861259614332084311e-09);
 
     (df(0.69314718246459960938, -1.904654323148236017e-09) * (e as f32))
@@ -619,7 +614,7 @@ fn logkf(mut d: f32) -> f32n2 {
 }
 
 #[inline]
-fn expk2f(d: f32n2) -> f32n2 {
+fn expk2f(d: F2<f32>) -> F2<f32> {
     let qf = rintfk((d.0 + d.1) * R_LN2_F);
 
     let q = qf as i32;
@@ -627,9 +622,9 @@ fn expk2f(d: f32n2) -> f32n2 {
     s += qf * -L2L_F;
 
     let u = 0.1980960224e-3
-        .mla(s.0, 0.1394256484e-2)
-        .mla(s.0, 0.8333456703e-2)
-        .mla(s.0, 0.4166637361e-1);
+        .mul_add(s.0, 0.1394256484e-2)
+        .mul_add(s.0, 0.8333456703e-2)
+        .mul_add(s.0, 0.4166637361e-1);
 
     let mut t = s * u + 0.166666659414234244790680580464e+0;
     t = s * t + 0.5;
@@ -653,7 +648,7 @@ pub fn xpowf(x: f32, y: f32) -> f32 {
 
     let mut result = expkf(logkf(fabsfk(x)) * y);
 
-    result = if xisnanf(result) {
+    result = if result.isnan() {
         SLEEF_INFINITY_F
     } else {
         result
@@ -671,16 +666,16 @@ pub fn xpowf(x: f32, y: f32) -> f32 {
     let efx = mulsignf(fabsfk(x) - 1., y);
     if (y == 0.) || (x == 1.) {
         1.
-    } else if xisnanf(x) || xisnanf(y) {
+    } else if x.isnan() || y.isnan() {
         SLEEF_NAN_F
-    } else if xisinff(x) || (x == 0.) {
+    } else if x.isinf() || (x == 0.) {
         (if yisodd { signf(x) } else { 1. })
             * (if (if x == 0. { -y } else { y }) < 0. {
                 0.
             } else {
                 SLEEF_INFINITY_F
             })
-    } else if xisinff(y) {
+    } else if y.isinf() {
         if efx < 0. {
             0.
         } else if efx == 0. {
@@ -696,13 +691,13 @@ pub fn xpowf(x: f32, y: f32) -> f32 {
 pub fn xsinhf(x: f32) -> f32 {
     let mut y = fabsfk(x);
     let mut d = expk2f(df(y, 0.));
-    d = d.sub_checked(d.rec());
+    d = d.sub_checked(d.recpre());
     y = (d.0 + d.1) * 0.5;
 
     y = if fabsfk(x) > 89. { SLEEF_INFINITY_F } else { y };
-    y = if xisnanf(y) { SLEEF_INFINITY_F } else { y };
+    y = if y.isnan() { SLEEF_INFINITY_F } else { y };
     y = mulsignf(y, x);
-    if xisnanf(x) {
+    if x.isnan() {
         SLEEF_NAN_F
     } else {
         y
@@ -712,12 +707,12 @@ pub fn xsinhf(x: f32) -> f32 {
 pub fn xcoshf(x: f32) -> f32 {
     let mut y = fabsfk(x);
     let mut d = expk2f(df(y, 0.));
-    d = d.add_checked(d.rec());
+    d = d.add_checked(d.recpre());
     y = (d.0 + d.1) * 0.5;
 
     y = if fabsfk(x) > 89. { SLEEF_INFINITY_F } else { y };
-    y = if xisnanf(y) { SLEEF_INFINITY_F } else { y };
-    if xisnanf(x) {
+    y = if y.isnan() { SLEEF_INFINITY_F } else { y };
+    if x.isnan() {
         SLEEF_NAN_F
     } else {
         y
@@ -727,14 +722,14 @@ pub fn xcoshf(x: f32) -> f32 {
 pub fn xtanhf(x: f32) -> f32 {
     let mut y = fabsfk(x);
     let mut d = expk2f(df(y, 0.));
-    let e = d.rec();
+    let e = d.recpre();
     d = d.sub_checked(e) / d.add_checked(e);
     y = d.0 + d.1;
 
     y = if fabsfk(x) > 18.714973875 { 1. } else { y };
-    y = if xisnanf(y) { 1. } else { y };
+    y = if y.isnan() { 1. } else { y };
     y = mulsignf(y, x);
-    if xisnanf(x) {
+    if x.isnan() {
         SLEEF_NAN_F
     } else {
         y
@@ -742,7 +737,7 @@ pub fn xtanhf(x: f32) -> f32 {
 }
 
 #[inline]
-fn logk2f(d: f32n2) -> f32n2 {
+fn logk2f(d: F2<f32>) -> F2<f32> {
     let e = ilogbkf(d.0 * (1. / 0.75));
     let m = d.scale(pow2if(-e));
 
@@ -750,9 +745,9 @@ fn logk2f(d: f32n2) -> f32n2 {
     let x2 = x.square();
 
     let t = 0.2392828464508056640625
-        .mla(x2.0, 0.28518211841583251953125)
-        .mla(x2.0, 0.400005877017974853515625)
-        .mla(x2.0, 0.666666686534881591796875);
+        .mul_add(x2.0, 0.28518211841583251953125)
+        .mul_add(x2.0, 0.400005877017974853515625)
+        .mul_add(x2.0, 0.666666686534881591796875);
 
     (df(0.69314718246459960938, -1.904654323148236017e-09) * (e as f32))
         .add_checked(x.scale(2.))
@@ -762,19 +757,19 @@ fn logk2f(d: f32n2) -> f32n2 {
 pub fn xasinhf(x: f32) -> f32 {
     let mut y = fabsfk(x);
 
-    let mut d = if y > 1. { x.rec() } else { df(y, 0.) };
+    let mut d = if y > 1. { x.recpre() } else { df(y, 0.) };
     d = (d.square() + 1.).sqrt();
     d = if y > 1. { d * y } else { d };
 
     d = logk2f(d.add_checked(x).normalize());
     y = d.0 + d.1;
 
-    y = if fabsfk(x) > SQRT_FLT_MAX || xisnanf(y) {
+    y = if fabsfk(x) > SQRT_FLT_MAX || y.isnan() {
         mulsignf(SLEEF_INFINITY_F, x)
     } else {
         y
     };
-    y = if xisnanf(x) { SLEEF_NAN_F } else { y };
+    y = if x.isnan() { SLEEF_NAN_F } else { y };
     if xisnegzerof(x) {
         -0.
     } else {
@@ -786,14 +781,14 @@ pub fn xacoshf(x: f32) -> f32 {
     let d = logk2f((x.add_as_f2(1.)).sqrt() * (x.add_as_f2(-1.)).sqrt() + x);
     let mut y = d.0 + d.1;
 
-    y = if (x > SQRT_FLT_MAX) || xisnanf(y) {
+    y = if (x > SQRT_FLT_MAX) || y.isnan() {
         SLEEF_INFINITY_F
     } else {
         y
     };
     y = if x == 1. { 0. } else { y };
     y = if x < 1. { SLEEF_NAN_F } else { y };
-    if xisnanf(x) {
+    if x.isnan() {
         SLEEF_NAN_F
     } else {
         y
@@ -811,13 +806,13 @@ pub fn xatanhf(x: f32) -> f32 {
         (d.0 + d.1) * 0.5
     };
 
-    y = if xisinff(x) || xisnanf(y) {
+    y = if x.isinf() || y.isnan() {
         SLEEF_NAN_F
     } else {
         y
     };
     y = mulsignf(y, x);
-    if xisnanf(x) {
+    if x.isnan() {
         SLEEF_NAN_F
     } else {
         y
@@ -830,11 +825,11 @@ pub fn xexp2f(d: f32) -> f32 {
     let s = d - qf;
 
     let mut u = 0.1535920892e-3
-        .mla(s, 0.1339262701e-2)
-        .mla(s, 0.9618384764e-2)
-        .mla(s, 0.5550347269e-1)
-        .mla(s, 0.2402264476e+0)
-        .mla(s, 0.6931471825e+0);
+        .mul_add(s, 0.1339262701e-2)
+        .mul_add(s, 0.9618384764e-2)
+        .mul_add(s, 0.5550347269e-1)
+        .mul_add(s, 0.2402264476e+0)
+        .mul_add(s, 0.6931471825e+0);
     u = (1.).add_checked(u.mul_as_f2(s)).normalize().0;
 
     if d >= 128. {
@@ -850,15 +845,15 @@ pub fn xexp10f(d: f32) -> f32 {
     let qf = rintfk(d * (LOG10_2 as f32));
 
     let q = qf as i32;
-    let s = mlaf(qf, -L10U_F, d);
-    let s = mlaf(qf, -L10L_F, s);
+    let s = qf.mul_add(-L10U_F, d);
+    let s = qf.mul_add(-L10L_F, s);
 
     let mut u = 0.2064004987e+0
-        .mla(s, 0.5417877436e+0)
-        .mla(s, 0.1171286821e+1)
-        .mla(s, 0.2034656048e+1)
-        .mla(s, 0.2650948763e+1)
-        .mla(s, 0.2302585125e+1);
+        .mul_add(s, 0.5417877436e+0)
+        .mul_add(s, 0.1171286821e+1)
+        .mul_add(s, 0.2034656048e+1)
+        .mul_add(s, 0.2650948763e+1)
+        .mul_add(s, 0.2302585125e+1);
     u = (1.).add_checked(u.mul_as_f2(s)).normalize().0;
 
     if d > 38.5318394191036238941387 {
@@ -900,8 +895,8 @@ pub fn xlog10f(mut d: f32) -> f32 {
     let x2 = x.0 * x.0;
 
     let t = 0.1314289868e+0
-        .mla(x2, 0.1735493541e+0)
-        .mla(x2, 0.2895309627e+0);
+        .mul_add(x2, 0.1735493541e+0)
+        .mul_add(x2, 0.2895309627e+0);
 
     let s = df(0.30103001, -1.432098889e-08)
         * (e as f32)
@@ -910,9 +905,9 @@ pub fn xlog10f(mut d: f32) -> f32 {
 
     if d == 0. {
         -SLEEF_INFINITY_F
-    } else if (d < 0.) || xisnanf(d) {
+    } else if (d < 0.) || d.isnan() {
         SLEEF_NAN_F
-    } else if xisinff(d) {
+    } else if d.isinf() {
         SLEEF_INFINITY_F
     } else {
         s.0 + s.1
@@ -936,17 +931,17 @@ pub fn xlog2f(mut d: f32) -> f32 {
     let x2 = x.0 * x.0;
 
     let t = 0.4374550283e+0
-        .mla(x2, 0.5764790177e+0)
-        .mla(x2, 0.9618012905120);
+        .mul_add(x2, 0.5764790177e+0)
+        .mul_add(x2, 0.9618012905120);
 
     let mut s = (e as f32) + x * df(2.8853900432586669922, 3.2734474483568488616e-08);
     s += x2 * x.0 * t;
 
     if d == 0. {
         -SLEEF_INFINITY_F
-    } else if (d < 0.) || xisnanf(d) {
+    } else if (d < 0.) || d.isnan() {
         SLEEF_NAN_F
-    } else if xisinff(d) {
+    } else if d.isinf() {
         SLEEF_INFINITY_F
     } else {
         s.0 + s.1
@@ -964,7 +959,7 @@ pub fn xlog1pf(d: f32) -> f32 {
     let mut e = ilogb2kf(dp1 * (1. / 0.75));
 
     let t = ldexp3kf(1., -e);
-    let m = mlaf(d, t, t - 1.);
+    let m = d.mul_add(t, t - 1.);
 
     if o {
         e -= 64;
@@ -974,8 +969,8 @@ pub fn xlog1pf(d: f32) -> f32 {
     let x2 = x.0 * x.0;
 
     let t = 0.3027294874e+0
-        .mla(x2, 0.3996108174e+0)
-        .mla(x2, 0.6666694880e+0);
+        .mul_add(x2, 0.3996108174e+0)
+        .mul_add(x2, 0.6666694880e+0);
 
     let s = (df(0.69314718246459960938, -1.904654323148236017e-09) * (e as f32))
         .add_checked(x.scale(2.))
@@ -1014,11 +1009,11 @@ pub fn xcbrtf(mut d: f32) -> f32 {
     d = fabsfk(d);
 
     let x = (-0.601564466953277587890625)
-        .mla(d, 2.8208892345428466796875)
-        .mla(d, -5.532182216644287109375)
-        .mla(d, 5.898262500762939453125)
-        .mla(d, -3.8095417022705078125)
-        .mla(d, 2.2241256237030029296875);
+        .mul_add(d, 2.8208892345428466796875)
+        .mul_add(d, -5.532182216644287109375)
+        .mul_add(d, 5.898262500762939453125)
+        .mul_add(d, -3.8095417022705078125)
+        .mul_add(d, 2.2241256237030029296875);
 
     let y = d * x * x;
     (y - (2. / 3.) * y * (y * x - 1.)) * q
@@ -1065,7 +1060,7 @@ pub fn xfdimf(x: f32, y: f32) -> f32 {
 
 pub fn xtruncf(x: f32) -> f32 {
     let fr = x - (x as i32 as f32);
-    if xisinff(x) || (fabsfk(x) >= F1_23) {
+    if x.isinf() || (fabsfk(x) >= F1_23) {
         x
     } else {
         copysignfk(x - fr, x)
@@ -1075,7 +1070,7 @@ pub fn xtruncf(x: f32) -> f32 {
 pub fn xfloorf(x: f32) -> f32 {
     let mut fr = x - (x as i32 as f32);
     fr = if fr < 0. { fr + 1. } else { fr };
-    if xisinff(x) || (fabsfk(x) >= F1_23) {
+    if x.isinf() || (fabsfk(x) >= F1_23) {
         x
     } else {
         copysignfk(x - fr, x)
@@ -1085,7 +1080,7 @@ pub fn xfloorf(x: f32) -> f32 {
 pub fn xceilf(x: f32) -> f32 {
     let mut fr = x - (x as i32 as f32);
     fr = if fr <= 0. { fr } else { fr - 1. };
-    if xisinff(x) || (fabsfk(x) >= F1_23) {
+    if x.isinf() || (fabsfk(x) >= F1_23) {
         x
     } else {
         copysignfk(x - fr, x)
@@ -1100,7 +1095,7 @@ pub fn xroundf(d: f32) -> f32 {
     };
     fr = if fr < 0. { fr + 1. } else { fr };
     x = if d == 0.4999999701976776123 { 0. } else { x }; // nextafterf(0.5, 0)
-    if xisinff(d) || (fabsfk(d) >= F1_23) {
+    if d.isinf() || (fabsfk(d) >= F1_23) {
         d
     } else {
         copysignfk(x - fr, d)
@@ -1117,17 +1112,17 @@ pub fn xrintf(d: f32) -> f32 {
         fr
     };
     x = if d == 0.50000005960464477539 { 0. } else { x }; // nextafterf(0.5, 1)
-    if xisinff(d) || (fabsfk(d) >= F1_23) {
+    if d.isinf() || (fabsfk(d) >= F1_23) {
         d
     } else {
         copysignfk(x - fr, d)
     }
 }
 
-pub fn xmodff(x: f32) -> f32n2 {
+pub fn xmodff(x: f32) -> F2<f32> {
     let mut fr = x - (x as i32 as f32);
     fr = if fabsfk(x) > F1_23 { 0. } else { fr };
-    f32n2::new(copysignfk(fr, x), copysignfk(x - fr, x))
+    F2::new(copysignfk(fr, x), copysignfk(x - fr, x))
 }
 
 pub fn xldexpf(x: f32, mut exp: i32) -> f32 {
@@ -1168,7 +1163,7 @@ pub fn xnextafterf(x: f32, y: f32) -> f32 {
 
     let cxf = f32::from_bits(cxi as u32);
 
-    if xisnanf(x) || xisnanf(y) {
+    if x.isnan() || y.isnan() {
         SLEEF_NAN_F
     } else if (x == 0.) && (y == 0.) {
         y
@@ -1190,7 +1185,7 @@ pub fn xfrfrexpf(mut x: f32) -> f32 {
 
     if x == 0. {
         x
-    } else if xisinff(x) {
+    } else if x.isinf() {
         mulsignf(SLEEF_INFINITY_F, x)
     } else {
         f32::from_bits(cxu)
@@ -1207,7 +1202,7 @@ pub fn xexpfrexpf(mut x: f32) -> i32 {
 
     ret += (((x.to_bits() >> 23) & 0xff) as i32) - 0x7e;
 
-    if (x == 0.) || xisnanf(x) || xisinff(x) {
+    if (x == 0.) || x.isnan() || x.isinf() {
         0
     } else {
         ret
@@ -1297,10 +1292,10 @@ pub fn xfmaf(mut x: f32, mut y: f32, mut z: f32) -> f32 {
     let mut d = x.mul_as_f2(y);
     d += z;
     let ret = if (x == 0.) || (y == 0.) { z } else { d.0 + d.1 };
-    if xisinff(z) && !xisinff(x) && !xisnanf(x) && !xisinff(y) && !xisnanf(y) {
+    if z.isinf() && !x.isinf() && !x.isnan() && !y.isinf() && !y.isnan() {
         h2 = z;
     }
-    if xisinff(h2) || xisnanf(h2) {
+    if h2.isinf() || h2.isnan() {
         h2
     } else {
         ret * q
@@ -1310,7 +1305,7 @@ pub fn xfmaf(mut x: f32, mut y: f32, mut z: f32) -> f32 {
 //
 
 #[inline]
-fn sinpifk(d: f32) -> f32n2 {
+fn sinpifk(d: f32) -> F2<f32> {
     let u = d * 4.;
     let q = ceilfk(u) & !1;
     let o = (q & 2) != 0;
@@ -1323,8 +1318,8 @@ fn sinpifk(d: f32) -> f32n2 {
     //
 
     let u = (if o { -0.2430611801e-7 } else { 0.3093842054e-6 })
-        .mla(s, if o { 0.3590577080e-5 } else { -0.3657307388e-4 })
-        .mla(s, if o { -0.3259917721e-3 } else { 0.2490393585e-2 });
+        .mul_add(s, if o { 0.3590577080e-5 } else { -0.3657307388e-4 })
+        .mul_add(s, if o { -0.3259917721e-3 } else { 0.2490393585e-2 });
     let mut x = u * s
         + (if o {
             df(0.015854343771934509277, 4.4940051354032242811e-10)
@@ -1350,7 +1345,7 @@ fn sinpifk(d: f32) -> f32n2 {
 }
 
 #[inline]
-fn cospifk(d: f32) -> f32n2 {
+fn cospifk(d: f32) -> F2<f32> {
     let u = d * 4.;
     let q = ceilfk(u) & !1;
     let o = (q & 2) == 0;
@@ -1363,8 +1358,8 @@ fn cospifk(d: f32) -> f32n2 {
     //
 
     let u = (if o { -0.2430611801e-7 } else { 0.3093842054e-6 })
-        .mla(s, if o { 0.3590577080e-5 } else { -0.3657307388e-4 })
-        .mla(s, if o { -0.3259917721e-3 } else { 0.2490393585e-2 });
+        .mul_add(s, if o { 0.3590577080e-5 } else { -0.3657307388e-4 })
+        .mul_add(s, if o { -0.3259917721e-3 } else { 0.2490393585e-2 });
     let mut x = u * s
         + (if o {
             df(0.015854343771934509277, 4.4940051354032242811e-10)
@@ -1389,7 +1384,7 @@ fn cospifk(d: f32) -> f32n2 {
     x
 }
 
-fn gammafk(a: f32) -> (f32n2, f32n2) {
+fn gammafk(a: f32) -> (F2<f32>, F2<f32>) {
     let otiny = fabsfk(a) < 1e-30;
     let oref = a < 0.5;
 
@@ -1422,7 +1417,7 @@ fn gammafk(a: f32) -> (f32n2, f32n2) {
         0.9435157776e+0
     } else {
         0.1102489550e-3
-    }).mla(
+    }).mul_add(
         t,
         if o2 {
             -5.17179090826059219329394422e-05
@@ -1431,7 +1426,7 @@ fn gammafk(a: f32) -> (f32n2, f32n2) {
         } else {
             0.8160019934e-4
         },
-    ).mla(
+    ).mul_add(
         t,
         if o2 {
             -0.000592166437353693882857342347
@@ -1440,7 +1435,7 @@ fn gammafk(a: f32) -> (f32n2, f32n2) {
         } else {
             0.1528468856e-3
         },
-    ).mla(
+    ).mul_add(
         t,
         if o2 {
             6.97281375836585777403743539e-05
@@ -1449,7 +1444,7 @@ fn gammafk(a: f32) -> (f32n2, f32n2) {
         } else {
             -0.2355068718e-3
         },
-    ).mla(
+    ).mul_add(
         t,
         if o2 {
             0.000784039221720066627493314301
@@ -1458,7 +1453,7 @@ fn gammafk(a: f32) -> (f32n2, f32n2) {
         } else {
             0.4962242092e-3
         },
-    ).mla(
+    ).mul_add(
         t,
         if o2 {
             -0.000229472093621399176949318732
@@ -1467,7 +1462,7 @@ fn gammafk(a: f32) -> (f32n2, f32n2) {
         } else {
             -0.1193488017e-2
         },
-    ).mla(
+    ).mul_add(
         t,
         if o2 {
             -0.002681327160493827160473958490
@@ -1476,7 +1471,7 @@ fn gammafk(a: f32) -> (f32n2, f32n2) {
         } else {
             0.2891599433e-2
         },
-    ).mla(
+    ).mul_add(
         t,
         if o2 {
             0.003472222222222222222175164840
@@ -1485,7 +1480,7 @@ fn gammafk(a: f32) -> (f32n2, f32n2) {
         } else {
             -0.7385451812e-2
         },
-    ).mla(
+    ).mul_add(
         t,
         if o2 {
             0.083333333333333333335592087900
@@ -1568,16 +1563,16 @@ pub mod u35 {
         let s = s * s;
 
         let mut rsin = -0.3600925265e-4
-            .mla(s, 0.2490088111e-2)
-            .mla(s, -0.8074551076e-1)
-            .mla(s, 0.7853981853e+0)
+            .mul_add(s, 0.2490088111e-2)
+            .mul_add(s, -0.8074551076e-1)
+            .mul_add(s, 0.7853981853e+0)
             * t;
 
         let mut rcos = 0.3539815225e-5
-            .mla(s, -0.3259574005e-3)
-            .mla(s, 0.1585431583e-1)
-            .mla(s, -0.3084251285e+0)
-            .mla(s, 1.);
+            .mul_add(s, -0.3259574005e-3)
+            .mul_add(s, 0.1585431583e-1)
+            .mul_add(s, -0.3084251285e+0)
+            .mul_add(s, 1.);
 
         if (q & 2) != 0 {
             let s = rcos;
@@ -1595,7 +1590,7 @@ pub mod u35 {
             rsin = 0.;
             rcos = 1.;
         }
-        if xisinff(d) {
+        if d.isinf() {
             rsin = SLEEF_NAN_F;
             rcos = SLEEF_NAN_F;
         }
@@ -1608,9 +1603,9 @@ pub mod u35 {
         let mut y = (e + 2.) / (e + 1.) * (0.5 * e);
 
         y = if fabsfk(x) > 88. { SLEEF_INFINITY_F } else { y };
-        y = if xisnanf(y) { SLEEF_INFINITY_F } else { y };
+        y = if y.isnan() { SLEEF_INFINITY_F } else { y };
         y = mulsignf(y, x);
-        if xisnanf(x) {
+        if x.isnan() {
             SLEEF_NAN_F
         } else {
             y
@@ -1622,8 +1617,8 @@ pub mod u35 {
         let mut y = 0.5 * e + 0.5 / e;
 
         y = if fabsfk(x) > 88. { SLEEF_INFINITY_F } else { y };
-        y = if xisnanf(y) { SLEEF_INFINITY_F } else { y };
-        if xisnanf(x) {
+        y = if y.isnan() { SLEEF_INFINITY_F } else { y };
+        if x.isnan() {
             SLEEF_NAN_F
         } else {
             y
@@ -1636,9 +1631,9 @@ pub mod u35 {
         y = d / (d + 2.);
 
         y = if fabsfk(x) > 18.714973875 { 1. } else { y };
-        y = if xisnanf(y) { 1. } else { y };
+        y = if y.isnan() { 1. } else { y };
         y = mulsignf(y, x);
-        if xisnanf(x) {
+        if x.isnan() {
             SLEEF_NAN_F
         } else {
             y
@@ -1654,7 +1649,7 @@ pub mod u35 {
         let t = min / max;
         if (x == SLEEF_INFINITY_F) || (y == SLEEF_INFINITY_F) {
             SLEEF_INFINITY_F
-        } else if xisnanf(x) || xisnanf(y) {
+        } else if x.isnan() || y.isnan() {
             SLEEF_NAN_F
         } else if min == 0. {
             max
@@ -1696,18 +1691,19 @@ pub mod u35 {
 }
 
 pub mod u1 {
-    use common::*;
-    use super::rintfk;
     use super::rempif;
-    
+    use super::rintfk;
+    use common::*;
+    use f2::*;
+
     pub fn xsinf(d: f32) -> f32 {
         let q: i32;
-        let mut s: f32n2;
+        let mut s: F2<f32>;
 
         if fabsfk(d) < TRIGRANGEMAX2_F {
             let qf = rintfk(d * M_1_PI_F);
             q = qf as i32;
-            let u = mlaf(qf, -PI_A2_F, d);
+            let u = qf.mul_add(-PI_A2_F, d);
             s = u.add_as_f2(qf * (-PI_B2_F));
             s.add_checked_assign(qf * (-PI_C2_F));
         } else {
@@ -1720,7 +1716,7 @@ pub mod u1 {
                 );
             }
             s = dfidf.normalize();
-            if xisinff(d) || xisnanf(d) {
+            if d.isinf() || d.isnan() {
                 s.0 = SLEEF_NAN_F;
             }
         }
@@ -1729,8 +1725,8 @@ pub mod u1 {
         s = s.square();
 
         let mut u = 2.6083159809786593541503e-06
-            .mla(s.0, -0.0001981069071916863322258)
-            .mla(s.0, 0.00833307858556509017944336);
+            .mul_add(s.0, -0.0001981069071916863322258)
+            .mul_add(s.0, 0.00833307858556509017944336);
 
         let x = (1.).add_checked((-0.166666597127914428710938).add_checked_as_f2(u * s.0) * s);
 
@@ -1747,12 +1743,12 @@ pub mod u1 {
     }
 
     pub fn xcosf(mut d: f32) -> f32 {
-        let mut s: f32n2;
+        let mut s: F2<f32>;
         let q: i32;
 
         if fabsfk(d) < TRIGRANGEMAX2_F {
             d = fabsfk(d);
-            let dq = mlaf(rintfk(d * M_1_PI_F - 0.5), 2., 1.);
+            let dq = rintfk(d * M_1_PI_F - 0.5).mul_add(2., 1.);
             q = dq as i32;
             s = d.add_as_f2(dq * (-PI_A2_F * 0.5));
             s += dq * (-PI_B2_F * 0.5);
@@ -1773,7 +1769,7 @@ pub mod u1 {
                 );
             }
             s = dfidf.normalize();
-            if xisinff(d) || xisnanf(d) {
+            if d.isinf() || d.isnan() {
                 s.0 = SLEEF_NAN_F;
             }
         }
@@ -1782,8 +1778,8 @@ pub mod u1 {
         s = s.square();
 
         let mut u = 2.6083159809786593541503e-06
-            .mla(s.0, -0.0001981069071916863322258)
-            .mla(s.0, 0.00833307858556509017944336);
+            .mul_add(s.0, -0.0001981069071916863322258)
+            .mul_add(s.0, 0.00833307858556509017944336);
 
         let x = (1.).add_checked((-0.166666597127914428710938).add_checked_as_f2(u * s.0) * s);
 
@@ -1798,19 +1794,19 @@ pub mod u1 {
 
     pub fn xsincosf(d: f32) -> (f32, f32) {
         let q: i32;
-        let mut s: f32n2;
+        let mut s: F2<f32>;
 
         if fabsfk(d) < TRIGRANGEMAX2_F {
             let qf = rintfk(d * M_2_PI_F);
             q = qf as i32;
-            let u = mlaf(qf, -PI_A2_F * 0.5, d);
+            let u = qf.mul_add(-PI_A2_F * 0.5, d);
             s = u.add_as_f2(qf * (-PI_B2_F * 0.5));
             s.add_checked_assign(qf * (-PI_C2_F * 0.5));
         } else {
             let (dfidf, dfii) = rempif(d);
             q = dfii;
             s = dfidf;
-            if xisinff(d) || xisnanf(d) {
+            if d.isinf() || d.isnan() {
                 s.0 = SLEEF_NAN_F;
             }
         }
@@ -1819,8 +1815,8 @@ pub mod u1 {
         s.0 = s.square_as_f();
 
         let u = (-0.000195169282960705459117889)
-            .mla(s.0, 0.00833215750753879547119141)
-            .mla(s.0, -0.166666537523269653320312)
+            .mul_add(s.0, 0.00833215750753879547119141)
+            .mul_add(s.0, -0.166666537523269653320312)
             * s.0
             * t.0;
 
@@ -1831,10 +1827,10 @@ pub mod u1 {
         }
 
         let u = (-2.71811842367242206819355e-07)
-            .mla(s.0, 2.47990446951007470488548e-05)
-            .mla(s.0, -0.00138888787478208541870117)
-            .mla(s.0, 0.0416666641831398010253906)
-            .mla(s.0, -0.5);
+            .mul_add(s.0, 2.47990446951007470488548e-05)
+            .mul_add(s.0, -0.00138888787478208541870117)
+            .mul_add(s.0, 0.0416666641831398010253906)
+            .mul_add(s.0, -0.5);
 
         x = (1.).add_checked(s.0.mul_as_f2(u));
         let mut rcos = x.0 + x.1;
@@ -1856,18 +1852,18 @@ pub mod u1 {
 
     pub fn xtanf(d: f32) -> f32 {
         let q: i32;
-        let mut s: f32n2;
+        let mut s: F2<f32>;
         if fabsfk(d) < TRIGRANGEMAX2_F {
             let qf = rintfk(d * M_2_PI_F);
             q = qf as i32;
-            let u = mlaf(qf, -PI_A2_F * 0.5, d);
+            let u = qf.mul_add(-PI_A2_F * 0.5, d);
             s = u.add_as_f2(qf * (-PI_B2_F * 0.5));
             s.add_checked_assign(qf * (-PI_C2_F * 0.5));
         } else {
             let (dfidf, dfii) = rempif(d);
             q = dfii;
             s = dfidf;
-            if xisinff(d) || xisnanf(d) {
+            if d.isinf() || d.isnan() {
                 s.0 = SLEEF_NAN_F;
             }
         }
@@ -1880,17 +1876,17 @@ pub mod u1 {
         s = s.square().normalize();
 
         let u = 0.00446636462584137916564941
-            .mla(s.0, -8.3920182078145444393158e-05)
-            .mla(s.0, 0.0109639242291450500488281)
-            .mla(s.0, 0.0212360303848981857299805)
-            .mla(s.0, 0.0540687143802642822265625);
+            .mul_add(s.0, -8.3920182078145444393158e-05)
+            .mul_add(s.0, 0.0109639242291450500488281)
+            .mul_add(s.0, 0.0212360303848981857299805)
+            .mul_add(s.0, 0.0540687143802642822265625);
 
         let mut x = (0.133325666189193725585938).add_checked_as_f2(u * s.0);
         x = (1.).add_checked((0.33333361148834228515625).add_checked(s * x) * s);
         x = t * x;
 
         if (q & 1) != 0 {
-            x = x.rec();
+            x = x.recpre();
         }
 
         if xisnegzerof(d) {
@@ -1900,7 +1896,7 @@ pub mod u1 {
         }
     }
 
-    fn atan2kf(mut y: f32n2, mut x: f32n2) -> f32n2 {
+    fn atan2kf(mut y: F2<f32>, mut x: F2<f32>) -> F2<f32> {
         let mut q = 0;
 
         if x.0 < 0. {
@@ -1920,13 +1916,13 @@ pub mod u1 {
         let mut t = s.square().normalize();
 
         let u = (-0.00176397908944636583328247)
-            .mla(t.0, 0.0107900900766253471374512)
-            .mla(t.0, -0.0309564601629972457885742)
-            .mla(t.0, 0.0577365085482597351074219)
-            .mla(t.0, -0.0838950723409652709960938)
-            .mla(t.0, 0.109463557600975036621094)
-            .mla(t.0, -0.142626821994781494140625)
-            .mla(t.0, 0.199983194470405578613281);
+            .mul_add(t.0, 0.0107900900766253471374512)
+            .mul_add(t.0, -0.0309564601629972457885742)
+            .mul_add(t.0, 0.0577365085482597351074219)
+            .mul_add(t.0, -0.0838950723409652709960938)
+            .mul_add(t.0, 0.109463557600975036621094)
+            .mul_add(t.0, -0.142626821994781494140625)
+            .mul_add(t.0, 0.199983194470405578613281);
 
         t = t * (-0.333332866430282592773438).add_checked_as_f2(u * t.0);
         t = s * (1.).add_checked(t);
@@ -1944,15 +1940,15 @@ pub mod u1 {
         r = mulsignf(r, x);
         r = if y == 0. {
             (if signf(x) == -1. { M_PI_F } else { 0. })
-        } else if xisinff(y) {
-            M_PI_2_F - (if xisinff(x) { signf(x) * M_PI_4_F } else { 0. })
-        } else if xisinff(x) || (x == 0.) {
-            M_PI_2_F - (if xisinff(x) { signf(x) * M_PI_2_F } else { 0. })
+        } else if y.isinf() {
+            M_PI_2_F - (if x.isinf() { signf(x) * M_PI_4_F } else { 0. })
+        } else if x.isinf() || (x == 0.) {
+            M_PI_2_F - (if x.isinf() { signf(x) * M_PI_2_F } else { 0. })
         } else {
             r
         };
 
-        if xisnanf(x) || xisnanf(y) {
+        if x.isnan() || y.isnan() {
             SLEEF_NAN_F
         } else {
             mulsignf(r, y)
@@ -1970,10 +1966,10 @@ pub mod u1 {
         x = if fabsfk(d) == 1. { df(0., 0.) } else { x };
 
         let u = 0.4197454825e-1
-            .mla(x2, 0.2424046025e-1)
-            .mla(x2, 0.4547423869e-1)
-            .mla(x2, 0.7495029271e-1)
-            .mla(x2, 0.1666677296e+0)
+            .mul_add(x2, 0.2424046025e-1)
+            .mul_add(x2, 0.4547423869e-1)
+            .mul_add(x2, 0.7495029271e-1)
+            .mul_add(x2, 0.1666677296e+0)
             * x2
             * x.0;
 
@@ -1994,10 +1990,10 @@ pub mod u1 {
         x = if fabsfk(d) == 1. { df(0., 0.) } else { x };
 
         let u = 0.4197454825e-1
-            .mla(x2, 0.2424046025e-1)
-            .mla(x2, 0.4547423869e-1)
-            .mla(x2, 0.7495029271e-1)
-            .mla(x2, 0.1666677296e+0)
+            .mul_add(x2, 0.2424046025e-1)
+            .mul_add(x2, 0.4547423869e-1)
+            .mul_add(x2, 0.7495029271e-1)
+            .mul_add(x2, 0.1666677296e+0)
             * x.0
             * x2;
 
@@ -2015,7 +2011,7 @@ pub mod u1 {
     pub fn xatanf(d: f32) -> f32 {
         let d2 = atan2kf(df(fabsfk(d), 0.), df(1., 0.));
         let mut r = d2.0 + d2.1;
-        if xisinff(d) {
+        if d.isinf() {
             r = 1.570796326794896557998982;
         }
         mulsignf(r, d)
@@ -2038,8 +2034,8 @@ pub mod u1 {
         let x2 = x.0 * x.0;
 
         let t = 0.3027294874e+0
-            .mla(x2, 0.3996108174e+0)
-            .mla(x2, 0.6666694880e+0);
+            .mul_add(x2, 0.3996108174e+0)
+            .mul_add(x2, 0.6666694880e+0);
 
         let s = (df(0.69314718246459960938, -1.904654323148236017e-09) * (e as f32))
             .add_checked(x.scale(2.))
@@ -2047,9 +2043,9 @@ pub mod u1 {
 
         if d == 0. {
             -SLEEF_INFINITY_F
-        } else if (d < 0.) || xisnanf(d) {
+        } else if (d < 0.) || d.isnan() {
             SLEEF_NAN_F
-        } else if xisinff(d) {
+        } else if d.isinf() {
             SLEEF_INFINITY_F
         } else {
             s.0 + s.1
@@ -2076,11 +2072,11 @@ pub mod u1 {
         d = fabsfk(d);
 
         let mut x = (-0.601564466953277587890625)
-            .mla(d, 2.8208892345428466796875)
-            .mla(d, -5.532182216644287109375)
-            .mla(d, 5.898262500762939453125)
-            .mla(d, -3.8095417022705078125)
-            .mla(d, 2.2241256237030029296875);
+            .mul_add(d, 2.8208892345428466796875)
+            .mul_add(d, -5.532182216644287109375)
+            .mul_add(d, 5.898262500762939453125)
+            .mul_add(d, -3.8095417022705078125)
+            .mul_add(d, 2.2241256237030029296875);
 
         let mut y = x * x;
         y = y * y;
@@ -2097,7 +2093,7 @@ pub mod u1 {
 
         if d == 0. {
             mulsignf(0., q2.0)
-        } else if xisinff(d) {
+        } else if d.isinf() {
             mulsignf(SLEEF_INFINITY_F, q2.0)
         } else {
             super::ldexp2kf(v.0 + v.1, (e + 6144) / 3 - 2048)
@@ -2109,7 +2105,7 @@ pub mod u1 {
         let y = super::expk2f(da) * db;
         let mut r = y.0 + y.1;
         r = if ((a == -SLEEF_INFINITY_F) || ((a < 0.) && xisintf(a)))
-            || (xisnumberf(a) && (a < 0.) && xisnanf(r))
+            || (xisnumberf(a) && (a < 0.) && r.isnan())
         {
             SLEEF_NAN_F
         } else {
@@ -2117,7 +2113,7 @@ pub mod u1 {
         };
         if ((a == SLEEF_INFINITY_F) || xisnumberf(a))
             && (a >= -f32::MIN)
-            && ((a == 0.) || (a > 36.) || xisnanf(r))
+            && ((a == 0.) || (a > 36.) || r.isnan())
         {
             mulsignf(SLEEF_INFINITY_F, a)
         } else {
@@ -2129,7 +2125,7 @@ pub mod u1 {
         let (da, db) = super::gammafk(a);
         let y = da + super::logk2f(db.abs());
         let r = y.0 + y.1;
-        if xisinff(a) || (a <= 0. && xisintf(a)) || (xisnumberf(a) && xisnanf(r)) {
+        if a.isinf() || (a <= 0. && xisintf(a)) || (xisnumberf(a) && r.isnan()) {
             SLEEF_INFINITY_F
         } else {
             r
@@ -2151,7 +2147,7 @@ pub mod u1 {
             -0.1792667899e-4
         } else {
             -0.9495757695e-5
-        }.mla(
+        }.mul_add(
             u,
             if o0 {
                 -0.7768311189e-3
@@ -2160,7 +2156,7 @@ pub mod u1 {
             } else {
                 0.2481465926e-3
             },
-        ).mla(
+        ).mul_add(
             u,
             if o0 {
                 0.5159463733e-2
@@ -2169,7 +2165,7 @@ pub mod u1 {
             } else {
                 -0.2918176819e-2
             },
-        ).mla(
+        ).mul_add(
             u,
             if o0 {
                 -0.2683781274e-1
@@ -2178,7 +2174,7 @@ pub mod u1 {
             } else {
                 0.2059706673e-1
             },
-        ).mla(
+        ).mul_add(
             u,
             if o0 {
                 0.1128318012e+0
@@ -2205,9 +2201,13 @@ pub mod u1 {
             df(-0.112461487742845562801052956293e+1, 0.)
         };
         d *= a;
-        d = if o0 { d } else { (1.).add_checked(-super::expk2f(d)) };
+        d = if o0 {
+            d
+        } else {
+            (1.).add_checked(-super::expk2f(d))
+        };
         u = mulsignf(if o2 { d.0 + d.1 } else { 1. }, s);
-        if xisnanf(a) {
+        if a.isnan() {
             SLEEF_NAN_F
         } else {
             u
@@ -2218,6 +2218,7 @@ pub mod u1 {
 
 pub mod u15 {
     use common::*;
+    use f2::*;
 
     pub fn xerfcf(mut a: f32) -> f32 {
         let s = a;
@@ -2240,7 +2241,7 @@ pub mod u15 {
             -0.3869504035e+0
         } else {
             0.1115344167e+1
-        }.mla(
+        }.mul_add(
             u.0,
             if o0 {
                 0.6000166177e-3
@@ -2251,7 +2252,7 @@ pub mod u15 {
             } else {
                 -0.9454904199e+0
             },
-        ).mla(
+        ).mul_add(
             u.0,
             if o0 {
                 -0.1665703603e-2
@@ -2262,7 +2263,7 @@ pub mod u15 {
             } else {
                 -0.3667259514e+0
             },
-        ).mla(
+        ).mul_add(
             u.0,
             if o0 {
                 0.1795156277e-3
@@ -2273,7 +2274,7 @@ pub mod u15 {
             } else {
                 0.7155663371e+0
             },
-        ).mla(
+        ).mul_add(
             u.0,
             if o0 {
                 0.1914106123e-1
@@ -2327,7 +2328,7 @@ pub mod u15 {
         if s < 0. {
             r = 2. - r;
         }
-        if xisnanf(s) {
+        if s.isnan() {
             SLEEF_NAN_F
         } else {
             r
@@ -2338,6 +2339,7 @@ pub mod u15 {
 
 pub mod u05 {
     use common::*;
+    use f2::*;
 
     pub fn xsqrtf(mut d: f32) -> f32 {
         let mut q = 0.5;
@@ -2361,7 +2363,7 @@ pub mod u05 {
         x *= 1.5 - 0.5 * d * x * x;
         x *= (1.5 - 0.5 * d * x * x) * d;
 
-        let d2 = (d + x.mul_as_f2(x)) * x.rec();
+        let d2 = (d + x.mul_as_f2(x)) * x.recpre();
 
         if (d == 0.) || (d == SLEEF_INFINITY_F) {
             d
@@ -2382,8 +2384,8 @@ pub mod u05 {
         //
 
         let u = 0.3093842054e-6
-            .mla(s, -0.3657307388e-4)
-            .mla(s, 0.2490393585e-2);
+            .mul_add(s, -0.3657307388e-4)
+            .mul_add(s, 0.2490393585e-2);
         let mut x = u * s + df(-0.080745510756969451904, -1.3373665339076936258e-09);
         x = s2 * x + df(0.78539818525314331055, -2.1857338617566484855e-08);
 
@@ -2394,8 +2396,8 @@ pub mod u05 {
         }
 
         let u = (-0.2430611801e-7)
-            .mla(s, 0.3590577080e-5)
-            .mla(s, -0.3259917721e-3);
+            .mul_add(s, 0.3590577080e-5)
+            .mul_add(s, -0.3259917721e-3);
         x = u * s + df(0.015854343771934509277, 4.4940051354032242811e-10);
         x = s2 * x + df(-0.30842512845993041992, -9.0728339030733922277e-09);
 
@@ -2418,7 +2420,7 @@ pub mod u05 {
             rsin = 0.;
             rcos = 1.;
         }
-        if xisinff(d) {
+        if d.isinf() {
             rsin = SLEEF_NAN_F;
             rcos = SLEEF_NAN_F;
         }
@@ -2444,11 +2446,11 @@ pub mod u05 {
         let ret = t.0 + t.1;
         if (x == SLEEF_INFINITY_F) || (y == SLEEF_INFINITY_F) {
             SLEEF_INFINITY_F
-        } else if xisnanf(x) || xisnanf(y) {
+        } else if x.isnan() || y.isnan() {
             SLEEF_NAN_F
         } else if min == 0. {
             max
-        } else if xisnanf(ret) {
+        } else if ret.isnan() {
             SLEEF_INFINITY_F
         } else {
             ret
@@ -2458,7 +2460,7 @@ pub mod u05 {
     pub fn xsinpif(d: f32) -> f32 {
         let x = super::sinpifk(d);
 
-        if xisinff(d) {
+        if d.isinf() {
             SLEEF_NAN_F
         } else if fabsfk(d) > TRIGRANGEMAX4_F {
             0.
@@ -2472,7 +2474,7 @@ pub mod u05 {
     pub fn xcospif(d: f32) -> f32 {
         let x = super::cospifk(d);
 
-        if xisinff(d) {
+        if d.isinf() {
             SLEEF_NAN_F
         } else if fabsfk(d) > TRIGRANGEMAX4_F {
             1.

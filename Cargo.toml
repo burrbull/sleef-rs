@@ -4,3 +4,8 @@ version = "0.1.0"
 authors = ["Andrey Zgarbul <zgarbul.andrey@gmail.com>"]
 
 [dependencies]
+
+[dependencies.packed_simd]
+#version = "0.1"
+git = "https://github.com/rust-lang-nursery/packed_simd.git"
+features = ["into_bits"]

@@ -1,7 +1,5 @@
-
 macro_rules! impl_math_f32 {
     ($f32x:ident, $u32x:ident, $m32x:ident, $i32x:ident) => {
-        //use f2::*;
 
         //---------???????
         //--------- Naive implementation ???????
@@ -53,8 +51,12 @@ macro_rules! impl_math_f32 {
 
 
         #[inline]
-        fn vgather_vf_p_vi2(_ptr: &[f32], _st: usize, _vi: $i32x) -> $f32x {
-          unimplemented!()
+        fn vgather_vf_p_vi2(ptr: &[f32], vi: $i32x) -> $f32x {
+          let mut ar = [0_f32; $f32x::lanes()];
+          for i in 0..$f32x::lanes() {
+              ar[i] = ptr[vi.extract(i) as usize];
+          }
+          $f32x::from_slice_aligned(&ar)
         }
 
 
@@ -236,19 +238,19 @@ macro_rules! impl_math_f32 {
             a = vldexp3_vf_vf_vi2(a, q);
             ex = vandnot_vi2_vi2_vi2(ex >> 31, ex);
             ex = ex << 2;
-            let mut x = a.mul_as_f2(vgather_vf_p_vi2(&REMPITABSP, 0, ex));
+            let mut x = a.mul_as_f2(vgather_vf_p_vi2(&REMPITABSP, ex));
             let (did, mut q) = rempisubf(x.0);
             x.0 = did;
             x = x.normalize();
-            let y = a.mul_as_f2(vgather_vf_p_vi2(&REMPITABSP, 1, ex));
+            let y = a.mul_as_f2(vgather_vf_p_vi2(&REMPITABSP[1..], ex));
             x += y;
             let (did, dii) = rempisubf(x.0);
             q = q + dii;
             x.0 = did;
             x = x.normalize();
             let mut y = F2::new(
-                vgather_vf_p_vi2(&REMPITABSP, 2, ex),
-                vgather_vf_p_vi2(&REMPITABSP, 3, ex),
+                vgather_vf_p_vi2(&REMPITABSP[2..], ex),
+                vgather_vf_p_vi2(&REMPITABSP[3..], ex),
             );
             y *= a;
             x += y;

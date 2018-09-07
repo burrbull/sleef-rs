@@ -5,7 +5,6 @@ pub use std::f64;
 pub use std::i32;
 pub use std::i64;
 
-
 // ------------------
 
 pub fn SQRTF(x: f32) -> f32 {
@@ -66,24 +65,23 @@ pub(crate) fn fabsfk(x: f32) -> f32 {
     int_bits_to_float(0x7fffffff & float_to_raw_int_bits(x))
 }
 
-
 impl IsInf for f32 {
-  type Mask = bool;
-  #[inline]
-  fn isinf(self) -> Self::Mask {
-     (self == SLEEF_INFINITY_F) || (self == -SLEEF_INFINITY_F)
-  }
-  #[inline]
-  fn ispinf(self) -> Self::Mask {
-    self == SLEEF_INFINITY_F
-  }
+    type Mask = bool;
+    #[inline]
+    fn isinf(self) -> Self::Mask {
+        (self == SLEEF_INFINITY_F) || (self == -SLEEF_INFINITY_F)
+    }
+    #[inline]
+    fn ispinf(self) -> Self::Mask {
+        self == SLEEF_INFINITY_F
+    }
 }
 impl IsNan for f32 {
-  type Mask = bool;
-  #[inline]
-  fn isnan(self) -> Self::Mask {
-    self != self
-  }
+    type Mask = bool;
+    #[inline]
+    fn isnan(self) -> Self::Mask {
+        self != self
+    }
 }
 
 #[inline]
@@ -138,22 +136,22 @@ pub(crate) fn fabsk(x: f64) -> f64 {
 }
 
 impl IsInf for f64 {
-  type Mask = bool;
-  #[inline]
-  fn isinf(self) -> Self::Mask {
-     (self == SLEEF_INFINITY) || (self == -SLEEF_INFINITY)
-  }
-  #[inline]
-  fn ispinf(self) -> Self::Mask {
-    self == SLEEF_INFINITY
-  }
+    type Mask = bool;
+    #[inline]
+    fn isinf(self) -> Self::Mask {
+        (self == SLEEF_INFINITY) || (self == -SLEEF_INFINITY)
+    }
+    #[inline]
+    fn ispinf(self) -> Self::Mask {
+        self == SLEEF_INFINITY
+    }
 }
 impl IsNan for f64 {
-  type Mask = bool;
-  #[inline]
-  fn isnan(self) -> Self::Mask {
-    self != self
-  }
+    type Mask = bool;
+    #[inline]
+    fn isnan(self) -> Self::Mask {
+        self != self
+    }
 }
 
 #[inline]
@@ -197,7 +195,10 @@ pub(crate) fn sign(d: f64) -> f64 {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct F2<T>(pub T, pub T);
 
-impl<T> F2<T> where T: std::marker::Sized {
+impl<T> F2<T>
+where
+    T: std::marker::Sized,
+{
     #[inline]
     pub fn new(x0: T, x1: T) -> Self {
         F2(x0, x1)
@@ -206,45 +207,57 @@ impl<T> F2<T> where T: std::marker::Sized {
 
 // ---- Advanced Traits -----------------
 
+pub trait FromU32 {
+    fn from_u32(i: (u32, u32)) -> Self;
+}
+
 pub trait IsInf {
-  type Mask;
-  fn isinf(self) -> Self::Mask;
-  fn ispinf(self) -> Self::Mask;
+    type Mask;
+    fn isinf(self) -> Self::Mask;
+    fn ispinf(self) -> Self::Mask;
 }
 pub trait IsNan {
-  type Mask;
-  fn isnan(self) -> Self::Mask;
+    type Mask;
+    fn isnan(self) -> Self::Mask;
 }
 
 pub trait Round {
     type Int;
-    
+
     fn truncate(self) -> Self;
-    
+
     fn truncatei(self) -> Self::Int;
-    
+
     fn rint(self) -> Self;
-    
+
     fn rinti(self) -> Self::Int;
 }
 
 pub trait AsF2
-    where Self: std::marker::Sized {
+where
+    Self: std::marker::Sized,
+{
     fn add_as_f2(self, other: Self) -> F2<Self>;
-    
+
     fn add_checked_as_f2(self, other: Self) -> F2<Self>;
-    
+
     fn mul_as_f2(self, other: Self) -> F2<Self>;
-    
+
     fn sqrt_as_f2(self) -> F2<Self>;
 }
 pub trait RecPreAsF2
-    where Self: std::marker::Sized {
+where
+    Self: std::marker::Sized,
+{
     fn recpre_as_f2(self) -> F2<Self>;
 }
 
 pub trait MulAdd {
     fn mul_add(self, y: Self, z: Self) -> Self;
+}
+
+pub trait MulSub {
+    fn mul_sub(self, y: Self, z: Self) -> Self;
 }
 
 pub trait Check {

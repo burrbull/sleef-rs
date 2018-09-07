@@ -420,7 +420,7 @@ macro_rules! impl_f2_f32 {
         impl RecPreAsF2 for $f32x {
             #[cfg(target_feature = "fma")]
             #[inline]
-            fn recpre_as_f2(self) -> F2<$f32x>  {
+            fn recpre_as_f2(self) -> F2<Self>  {
                 let q0 = self.recpre();
                 F2::new(q0, q0 * self.fmanp(q0, Self::splat(1)))
             }
@@ -481,6 +481,457 @@ macro_rules! impl_f2_f32 {
                     vsel_vf2_vo_vf2_vf2(o2, F2::from(d2), F2::from(d3)),
                 ),
             )
+        }
+    };
+}
+
+macro_rules! impl_f2_f64 {
+    ($f64x:ident, $u64x:ident, $m64x:ident) => {
+        use common::*;
+
+        impl FromU32 for $u64x {
+            fn from_u32(i: (u32, u32)) -> Self {
+                let mut a = [0_u32; $u64x::lanes() * 2];
+                for j in 0..$u64x::lanes() {
+                    a[2 * j] = i.0;
+                    a[2 * j + 1] = i.1;
+                }
+                $u64x::from_bits(Simd::<[u32; $u64x::lanes() * 2]>::from_slice_aligned(&a))
+            }
+        }
+
+        // --------------------
+        #[inline]
+        fn vsel_vd_vo_d_d(o: $m64x, v1: f64, v0: f64) -> $f64x {
+            o.select($f64x::splat(v1), $f64x::splat(v0))
+        }
+
+        #[inline]
+        fn vsel_vd_vo_vo_d_d_d(o0: $m64x, o1: $m64x, d0: f64, d1: f64, d2: f64) -> $f64x {
+            o0.select($f64x::splat(d0), vsel_vd_vo_d_d(o1, d1, d2))
+        }
+
+        #[inline]
+        fn vsel_vd_vo_vo_vo_d_d_d_d(
+            o0: $m64x,
+            o1: $m64x,
+            o2: $m64x,
+            d0: f64,
+            d1: f64,
+            d2: f64,
+            d3: f64,
+        ) -> $f64x {
+            o0.select(
+                $f64x::splat(d0),
+                o1.select($f64x::splat(d1), vsel_vd_vo_d_d(o2, d2, d3)),
+            )
+        }
+        // -------------------
+
+        #[inline]
+        fn vupper_vd_vd(d: $f64x) -> $f64x {
+            $f64x::from_bits($u64x::from_bits(d) & $u64x::from_u32((0xffffffff, 0xf8000000)))
+        }
+
+        impl F2<$f64x> {
+            #[inline]
+            pub fn normalize(self) -> Self {
+                let s0 = self.0 + self.1;
+                Self::new(s0, self.0 - s0 + self.1)
+            }
+
+            #[inline]
+            pub fn abs(self) -> Self {
+                Self::new(
+                    self.0.abs(),
+                    $f64x::from_bits(
+                        $u64x::from_bits(self.1)
+                            ^ ($u64x::from_bits(self.0) & $u64x::from_bits($f64x::splat(-0.))),
+                    ),
+                )
+            }
+
+            #[inline]
+            pub fn scale(self, other: $f64x) -> Self {
+                Self::new(self.0 * other, self.1 * other)
+            }
+
+            #[cfg(target_feature = "fma")]
+            #[inline]
+            pub fn square(self) -> Self {
+                let r0 = self.0 * self.0;
+                Self::new(
+                    r0,
+                    (self.0 + self.0).mul_adde(self.1, self.0.mul_sube(self.0, r0)),
+                )
+            }
+            #[cfg(not(target_feature = "fma"))]
+            #[inline]
+            pub fn square(self) -> Self {
+                let xh = vupper_vd_vd(self.0);
+                let xl = self.0 - xh;
+                let r0 = self.0 * self.0;
+                Self::new(
+                    r0,
+                    xh * xh + (-r0) + (xh + xh) * xl + xl * xl + self.0 * (self.1 + self.1),
+                )
+            }
+
+            #[cfg(target_feature = "fma")]
+            #[inline]
+            pub fn square_as_f(self) -> $f64x {
+                self.0.mul_adde(self.0, self.0 * self.1 + self.0 * self.1)
+            }
+            #[cfg(not(target_feature = "fma"))]
+            #[inline]
+            pub fn square_as_f(self) -> $f64x {
+                let xh = vupper_vd_vd(self.0);
+                let xl = self.0 - xh;
+
+                xh * self.1 + xh * self.1 + xl * xl + (xh * xl + xh * xl) + xh * xh
+            }
+
+            #[inline]
+            pub fn sqrt(self) -> Self {
+                let t = (self.0 + self.1).sqrt();
+                ((self + t.mul_as_f2(t)) * t.recpre_as_f2()).scale($f64x::splat(0.5))
+            }
+
+            #[cfg(target_feature = "fma")]
+            #[inline]
+            pub fn mul_as_f(self, other: Self) -> $f64x {
+                self.0
+                    .mul_adde(other.0, self.1.mul_adde(other.0, self.0 * other.1))
+            }
+            #[cfg(not(target_feature = "fma"))]
+            #[inline]
+            pub fn mul_as_f(self, other: Self) -> $f64x {
+                let xh = vupper_vd_vd(self.0);
+                let xl = self.0 - xh;
+                let yh = vupper_vd_vd(other.0);
+                let yl = other.0 - yh;
+
+                self.1 * yh + xh * other.1 + xl * yl + xh * yl + xl * yh + xh * yh
+            }
+        }
+
+        impl std::convert::From<(f64, f64)> for F2<$f64x> {
+            fn from(f: (f64, f64)) -> Self {
+                Self::new($f64x::splat(f.0), $f64x::splat(f.1))
+            }
+        }
+
+        impl std::ops::Neg for F2<$f64x> {
+            type Output = Self;
+            #[inline]
+            fn neg(self) -> Self {
+                Self::new(-self.0, -self.1)
+            }
+        }
+
+        impl std::ops::Add for F2<$f64x> {
+            type Output = Self;
+            #[inline]
+            fn add(self, other: Self) -> Self {
+                let r0 = self.0 + other.0;
+                let v = r0 - self.0;
+                Self::new(r0, self.0 - (r0 - v) + (other.0 - v) + (self.1 + other.1))
+            }
+        }
+        impl std::ops::AddAssign for F2<$f64x> {
+            #[inline]
+            fn add_assign(&mut self, other: Self) {
+                *self = *self + other;
+            }
+        }
+
+        impl std::ops::Add<$f64x> for F2<$f64x> {
+            type Output = Self;
+            #[inline]
+            fn add(self, other: $f64x) -> Self {
+                let r0 = self.0 + other;
+                let v = r0 - self.0;
+                Self::new(r0, self.0 - (r0 - v) + (other - v) + self.1)
+            }
+        }
+        impl std::ops::AddAssign<$f64x> for F2<$f64x> {
+            #[inline]
+            fn add_assign(&mut self, other: $f64x) {
+                *self = *self + other;
+            }
+        }
+
+        impl std::ops::Add<F2<$f64x>> for $f64x {
+            type Output = F2<Self>;
+            #[inline]
+            fn add(self, other: F2<Self>) -> Self::Output {
+                let r0 = self + other.0;
+                let v = r0 - self;
+                F2::new(r0, self - (r0 - v) + (other.0 - v) + other.1)
+            }
+        }
+
+        impl std::ops::Mul for F2<$f64x> {
+            type Output = Self;
+            #[cfg(target_feature = "fma")]
+            #[inline]
+            fn mul(self, other: Self) -> Self {
+                let r0 = self.0 * other.0;
+                Self::new(
+                    r0,
+                    self.0.mul_adde(
+                        other.1,
+                        self.1.mul_adde(other.0, self.0.mul_sube(other.0, r0)),
+                    ),
+                )
+            }
+            #[cfg(not(target_feature = "fma"))]
+            #[inline]
+            fn mul(self, other: Self) -> Self {
+                let xh = vupper_vd_vd(self.0);
+                let xl = self.0 - xh;
+                let yh = vupper_vd_vd(other.0);
+                let yl = other.0 - yh;
+                let r0 = self.0 * other.0;
+                Self::new(
+                    r0,
+                    xh * yh
+                        + (-r0)
+                        + xl * yh
+                        + xh * yl
+                        + xl * yl
+                        + self.0 * other.1
+                        + self.1 * other.0,
+                )
+            }
+        }
+        impl std::ops::MulAssign for F2<$f64x> {
+            #[inline]
+            fn mul_assign(&mut self, other: Self) {
+                *self = *self * other;
+            }
+        }
+
+        impl std::ops::Mul<$f64x> for F2<$f64x> {
+            type Output = Self;
+            #[cfg(target_feature = "fma")]
+            #[inline]
+            fn mul(self, other: $f64x) -> Self {
+                let r0 = self.0 * other;
+                Self::new(r0, self.1.mul_adde(other, self.0.mul_sube(other, r0)))
+            }
+            #[cfg(not(target_feature = "fma"))]
+            #[inline]
+            fn mul(self, other: $f64x) -> Self {
+                let xh = vupper_vd_vd(self.0);
+                let xl = self.0 - xh;
+                let yh = vupper_vd_vd(other);
+                let yl = other - yh;
+                let r0 = self.0 * other;
+                Self::new(
+                    r0,
+                    xh * yh + (-r0) + xl * yh + xh * yl + xl * yl + self.1 * other,
+                )
+            }
+        }
+        impl std::ops::MulAssign<$f64x> for F2<$f64x> {
+            #[inline]
+            fn mul_assign(&mut self, other: $f64x) {
+                *self = *self * other;
+            }
+        }
+
+        impl std::ops::Div for F2<$f64x> {
+            type Output = Self;
+            #[cfg(target_feature = "fma")]
+            #[inline]
+            fn div(self, other: Self) -> Self {
+                let t = other.0.recpre();
+
+                let q0 = self.0 * t;
+                let u = t.mul_sube(self.0, q0);
+                let mut q1 = other.1.fmanp(t, other.0.fmanp(t, $f64x::splat(1.)));
+                q1 = q0.mul_adde(q1, self.1.mul_adde(t, u));
+
+                Self::new(q0, q1)
+            }
+            #[cfg(not(target_feature = "fma"))]
+            #[inline]
+            fn div(self, other: Self) -> Self {
+                let t = other.0.recpre();
+                let dh = vupper_vd_vd(other.0);
+                let dl = other.0 - dh;
+                let th = vupper_vd_vd(t);
+                let tl = t - th;
+                let nhh = vupper_vd_vd(self.0);
+                let nhl = self.0 - nhh;
+
+                let q0 = self.0 * t;
+
+                let u = nhh * th - q0
+                    + nhh * tl
+                    + nhl * th
+                    + nhl * tl
+                    + q0 * ($f64x::splat(1.) - dh * th - dh * tl - dl * th - dl * tl);
+
+                Self::new(q0, t.mul_add(self.1 - q0 * other.1, u))
+            }
+        }
+
+        impl AddChecked for F2<$f64x> {
+            type Output = Self;
+            #[inline]
+            fn add_checked(self, other: Self) -> Self::Output {
+                // |self| >= |other|
+                let r0 = self.0 + other.0;
+                Self::new(r0, self.0 - r0 + other.0 + self.1 + other.1)
+            }
+        }
+        impl AddCheckedAssign<F2<$f64x>> for F2<$f64x> {
+            #[inline]
+            fn add_checked_assign(&mut self, other: Self) {
+                *self = (*self).add_checked(other);
+            }
+        }
+        impl AddChecked<$f64x> for F2<$f64x> {
+            type Output = Self;
+            #[inline]
+            fn add_checked(self, other: $f64x) -> Self::Output {
+                // |self| >= |other|
+                let r0 = self.0 + other;
+                Self::new(r0, self.0 - r0 + other + self.1)
+            }
+        }
+        impl AddCheckedAssign<$f64x> for F2<$f64x> {
+            #[inline]
+            fn add_checked_assign(&mut self, other: $f64x) {
+                *self = (*self).add_checked(other);
+            }
+        }
+
+        impl AddChecked<F2<$f64x>> for $f64x {
+            type Output = F2<Self>;
+            #[inline]
+            fn add_checked(self, other: F2<Self>) -> Self::Output {
+                let r0 = self + other.0;
+                F2::new(r0, self - r0 + other.0 + other.1)
+            }
+        }
+
+        impl SubChecked for F2<$f64x> {
+            type Output = Self;
+            #[inline]
+            fn sub_checked(self, other: Self) -> Self::Output {
+                // |self| >= |other|
+                let r0 = self.0 - other.0;
+                let mut r1 = self.0 - r0;
+                r1 = r1 - other.0;
+                r1 = r1 + self.1;
+                r1 = r1 - other.1;
+
+                Self::new(r0, r1)
+            }
+        }
+
+        impl SubChecked<$f64x> for F2<$f64x> {
+            type Output = Self;
+            #[inline]
+            fn sub_checked(self, other: $f64x) -> Self::Output {
+                // |self| >= |other|
+                let r0 = self.0 - other;
+                Self::new(r0, self.0 - r0 - other + self.1)
+            }
+        }
+
+        impl AsF2 for $f64x {
+            #[inline]
+            fn add_as_f2(self, other: Self) -> F2<Self> {
+                let r0 = self + other;
+                let v = r0 - self;
+                F2::new(r0, self - (r0 - v) + (other - v))
+            }
+            #[inline]
+            fn add_checked_as_f2(self, other: Self) -> F2<Self> {
+                let r0 = self + other;
+                F2::new(r0, self - r0 + other)
+            }
+            #[cfg(target_feature = "fma")]
+            #[inline]
+            fn mul_as_f2(self, other: Self) -> F2<Self> {
+                let r0 = self * other;
+                F2::new(r0, self.mul_sube(other, r0))
+            }
+            #[cfg(not(target_feature = "fma"))]
+            #[inline]
+            fn mul_as_f2(self, other: Self) -> F2<Self> {
+                let xh = vupper_vd_vd(self);
+                let xl = self - xh;
+                let yh = vupper_vd_vd(other);
+                let yl = other - yh;
+                let r0 = self * other;
+                F2::new(r0, xh * yh + (-r0) + xl * yh + xh * yl + xl * yl)
+            }
+            #[inline]
+            fn sqrt_as_f2(self) -> F2<Self> {
+                let t = self.sqrt();
+                ((self + t.mul_as_f2(t)) * t.recpre_as_f2()).scale(Self::splat(0.5))
+            }
+        }
+
+        impl RecPre for F2<$f64x> {
+            #[cfg(target_feature = "fma")]
+            #[inline]
+            fn recpre(self) -> Self {
+                let q0 = self.0.recpre();
+                Self::new(q0, q0 * self.1.fmanp(q0, self.0.fmanp(q0, $f64x::splat(1))))
+            }
+            #[cfg(not(target_feature = "fma"))]
+            #[inline]
+            fn recpre(self) -> F2<$f64x> {
+                let t = self.0.recpre();
+                let dh = vupper_vd_vd(self.0);
+                let dl = self.0 - dh;
+                let th = vupper_vd_vd(t);
+                let tl = t - th;
+                let q0 = t;
+                Self::new(
+                    q0,
+                    t * ($f64x::splat(1.) - dh * th - dh * tl - dl * th - dl * tl - self.1 * t),
+                )
+            }
+        }
+
+        impl RecPreAsF2 for $f64x {
+            #[cfg(target_feature = "fma")]
+            #[inline]
+            fn recpre_as_f2(self) -> F2<Self> {
+                let q0 = self.recpre();
+                F2::new(q0, q0 * (self, q0, Self::splat(1.)).fmanp())
+            }
+            #[cfg(not(target_feature = "fma"))]
+            #[inline]
+            fn recpre_as_f2(self) -> F2<Self> {
+                let t = self.recpre();
+                let dh = vupper_vd_vd(self);
+                let dl = self - dh;
+                let th = vupper_vd_vd(t);
+                let tl = t - th;
+                let q0 = t;
+                F2::new(
+                    q0,
+                    t * (Self::splat(1.) - dh * th - dh * tl - dl * th - dl * tl),
+                )
+            }
+        }
+
+        #[inline]
+        fn vsel_vd2_vo_vd2_vd2(m: $m64x, x: F2<$f64x>, y: F2<$f64x>) -> F2<$f64x> {
+            F2::new(m.select(x.0, y.0), m.select(x.1, y.1))
+        }
+
+        #[inline]
+        fn vsel_vd2_vo_d_d_d_d(o: $m64x, x1: f64, y1: f64, x0: f64, y0: f64) -> F2<$f64x> {
+            F2::new(vsel_vd_vo_d_d(o, x1, x0), vsel_vd_vo_d_d(o, y1, y0))
         }
     };
 }
@@ -821,7 +1272,7 @@ impl F2<f64> {
     }
 
     #[inline]
-    pub fn square_as_d(self) -> f64 {
+    pub fn square_as_f(self) -> f64 {
         let xh = upper(self.0);
         let xl = self.0 - xh;
         xh * self.1 + xh * self.1 + xl * xl + (xh * xl + xh * xl) + xh * xh
@@ -834,7 +1285,7 @@ impl F2<f64> {
     }
 
     #[inline]
-    pub fn mul_as_d(self, other: Self) -> f64 {
+    pub fn mul_as_f(self, other: Self) -> f64 {
         let xh = upper(self.0);
         let xl = self.0 - xh;
         let yh = upper(other.0);

@@ -2130,7 +2130,7 @@ pub mod u1 {
 
         let x = (1.).add_checked((-0.166666666666666657414808).add_checked_as_f2(u * s.0) * s);
 
-        let u = t.mul_as_d(x);
+        let u = t.mul_as_f(x);
 
         if xisnegzero(d) {
             d
@@ -2199,7 +2199,7 @@ pub mod u1 {
 
         let x = (1.).add_checked((-0.166666666666666657414808).add_checked_as_f2(u * s.0) * s);
 
-        let u = t.mul_as_d(x);
+        let u = t.mul_as_f(x);
 
         if ((ql as isize) & 2) == 0 {
             -u
@@ -2215,13 +2215,17 @@ pub mod u1 {
         if fabsk(d) < TRIGRANGEMAX2 {
             let qlf = rintk(d * (2. * M_1_PI));
             ql = qlf as isize;
-            s = qlf.mul_add(-PI_A2 * 0.5, d).add_checked_as_f2(qlf * (-PI_B2 * 0.5));
+            s = qlf
+                .mul_add(-PI_A2 * 0.5, d)
+                .add_checked_as_f2(qlf * (-PI_B2 * 0.5));
         } else if fabsk(d) < TRIGRANGEMAX {
             let dqh = trunck(d * ((2. * M_1_PI) / D1_24)) * D1_24;
             let qlf = rintk(d * (2. * M_1_PI) - dqh);
             ql = qlf as isize;
 
-            s = dqh.mul_add(-PI_A * 0.5, d).add_checked_as_f2(qlf * (-PI_A * 0.5));
+            s = dqh
+                .mul_add(-PI_A * 0.5, d)
+                .add_checked_as_f2(qlf * (-PI_A * 0.5));
             s += dqh * (-PI_B * 0.5);
             s += qlf * (-PI_B * 0.5);
             s += dqh * (-PI_C * 0.5);
@@ -2237,7 +2241,7 @@ pub mod u1 {
 
         let t = s;
 
-        s.0 = s.square_as_d();
+        s.0 = s.square_as_f();
 
         let u = 1.58938307283228937328511e-10
             .mul_add(s.0, -2.50506943502539773349318e-08)
@@ -2288,7 +2292,9 @@ pub mod u1 {
         if fabsk(d) < TRIGRANGEMAX2 {
             let qlf = rintk(d * (2. * M_1_PI));
             ql = qlf as isize;
-            s = qlf.mul_add(-PI_A2 * 0.5, d).add_checked_as_f2(qlf * (-PI_B2 * 0.5));
+            s = qlf
+                .mul_add(-PI_A2 * 0.5, d)
+                .add_checked_as_f2(qlf * (-PI_B2 * 0.5));
         } else if fabsk(d) < TRIGRANGEMAX {
             let dqh = trunck(d * (M_2_PI / D1_24)) * D1_24;
             s = dd(M_2_PI_H, M_2_PI_L) * d + ((if d < 0. { -0.5 } else { 0.5 }) - dqh);
@@ -2296,7 +2302,9 @@ pub mod u1 {
 
             let qlf = ql as f64;
 
-            s = dqh.mul_add(-PI_A * 0.5, d).add_checked_as_f2(qlf * (-PI_A * 0.5));
+            s = dqh
+                .mul_add(-PI_A * 0.5, d)
+                .add_checked_as_f2(qlf * (-PI_A * 0.5));
             s += dqh * (-PI_B * 0.5);
             s += qlf * (-PI_B * 0.5);
             s += dqh * (-PI_C * 0.5);

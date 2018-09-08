@@ -1,4 +1,4 @@
-use common::*;
+pub use common::*;
 
 macro_rules! impl_f2_f32 {
     ($f32x:ident, $u32x:ident, $m32x:ident) => {

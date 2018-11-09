@@ -1,14 +1,46 @@
+//! Functions with 1.0 ULP error bound
+
 use super::*;
 
+/// Base-2 exponential function
+///
+/// This function returns 2 raised to ***a***.
+/// The error bound of the returned value is 1.0 ULP.
+pub fn exp2f(d: f32) -> f32 {
+    let qf = rintfk(d);
+    let q = qf as i32;
+    let s = d - qf;
+
+    let mut u = 0.1535920892e-3_f32
+        .mul_add(s, 0.1339262701e-2)
+        .mul_add(s, 0.9618384764e-2)
+        .mul_add(s, 0.5550347269e-1)
+        .mul_add(s, 0.2402264476e+0)
+        .mul_add(s, 0.6931471825e+0);
+    u = (1.).add_checked(u.mul_as_doubled(s)).normalize().0;
+
+    if d >= 128. {
+        SLEEF_INFINITY_F
+    } else if d < -150. {
+        0.
+    } else {
+        ldexp2kf(u, q)
+    }
+}
+
+/// Sine function
+///
+/// This function evaluates the sine function of a value in ***a***.
+/// The error bound of the returned value is 1.0 ULP.
 pub fn sinf(d: f32) -> f32 {
     let q: i32;
-    let mut s: F2<f32>;
+    let mut s: Doubled<f32>;
 
     if fabsfk(d) < TRIGRANGEMAX2_F {
         let qf = rintfk(d * M_1_PI_F);
         q = qf as i32;
         let u = qf.mul_add(-PI_A2_F, d);
-        s = u.add_as_f2(qf * (-PI_B2_F));
+        s = u.add_as_doubled(qf * (-PI_B2_F));
         s.add_checked_assign(qf * (-PI_C2_F));
     } else {
         let (mut dfidf, dfii) = rempif(d);
@@ -28,11 +60,11 @@ pub fn sinf(d: f32) -> f32 {
     let t = s;
     s = s.square();
 
-    let mut u = 2.6083159809786593541503e-06
+    let mut u = 2.6083159809786593541503e-06_f32
         .mul_add(s.0, -0.0001981069071916863322258)
         .mul_add(s.0, 0.00833307858556509017944336);
 
-    let x = (1.).add_checked((-0.166666597127914428710938).add_checked_as_f2(u * s.0) * s);
+    let x = (1.).add_checked((-0.166666597127914428710938).add_checked_as_doubled(u * s.0) * s);
 
     u = t.mul_as_f(x);
 
@@ -46,15 +78,19 @@ pub fn sinf(d: f32) -> f32 {
     }
 }
 
+/// Cosine function
+///
+/// This function evaluates the cosine function of a value in ***a***.
+/// The error bound of the returned value is 1.0 ULP.
 pub fn cosf(mut d: f32) -> f32 {
-    let mut s: F2<f32>;
+    let mut s: Doubled<f32>;
     let q: i32;
 
     if fabsfk(d) < TRIGRANGEMAX2_F {
         d = fabsfk(d);
         let dq = rintfk(d * M_1_PI_F - 0.5).mul_add(2., 1.);
         q = dq as i32;
-        s = d.add_as_f2(dq * (-PI_A2_F * 0.5));
+        s = d.add_as_doubled(dq * (-PI_A2_F * 0.5));
         s += dq * (-PI_B2_F * 0.5);
         s += dq * (-PI_C2_F * 0.5);
     } else {
@@ -81,11 +117,11 @@ pub fn cosf(mut d: f32) -> f32 {
     let t = s;
     s = s.square();
 
-    let mut u = 2.6083159809786593541503e-06
+    let mut u = 2.6083159809786593541503e-06_f32
         .mul_add(s.0, -0.0001981069071916863322258)
         .mul_add(s.0, 0.00833307858556509017944336);
 
-    let x = (1.).add_checked((-0.166666597127914428710938).add_checked_as_f2(u * s.0) * s);
+    let x = (1.).add_checked((-0.166666597127914428710938).add_checked_as_doubled(u * s.0) * s);
 
     u = t.mul_as_f(x);
 
@@ -96,15 +132,22 @@ pub fn cosf(mut d: f32) -> f32 {
     }
 }
 
+/// Evaluate sine and cosine functions simultaneously
+///
+/// Evaluates the sine and cosine functions of a value in a at a time,
+/// and store the two values in *first* and *second* position in the returned value, respectively.
+/// returned value, respectively.
+/// The error bound of the returned values is 1.0 ULP.
+/// If ***a*** is a NaN or infinity, a NaN is returned.
 pub fn sincosf(d: f32) -> (f32, f32) {
     let q: i32;
-    let mut s: F2<f32>;
+    let mut s: Doubled<f32>;
 
     if fabsfk(d) < TRIGRANGEMAX2_F {
         let qf = rintfk(d * M_2_PI_F);
         q = qf as i32;
         let u = qf.mul_add(-PI_A2_F * 0.5, d);
-        s = u.add_as_f2(qf * (-PI_B2_F * 0.5));
+        s = u.add_as_doubled(qf * (-PI_B2_F * 0.5));
         s.add_checked_assign(qf * (-PI_C2_F * 0.5));
     } else {
         let (dfidf, dfii) = rempif(d);
@@ -118,7 +161,7 @@ pub fn sincosf(d: f32) -> (f32, f32) {
     let t = s;
     s.0 = s.square_as_f();
 
-    let u = (-0.000195169282960705459117889)
+    let u = (-0.000195169282960705459117889_f32)
         .mul_add(s.0, 0.00833215750753879547119141)
         .mul_add(s.0, -0.166666537523269653320312)
         * s.0
@@ -130,13 +173,13 @@ pub fn sincosf(d: f32) -> (f32, f32) {
         rsin = -0.;
     }
 
-    let u = (-2.71811842367242206819355e-07)
+    let u = (-2.71811842367242206819355e-07_f32)
         .mul_add(s.0, 2.47990446951007470488548e-05)
         .mul_add(s.0, -0.00138888787478208541870117)
         .mul_add(s.0, 0.0416666641831398010253906)
         .mul_add(s.0, -0.5);
 
-    x = (1.).add_checked(s.0.mul_as_f2(u));
+    x = (1.).add_checked(s.0.mul_as_doubled(u));
     let mut rcos = x.0 + x.1;
 
     if (q & 1) != 0 {
@@ -154,14 +197,18 @@ pub fn sincosf(d: f32) -> (f32, f32) {
     (rsin, rcos)
 }
 
+/// Tangent function
+///
+/// This function evaluates the tangent function of a value in ***a***.
+/// The error bound of the returned value is 1.0 ULP.
 pub fn tanf(d: f32) -> f32 {
     let q: i32;
-    let mut s: F2<f32>;
+    let mut s: Doubled<f32>;
     if fabsfk(d) < TRIGRANGEMAX2_F {
         let qf = rintfk(d * M_2_PI_F);
         q = qf as i32;
         let u = qf.mul_add(-PI_A2_F * 0.5, d);
-        s = u.add_as_f2(qf * (-PI_B2_F * 0.5));
+        s = u.add_as_doubled(qf * (-PI_B2_F * 0.5));
         s.add_checked_assign(qf * (-PI_C2_F * 0.5));
     } else {
         let (dfidf, dfii) = rempif(d);
@@ -179,13 +226,13 @@ pub fn tanf(d: f32) -> f32 {
     let t = s;
     s = s.square().normalize();
 
-    let u = 0.00446636462584137916564941
+    let u = 0.00446636462584137916564941_f32
         .mul_add(s.0, -8.3920182078145444393158e-05)
         .mul_add(s.0, 0.0109639242291450500488281)
         .mul_add(s.0, 0.0212360303848981857299805)
         .mul_add(s.0, 0.0540687143802642822265625);
 
-    let mut x = (0.133325666189193725585938).add_checked_as_f2(u * s.0);
+    let mut x = (0.133325666189193725585938).add_checked_as_doubled(u * s.0);
     x = (1.).add_checked((0.33333361148834228515625).add_checked(s * x) * s);
     x = t * x;
 
@@ -200,7 +247,7 @@ pub fn tanf(d: f32) -> f32 {
     }
 }
 
-fn atan2kf_u1(mut y: F2<f32>, mut x: F2<f32>) -> F2<f32> {
+fn atan2kf_u1(mut y: Doubled<f32>, mut x: Doubled<f32>) -> Doubled<f32> {
     let mut q = 0;
 
     if x.0 < 0. {
@@ -219,7 +266,7 @@ fn atan2kf_u1(mut y: F2<f32>, mut x: F2<f32>) -> F2<f32> {
     let s = y / x;
     let mut t = s.square().normalize();
 
-    let u = (-0.00176397908944636583328247)
+    let u = (-0.00176397908944636583328247_f32)
         .mul_add(t.0, 0.0107900900766253471374512)
         .mul_add(t.0, -0.0309564601629972457885742)
         .mul_add(t.0, 0.0577365085482597351074219)
@@ -228,11 +275,17 @@ fn atan2kf_u1(mut y: F2<f32>, mut x: F2<f32>) -> F2<f32> {
         .mul_add(t.0, -0.142626821994781494140625)
         .mul_add(t.0, 0.199983194470405578613281);
 
-    t = t * (-0.333332866430282592773438).add_checked_as_f2(u * t.0);
+    t = t * (-0.333332866430282592773438).add_checked_as_doubled(u * t.0);
     t = s * (1.).add_checked(t);
     df(1.5707963705062866211, -4.3711388286737928865e-08) * (q as f32) + t
 }
 
+/// Arc tangent function of two variables
+///
+/// This function evaluates the arc tangent function of (***y*** / ***x***).
+/// The quadrant of the result is determined according to the signs
+/// of ***x*** and ***y***.
+/// The error bound of the returned values is `max(1.0 ULP, f32::MIN)`.
 pub fn atan2f(mut y: f32, mut x: f32) -> f32 {
     if fabsfk(x) < 2.9387372783541830947e-39 {
         y *= F1_24;
@@ -259,17 +312,21 @@ pub fn atan2f(mut y: f32, mut x: f32) -> f32 {
     }
 }
 
+/// Arc sine function
+///
+/// This function evaluates the arc sine function of a value in ***a***.
+/// The error bound of the returned value is 1.0 ULP.
 pub fn asinf(d: f32) -> f32 {
     let o = fabsfk(d) < 0.5;
     let x2 = if o { d * d } else { (1. - fabsfk(d)) * 0.5 };
     let mut x = if o {
         df(fabsfk(d), 0.)
     } else {
-        x2.sqrt_as_f2()
+        x2.sqrt_as_doubled()
     };
     x = if fabsfk(d) == 1. { df(0., 0.) } else { x };
 
-    let u = 0.4197454825e-1
+    let u = 0.4197454825e-1_f32
         .mul_add(x2, 0.2424046025e-1)
         .mul_add(x2, 0.4547423869e-1)
         .mul_add(x2, 0.7495029271e-1)
@@ -283,17 +340,21 @@ pub fn asinf(d: f32) -> f32 {
     mulsignf(r, d)
 }
 
+/// Arc cosine function
+///
+/// This function evaluates the arc cosine function of a value in ***a***.
+/// The error bound of the returned value is 1.0 ULP.
 pub fn acosf(d: f32) -> f32 {
     let o = fabsfk(d) < 0.5;
     let x2 = if o { d * d } else { (1. - fabsfk(d)) * 0.5 };
     let mut x = if o {
         df(fabsfk(d), 0.)
     } else {
-        x2.sqrt_as_f2()
+        x2.sqrt_as_doubled()
     };
     x = if fabsfk(d) == 1. { df(0., 0.) } else { x };
 
-    let u = 0.4197454825e-1
+    let u = 0.4197454825e-1_f32
         .mul_add(x2, 0.2424046025e-1)
         .mul_add(x2, 0.4547423869e-1)
         .mul_add(x2, 0.7495029271e-1)
@@ -302,7 +363,7 @@ pub fn acosf(d: f32) -> f32 {
         * x2;
 
     let mut y = df(3.1415927410125732422 / 2., -8.7422776573475857731e-08 / 2.)
-        .sub_checked(mulsignf(x.0, d).add_checked_as_f2(mulsignf(u, d)));
+        .sub_checked(mulsignf(x.0, d).add_checked_as_doubled(mulsignf(u, d)));
     x.add_checked_assign(u);
     y = if o { y } else { x.scale(2.) };
     if !o && (d < 0.) {
@@ -312,6 +373,10 @@ pub fn acosf(d: f32) -> f32 {
     y.0 + y.1
 }
 
+/// Arc tangent function
+///
+/// This function evaluates the arc tangent function of a value in ***a***.
+/// The error bound of the returned value is 1.0 ULP.
 pub fn atanf(d: f32) -> f32 {
     let d2 = atan2kf_u1(df(fabsfk(d), 0.), df(1., 0.));
     let mut r = d2.0 + d2.1;
@@ -321,6 +386,10 @@ pub fn atanf(d: f32) -> f32 {
     mulsignf(r, d)
 }
 
+/// Natural logarithmic function
+///
+/// This function returns the natural logarithm of ***a***.
+/// The error bound of the returned value is 1.0 ULP.
 pub fn logf(mut d: f32) -> f32 {
     let o = d < f32::MIN;
     if o {
@@ -334,10 +403,10 @@ pub fn logf(mut d: f32) -> f32 {
         e -= 64;
     }
 
-    let x = (-1.).add_as_f2(m) / (1.).add_as_f2(m);
+    let x = (-1.).add_as_doubled(m) / (1.).add_as_doubled(m);
     let x2 = x.0 * x.0;
 
-    let t = 0.3027294874e+0
+    let t = 0.3027294874e+0_f32
         .mul_add(x2, 0.3996108174e+0)
         .mul_add(x2, 0.6666694880e+0);
 
@@ -356,6 +425,10 @@ pub fn logf(mut d: f32) -> f32 {
     }
 }
 
+/// Cube root function
+///
+/// This function returns the real cube root of ***a***.
+/// The error bound of the returned value is 1.0 ULP.
 pub fn cbrtf(mut d: f32) -> f32 {
     let e = ilogbkf(fabsfk(d)) + 1;
     d = ldexp2kf(d, -e);
@@ -375,7 +448,7 @@ pub fn cbrtf(mut d: f32) -> f32 {
     q2.1 = mulsignf(q2.1, d);
     d = fabsfk(d);
 
-    let mut x = (-0.601564466953277587890625)
+    let mut x = (-0.601564466953277587890625_f32)
         .mul_add(d, 2.8208892345428466796875)
         .mul_add(d, -5.532182216644287109375)
         .mul_add(d, 5.898262500762939453125)
@@ -388,12 +461,12 @@ pub fn cbrtf(mut d: f32) -> f32 {
 
     let z = x;
 
-    let mut u = x.mul_as_f2(x);
+    let mut u = x.mul_as_doubled(x);
     u = u * u * d + (-x);
     y = u.0 + u.1;
 
     y = -2. / 3. * y * z;
-    let v = (z.mul_as_f2(z) + y) * d * q2;
+    let v = (z.mul_as_doubled(z) + y) * d * q2;
 
     if d == 0. {
         mulsignf(0., q2.0)
@@ -404,6 +477,9 @@ pub fn cbrtf(mut d: f32) -> f32 {
     }
 }
 
+/// Gamma function
+///
+/// The error bound of the returned value is 1.0 ULP.
 pub fn tgammaf(a: f32) -> f32 {
     let (da, db) = gammafk(a);
     let y = expk2f(da) * db;
@@ -425,6 +501,11 @@ pub fn tgammaf(a: f32) -> f32 {
     }
 }
 
+/// Log gamma function
+///
+/// The error bound of the returned value is 1.0 ULP if the argument is positive.
+/// If the argument is larger than 4e+36, it may return infinity instead of the correct value.
+/// The error bound is `max(1 ULP and 1e-8)`, if the argument is negative.
 pub fn lgammaf(a: f32) -> f32 {
     let (da, db) = gammafk(a);
     let y = da + logk2f(db.abs());
@@ -436,6 +517,9 @@ pub fn lgammaf(a: f32) -> f32 {
     }
 }
 
+/// Error function
+///
+/// The error bound of the returned value is 1.0 ULP.
 pub fn erff(mut a: f32) -> f32 {
     let s = a;
 
@@ -446,7 +530,7 @@ pub fn erff(mut a: f32) -> f32 {
     let mut u = if o0 { a * a } else { a };
 
     let t = if o0 {
-        0.7089292194e-4
+        0.7089292194e-4_f32
     } else if o1 {
         -0.1792667899e-4
     } else {
@@ -488,7 +572,7 @@ pub fn erff(mut a: f32) -> f32 {
             -0.9901899844e-1
         },
     );
-    let mut d = t.mul_as_f2(u);
+    let mut d = t.mul_as_doubled(u);
     d += if o0 {
         df(-0.376125876000657465175213237214e+0, 0.)
     } else if o1 {
@@ -514,13 +598,17 @@ pub fn erff(mut a: f32) -> f32 {
     }
 }
 
+/// Base-*e* exponential function
+///
+/// This function returns the value of *e* raised to ***a***.
+/// The error bound of the returned value is 1.0 ULP.
 pub fn expf(d: f32) -> f32 {
     let qf = rintfk(d * R_LN2_F);
     let q = qf as i32;
     let s = qf.mul_add(-L2U_F, d);
     let s = qf.mul_add(-L2L_F, s);
 
-    let mut u = 0.000198527617612853646278381
+    let mut u = 0.000198527617612853646278381_f32
         .mul_add(s, 0.00139304355252534151077271)
         .mul_add(s, 0.00833336077630519866943359)
         .mul_add(s, 0.0416664853692054748535156)
@@ -538,6 +626,10 @@ pub fn expf(d: f32) -> f32 {
     }
 }
 
+/// Power function
+///
+/// This function returns the value of ***x*** raised to the power of ***y***.
+/// The error bound of the returned value is 1.0 ULP.
 pub fn powf(x: f32, y: f32) -> f32 {
     let yisint = (y == (y as i32 as f32)) || (fabsfk(y) >= F1_24);
     let yisodd = ((1 & (y as i32)) != 0) && yisint && (fabsfk(y) < F1_24);
@@ -584,6 +676,14 @@ pub fn powf(x: f32, y: f32) -> f32 {
     }
 }
 
+/// Hyperbolic sine function
+///
+/// This function evaluates the hyperbolic sine function of a value in ***a***.
+/// The error bound of the returned value is 1.0 ULP if ***a*** is in
+/// `[-709, 709]` for the double-precision function or `[-88.5, 88.5]`
+/// for the single-precision function.
+/// If ***a*** is a finite value out of this range, infinity with a correct
+/// sign or a correct value with 1.0 ULP error bound is returned.
 pub fn sinhf(x: f32) -> f32 {
     let mut y = fabsfk(x);
     let mut d = expk2f(df(y, 0.));
@@ -600,6 +700,14 @@ pub fn sinhf(x: f32) -> f32 {
     }
 }
 
+/// Hyperbolic cosine function
+///
+/// This function evaluates the hyperbolic cosine function of a value in ***a***.
+/// The error bound of the returned value is 1.0 ULP if ***a** is in
+/// `[-709, 709]` for the double-precision function or `[-88.5, 88.5]`
+/// for the single-precision function.
+/// If a is a finite value out of this range, infinity with a correct
+/// sign or a correct value with 1.0 ULP error bound is returned.
 pub fn coshf(x: f32) -> f32 {
     let mut y = fabsfk(x);
     let mut d = expk2f(df(y, 0.));
@@ -615,6 +723,11 @@ pub fn coshf(x: f32) -> f32 {
     }
 }
 
+/// Hyperbolic tangent function
+///
+/// This function evaluates the hyperbolic tangent function of a value in ***a***.
+/// The error bound of the returned value is 1.0 ULP for the double-precision
+/// function or 1.0001 ULP for the single-precision function.
 pub fn tanhf(x: f32) -> f32 {
     let mut y = fabsfk(x);
     let mut d = expk2f(df(y, 0.));
@@ -632,6 +745,14 @@ pub fn tanhf(x: f32) -> f32 {
     }
 }
 
+/// Inverse hyperbolic sine function
+///
+/// This function evaluates the inverse hyperbolic sine function of a value in ***a***.
+/// The error bound of the returned value is 1.0 ULP if a is in
+/// `[-1.34e+154, 1.34e+154]` for the double-precision function or 1.001 ULP
+/// if ***a*** is in `[-1.84e+19, 1.84e+19]` for the single-precision function.
+/// If ***a*** is a finite value out of this range, infinity with a correct
+/// sign or a correct value with 1.0 ULP error bound is returned.
 pub fn asinhf(x: f32) -> f32 {
     let mut y = fabsfk(x);
 
@@ -655,8 +776,16 @@ pub fn asinhf(x: f32) -> f32 {
     }
 }
 
+/// Inverse hyperbolic cosine function
+///
+/// This function evaluates the inverse hyperbolic cosine function of a value in ***a***.
+/// The error bound of the returned value is 1.0 ULP if a is in
+/// `[-1.34e+154, 1.34e+154]` for the double-precision function or 1.001 ULP
+/// if ***a*** is in `[-1.84e+19, 1.84e+19]` for the single-precision function.
+/// If ***a*** is a finite value out of this range, infinity with a correct
+/// sign or a correct value with 1.0 ULP error bound is returned.
 pub fn acoshf(x: f32) -> f32 {
-    let d = logk2f((x.add_as_f2(1.)).sqrt() * (x.add_as_f2(-1.)).sqrt() + x);
+    let d = logk2f((x.add_as_doubled(1.)).sqrt() * (x.add_as_doubled(-1.)).sqrt() + x);
     let mut y = d.0 + d.1;
 
     y = if (x > SQRT_FLT_MAX) || y.isnan() {
@@ -673,9 +802,14 @@ pub fn acoshf(x: f32) -> f32 {
     }
 }
 
+/// Inverse hyperbolic tangent function
+///
+/// This function evaluates the inverse hyperbolic tangent function of a value in ***a***.
+/// The error bound of the returned value is 1.0 ULP for the double-precision
+/// function or 1.0001 ULP for the single-precision function.
 pub fn atanhf(x: f32) -> f32 {
     let mut y = fabsfk(x);
-    let d = logk2f((1.).add_as_f2(y) / (1.).add_as_f2(-y));
+    let d = logk2f((1.).add_as_doubled(y) / (1.).add_as_doubled(-y));
     y = if y > 1. {
         SLEEF_NAN_F
     } else if y == 1. {
@@ -697,6 +831,10 @@ pub fn atanhf(x: f32) -> f32 {
     }
 }
 
+/// Base-10 exponential function
+///
+/// This function returns 10 raised to ***a***.
+/// The error bound of the returned value is 1.09 ULP.
 pub fn exp10f(d: f32) -> f32 {
     let qf = rintfk(d * (LOG10_2 as f32));
 
@@ -704,13 +842,13 @@ pub fn exp10f(d: f32) -> f32 {
     let s = qf.mul_add(-L10U_F, d);
     let s = qf.mul_add(-L10L_F, s);
 
-    let mut u = 0.2064004987e+0
+    let mut u = 0.2064004987e+0_f32
         .mul_add(s, 0.5417877436e+0)
         .mul_add(s, 0.1171286821e+1)
         .mul_add(s, 0.2034656048e+1)
         .mul_add(s, 0.2650948763e+1)
         .mul_add(s, 0.2302585125e+1);
-    u = (1.).add_checked(u.mul_as_f2(s)).normalize().0;
+    u = (1.).add_checked(u.mul_as_doubled(s)).normalize().0;
 
     if d > 38.5318394191036238941387 {
         SLEEF_INFINITY_F // log10(FLT_MAX)
@@ -721,6 +859,10 @@ pub fn exp10f(d: f32) -> f32 {
     }
 }
 
+/// Base-*e* exponential function minus 1
+///
+/// This function returns the value one less than *e* raised to ***a***.
+/// The error bound of the returned value is 1.0 ULP.
 pub fn expm1f(a: f32) -> f32 {
     let d = expk2f(df(a, 0.)) + (-1.);
     if xisnegzerof(a) {
@@ -734,6 +876,10 @@ pub fn expm1f(a: f32) -> f32 {
     }
 }
 
+/// Base-10 logarithmic function
+///
+/// This function returns the base-10 logarithm of ***a***.
+/// The error bound of the returned value is 1.0 ULP.
 pub fn log10f(mut d: f32) -> f32 {
     let o = d < f32::MIN;
     if o {
@@ -747,10 +893,10 @@ pub fn log10f(mut d: f32) -> f32 {
         e -= 64;
     }
 
-    let x = (-1.).add_as_f2(m) / (1.).add_as_f2(m);
+    let x = (-1.).add_as_doubled(m) / (1.).add_as_doubled(m);
     let x2 = x.0 * x.0;
 
-    let t = 0.1314289868e+0
+    let t = 0.1314289868e+0_f32
         .mul_add(x2, 0.1735493541e+0)
         .mul_add(x2, 0.2895309627e+0);
 
@@ -770,6 +916,10 @@ pub fn log10f(mut d: f32) -> f32 {
     }
 }
 
+/// Base-2 logarithmic function
+///
+/// This function returns the base-2 logarithm of ***a***.
+/// The error bound of the returned value is 1.0 ULP.
 pub fn log2f(mut d: f32) -> f32 {
     let o = d < f32::MIN;
     if o {
@@ -783,10 +933,10 @@ pub fn log2f(mut d: f32) -> f32 {
         e -= 64;
     }
 
-    let x = (-1.).add_as_f2(m) / (1.).add_as_f2(m);
+    let x = (-1.).add_as_doubled(m) / (1.).add_as_doubled(m);
     let x2 = x.0 * x.0;
 
-    let t = 0.4374550283e+0
+    let t = 0.4374550283e+0_f32
         .mul_add(x2, 0.5764790177e+0)
         .mul_add(x2, 0.9618012905120);
 
@@ -804,6 +954,10 @@ pub fn log2f(mut d: f32) -> f32 {
     }
 }
 
+/// Logarithm of one plus argument
+///
+/// This function returns the natural logarithm of (1+***a***).
+/// The error bound of the returned value is 1.0 ULP.
 pub fn log1pf(d: f32) -> f32 {
     let mut dp1 = d + 1.;
 
@@ -821,10 +975,10 @@ pub fn log1pf(d: f32) -> f32 {
         e -= 64;
     }
 
-    let x = df(m, 0.) / (2.).add_checked_as_f2(m);
+    let x = df(m, 0.) / (2.).add_checked_as_doubled(m);
     let x2 = x.0 * x.0;
 
-    let t = 0.3027294874e+0
+    let t = 0.3027294874e+0_f32
         .mul_add(x2, 0.3996108174e+0)
         .mul_add(x2, 0.6666694880e+0);
 

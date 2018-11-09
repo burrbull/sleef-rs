@@ -1,5 +1,10 @@
+//! Functions with 0.5 ULP error bound
+
 use super::*;
 
+/// Square root function
+///
+/// The error bound of the returned value is 0.5001 ULP.
 pub fn sqrtf(mut d: f32) -> f32 {
     let mut q = 0.5;
 
@@ -16,13 +21,13 @@ pub fn sqrtf(mut d: f32) -> f32 {
     }
 
     // http://en.wikipedia.org/wiki/Fast_inverse_square_root
-    let mut x = int_bits_to_float(0x5f375a86 - (float_to_raw_int_bits(d + 1e-45) >> 1));
+    let mut x = f32::from_bits(0x5f375a86 - ((d + 1e-45).to_bits() >> 1));
 
     x *= 1.5 - 0.5 * d * x * x;
     x *= 1.5 - 0.5 * d * x * x;
     x *= (1.5 - 0.5 * d * x * x) * d;
 
-    let d2 = (d + x.mul_as_f2(x)) * x.recpre();
+    let d2 = (d + x.mul_as_doubled(x)) * x.recpre();
 
     if (d == 0.) || (d == SLEEF_INFINITY_F) {
         d
@@ -31,6 +36,12 @@ pub fn sqrtf(mut d: f32) -> f32 {
     }
 }
 
+/// Evaluate sin( π***a*** ) and cos( π***a*** ) for given ***a*** simultaneously
+///
+/// Evaluates the sine and cosine functions of π***a*** at a time, and store the two values in a tuple.
+/// The error bound of the returned value are `max(0.506 ULP, f32::MIN)` if [-1e+7, 1e+7].
+/// If ***a*** is a finite value out of this range, an arbitrary value within [-1, 1] is returned.
+/// If ***a*** is a NaN or infinity, a NaN is returned.
 pub fn sincospif(d: f32) -> (f32, f32) {
     let u = d * 4.;
     let q = super::ceilfk(u) & !1_i32;
@@ -38,11 +49,11 @@ pub fn sincospif(d: f32) -> (f32, f32) {
     let s = u - (q as f32);
     let t = s;
     let s = s * s;
-    let s2 = t.mul_as_f2(t);
+    let s2 = t.mul_as_doubled(t);
 
     //
 
-    let u = 0.3093842054e-6
+    let u = 0.3093842054e-6_f32
         .mul_add(s, -0.3657307388e-4)
         .mul_add(s, 0.2490393585e-2);
     let mut x = u * s + df(-0.080745510756969451904, -1.3373665339076936258e-09);
@@ -54,7 +65,7 @@ pub fn sincospif(d: f32) -> (f32, f32) {
         rsin = -0.;
     }
 
-    let u = (-0.2430611801e-7)
+    let u = (-0.2430611801e-7_f32)
         .mul_add(s, 0.3590577080e-5)
         .mul_add(s, -0.3259917721e-3);
     x = u * s + df(0.015854343771934509277, 4.4940051354032242811e-10);
@@ -87,6 +98,9 @@ pub fn sincospif(d: f32) -> (f32, f32) {
     (rsin, rcos)
 }
 
+/// 2D Euclidian distance function
+///
+/// The error bound of the returned value is 0.5001 ULP.
 pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
     x = fabsfk(x);
     y = fabsfk(y);
@@ -116,6 +130,13 @@ pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
     }
 }
 
+/// Evaluate sin( π***a*** ) for given ***a***
+///
+/// This function evaluates the sine function of π***a***.
+/// The error bound of the returned value is `max(0.506 ULP, f32::MIN)`
+/// if [-1e+7, 1e+7] for the single-precision function.
+/// If ***a*** is a finite value out of this range, an arbitrary value within [-1, 1] is returned.
+/// If ***a*** is a NaN or infinity, a NaN is returned. 
 pub fn sinpif(d: f32) -> f32 {
     let x = super::sinpifk(d);
 
@@ -130,6 +151,13 @@ pub fn sinpif(d: f32) -> f32 {
     }
 }
 
+/// Evaluate cos( π***a*** ) for given ***a***
+///
+/// This function evaluates the cosine function of π***a***.
+/// The error bound of the returned value is `max(0.506 ULP, f32::MIN)`
+/// if [-1e+7, 1e+7] for the single-precision function.
+/// If ***a*** is a finite value out of this range, an arbitrary value within [-1, 1] is returned.
+/// If ***a*** is a NaN or infinity, a NaN is returned. 
 pub fn cospif(d: f32) -> f32 {
     let x = super::cospifk(d);
 

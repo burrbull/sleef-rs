@@ -1,5 +1,10 @@
+//! Functions with 1.5 ULP error bound
+
 use super::*;
 
+/// Complementary error function
+///
+/// The error bound is max(1.5 ULP, f32::MIN).
 pub fn erfcf(mut a: f32) -> f32 {
     let s = a;
     a = fabsfk(a);
@@ -14,7 +19,7 @@ pub fn erfcf(mut a: f32) -> f32 {
     };
 
     let t = if o0 {
-        -0.8638041618e-4
+        -0.8638041618e-4_f32
     } else if o1 {
         -0.6236977242e-5
     } else if o2 {

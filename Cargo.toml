@@ -1,11 +1,13 @@
 [package]
 name = "sleef"
+edition = "2018"
 version = "0.1.0"
 authors = ["Andrey Zgarbul <zgarbul.andrey@gmail.com>"]
 
-[dependencies]
+[dependencies.doubled]
+git = "https://github.com/burrbull/doubled-rs"
+features = ["packed_simd"]
 
 [dependencies.packed_simd]
-#version = "0.1"
-git = "https://github.com/rust-lang-nursery/packed_simd.git"
+version = "0.3"
 features = ["into_bits"]

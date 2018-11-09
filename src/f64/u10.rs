@@ -1,12 +1,14 @@
+//! Functions with 1.0 ULP error bound
+
 use super::*;
 
 pub fn acos(d: f64) -> f64 {
     let o = fabsk(d) < 0.5;
     let x2 = if o { d * d } else { (1. - fabsk(d)) * 0.5 };
-    let mut x = if o { dd(fabsk(d), 0.) } else { x2.sqrt_as_f2() };
+    let mut x = if o { dd(fabsk(d), 0.) } else { x2.sqrt_as_doubled() };
     x = if fabsk(d) == 1. { dd(0., 0.) } else { x };
 
-    let u = 0.3161587650653934628e-1
+    let u = 0.3161587650653934628e-1_f64
         .mul_add(x2, -0.1581918243329996643e-1)
         .mul_add(x2, 0.1929045477267910674e-1)
         .mul_add(x2, 0.6606077476277170610e-2)
@@ -22,7 +24,7 @@ pub fn acos(d: f64) -> f64 {
         * x2;
 
     let mut y = dd(3.141592653589793116 / 2., 1.2246467991473532072e-16 / 2.)
-        .sub_checked(mulsign(x.0, d).add_checked_as_f2(mulsign(u, d)));
+        .sub_checked(mulsign(x.0, d).add_checked_as_doubled(mulsign(u, d)));
     x.add_checked_assign(u);
     y = if o { y } else { x.scale(2.) };
     if !o && (d < 0.) {
@@ -40,7 +42,7 @@ pub fn atan(d: f64) -> f64 {
     mulsign(r, d)
 }
 
-fn atan2k_u1(mut y: F2<f64>, mut x: F2<f64>) -> F2<f64> {
+fn atan2k_u1(mut y: Doubled<f64>, mut x: Doubled<f64>) -> Doubled<f64> {
     let mut q: isize = 0;
     if x.0 < 0. {
         x.0 = -x.0;
@@ -59,7 +61,7 @@ fn atan2k_u1(mut y: F2<f64>, mut x: F2<f64>) -> F2<f64> {
     let mut t = s.square();
     t = t.normalize();
 
-    let u = 1.06298484191448746607415e-05
+    let u = 1.06298484191448746607415e-05_f64
         .mul_add(t.0, -0.000125620649967286867384336)
         .mul_add(t.0, 0.00070557664296393412389774)
         .mul_add(t.0, -0.00251865614498713360352999)
@@ -129,10 +131,10 @@ pub fn atan2(mut y: f64, mut x: f64) -> f64 {
 pub fn asin(d: f64) -> f64 {
     let o = fabsk(d) < 0.5;
     let x2 = if o { d * d } else { (1. - fabsk(d)) * 0.5 };
-    let mut x = if o { dd(fabsk(d), 0.) } else { x2.sqrt_as_f2() };
+    let mut x = if o { dd(fabsk(d), 0.) } else { x2.sqrt_as_doubled() };
     x = if fabsk(d) == 1.0 { dd(0., 0.) } else { x };
 
-    let u = 0.3161587650653934628e-1
+    let u = 0.3161587650653934628e-1_f64
         .mul_add(x2, -0.1581918243329996643e-1)
         .mul_add(x2, 0.1929045477267910674e-1)
         .mul_add(x2, 0.6606077476277170610e-2)
@@ -155,19 +157,19 @@ pub fn asin(d: f64) -> f64 {
 }
 
 pub fn sin(d: f64) -> f64 {
-    let mut s: F2<f64>;
+    let mut s: Doubled<f64>;
     let ql: isize;
 
     if fabsk(d) < TRIGRANGEMAX2 {
         let qlf = rintk(d * M_1_PI);
         ql = qlf as isize;
-        s = qlf.mul_add(-PI_A2, d).add_checked_as_f2(qlf * -PI_B2);
+        s = qlf.mul_add(-PI_A2, d).add_checked_as_doubled(qlf * -PI_B2);
     } else if fabsk(d) < TRIGRANGEMAX {
         let dqh = trunck(d * (M_1_PI / D1_24)) * D1_24;
         let qlf = rintk(d.mul_add(M_1_PI, -dqh));
         ql = qlf as isize;
 
-        s = dqh.mul_add(-PI_A, d).add_checked_as_f2(qlf * -PI_A);
+        s = dqh.mul_add(-PI_A, d).add_checked_as_doubled(qlf * -PI_A);
         s += dqh * -PI_B;
         s += qlf * -PI_B;
         s += dqh * -PI_C;
@@ -191,7 +193,7 @@ pub fn sin(d: f64) -> f64 {
     let t = s;
     s = s.square();
 
-    let u = 2.72052416138529567917983e-15
+    let u = 2.72052416138529567917983e-15_f64
         .mul_add(s.0, -7.6429259411395447190023e-13)
         .mul_add(s.0, 1.60589370117277896211623e-10)
         .mul_add(s.0, -2.5052106814843123359368e-08)
@@ -199,7 +201,7 @@ pub fn sin(d: f64) -> f64 {
         .mul_add(s.0, -0.000198412698412046454654947)
         .mul_add(s.0, 0.00833333333333318056201922);
 
-    let x = (1.).add_checked((-0.166666666666666657414808).add_checked_as_f2(u * s.0) * s);
+    let x = (1.).add_checked((-0.166666666666666657414808).add_checked_as_doubled(u * s.0) * s);
 
     let u = t.mul_as_f(x);
 
@@ -213,16 +215,16 @@ pub fn sin(d: f64) -> f64 {
 }
 
 pub fn cos(d: f64) -> f64 {
-    let mut s: F2<f64>;
+    let mut s: Doubled<f64>;
     let ql: isize;
 
     let d = fabsk(d);
 
     if d < TRIGRANGEMAX2 {
-        ql = (2.).mul_add(rintk(d * M_1_PI - 0.5), 1.) as isize;
+        ql = (2_f64).mul_add(rintk(d * M_1_PI - 0.5), 1.) as isize;
         let qlf = ql as f64;
         s = d
-            .add_as_f2(qlf * (-PI_A2 * 0.5))
+            .add_as_doubled(qlf * (-PI_A2 * 0.5))
             .add_checked(qlf * (-PI_B2 * 0.5));
     } else if d < TRIGRANGEMAX {
         let mut dqh = trunck(d * (M_1_PI / D1_23) - 0.5 * (M_1_PI / D1_23));
@@ -231,7 +233,7 @@ pub fn cos(d: f64) -> f64 {
         dqh *= D1_24;
 
         let u = dqh.mul_add(-PI_A * 0.5, d);
-        s = u.add_as_f2(qlf * (-PI_A * 0.5));
+        s = u.add_as_doubled(qlf * (-PI_A * 0.5));
         s += dqh * (-PI_B * 0.5);
         s += qlf * (-PI_B * 0.5);
         s += dqh * (-PI_C * 0.5);
@@ -260,7 +262,7 @@ pub fn cos(d: f64) -> f64 {
     let t = s;
     s = s.square();
 
-    let u = 2.72052416138529567917983e-15
+    let u = 2.72052416138529567917983e-15_f64
         .mul_add(s.0, -7.6429259411395447190023e-13)
         .mul_add(s.0, 1.60589370117277896211623e-10)
         .mul_add(s.0, -2.5052106814843123359368e-08)
@@ -268,7 +270,7 @@ pub fn cos(d: f64) -> f64 {
         .mul_add(s.0, -0.000198412698412046454654947)
         .mul_add(s.0, 0.00833333333333318056201922);
 
-    let x = (1.).add_checked((-0.166666666666666657414808).add_checked_as_f2(u * s.0) * s);
+    let x = (1.).add_checked((-0.166666666666666657414808).add_checked_as_doubled(u * s.0) * s);
 
     let u = t.mul_as_f(x);
 
@@ -280,7 +282,7 @@ pub fn cos(d: f64) -> f64 {
 }
 
 pub fn sincos(d: f64) -> (f64, f64) {
-    let mut s: F2<f64>;
+    let mut s: Doubled<f64>;
     let ql: isize;
 
     if fabsk(d) < TRIGRANGEMAX2 {
@@ -288,7 +290,7 @@ pub fn sincos(d: f64) -> (f64, f64) {
         ql = qlf as isize;
         s = qlf
             .mul_add(-PI_A2 * 0.5, d)
-            .add_checked_as_f2(qlf * (-PI_B2 * 0.5));
+            .add_checked_as_doubled(qlf * (-PI_B2 * 0.5));
     } else if fabsk(d) < TRIGRANGEMAX {
         let dqh = trunck(d * ((2. * M_1_PI) / D1_24)) * D1_24;
         let qlf = rintk(d * (2. * M_1_PI) - dqh);
@@ -296,7 +298,7 @@ pub fn sincos(d: f64) -> (f64, f64) {
 
         s = dqh
             .mul_add(-PI_A * 0.5, d)
-            .add_checked_as_f2(qlf * (-PI_A * 0.5));
+            .add_checked_as_doubled(qlf * (-PI_A * 0.5));
         s += dqh * (-PI_B * 0.5);
         s += qlf * (-PI_B * 0.5);
         s += dqh * (-PI_C * 0.5);
@@ -314,7 +316,7 @@ pub fn sincos(d: f64) -> (f64, f64) {
 
     s.0 = s.square_as_f();
 
-    let u = 1.58938307283228937328511e-10
+    let u = 1.58938307283228937328511e-10_f64
         .mul_add(s.0, -2.50506943502539773349318e-08)
         .mul_add(s.0, 2.75573131776846360512547e-06)
         .mul_add(s.0, -0.000198412698278911770864914)
@@ -330,7 +332,7 @@ pub fn sincos(d: f64) -> (f64, f64) {
         rsin = -0.;
     }
 
-    let u = (-1.13615350239097429531523e-11)
+    let u = (-1.13615350239097429531523e-11_f64)
         .mul_add(s.0, 2.08757471207040055479366e-09)
         .mul_add(s.0, -2.75573144028847567498567e-07)
         .mul_add(s.0, 2.48015872890001867311915e-05)
@@ -338,7 +340,7 @@ pub fn sincos(d: f64) -> (f64, f64) {
         .mul_add(s.0, 0.0416666666666665519592062)
         .mul_add(s.0, -0.5);
 
-    let x = (1.).add_checked(s.0.mul_as_f2(u));
+    let x = (1.).add_checked(s.0.mul_as_doubled(u));
     let mut rcos = x.0 + x.1;
 
     if (ql & 1) != 0 {
@@ -357,7 +359,7 @@ pub fn sincos(d: f64) -> (f64, f64) {
 }
 
 pub fn tan(d: f64) -> f64 {
-    let mut s: F2<f64>;
+    let mut s: Doubled<f64>;
     let ql: isize;
 
     if fabsk(d) < TRIGRANGEMAX2 {
@@ -365,7 +367,7 @@ pub fn tan(d: f64) -> f64 {
         ql = qlf as isize;
         s = qlf
             .mul_add(-PI_A2 * 0.5, d)
-            .add_checked_as_f2(qlf * (-PI_B2 * 0.5));
+            .add_checked_as_doubled(qlf * (-PI_B2 * 0.5));
     } else if fabsk(d) < TRIGRANGEMAX {
         let dqh = trunck(d * (M_2_PI / D1_24)) * D1_24;
         s = dd(M_2_PI_H, M_2_PI_L) * d + ((if d < 0. { -0.5 } else { 0.5 }) - dqh);
@@ -375,7 +377,7 @@ pub fn tan(d: f64) -> f64 {
 
         s = dqh
             .mul_add(-PI_A * 0.5, d)
-            .add_checked_as_f2(qlf * (-PI_A * 0.5));
+            .add_checked_as_doubled(qlf * (-PI_A * 0.5));
         s += dqh * (-PI_B * 0.5);
         s += qlf * (-PI_B * 0.5);
         s += dqh * (-PI_C * 0.5);
@@ -396,7 +398,7 @@ pub fn tan(d: f64) -> f64 {
     let t = s;
     s = s.square();
 
-    let u = 1.01419718511083373224408e-05
+    let u = 1.01419718511083373224408e-05_f64
         .mul_add(s.0, -2.59519791585924697698614e-05)
         .mul_add(s.0, 5.23388081915899855325186e-05)
         .mul_add(s.0, -3.05033014433946488225616e-05)
@@ -411,7 +413,7 @@ pub fn tan(d: f64) -> f64 {
         .mul_add(s.0, 0.0539682539781298417636002)
         .mul_add(s.0, 0.133333333333125941821962);
 
-    let mut x = (1.).add_checked((0.333333333333334980164153).add_checked_as_f2(u * s.0) * s);
+    let mut x = (1.).add_checked((0.333333333333334980164153).add_checked_as_doubled(u * s.0) * s);
     x = t * x;
 
     if (ql & 1) != 0 {
@@ -438,10 +440,10 @@ pub fn log(mut d: f64) -> f64 {
         e -= 64;
     }
 
-    let x = (-1.).add_as_f2(m) / (1.).add_as_f2(m);
+    let x = (-1.).add_as_doubled(m) / (1.).add_as_doubled(m);
     let x2 = x.0 * x.0;
 
-    let t = 0.1532076988502701353e+0
+    let t = 0.1532076988502701353e+0_f64
         .mul_add(x2, 0.1525629051003428716e+0)
         .mul_add(x2, 0.1818605932937785996e+0)
         .mul_add(x2, 0.2222214519839380009e+0)
@@ -485,7 +487,7 @@ pub fn cbrt(d: f64) -> f64 {
     q2.1 = mulsign(q2.1, d);
     let d = fabsk(d);
 
-    let mut x = (-0.640245898480692909870982)
+    let mut x = (-0.640245898480692909870982_f64)
         .mul_add(d, 2.96155103020039511818595)
         .mul_add(d, -5.73353060922947843636166)
         .mul_add(d, 6.03990368989458747961407)
@@ -498,12 +500,12 @@ pub fn cbrt(d: f64) -> f64 {
 
     let z = x;
 
-    let mut u = x.mul_as_f2(x);
+    let mut u = x.mul_as_doubled(x);
     u = u * u * d + (-x);
     y = u.0 + u.1;
 
     y = -2. / 3. * y * z;
-    let v = (z.mul_as_f2(z) + y) * d * q2;
+    let v = (z.mul_as_doubled(z) + y) * d * q2;
 
     if d == 0. {
         mulsign(0., q2.0)
@@ -557,7 +559,7 @@ pub fn erf(a: f64) -> f64 {
     let u = if o0 { a * a } else { a };
 
     let t = (if o0 {
-        0.6801072401395392157e-20
+        0.6801072401395392157e-20_f64
     } else if o1 {
         0.2830954522087717660e-13
     } else {
@@ -734,7 +736,7 @@ pub fn erf(a: f64) -> f64 {
             -0.1129442929103524396e+01
         },
     );
-    let mut d = t.mul_as_f2(u);
+    let mut d = t.mul_as_doubled(u);
     d += if o0 {
         dd(1.1283791670955125586, 1.5335459613165822674e-17)
     } else if o1 {
@@ -761,7 +763,7 @@ pub fn exp(d: f64) -> f64 {
     let s = qf.mul_add(-L2U, d);
     let s = qf.mul_add(-L2L, s);
 
-    let mut u = 2.08860621107283687536341e-09
+    let mut u = 2.08860621107283687536341e-09_f64
         .mul_add(s, 2.51112930892876518610661e-08)
         .mul_add(s, 2.75573911234900471893338e-07)
         .mul_add(s, 2.75572362911928827629423e-06)
@@ -889,7 +891,7 @@ pub fn asinh(x: f64) -> f64 {
 }
 
 pub fn acosh(x: f64) -> f64 {
-    let d = logk2(x.add_as_f2(1.).sqrt() * x.add_as_f2(-1.).sqrt() + x);
+    let d = logk2(x.add_as_doubled(1.).sqrt() * x.add_as_doubled(-1.).sqrt() + x);
     let mut y = d.0 + d.1;
 
     y = if (x > SQRT_DBL_MAX) || y.isnan() {
@@ -908,7 +910,7 @@ pub fn acosh(x: f64) -> f64 {
 
 pub fn atanh(x: f64) -> f64 {
     let mut y = fabsk(x);
-    let d = logk2((1.).add_as_f2(y) / (1.).add_as_f2(-y));
+    let d = logk2((1.).add_as_doubled(y) / (1.).add_as_doubled(-y));
     y = if y > 1.0 {
         SLEEF_NAN
     } else if y == 1.0 {
@@ -930,7 +932,7 @@ pub fn exp2(d: f64) -> f64 {
 
     let s = d - (q as f64);
 
-    let mut u = 0.4434359082926529454e-9
+    let mut u = 0.4434359082926529454e-9_f64
         .mul_add(s, 0.7073164598085707425e-8)
         .mul_add(s, 0.1017819260921760451e-6)
         .mul_add(s, 0.1321543872511327615e-5)
@@ -941,7 +943,7 @@ pub fn exp2(d: f64) -> f64 {
         .mul_add(s, 0.5550410866482046596e-1)
         .mul_add(s, 0.2402265069591012214e+0)
         .mul_add(s, 0.6931471805599452862e+0);
-    u = (1.).add_checked(u.mul_as_f2(s)).normalize().0;
+    u = (1.).add_checked(u.mul_as_doubled(s)).normalize().0;
 
     u = ldexp2k(u, q);
 
@@ -960,7 +962,7 @@ pub fn exp10(d: f64) -> f64 {
     let s = qf.mul_add(-L10U, d);
     let s = qf.mul_add(-L10L, s);
 
-    let mut u = 0.2411463498334267652e-3
+    let mut u = 0.2411463498334267652e-3_f64
         .mul_add(s, 0.1157488415217187375e-2)
         .mul_add(s, 0.5013975546789733659e-2)
         .mul_add(s, 0.1959762320720533080e-1)
@@ -971,7 +973,7 @@ pub fn exp10(d: f64) -> f64 {
         .mul_add(s, 0.2034678592293432953e+1)
         .mul_add(s, 0.2650949055239205876e+1)
         .mul_add(s, 0.2302585092994045901e+1);
-    u = (1.).add_checked(u.mul_as_f2(s)).normalize().0;
+    u = (1.).add_checked(u.mul_as_doubled(s)).normalize().0;
 
     if d > 308.25471555991671 {
         SLEEF_INFINITY // log10(DBL_MAX)
@@ -1008,10 +1010,10 @@ pub fn log2(mut d: f64) -> f64 {
         e -= 64;
     }
 
-    let x = (-1.).add_as_f2(m) / (1.).add_as_f2(m);
+    let x = (-1.).add_as_doubled(m) / (1.).add_as_doubled(m);
     let x2 = x.0 * x.0;
 
-    let t = 0.2211941750456081490e+0
+    let t = 0.2211941750456081490e+0_f64
         .mul_add(x2, 0.2200768693152277689e+0)
         .mul_add(x2, 0.2623708057488514656e+0)
         .mul_add(x2, 0.3205977477944495502e+0)
@@ -1048,10 +1050,10 @@ pub fn log1p(d: f64) -> f64 {
         e -= 64;
     }
 
-    let x = dd(m, 0.) / (2.).add_checked_as_f2(m);
+    let x = dd(m, 0.) / (2.).add_checked_as_doubled(m);
     let x2 = x.0 * x.0;
 
-    let t = 0.1532076988502701353e+0
+    let t = 0.1532076988502701353e+0_f64
         .mul_add(x2, 0.1525629051003428716e+0)
         .mul_add(x2, 0.1818605932937785996e+0)
         .mul_add(x2, 0.2222214519839380009e+0)

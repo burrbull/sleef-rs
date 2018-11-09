@@ -1,3 +1,5 @@
+//! Functions with 1.5 ULP error bound
+
 use super::*;
 
 pub fn erfc(a: f64) -> f64 {
@@ -8,7 +10,7 @@ pub fn erfc(a: f64) -> f64 {
     let o2 = a < 4.2;
     let o3 = a < 27.3;
     let u = if o0 {
-        a.mul_as_f2(a)
+        a.mul_as_doubled(a)
     } else if o1 {
         dd(a, 0.)
     } else {
@@ -16,7 +18,7 @@ pub fn erfc(a: f64) -> f64 {
     };
 
     let t = (if o0 {
-        0.6801072401395386139e-20
+        0.6801072401395386139e-20_f64
     } else if o1 {
         0.3438010341362585303e-12
     } else if o2 {

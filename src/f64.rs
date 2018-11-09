@@ -1,31 +1,78 @@
 #![allow(dead_code)]
-use std::f64;
-use std::isize;
+use core::f64;
+use core::isize;
 
-pub mod u10;
+use doubled::*;
+use crate::common::*;
 
-pub mod u15;
+#[inline]
+pub fn dd(h: f64, l: f64) -> Doubled<f64> {
+    Doubled::new(h, l)
+}
 
 pub mod u05;
-
+pub mod u10;
+pub mod u15;
 pub mod u35;
 
-use f2s::*;
 
-// ------- Delete !!! Replace with core::simd::f32n2 -------------------
+#[inline]
+pub fn xisnegzero(x: f64) -> bool {
+    x.to_bits() == (-0_f64).to_bits()
+}
+#[inline]
+pub fn xisnumber(x: f64) -> bool {
+    !x.isinf() && !x.isnan()
+}
+
+#[inline]
+pub fn xisint(d: f64) -> bool {
+    let x = d - D1_31 * ((d * (1. / D1_31)) as i64 as f64);
+    (x == x as i64 as f64) || (fabsk(d) >= D1_53)
+}
+
+#[inline]
+pub fn xisodd(d: f64) -> bool {
+    let x = d - D1_31 * ((d * (1. / D1_31)) as i64 as f64);
+    ((1 & (x as i64)) != 0) && (fabsk(d) < D1_53)
+}
+
+#[inline]
+pub fn mulsign(x: f64, y: f64) -> f64 {
+    f64::from_bits(x.to_bits() ^ (y.to_bits() & (1 << 63)))
+}
+
+#[inline]
+pub fn copysignk(x: f64, y: f64) -> f64 {
+    f64::from_bits((x.to_bits() & !(1 << 63)) ^ (y.to_bits() & (1 << 63)))
+}
+
+#[inline]
+pub fn sign(d: f64) -> f64 {
+    mulsign(1., d)
+}
+
+#[inline]
+fn fabsk(x: f64) -> f64 {
+    f64::from_bits(0x7fffffffffffffff & x.to_bits())
+}
+
 
 #[inline]
 fn rintk(x: f64) -> f64 {
     (if x < 0. { (x - 0.5) } else { (x + 0.5) }) as isize as f64
 }
+
 #[inline]
 fn ceilk(x: f64) -> isize {
     (x as isize) + (if x < 0. { 0 } else { 1 })
 }
+
 #[inline]
 fn trunck(x: f64) -> f64 {
     x as isize as f64
 }
+
 #[inline]
 fn fmink(x: f64, y: f64) -> f64 {
     if x < y {
@@ -34,6 +81,7 @@ fn fmink(x: f64, y: f64) -> f64 {
         y
     }
 }
+
 #[inline]
 fn fmaxk(x: f64, y: f64) -> f64 {
     if x > y {
@@ -45,7 +93,7 @@ fn fmaxk(x: f64, y: f64) -> f64 {
 
 #[inline]
 fn pow2i(q: isize) -> f64 {
-    long_bits_to_double(((q + 0x3ff) as i64) << 52)
+    f64::from_bits(((q + 0x3ff) as u64) << 52)
 }
 
 #[inline]
@@ -56,9 +104,9 @@ fn ldexpk(x: f64, mut q: isize) -> f64 {
     m += 0x3ff;
     m = if m < 0 { 0 } else { m };
     m = if m > 0x7ff { 0x7ff } else { m };
-    let u = long_bits_to_double((m as i64) << 52);
+    let u = f64::from_bits((m as u64) << 52);
     let x = x * u * u * u * u;
-    let u = long_bits_to_double(((q + 0x3ff) as i64) << 52);
+    let u = f64::from_bits(((q + 0x3ff) as u64) << 52);
     x * u
 }
 
@@ -71,35 +119,14 @@ fn ldexp2k(d: f64, e: isize) -> f64 {
 #[inline]
 fn ldexp3k(d: f64, e: isize) -> f64 {
     // very fast, no denormal
-    long_bits_to_double(double_to_raw_long_bits(d) + ((e as i64) << 52))
-}
-
-pub fn ldexp(x: f64, mut exp: isize) -> f64 {
-    if exp > 2100 {
-        exp = 2100;
-    }
-    if exp < -2100 {
-        exp = -2100;
-    }
-
-    let mut e0 = exp >> 2;
-    if exp < 0 {
-        e0 += 1;
-    }
-    if (-100 < exp) && (exp < 100) {
-        e0 = 0;
-    }
-    let e1 = exp - (e0 << 2);
-
-    let p = pow2i(e0);
-    x * pow2i(e1) * p * p * p * p
+    f64::from_bits(d.to_bits() + ((e as u64) << 52))
 }
 
 #[inline]
 fn ilogbk(mut d: f64) -> isize {
     let m = d < 4.9090934652977266E-91;
     d = if m { 2.037035976334486E90 * d } else { d };
-    let q = (double_to_raw_long_bits(d) >> 52) & 0x7ff;
+    let q = (d.to_bits() >> 52) & 0x7ff;
     (if m { q - (300 + 0x03ff) } else { q - 0x03ff }) as isize
 }
 
@@ -107,22 +134,7 @@ fn ilogbk(mut d: f64) -> isize {
 // normalized FP value.
 #[inline]
 fn ilogb2k(d: f64) -> isize {
-    (((double_to_raw_long_bits(d) >> 52) & 0x7ff) - 0x3ff) as isize
-}
-
-pub fn ilogb(d: f64) -> isize {
-    let mut e = ilogbk(fabsk(d));
-    e = if d == 0. { SLEEF_FP_ILOGB0 as isize } else { e };
-    e = if d.isnan() {
-        SLEEF_FP_ILOGBNAN as isize
-    } else {
-        e
-    };
-    if d.isinf() {
-        isize::MAX
-    } else {
-        e
-    }
+    (((d.to_bits() >> 52) & 0x7ff) - 0x3ff) as isize
 }
 
 #[inline]
@@ -143,7 +155,7 @@ fn atan2k(mut y: f64, mut x: f64) -> f64 {
     let s = y / x;
     let t = s * s;
 
-    let u = (-1.88796008463073496563746e-05)
+    let u = (-1.88796008463073496563746e-05_f64)
         .mul_add(t, 0.000209850076645816976906797)
         .mul_add(t, -0.00110611831486672482563471)
         .mul_add(t, 0.00370026744188713119232403)
@@ -187,7 +199,7 @@ fn rempisub(x: f64) -> (f64, i32) {
 }
 
 // Payne-Hanek like argument reduction
-fn rempi(a: f64) -> (F2<f64>, i32) {
+fn rempi(a: f64) -> (Doubled<f64>, i32) {
     let mut ex = ilogb2k(a) - 55;
     let q = if ex > (700 - 55) { -64 } else { 0 };
     let a = ldexp3k(a, q);
@@ -195,12 +207,12 @@ fn rempi(a: f64) -> (F2<f64>, i32) {
         ex = 0;
     }
     let ex = (ex * 4) as usize;
-    let mut x = a.mul_as_f2(REMPITABDP[ex]);
+    let mut x = a.mul_as_doubled(REMPITABDP[ex]);
     let (did, dii) = rempisub(x.0);
     let mut q = dii;
     x.0 = did;
     x = x.normalize();
-    let mut y = a.mul_as_f2(REMPITABDP[ex + 1]);
+    let mut y = a.mul_as_doubled(REMPITABDP[ex + 1]);
     x += y;
     let (did, dii) = rempisub(x.0);
     q += dii;
@@ -213,7 +225,7 @@ fn rempi(a: f64) -> (F2<f64>, i32) {
 }
 
 #[inline]
-fn sinpik(d: f64) -> F2<f64> {
+fn sinpik(d: f64) -> Doubled<f64> {
     let u = d * 4.;
     let q = ceilk(u) & !1;
     let o = (q & 2) != 0;
@@ -221,12 +233,12 @@ fn sinpik(d: f64) -> F2<f64> {
     let s = u - (q as f64);
     let t = s;
     let s = s * s;
-    let s2 = t.mul_as_f2(t);
+    let s2 = t.mul_as_doubled(t);
 
     //
 
     let u = (if o {
-        9.94480387626843774090208e-16
+        9.94480387626843774090208e-16_f64
     } else {
         -2.02461120785182399295868e-14
     }).mul_add(
@@ -292,7 +304,7 @@ fn sinpik(d: f64) -> F2<f64> {
 }
 
 #[inline]
-fn cospik(d: f64) -> F2<f64> {
+fn cospik(d: f64) -> Doubled<f64> {
     let u = d * 4.;
     let q = ceilk(u) & !1;
     let o = (q & 2) == 0;
@@ -300,12 +312,12 @@ fn cospik(d: f64) -> F2<f64> {
     let s = u - (q as f64);
     let t = s;
     let s = s * s;
-    let s2 = t.mul_as_f2(t);
+    let s2 = t.mul_as_doubled(t);
 
     //
 
     let u = (if o {
-        9.94480387626843774090208e-16
+        9.94480387626843774090208e-16_f64
     } else {
         -2.02461120785182399295868e-14
     }).mul_add(
@@ -377,7 +389,7 @@ fn expm1k(d: f64) -> f64 {
     let s = q.mul_add(-L2U, d);
     let s = q.mul_add(-L2L, s);
 
-    let mut u = 2.08860621107283687536341e-09
+    let mut u = 2.08860621107283687536341e-09_f64
         .mul_add(s, 2.51112930892876518610661e-08)
         .mul_add(s, 2.75573911234900471893338e-07)
         .mul_add(s, 2.75572362911928827629423e-06)
@@ -399,7 +411,7 @@ fn expm1k(d: f64) -> f64 {
 }
 
 #[inline]
-fn logk(mut d: f64) -> F2<f64> {
+fn logk(mut d: f64) -> Doubled<f64> {
     let o = d < f64::MIN;
     if o {
         d *= D1_32 * D1_32
@@ -412,10 +424,10 @@ fn logk(mut d: f64) -> F2<f64> {
         e -= 64;
     }
 
-    let x = (-1.).add_as_f2(m) / (1.).add_as_f2(m);
+    let x = (-1.).add_as_doubled(m) / (1.).add_as_doubled(m);
     let x2 = x.square();
 
-    let t = 0.116255524079935043668677
+    let t = 0.116255524079935043668677_f64
         .mul_add(x2.0, 0.103239680901072952701192)
         .mul_add(x2.0, 0.117754809412463995466069)
         .mul_add(x2.0, 0.13332981086846273921509)
@@ -432,14 +444,14 @@ fn logk(mut d: f64) -> F2<f64> {
 }
 
 #[inline]
-fn expk(d: F2<f64>) -> f64 {
+fn expk(d: Doubled<f64>) -> f64 {
     let q = rintk((d.0 + d.1) * R_LN2);
 
     let s = d + q * (-L2U) + q * (-L2L);
 
     let s = s.normalize();
 
-    let u = 2.51069683420950419527139e-08
+    let u = 2.51069683420950419527139e-08_f64
         .mul_add(s.0, 2.76286166770270649116855e-07)
         .mul_add(s.0, 2.75572496725023574143864e-06)
         .mul_add(s.0, 2.48014973989819794114153e-05)
@@ -462,13 +474,13 @@ fn expk(d: F2<f64>) -> f64 {
 }
 
 #[inline]
-fn expk2(d: F2<f64>) -> F2<f64> {
+fn expk2(d: Doubled<f64>) -> Doubled<f64> {
     let qf = rintk((d.0 + d.1) * R_LN2);
     let q = qf as isize;
 
     let s = d + qf * (-L2U) + qf * (-L2L);
 
-    let u = 0.1602472219709932072e-9
+    let u = 0.1602472219709932072e-9_f64
         .mul_add(s.0, 0.2092255183563157007e-8)
         .mul_add(s.0, 0.2505230023782644465e-7)
         .mul_add(s.0, 0.2755724800902135303e-6)
@@ -485,7 +497,7 @@ fn expk2(d: F2<f64>) -> F2<f64> {
 
     t = 1. + t;
 
-    t = F2::new(ldexp2k(t.0, q), ldexp2k(t.1, q));
+    t = Doubled::new(ldexp2k(t.0, q), ldexp2k(t.1, q));
 
     if d.0 < -1000. {
         dd(0., 0.)
@@ -494,33 +506,16 @@ fn expk2(d: F2<f64>) -> F2<f64> {
     }
 }
 
-pub fn tanh(x: f64) -> f64 {
-    let mut y = fabsk(x);
-    let mut d = expk2(dd(y, 0.));
-    let e = d.recpre();
-    d = d.sub_checked(e) / d.add_checked(e);
-    y = d.0 + d.1;
-
-    y = if fabsk(x) > 18.714973875 { 1. } else { y };
-    y = if y.isnan() { 1. } else { y };
-    y = mulsign(y, x);
-    if x.isnan() {
-        SLEEF_NAN
-    } else {
-        y
-    }
-}
-
 #[inline]
-fn logk2(d: F2<f64>) -> F2<f64> {
+fn logk2(d: Doubled<f64>) -> Doubled<f64> {
     let e = ilogbk(d.0 * (1. / 0.75));
 
-    let m = F2::new(ldexp2k(d.0, -e), ldexp2k(d.1, -e));
+    let m = Doubled::new(ldexp2k(d.0, -e), ldexp2k(d.1, -e));
 
     let x = (m + (-1.)) / (m + 1.);
     let x2 = x.square();
 
-    let t = 0.13860436390467167910856
+    let t = 0.13860436390467167910856_f64
         .mul_add(x2.0, 0.131699838841615374240845)
         .mul_add(x2.0, 0.153914168346271945653214)
         .mul_add(x2.0, 0.181816523941564611721589)
@@ -534,262 +529,18 @@ fn logk2(d: F2<f64>) -> F2<f64> {
         .add_checked(x2 * x * t)
 }
 
-//
-
-pub fn log10(mut d: f64) -> f64 {
-    let o = d < f64::MIN;
-    if o {
-        d *= D1_32 * D1_32;
-    }
-
-    let mut e = ilogb2k(d * (1. / 0.75));
-    let m = ldexp3k(d, -e);
-
-    if o {
-        e -= 64;
-    }
-
-    let x = (-1.).add_as_f2(m) / (1.).add_as_f2(m);
-    let x2 = x.0 * x.0;
-
-    let t = 0.6653725819576758460e-1
-        .mul_add(x2, 0.6625722782820833712e-1)
-        .mul_add(x2, 0.7898105214313944078e-1)
-        .mul_add(x2, 0.9650955035715275132e-1)
-        .mul_add(x2, 0.1240841409721444993e+0)
-        .mul_add(x2, 0.1737177927454605086e+0)
-        .mul_add(x2, 0.2895296546021972617e+0);
-
-    let s = (dd(0.30102999566398119802, -2.803728127785170339e-18) * (e as f64))
-        .add_checked(x * dd(0.86858896380650363334, 1.1430059694096389311e-17))
-        .add_checked(x2 * x.0 * t);
-
-    if d.isinf() {
-        SLEEF_INFINITY
-    } else if (d < 0.) || d.isnan() {
-        SLEEF_NAN
-    } else if d == 0. {
-        -SLEEF_INFINITY
-    } else {
-        s.0 + s.1
-    }
-}
-
-//
-
-pub fn fma(mut x: f64, mut y: f64, mut z: f64) -> f64 {
-    let mut h2 = x * y + z;
-    let mut q = 1.;
-    const C0: f64 = D1_54;
-    const C1: f64 = C0 * C0;
-    const C2: f64 = C1 * C1;
-    if fabsk(h2) < 1e-300 {
-        x *= C1;
-        y *= C1;
-        z *= C2;
-        q = 1. / C2;
-    }
-    if fabsk(h2) > 1e+299 {
-        x *= 1. / C1;
-        y *= 1. / C1;
-        z *= 1. / C2;
-        q = C2;
-    }
-    let d = x.mul_as_f2(y) + z;
-    let ret = if (x == 0.) || (y == 0.) { z } else { d.0 + d.1 };
-    if z.isinf() && !x.isinf() && !x.isnan() && !y.isinf() && !y.isnan() {
-        h2 = z;
-    }
-    if h2.isinf() || h2.isnan() {
-        h2
-    } else {
-        ret * q
-    }
-}
-/*
-pub fn xsqrt(d: f64) -> f64 {
-    return SQRT(d);
-}
-*/
-pub fn fabs(x: f64) -> f64 {
-    return fabsk(x);
-}
-
-pub fn copysign(x: f64, y: f64) -> f64 {
-    return copysignk(x, y);
-}
-
-pub fn fmax(x: f64, y: f64) -> f64 {
-    if y != y {
-        x
-    } else if x > y {
-        x
-    } else {
-        y
-    }
-}
-
-pub fn fmin(x: f64, y: f64) -> f64 {
-    if y != y {
-        x
-    } else if x < y {
-        x
-    } else {
-        y
-    }
-}
-
-pub fn fdim(x: f64, y: f64) -> f64 {
-    let ret = x - y;
-    if (ret < 0.) || (x == y) {
-        0.
-    } else {
-        ret
-    }
-}
-
-pub fn trunc(x: f64) -> f64 {
-    let mut fr = x - D1_31 * ((x * (1. / D1_31)) as i32 as f64);
-    fr = fr - (fr as i32 as f64);
-    if x.isinf() || (fabsk(x) >= D1_52) {
-        x
-    } else {
-        copysignk(x - fr, x)
-    }
-}
-
-pub fn floor(x: f64) -> f64 {
-    let mut fr = x - D1_31 * ((x * (1. / D1_31)) as i32 as f64);
-    fr = fr - (fr as i32 as f64);
-    fr = if fr < 0. { fr + 1. } else { fr };
-    if x.isinf() || (fabsk(x) >= D1_52) {
-        x
-    } else {
-        copysignk(x - fr, x)
-    }
-}
-
-pub fn ceil(x: f64) -> f64 {
-    let mut fr = x - D1_31 * ((x * (1. / D1_31)) as i32 as f64);
-    fr = fr - (fr as i32 as f64);
-    fr = if fr <= 0. { fr } else { fr - 1. };
-    if x.isinf() || (fabsk(x) >= D1_52) {
-        x
-    } else {
-        copysignk(x - fr, x)
-    }
-}
-
-pub fn round(d: f64) -> f64 {
-    let mut x = d + 0.5;
-    let mut fr = x - D1_31 * ((x * (1. / D1_31)) as i32 as f64);
-    fr = fr - (fr as i32 as f64);
-    if (fr == 0.) && (x <= 0.) {
-        x -= 1.;
-    }
-    fr = if fr < 0. { fr + 1. } else { fr };
-    let x = if d == 0.49999999999999994449 { 0. } else { x }; // nextafter(0.5, 0)
-    if d.isinf() || (fabsk(d) >= D1_52) {
-        d
-    } else {
-        copysignk(x - fr, d)
-    }
-}
-
-pub fn rint(d: f64) -> f64 {
-    let x = d + 0.5;
-    let mut fr = x - D1_31 * ((x * (1. / D1_31)) as i32 as f64);
-    let isodd = (1 & (fr as i32)) != 0;
-    fr = fr - (fr as i32 as f64);
-    fr = if (fr < 0.) || ((fr == 0.) && isodd) {
-        fr + 1.
-    } else {
-        fr
-    };
-    let x = if d == 0.50000000000000011102 { 0. } else { x }; // nextafter(0.5, 1)
-    if d.isinf() || (fabsk(d) >= D1_52) {
-        d
-    } else {
-        copysignk(x - fr, d)
-    }
-}
-
-pub fn nextafter(x: f64, y: f64) -> f64 {
-    let x = if x == 0. { mulsign(0., y) } else { x };
-    let mut cxi = x.to_bits() as i64;
-    let c = (cxi < 0) == (y < x);
-    if c {
-        cxi = -(cxi ^ (1 << 63));
-    }
-
-    if x != y {
-        cxi -= 1;
-    }
-
-    if c {
-        cxi = -(((cxi as u64) ^ (1u64 << 63)) as i64);
-    }
-
-    let cxf = f64::from_bits(cxi as u64);
-    if x.isnan() || y.isnan() {
-        SLEEF_NAN
-    } else if (x == 0.) && (y == 0.) {
-        y
-    } else if (cxf == 0.) && (x != 0.) {
-        mulsign(0., x)
-    } else {
-        cxf
-    }
-}
-
-pub fn frfrexp(mut x: f64) -> f64 {
-    if fabsk(x) < f64::MIN {
-        x *= D1_63;
-    }
-
-    let mut cxu = x.to_bits();
-    cxu &= !0x7ff0000000000000u64;
-    cxu |= 0x3fe0000000000000u64;
-
-    if x == 0. {
-        x
-    } else if x.isinf() {
-        mulsign(SLEEF_INFINITY, x)
-    } else {
-        f64::from_bits(cxu)
-    }
-}
-
-pub fn expfrexp(mut x: f64) -> i32 {
-    let mut ret = 0;
-
-    if fabsk(x) < f64::MIN {
-        x *= D1_63;
-        ret = -63;
-    }
-
-    let cxu = x.to_bits();
-    ret += (((cxu >> 52) & 0x7ff) as i32) - 0x3fe;
-
-    if x == 0. || x.isnan() || x.isinf() {
-        0
-    } else {
-        ret
-    }
-}
-
 #[inline]
 fn toward0(d: f64) -> f64 {
     if d == 0. {
         0.
     } else {
-        long_bits_to_double(double_to_raw_long_bits(d) - 1)
+        f64::from_bits(d.to_bits() - 1)
     }
 }
 
 #[inline]
 fn removelsb(d: f64) -> f64 {
-    long_bits_to_double(double_to_raw_long_bits(d) & 0xfffffffffffffffe)
+    f64::from_bits(d.to_bits() & 0xfffffffffffffffe)
 }
 
 #[inline]
@@ -802,53 +553,7 @@ fn ptrunc(x: f64) -> f64 {
     }
 }
 
-pub fn fmod(x: f64, y: f64) -> f64 {
-    let mut nu = fabsk(x);
-    let mut de = fabsk(y);
-    let mut s = 1.;
-    if de < f64::MIN {
-        nu *= D1_54;
-        de *= D1_54;
-        s = 1. / D1_54;
-    }
-    let mut r = dd(nu, 0.);
-    let rde = toward0(1. / de);
-
-    for _ in 0..21 {
-        // ceil(log2(DBL_MAX) / 51) + 1
-        let q = if (de + de > r.0) && (r.0 >= de) {
-            1.
-        } else {
-            toward0(r.0) * rde
-        };
-        r = (r + removelsb(ptrunc(q)).mul_as_f2(-de)).normalize();
-        if r.0 < de {
-            break;
-        }
-    }
-
-    let mut ret = r.0 * s;
-    if r.0 + r.1 == de {
-        ret = 0.;
-    }
-    ret = mulsign(ret, x);
-    if de == 0. {
-        SLEEF_NAN
-    } else if nu < de {
-        x
-    } else {
-        ret
-    }
-}
-
-pub fn modf(x: f64) -> F2<f64> {
-    let mut fr = x - D1_31 * ((x * (1. / D1_31)) as i32 as f64);
-    fr = fr - (fr as i32 as f64);
-    fr = if fabsk(x) >= D1_52 { 0. } else { fr };
-    F2::new(copysignk(fr, x), copysignk(x - fr, x))
-}
-
-fn gammak(a: f64) -> (F2<f64>, F2<f64>) {
+fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
     let mut clln = dd(1., 0.);
     let mut clld = dd(1., 0.);
 
@@ -858,7 +563,7 @@ fn gammak(a: f64) -> (F2<f64>, F2<f64>) {
     let mut x = if otiny {
         dd(0., 0.)
     } else if oref {
-        (1.).add_as_f2(-a)
+        (1.).add_as_doubled(-a)
     } else {
         dd(a, 0.)
     };
@@ -881,7 +586,7 @@ fn gammak(a: f64) -> (F2<f64>, F2<f64>) {
     };
 
     let u = (if o2 {
-        -156.801412704022726379848862
+        -156.801412704022726379848862_f64
     } else if o0 {
         0.2947916772827614196e+2
     } else {
@@ -1090,7 +795,7 @@ fn gammak(a: f64) -> (F2<f64>, F2<f64>) {
     y += -x;
     y += dd(0.91893853320467278056, -3.8782941580672414498e-17); // 0.5*log(2*M_PI)
 
-    let mut z = u.mul_as_f2(t)
+    let mut z = u.mul_as_doubled(t)
         + (if o0 {
             -0.4006856343865314862e+0
         } else {
@@ -1112,7 +817,7 @@ fn gammak(a: f64) -> (F2<f64>, F2<f64>) {
 
     let mut clc = if o2 { y } else { z };
 
-    clld = if o2 { u.mul_as_f2(t) + 1. } else { clld };
+    clld = if o2 { u.mul_as_doubled(t) + 1. } else { clld };
 
     y = clln;
 
@@ -1145,3 +850,345 @@ fn gammak(a: f64) -> (F2<f64>, F2<f64>) {
 
     (clc, clln / clld)
 }
+
+
+pub fn ldexp(x: f64, mut exp: isize) -> f64 {
+    if exp > 2100 {
+        exp = 2100;
+    }
+    if exp < -2100 {
+        exp = -2100;
+    }
+
+    let mut e0 = exp >> 2;
+    if exp < 0 {
+        e0 += 1;
+    }
+    if (-100 < exp) && (exp < 100) {
+        e0 = 0;
+    }
+    let e1 = exp - (e0 << 2);
+
+    let p = pow2i(e0);
+    x * pow2i(e1) * p * p * p * p
+}
+
+pub fn ilogb(d: f64) -> isize {
+    let mut e = ilogbk(fabsk(d));
+    e = if d == 0. { SLEEF_FP_ILOGB0 as isize } else { e };
+    e = if d.isnan() {
+        SLEEF_FP_ILOGBNAN as isize
+    } else {
+        e
+    };
+    if d.isinf() {
+        isize::MAX
+    } else {
+        e
+    }
+}
+
+pub fn tanh(x: f64) -> f64 {
+    let mut y = fabsk(x);
+    let mut d = expk2(dd(y, 0.));
+    let e = d.recpre();
+    d = d.sub_checked(e) / d.add_checked(e);
+    y = d.0 + d.1;
+
+    y = if fabsk(x) > 18.714973875 { 1. } else { y };
+    y = if y.isnan() { 1. } else { y };
+    y = mulsign(y, x);
+    if x.isnan() {
+        SLEEF_NAN
+    } else {
+        y
+    }
+}
+
+pub fn log10(mut d: f64) -> f64 {
+    let o = d < f64::MIN;
+    if o {
+        d *= D1_32 * D1_32;
+    }
+
+    let mut e = ilogb2k(d * (1. / 0.75));
+    let m = ldexp3k(d, -e);
+
+    if o {
+        e -= 64;
+    }
+
+    let x = (-1.).add_as_doubled(m) / (1.).add_as_doubled(m);
+    let x2 = x.0 * x.0;
+
+    let t = 0.6653725819576758460e-1_f64
+        .mul_add(x2, 0.6625722782820833712e-1)
+        .mul_add(x2, 0.7898105214313944078e-1)
+        .mul_add(x2, 0.9650955035715275132e-1)
+        .mul_add(x2, 0.1240841409721444993e+0)
+        .mul_add(x2, 0.1737177927454605086e+0)
+        .mul_add(x2, 0.2895296546021972617e+0);
+
+    let s = (dd(0.30102999566398119802, -2.803728127785170339e-18) * (e as f64))
+        .add_checked(x * dd(0.86858896380650363334, 1.1430059694096389311e-17))
+        .add_checked(x2 * x.0 * t);
+
+    if d.isinf() {
+        SLEEF_INFINITY
+    } else if (d < 0.) || d.isnan() {
+        SLEEF_NAN
+    } else if d == 0. {
+        -SLEEF_INFINITY
+    } else {
+        s.0 + s.1
+    }
+}
+
+pub fn fma(mut x: f64, mut y: f64, mut z: f64) -> f64 {
+    let mut h2 = x * y + z;
+    let mut q = 1.;
+    const C0: f64 = D1_54;
+    const C1: f64 = C0 * C0;
+    const C2: f64 = C1 * C1;
+    if fabsk(h2) < 1e-300 {
+        x *= C1;
+        y *= C1;
+        z *= C2;
+        q = 1. / C2;
+    }
+    if fabsk(h2) > 1e+299 {
+        x *= 1. / C1;
+        y *= 1. / C1;
+        z *= 1. / C2;
+        q = C2;
+    }
+    let d = x.mul_as_doubled(y) + z;
+    let ret = if (x == 0.) || (y == 0.) { z } else { d.0 + d.1 };
+    if z.isinf() && !x.isinf() && !x.isnan() && !y.isinf() && !y.isnan() {
+        h2 = z;
+    }
+    if h2.isinf() || h2.isnan() {
+        h2
+    } else {
+        ret * q
+    }
+}
+
+pub fn fabs(x: f64) -> f64 {
+    fabsk(x)
+}
+
+pub fn copysign(x: f64, y: f64) -> f64 {
+    copysignk(x, y)
+}
+
+pub fn fmax(x: f64, y: f64) -> f64 {
+    if y != y {
+        x
+    } else if x > y {
+        x
+    } else {
+        y
+    }
+}
+
+pub fn fmin(x: f64, y: f64) -> f64 {
+    if y != y {
+        x
+    } else if x < y {
+        x
+    } else {
+        y
+    }
+}
+
+pub fn fdim(x: f64, y: f64) -> f64 {
+    let ret = x - y;
+    if (ret < 0.) || (x == y) {
+        0.
+    } else {
+        ret
+    }
+}
+
+pub fn trunc(x: f64) -> f64 {
+    let mut fr = x - D1_31 * ((x * (1. / D1_31)) as i32 as f64);
+    fr = fr - (fr as i32 as f64);
+    if x.isinf() || (fabsk(x) >= D1_52) {
+        x
+    } else {
+        copysignk(x - fr, x)
+    }
+}
+
+pub fn floor(x: f64) -> f64 {
+    let mut fr = x - D1_31 * ((x * (1. / D1_31)) as i32 as f64);
+    fr = fr - (fr as i32 as f64);
+    fr = if fr < 0. { fr + 1. } else { fr };
+    if x.isinf() || (fabsk(x) >= D1_52) {
+        x
+    } else {
+        copysignk(x - fr, x)
+    }
+}
+
+pub fn ceil(x: f64) -> f64 {
+    let mut fr = x - D1_31 * ((x * (1. / D1_31)) as i32 as f64);
+    fr = fr - (fr as i32 as f64);
+    fr = if fr <= 0. { fr } else { fr - 1. };
+    if x.isinf() || (fabsk(x) >= D1_52) {
+        x
+    } else {
+        copysignk(x - fr, x)
+    }
+}
+
+pub fn round(d: f64) -> f64 {
+    let mut x = d + 0.5;
+    let mut fr = x - D1_31 * ((x * (1. / D1_31)) as i32 as f64);
+    fr = fr - (fr as i32 as f64);
+    if (fr == 0.) && (x <= 0.) {
+        x -= 1.;
+    }
+    fr = if fr < 0. { fr + 1. } else { fr };
+    let x = if d == 0.49999999999999994449 { 0. } else { x }; // nextafter(0.5, 0)
+    if d.isinf() || (fabsk(d) >= D1_52) {
+        d
+    } else {
+        copysignk(x - fr, d)
+    }
+}
+
+pub fn rint(d: f64) -> f64 {
+    let x = d + 0.5;
+    let mut fr = x - D1_31 * ((x * (1. / D1_31)) as i32 as f64);
+    let isodd = (1 & (fr as i32)) != 0;
+    fr = fr - (fr as i32 as f64);
+    fr = if (fr < 0.) || ((fr == 0.) && isodd) {
+        fr + 1.
+    } else {
+        fr
+    };
+    let x = if d == 0.50000000000000011102 { 0. } else { x }; // nextafter(0.5, 1)
+    if d.isinf() || (fabsk(d) >= D1_52) {
+        d
+    } else {
+        copysignk(x - fr, d)
+    }
+}
+
+pub fn nextafter(x: f64, y: f64) -> f64 {
+    let x = if x == 0. { mulsign(0., y) } else { x };
+    let mut cxi = x.to_bits() as i64;
+    let c = (cxi < 0) == (y < x);
+    if c {
+        cxi = -(cxi ^ (1 << 63));
+    }
+
+    if x != y {
+        cxi -= 1;
+    }
+
+    if c {
+        cxi = -(((cxi as u64) ^ (1u64 << 63)) as i64);
+    }
+
+    let cxf = f64::from_bits(cxi as u64);
+    if x.isnan() || y.isnan() {
+        SLEEF_NAN
+    } else if (x == 0.) && (y == 0.) {
+        y
+    } else if (cxf == 0.) && (x != 0.) {
+        mulsign(0., x)
+    } else {
+        cxf
+    }
+}
+
+pub fn frfrexp(mut x: f64) -> f64 {
+    if fabsk(x) < f64::MIN {
+        x *= D1_63;
+    }
+
+    let mut cxu = x.to_bits();
+    cxu &= !0x7ff0000000000000u64;
+    cxu |= 0x3fe0000000000000u64;
+
+    if x == 0. {
+        x
+    } else if x.isinf() {
+        mulsign(SLEEF_INFINITY, x)
+    } else {
+        f64::from_bits(cxu)
+    }
+}
+
+pub fn expfrexp(mut x: f64) -> i32 {
+    let mut ret = 0;
+
+    if fabsk(x) < f64::MIN {
+        x *= D1_63;
+        ret = -63;
+    }
+
+    let cxu = x.to_bits();
+    ret += (((cxu >> 52) & 0x7ff) as i32) - 0x3fe;
+
+    if x == 0. || x.isnan() || x.isinf() {
+        0
+    } else {
+        ret
+    }
+}
+
+pub fn fmod(x: f64, y: f64) -> f64 {
+    let mut nu = fabsk(x);
+    let mut de = fabsk(y);
+    let mut s = 1.;
+    if de < f64::MIN {
+        nu *= D1_54;
+        de *= D1_54;
+        s = 1. / D1_54;
+    }
+    let mut r = dd(nu, 0.);
+    let rde = toward0(1. / de);
+
+    for _ in 0..21 {
+        // ceil(log2(DBL_MAX) / 51) + 1
+        let q = if (de + de > r.0) && (r.0 >= de) {
+            1.
+        } else {
+            toward0(r.0) * rde
+        };
+        r = (r + removelsb(ptrunc(q)).mul_as_doubled(-de)).normalize();
+        if r.0 < de {
+            break;
+        }
+    }
+
+    let mut ret = r.0 * s;
+    if r.0 + r.1 == de {
+        ret = 0.;
+    }
+    ret = mulsign(ret, x);
+    if de == 0. {
+        SLEEF_NAN
+    } else if nu < de {
+        x
+    } else {
+        ret
+    }
+}
+
+pub fn modf(x: f64) -> Doubled<f64> {
+    let mut fr = x - D1_31 * ((x * (1. / D1_31)) as i32 as f64);
+    fr = fr - (fr as i32 as f64);
+    fr = if fabsk(x) >= D1_52 { 0. } else { fr };
+    Doubled::new(copysignk(fr, x), copysignk(x - fr, x))
+}
+
+/*
+pub fn xsqrt(d: f64) -> f64 {
+    SQRT(d)
+}
+*/

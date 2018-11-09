@@ -1,3 +1,5 @@
+//! Functions with 0.5 ULP error bound
+
 use super::*;
 
 pub fn sincospi(d: f64) -> (f64, f64) {
@@ -7,11 +9,11 @@ pub fn sincospi(d: f64) -> (f64, f64) {
     let s = u - (q as f64);
     let t = s;
     let s = s * s;
-    let s2 = t.mul_as_f2(t);
+    let s2 = t.mul_as_doubled(t);
 
     //
 
-    let u = (-2.02461120785182399295868e-14)
+    let u = (-2.02461120785182399295868e-14_f64)
         .mul_add(s, 6.94821830580179461327784e-12)
         .mul_add(s, -1.75724749952853179952664e-09)
         .mul_add(s, 3.13361688966868392878422e-07)
@@ -29,7 +31,7 @@ pub fn sincospi(d: f64) -> (f64, f64) {
 
     //
 
-    let u = 9.94480387626843774090208e-16
+    let u = 9.94480387626843774090208e-16_f64
         .mul_add(s, -3.89796226062932799164047e-13)
         .mul_add(s, 1.15011582539996035266901e-10)
         .mul_add(s, -2.4611369501044697495359e-08)
@@ -109,13 +111,13 @@ pub fn sqrt(mut d: f64) -> f64 {
 
     // http://en.wikipedia.org/wiki/Fast_inverse_square_root
     let mut x =
-        long_bits_to_double(0x5fe6ec85e7de30da - (double_to_raw_long_bits(d + 1e-320) >> 1));
+        f64::from_bits(0x5fe6ec85e7de30da - ((d + 1e-320).to_bits() >> 1));
 
     x = x * (1.5 - 0.5 * d * x * x);
     x = x * (1.5 - 0.5 * d * x * x);
     x = x * (1.5 - 0.5 * d * x * x) * d;
 
-    let d2 = (d + x.mul_as_f2(x)) * x.recpre();
+    let d2 = (d + x.mul_as_doubled(x)) * x.recpre();
 
     let ret = (d2.0 + d2.1) * q;
 

@@ -61,7 +61,7 @@ pub fn sincospi(d: f64) -> (f64, f64) {
         rsin = 0.;
         rcos = 1.;
     }
-    if d.isinf() {
+    if d.is_infinite() {
         rsin = SLEEF_NAN;
         rcos = SLEEF_NAN;
     }
@@ -71,7 +71,7 @@ pub fn sincospi(d: f64) -> (f64, f64) {
 
 pub fn sinpi(d: f64) -> f64 {
     let x = sinpik(d);
-    if d.isinf() {
+    if d.is_infinite() {
         SLEEF_NAN
     } else if fabsk(d) > TRIGRANGEMAX3 / 4. {
         0.
@@ -85,7 +85,7 @@ pub fn sinpi(d: f64) -> f64 {
 pub fn cospi(d: f64) -> f64 {
     let x = cospik(d);
 
-    if d.isinf() {
+    if d.is_infinite() {
         SLEEF_NAN
     } else if fabsk(d) > TRIGRANGEMAX3 / 4. {
         1.
@@ -151,11 +151,11 @@ pub fn hypot(mut x: f64, mut y: f64) -> f64 {
 
     if (x == SLEEF_INFINITY) || (y == SLEEF_INFINITY) {
         SLEEF_INFINITY
-    } else if x.isnan() || y.isnan() {
+    } else if x.is_nan() || y.is_nan() {
         SLEEF_NAN
     } else if min == 0. {
         max
-    } else if ret.isnan() {
+    } else if ret.is_nan() {
         SLEEF_INFINITY
     } else {
         ret

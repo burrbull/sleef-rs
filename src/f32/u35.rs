@@ -10,17 +10,17 @@ use super::*;
 pub fn atan2f(y: f32, x: f32) -> f32 {
     let mut r = atan2kf(fabsfk(y), x);
 
-    r = if x.isinf() || (x == 0.) {
-        M_PI_2_F - (if x.isinf() { signf(x) * M_PI_2_F } else { 0. })
-    } else if y.isinf() {
-        M_PI_2_F - (if x.isinf() { signf(x) * M_PI_4_F } else { 0. })
+    r = if x.is_infinite() || (x == 0.) {
+        M_PI_2_F - (if x.is_infinite() { signf(x) * M_PI_2_F } else { 0. })
+    } else if y.is_infinite() {
+        M_PI_2_F - (if x.is_infinite() { signf(x) * M_PI_4_F } else { 0. })
     } else if y == 0. {
         (if signf(x) == -1. { M_PI_F } else { 0. })
     } else {
         mulsignf(r, x)
     };
 
-    if x.isnan() || y.isnan() {
+    if x.is_nan() || y.is_nan() {
         SLEEF_NAN_F
     } else {
         mulsignf(r, y)
@@ -55,9 +55,9 @@ pub fn logf(mut d: f32) -> f32 {
 
     if d == 0. {
         -SLEEF_INFINITY_F
-    } else if (d < 0.) || d.isnan() {
+    } else if (d < 0.) || d.is_nan() {
         SLEEF_NAN_F
-    } else if d.isinf() {
+    } else if d.is_infinite() {
         SLEEF_INFINITY_F
     } else {
         x * t + 0.693147180559945286226764 * (e as f32)
@@ -107,7 +107,7 @@ pub fn sincospif(d: f32) -> (f32, f32) {
         rsin = 0.;
         rcos = 1.;
     }
-    if d.isinf() {
+    if d.is_infinite() {
         rsin = SLEEF_NAN_F;
         rcos = SLEEF_NAN_F;
     }
@@ -127,9 +127,9 @@ pub fn sinhf(x: f32) -> f32 {
     let mut y = (e + 2.) / (e + 1.) * (0.5 * e);
 
     y = if fabsfk(x) > 88. { SLEEF_INFINITY_F } else { y };
-    y = if y.isnan() { SLEEF_INFINITY_F } else { y };
+    y = if y.is_nan() { SLEEF_INFINITY_F } else { y };
     y = mulsignf(y, x);
-    if x.isnan() {
+    if x.is_nan() {
         SLEEF_NAN_F
     } else {
         y
@@ -148,8 +148,8 @@ pub fn coshf(x: f32) -> f32 {
     let mut y = 0.5 * e + 0.5 / e;
 
     y = if fabsfk(x) > 88. { SLEEF_INFINITY_F } else { y };
-    y = if y.isnan() { SLEEF_INFINITY_F } else { y };
-    if x.isnan() {
+    y = if y.is_nan() { SLEEF_INFINITY_F } else { y };
+    if x.is_nan() {
         SLEEF_NAN_F
     } else {
         y
@@ -167,9 +167,9 @@ pub fn tanhf(x: f32) -> f32 {
     y = d / (d + 2.);
 
     y = if fabsfk(x) > 18.714973875 { 1. } else { y };
-    y = if y.isnan() { 1. } else { y };
+    y = if y.is_nan() { 1. } else { y };
     y = mulsignf(y, x);
-    if x.isnan() {
+    if x.is_nan() {
         SLEEF_NAN_F
     } else {
         y
@@ -188,7 +188,7 @@ pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
     let t = min / max;
     if (x == SLEEF_INFINITY_F) || (y == SLEEF_INFINITY_F) {
         SLEEF_INFINITY_F
-    } else if x.isnan() || y.isnan() {
+    } else if x.is_nan() || y.is_nan() {
         SLEEF_NAN_F
     } else if min == 0. {
         max
@@ -261,7 +261,7 @@ pub fn sinf(mut d: f32) -> f32 {
             );
         }
         d = dfidf.0 + dfidf.1;
-        if t.isinf() || t.isnan() {
+        if t.is_infinite() || t.is_nan() {
             d = SLEEF_NAN_F;
         }
     }
@@ -321,7 +321,7 @@ pub fn cosf(mut d: f32) -> f32 {
             );
         }
         d = dfidf.0 + dfidf.1;
-        if t.isinf() || t.isnan() {
+        if t.is_infinite() || t.is_nan() {
             d = SLEEF_NAN_F;
         }
     }
@@ -368,7 +368,7 @@ pub fn sincosf(d: f32) -> (f32, f32) {
         let (dfidf, dfii) = rempif(d);
         q = dfii;
         s = dfidf.0 + dfidf.1;
-        if d.isinf() || d.isnan() {
+        if d.is_infinite() || d.is_nan() {
             s = SLEEF_NAN_F;
         }
     }
@@ -437,7 +437,7 @@ pub fn tanf(d: f32) -> f32 {
         let (dfidf, dfii) = rempif(d);
         q = dfii;
         x = dfidf.0 + dfidf.1;
-        if d.isinf() || d.isnan() {
+        if d.is_infinite() || d.is_nan() {
             x = SLEEF_NAN_F;
         }
     }

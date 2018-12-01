@@ -113,7 +113,7 @@ pub fn erfcf(mut a: f32) -> f32 {
     if s < 0. {
         r = 2. - r;
     }
-    if s.isnan() {
+    if s.is_nan() {
         SLEEF_NAN_F
     } else {
         r

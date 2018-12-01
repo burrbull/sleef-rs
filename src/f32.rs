@@ -26,10 +26,6 @@ pub fn xisintf(x: f32) -> bool {
 pub fn xisnegzerof(x: f32) -> bool {
     x.to_bits() == (-0f32).to_bits()
 }
-#[inline]
-pub fn xisnumberf(x: f32) -> bool {
-    !x.isinf() && !x.isnan()
-}
 
 #[inline]
 pub fn mulsignf(x: f32, y: f32) -> f32 {
@@ -596,8 +592,8 @@ fn gammafk(a: f32) -> (Doubled<f32>, Doubled<f32>) {
 pub fn ilogbf(d: f32) -> i32 {
     let mut e = ilogbkf(fabsfk(d));
     e = if d == 0. { SLEEF_FP_ILOGB0 } else { e };
-    e = if d.isnan() { SLEEF_FP_ILOGBNAN } else { e };
-    if d.isinf() {
+    e = if d.is_nan() { SLEEF_FP_ILOGBNAN } else { e };
+    if d.is_infinite() {
         i32::MAX
     } else {
         e
@@ -649,7 +645,7 @@ pub fn fdimf(x: f32, y: f32) -> f32 {
 /// Round to integer towards zero
 pub fn truncf(x: f32) -> f32 {
     let fr = x - (x as i32 as f32);
-    if x.isinf() || (fabsfk(x) >= F1_23) {
+    if x.is_infinite() || (fabsfk(x) >= F1_23) {
         x
     } else {
         copysignfk(x - fr, x)
@@ -660,7 +656,7 @@ pub fn truncf(x: f32) -> f32 {
 pub fn floorf(x: f32) -> f32 {
     let mut fr = x - (x as i32 as f32);
     fr = if fr < 0. { fr + 1. } else { fr };
-    if x.isinf() || (fabsfk(x) >= F1_23) {
+    if x.is_infinite() || (fabsfk(x) >= F1_23) {
         x
     } else {
         copysignfk(x - fr, x)
@@ -671,7 +667,7 @@ pub fn floorf(x: f32) -> f32 {
 pub fn ceilf(x: f32) -> f32 {
     let mut fr = x - (x as i32 as f32);
     fr = if fr <= 0. { fr } else { fr - 1. };
-    if x.isinf() || (fabsfk(x) >= F1_23) {
+    if x.is_infinite() || (fabsfk(x) >= F1_23) {
         x
     } else {
         copysignfk(x - fr, x)
@@ -687,7 +683,7 @@ pub fn roundf(d: f32) -> f32 {
     };
     fr = if fr < 0. { fr + 1. } else { fr };
     x = if d == 0.4999999701976776123 { 0. } else { x }; // nextafterf(0.5, 0)
-    if d.isinf() || (fabsfk(d) >= F1_23) {
+    if d.is_infinite() || (fabsfk(d) >= F1_23) {
         d
     } else {
         copysignfk(x - fr, d)
@@ -705,7 +701,7 @@ pub fn rintf(d: f32) -> f32 {
         fr
     };
     x = if d == 0.50000005960464477539 { 0. } else { x }; // nextafterf(0.5, 1)
-    if d.isinf() || (fabsfk(d) >= F1_23) {
+    if d.is_infinite() || (fabsfk(d) >= F1_23) {
         d
     } else {
         copysignfk(x - fr, d)
@@ -761,7 +757,7 @@ pub fn nextafterf(x: f32, y: f32) -> f32 {
 
     let cxf = f32::from_bits(cxi as u32);
 
-    if x.isnan() || y.isnan() {
+    if x.is_nan() || y.is_nan() {
         SLEEF_NAN_F
     } else if (x == 0.) && (y == 0.) {
         y
@@ -784,7 +780,7 @@ pub fn frfrexpf(mut x: f32) -> f32 {
 
     if x == 0. {
         x
-    } else if x.isinf() {
+    } else if x.is_infinite() {
         mulsignf(SLEEF_INFINITY_F, x)
     } else {
         f32::from_bits(cxu)
@@ -802,7 +798,7 @@ pub fn expfrexpf(mut x: f32) -> i32 {
 
     ret += (((x.to_bits() >> 23) & 0xff) as i32) - 0x7e;
 
-    if (x == 0.) || x.isnan() || x.isinf() {
+    if (x == 0.) || x.is_nan() || x.is_infinite() {
         0
     } else {
         ret
@@ -876,10 +872,10 @@ pub fn fmaf(mut x: f32, mut y: f32, mut z: f32) -> f32 {
     let mut d = x.mul_as_doubled(y);
     d += z;
     let ret = if (x == 0.) || (y == 0.) { z } else { d.0 + d.1 };
-    if z.isinf() && !x.isinf() && !x.isnan() && !y.isinf() && !y.isnan() {
+    if z.is_infinite() && !x.is_infinite() && !x.is_nan() && !y.is_infinite() && !y.is_nan() {
         h2 = z;
     }
-    if h2.isinf() || h2.isnan() {
+    if h2.is_infinite() || h2.is_nan() {
         h2
     } else {
         ret * q

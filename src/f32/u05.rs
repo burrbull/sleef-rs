@@ -90,7 +90,7 @@ pub fn sincospif(d: f32) -> (f32, f32) {
         rsin = 0.;
         rcos = 1.;
     }
-    if d.isinf() {
+    if d.is_infinite() {
         rsin = SLEEF_NAN_F;
         rcos = SLEEF_NAN_F;
     }
@@ -119,11 +119,11 @@ pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
     let ret = t.0 + t.1;
     if (x == SLEEF_INFINITY_F) || (y == SLEEF_INFINITY_F) {
         SLEEF_INFINITY_F
-    } else if x.isnan() || y.isnan() {
+    } else if x.is_nan() || y.is_nan() {
         SLEEF_NAN_F
     } else if min == 0. {
         max
-    } else if ret.isnan() {
+    } else if ret.is_nan() {
         SLEEF_INFINITY_F
     } else {
         ret
@@ -140,7 +140,7 @@ pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
 pub fn sinpif(d: f32) -> f32 {
     let x = super::sinpifk(d);
 
-    if d.isinf() {
+    if d.is_infinite() {
         SLEEF_NAN_F
     } else if fabsfk(d) > TRIGRANGEMAX4_F {
         0.
@@ -161,7 +161,7 @@ pub fn sinpif(d: f32) -> f32 {
 pub fn cospif(d: f32) -> f32 {
     let x = super::cospifk(d);
 
-    if d.isinf() {
+    if d.is_infinite() {
         SLEEF_NAN_F
     } else if fabsfk(d) > TRIGRANGEMAX4_F {
         1.

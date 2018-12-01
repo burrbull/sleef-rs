@@ -258,7 +258,7 @@ pub fn erfc(a: f64) -> f64 {
     if s < 0. {
         r = 2. - r;
     }
-    if s.isnan() {
+    if s.is_nan() {
         SLEEF_NAN
     } else {
         r

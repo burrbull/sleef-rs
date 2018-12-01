@@ -20,10 +20,6 @@ pub mod u35;
 pub fn xisnegzero(x: f64) -> bool {
     x.to_bits() == (-0_f64).to_bits()
 }
-#[inline]
-pub fn xisnumber(x: f64) -> bool {
-    !x.isinf() && !x.isnan()
-}
 
 #[inline]
 pub fn xisint(d: f64) -> bool {
@@ -876,12 +872,12 @@ pub fn ldexp(x: f64, mut exp: isize) -> f64 {
 pub fn ilogb(d: f64) -> isize {
     let mut e = ilogbk(fabsk(d));
     e = if d == 0. { SLEEF_FP_ILOGB0 as isize } else { e };
-    e = if d.isnan() {
+    e = if d.is_nan() {
         SLEEF_FP_ILOGBNAN as isize
     } else {
         e
     };
-    if d.isinf() {
+    if d.is_infinite() {
         isize::MAX
     } else {
         e
@@ -896,9 +892,9 @@ pub fn tanh(x: f64) -> f64 {
     y = d.0 + d.1;
 
     y = if fabsk(x) > 18.714973875 { 1. } else { y };
-    y = if y.isnan() { 1. } else { y };
+    y = if y.is_nan() { 1. } else { y };
     y = mulsign(y, x);
-    if x.isnan() {
+    if x.is_nan() {
         SLEEF_NAN
     } else {
         y
@@ -933,9 +929,9 @@ pub fn log10(mut d: f64) -> f64 {
         .add_checked(x * dd(0.86858896380650363334, 1.1430059694096389311e-17))
         .add_checked(x2 * x.0 * t);
 
-    if d.isinf() {
+    if d.is_infinite() {
         SLEEF_INFINITY
-    } else if (d < 0.) || d.isnan() {
+    } else if (d < 0.) || d.is_nan() {
         SLEEF_NAN
     } else if d == 0. {
         -SLEEF_INFINITY
@@ -964,10 +960,10 @@ pub fn fma(mut x: f64, mut y: f64, mut z: f64) -> f64 {
     }
     let d = x.mul_as_doubled(y) + z;
     let ret = if (x == 0.) || (y == 0.) { z } else { d.0 + d.1 };
-    if z.isinf() && !x.isinf() && !x.isnan() && !y.isinf() && !y.isnan() {
+    if z.is_infinite() && !x.is_infinite() && !x.is_nan() && !y.is_infinite() && !y.is_nan() {
         h2 = z;
     }
-    if h2.isinf() || h2.isnan() {
+    if h2.is_infinite() || h2.is_nan() {
         h2
     } else {
         ret * q
@@ -1014,7 +1010,7 @@ pub fn fdim(x: f64, y: f64) -> f64 {
 pub fn trunc(x: f64) -> f64 {
     let mut fr = x - D1_31 * ((x * (1. / D1_31)) as i32 as f64);
     fr = fr - (fr as i32 as f64);
-    if x.isinf() || (fabsk(x) >= D1_52) {
+    if x.is_infinite() || (fabsk(x) >= D1_52) {
         x
     } else {
         copysignk(x - fr, x)
@@ -1025,7 +1021,7 @@ pub fn floor(x: f64) -> f64 {
     let mut fr = x - D1_31 * ((x * (1. / D1_31)) as i32 as f64);
     fr = fr - (fr as i32 as f64);
     fr = if fr < 0. { fr + 1. } else { fr };
-    if x.isinf() || (fabsk(x) >= D1_52) {
+    if x.is_infinite() || (fabsk(x) >= D1_52) {
         x
     } else {
         copysignk(x - fr, x)
@@ -1036,7 +1032,7 @@ pub fn ceil(x: f64) -> f64 {
     let mut fr = x - D1_31 * ((x * (1. / D1_31)) as i32 as f64);
     fr = fr - (fr as i32 as f64);
     fr = if fr <= 0. { fr } else { fr - 1. };
-    if x.isinf() || (fabsk(x) >= D1_52) {
+    if x.is_infinite() || (fabsk(x) >= D1_52) {
         x
     } else {
         copysignk(x - fr, x)
@@ -1052,7 +1048,7 @@ pub fn round(d: f64) -> f64 {
     }
     fr = if fr < 0. { fr + 1. } else { fr };
     let x = if d == 0.49999999999999994449 { 0. } else { x }; // nextafter(0.5, 0)
-    if d.isinf() || (fabsk(d) >= D1_52) {
+    if d.is_infinite() || (fabsk(d) >= D1_52) {
         d
     } else {
         copysignk(x - fr, d)
@@ -1070,7 +1066,7 @@ pub fn rint(d: f64) -> f64 {
         fr
     };
     let x = if d == 0.50000000000000011102 { 0. } else { x }; // nextafter(0.5, 1)
-    if d.isinf() || (fabsk(d) >= D1_52) {
+    if d.is_infinite() || (fabsk(d) >= D1_52) {
         d
     } else {
         copysignk(x - fr, d)
@@ -1094,7 +1090,7 @@ pub fn nextafter(x: f64, y: f64) -> f64 {
     }
 
     let cxf = f64::from_bits(cxi as u64);
-    if x.isnan() || y.isnan() {
+    if x.is_nan() || y.is_nan() {
         SLEEF_NAN
     } else if (x == 0.) && (y == 0.) {
         y
@@ -1116,7 +1112,7 @@ pub fn frfrexp(mut x: f64) -> f64 {
 
     if x == 0. {
         x
-    } else if x.isinf() {
+    } else if x.is_infinite() {
         mulsign(SLEEF_INFINITY, x)
     } else {
         f64::from_bits(cxu)
@@ -1134,7 +1130,7 @@ pub fn expfrexp(mut x: f64) -> i32 {
     let cxu = x.to_bits();
     ret += (((cxu >> 52) & 0x7ff) as i32) - 0x3fe;
 
-    if x == 0. || x.isnan() || x.isinf() {
+    if x == 0. || x.is_nan() || x.is_infinite() {
         0
     } else {
         ret

@@ -54,8 +54,8 @@ pub fn sincospi(d: f64) -> (f64, f64) {
         rcos = 1.;
     }
     if d.is_infinite() {
-        rsin = SLEEF_NAN;
-        rcos = SLEEF_NAN;
+        rsin = f64::NAN;
+        rcos = f64::NAN;
     }
 
     (rsin, rcos)
@@ -65,11 +65,11 @@ pub fn sinh(x: f64) -> f64 {
     let e = expm1k(fabsk(x));
     let mut y = (e + 2.) / (e + 1.) * (0.5 * e);
 
-    y = if fabsk(x) > 709. { SLEEF_INFINITY } else { y };
-    y = if y.is_nan() { SLEEF_INFINITY } else { y };
+    y = if fabsk(x) > 709. { f64::INFINITY } else { y };
+    y = if y.is_nan() { f64::INFINITY } else { y };
     y = mulsign(y, x);
     if x.is_nan() {
-        SLEEF_NAN
+        f64::NAN
     } else {
         y
     }
@@ -79,10 +79,10 @@ pub fn cosh(x: f64) -> f64 {
     let e = u10::exp(fabsk(x));
     let mut y = 0.5 / e + 0.5 * e;
 
-    y = if fabsk(x) > 709. { SLEEF_INFINITY } else { y };
-    y = if y.is_nan() { SLEEF_INFINITY } else { y };
+    y = if fabsk(x) > 709. { f64::INFINITY } else { y };
+    y = if y.is_nan() { f64::INFINITY } else { y };
     if x.is_nan() {
-        SLEEF_NAN
+        f64::NAN
     } else {
         y
     }
@@ -97,7 +97,7 @@ pub fn tanh(x: f64) -> f64 {
     y = if y.is_nan() { 1. } else { y };
     y = mulsign(y, x);
     if x.is_nan() {
-        SLEEF_NAN
+        f64::NAN
     } else {
         y
     }
@@ -114,10 +114,10 @@ pub fn hypot(mut x: f64, mut y: f64) -> f64 {
     let max = fmaxk(x, y);
 
     let t = min / max;
-    if (x == SLEEF_INFINITY) || (y == SLEEF_INFINITY) {
-        SLEEF_INFINITY
+    if (x == f64::INFINITY) || (y == f64::INFINITY) {
+        f64::INFINITY
     } else if x.is_nan() || y.is_nan() {
-        SLEEF_NAN
+        f64::NAN
     } else if min == 0. {
         max
     } else {
@@ -148,7 +148,7 @@ pub fn atan2(y: f64, x: f64) -> f64 {
         mulsign(r, x)
     };
     if x.is_nan() || y.is_nan() {
-        SLEEF_NAN
+        f64::NAN
     } else {
         mulsign(r, y)
     }
@@ -280,14 +280,15 @@ pub fn sin(mut d: f64) -> f64 {
         let (mut ddidd, ddii) = rempi(t);
         ql = (((ddii & 3) * 2 + ((ddidd.0 > 0.) as i32) + 1) >> 2) as isize;
         if ddii & 1 != 0 {
-            ddidd = ddidd + dd(
-                mulsign(3.141592653589793116 * -0.5, ddidd.0),
-                mulsign(1.2246467991473532072e-16 * -0.5, ddidd.0),
-            );
+            ddidd = ddidd
+                + dd(
+                    mulsign(3.141592653589793116 * -0.5, ddidd.0),
+                    mulsign(1.2246467991473532072e-16 * -0.5, ddidd.0),
+                );
         }
         d = ddidd.0 + ddidd.1;
         if t.is_infinite() || t.is_nan() {
-            d = SLEEF_NAN;
+            d = f64::NAN;
         }
     }
 
@@ -340,20 +341,21 @@ pub fn cos(mut d: f64) -> f64 {
         let (mut ddidd, ddii) = rempi(t);
         ql = (((ddii & 3) * 2 + ((ddidd.0 > 0.) as i32) + 7) >> 1) as isize;
         if (ddii & 1) == 0 {
-            ddidd = ddidd + dd(
-                mulsign(
-                    3.141592653589793116 * -0.5,
-                    if ddidd.0 > 0. { 1. } else { -1. },
-                ),
-                mulsign(
-                    1.2246467991473532072e-16 * -0.5,
-                    if ddidd.0 > 0. { 1. } else { -1. },
-                ),
-            );
+            ddidd = ddidd
+                + dd(
+                    mulsign(
+                        3.141592653589793116 * -0.5,
+                        if ddidd.0 > 0. { 1. } else { -1. },
+                    ),
+                    mulsign(
+                        1.2246467991473532072e-16 * -0.5,
+                        if ddidd.0 > 0. { 1. } else { -1. },
+                    ),
+                );
         }
         d = ddidd.0 + ddidd.1;
         if t.is_infinite() || t.is_nan() {
-            d = SLEEF_NAN;
+            d = f64::NAN;
         }
     }
 
@@ -403,7 +405,7 @@ pub fn sincos(d: f64) -> (f64, f64) {
         ql = ddii as isize;
         s = ddidd.0 + ddidd.1;
         if d.is_infinite() || d.is_nan() {
-            s = SLEEF_NAN;
+            s = f64::NAN;
         }
     }
 
@@ -476,7 +478,7 @@ pub fn tan(d: f64) -> f64 {
         ql = ddii as isize;
         x = ddidd.0 + ddidd.1;
         if d.is_infinite() || d.is_nan() {
-            x = SLEEF_NAN;
+            x = f64::NAN;
         }
     }
 
@@ -540,11 +542,11 @@ pub fn log(mut d: f64) -> f64 {
     let x = x * t + 0.693147180559945286226764 * (e as f64);
 
     if d == 0. {
-        -SLEEF_INFINITY
+        f64::NEG_INFINITY
     } else if (d < 0.) || d.is_nan() {
-        SLEEF_NAN
+        f64::NAN
     } else if d.is_infinite() {
-        SLEEF_INFINITY
+        f64::INFINITY
     } else {
         x * t + 0.693147180559945286226764 * (e as f64)
     }

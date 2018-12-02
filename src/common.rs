@@ -8,7 +8,10 @@ pub use core::i64;
 
 use doubled::*;
 
-pub trait SqrtAsDoubled where Self: Sized {
+pub trait SqrtAsDoubled
+where
+    Self: Sized,
+{
     fn sqrt_as_doubled(self) -> Doubled<Self>;
 }
 
@@ -46,7 +49,6 @@ impl Sqrt for f64 {
     }
 }
 
-
 impl Sqrt for Doubled<f32> {
     #[inline]
     fn sqrt(self) -> Self {
@@ -78,7 +80,6 @@ pub trait Round {
 pub trait MulAdd {
     fn mul_add(self, y: Self, z: Self) -> Self;
 }
-
 
 pub trait MulSub {
     fn mul_sub(self, y: Self, z: Self) -> Self;

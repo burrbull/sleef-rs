@@ -2,8 +2,8 @@
 use core::f64;
 use core::isize;
 
-use doubled::*;
 use crate::common::*;
+use doubled::*;
 
 #[inline]
 pub fn dd(h: f64, l: f64) -> Doubled<f64> {
@@ -14,7 +14,6 @@ pub mod u05;
 pub mod u10;
 pub mod u15;
 pub mod u35;
-
 
 #[inline]
 pub fn xisnegzero(x: f64) -> bool {
@@ -52,7 +51,6 @@ pub fn sign(d: f64) -> f64 {
 fn fabsk(x: f64) -> f64 {
     f64::from_bits(0x7fffffffffffffff & x.to_bits())
 }
-
 
 #[inline]
 fn rintk(x: f64) -> f64 {
@@ -237,35 +235,40 @@ fn sinpik(d: f64) -> Doubled<f64> {
         9.94480387626843774090208e-16_f64
     } else {
         -2.02461120785182399295868e-14
-    }).mul_add(
+    })
+    .mul_add(
         s,
         if o {
             -3.89796226062932799164047e-13
         } else {
             6.94821830580179461327784e-12
         },
-    ).mul_add(
+    )
+    .mul_add(
         s,
         if o {
             1.15011582539996035266901e-10
         } else {
             -1.75724749952853179952664e-09
         },
-    ).mul_add(
+    )
+    .mul_add(
         s,
         if o {
             -2.4611369501044697495359e-08
         } else {
             3.13361688966868392878422e-07
         },
-    ).mul_add(
+    )
+    .mul_add(
         s,
         if o {
             3.59086044859052754005062e-06
         } else {
             -3.6576204182161551920361e-05
         },
-    ).mul_add(
+    )
+    .mul_add(
         s,
         if o {
             -0.000325991886927389905997954
@@ -316,35 +319,40 @@ fn cospik(d: f64) -> Doubled<f64> {
         9.94480387626843774090208e-16_f64
     } else {
         -2.02461120785182399295868e-14
-    }).mul_add(
+    })
+    .mul_add(
         s,
         if o {
             -3.89796226062932799164047e-13
         } else {
             6.94821830580179461327784e-12
         },
-    ).mul_add(
+    )
+    .mul_add(
         s,
         if o {
             1.15011582539996035266901e-10
         } else {
             -1.75724749952853179952664e-09
         },
-    ).mul_add(
+    )
+    .mul_add(
         s,
         if o {
             -2.4611369501044697495359e-08
         } else {
             3.13361688966868392878422e-07
         },
-    ).mul_add(
+    )
+    .mul_add(
         s,
         if o {
             3.59086044859052754005062e-06
         } else {
             -3.6576204182161551920361e-05
         },
-    ).mul_add(
+    )
+    .mul_add(
         s,
         if o {
             -0.000325991886927389905997954
@@ -587,7 +595,8 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
         0.2947916772827614196e+2
     } else {
         0.7074816000864609279e-7
-    }).mul_add(
+    })
+    .mul_add(
         t,
         if o2 {
             1.120804464289911606838558160000
@@ -596,7 +605,8 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
         } else {
             0.4009244333008730443e-6
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             13.39798545514258921833306020000
@@ -605,7 +615,8 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
         } else {
             0.1040114641628246946e-5
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             -0.116546276599463200848033357000
@@ -614,7 +625,8 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
         } else {
             0.1508349150733329167e-5
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             -1.391801093265337481495562410000
@@ -623,7 +635,8 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
         } else {
             0.1288143074933901020e-5
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             0.015056113040026424412918973400
@@ -632,7 +645,8 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
         } else {
             0.4744167749884993937e-6
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             0.179540117061234856098844714000
@@ -641,7 +655,8 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
         } else {
             -0.6554816306542489902e-7
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             -0.002481743600264997730942489280
@@ -650,7 +665,8 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
         } else {
             -0.3189252471452599844e-6
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             -0.029527880945699120504851034100
@@ -659,7 +675,8 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
         } else {
             0.1358883821470355377e-6
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             0.000540164767892604515196325186
@@ -668,7 +685,8 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
         } else {
             -0.4343931277157336040e-6
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             0.006403362833808069794787256200
@@ -677,7 +695,8 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
         } else {
             0.9724785897406779555e-6
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             -0.000162516262783915816896611252
@@ -686,7 +705,8 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
         } else {
             -0.2036886057225966011e-5
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             -0.001914438498565477526465972390
@@ -695,7 +715,8 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
         } else {
             0.4373363141819725815e-5
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             7.20489541602001055898311517e-05
@@ -704,7 +725,8 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
         } else {
             -0.9439951268304008677e-5
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             0.000839498720672087279971000786
@@ -713,7 +735,8 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
         } else {
             0.2050727030376389804e-4
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             -5.17179090826059219329394422e-05
@@ -722,7 +745,8 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
         } else {
             -0.4492620183431184018e-4
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             -0.000592166437353693882857342347
@@ -731,7 +755,8 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
         } else {
             0.9945751236071875931e-4
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             6.97281375836585777403743539e-05
@@ -740,7 +765,8 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
         } else {
             -0.2231547599034983196e-3
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             0.000784039221720066627493314301
@@ -749,7 +775,8 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
         } else {
             0.5096695247101967622e-3
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             -0.000229472093621399176949318732
@@ -758,7 +785,8 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
         } else {
             -0.1192753911667886971e-2
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             -0.002681327160493827160473958490
@@ -767,7 +795,8 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
         } else {
             0.2890510330742210310e-2
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             0.003472222222222222222175164840
@@ -776,7 +805,8 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
         } else {
             -0.7385551028674461858e-2
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             0.083333333333333333335592087900
@@ -847,7 +877,6 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
     (clc, clln / clld)
 }
 
-
 pub fn ldexp(x: f64, mut exp: isize) -> f64 {
     if exp > 2100 {
         exp = 2100;
@@ -895,7 +924,7 @@ pub fn tanh(x: f64) -> f64 {
     y = if y.is_nan() { 1. } else { y };
     y = mulsign(y, x);
     if x.is_nan() {
-        SLEEF_NAN
+        f64::NAN
     } else {
         y
     }
@@ -930,11 +959,11 @@ pub fn log10(mut d: f64) -> f64 {
         .add_checked(x2 * x.0 * t);
 
     if d.is_infinite() {
-        SLEEF_INFINITY
+        f64::INFINITY
     } else if (d < 0.) || d.is_nan() {
-        SLEEF_NAN
+        f64::NAN
     } else if d == 0. {
-        -SLEEF_INFINITY
+        f64::NEG_INFINITY
     } else {
         s.0 + s.1
     }
@@ -1091,7 +1120,7 @@ pub fn nextafter(x: f64, y: f64) -> f64 {
 
     let cxf = f64::from_bits(cxi as u64);
     if x.is_nan() || y.is_nan() {
-        SLEEF_NAN
+        f64::NAN
     } else if (x == 0.) && (y == 0.) {
         y
     } else if (cxf == 0.) && (x != 0.) {
@@ -1113,7 +1142,7 @@ pub fn frfrexp(mut x: f64) -> f64 {
     if x == 0. {
         x
     } else if x.is_infinite() {
-        mulsign(SLEEF_INFINITY, x)
+        mulsign(f64::INFINITY, x)
     } else {
         f64::from_bits(cxu)
     }
@@ -1168,7 +1197,7 @@ pub fn fmod(x: f64, y: f64) -> f64 {
     }
     ret = mulsign(ret, x);
     if de == 0. {
-        SLEEF_NAN
+        f64::NAN
     } else if nu < de {
         x
     } else {

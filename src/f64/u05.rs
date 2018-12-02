@@ -62,8 +62,8 @@ pub fn sincospi(d: f64) -> (f64, f64) {
         rcos = 1.;
     }
     if d.is_infinite() {
-        rsin = SLEEF_NAN;
-        rcos = SLEEF_NAN;
+        rsin = f64::NAN;
+        rcos = f64::NAN;
     }
 
     (rsin, rcos)
@@ -72,7 +72,7 @@ pub fn sincospi(d: f64) -> (f64, f64) {
 pub fn sinpi(d: f64) -> f64 {
     let x = sinpik(d);
     if d.is_infinite() {
-        SLEEF_NAN
+        f64::NAN
     } else if fabsk(d) > TRIGRANGEMAX3 / 4. {
         0.
     } else if xisnegzero(d) {
@@ -86,7 +86,7 @@ pub fn cospi(d: f64) -> f64 {
     let x = cospik(d);
 
     if d.is_infinite() {
-        SLEEF_NAN
+        f64::NAN
     } else if fabsk(d) > TRIGRANGEMAX3 / 4. {
         1.
     } else {
@@ -97,7 +97,7 @@ pub fn cospi(d: f64) -> f64 {
 pub fn sqrt(mut d: f64) -> f64 {
     let mut q = 0.5;
 
-    d = if d < 0. { SLEEF_NAN } else { d };
+    d = if d < 0. { f64::NAN } else { d };
 
     if d < 8.636168555094445E-78 {
         d *= 1.157920892373162E77;
@@ -110,8 +110,7 @@ pub fn sqrt(mut d: f64) -> f64 {
     }
 
     // http://en.wikipedia.org/wiki/Fast_inverse_square_root
-    let mut x =
-        f64::from_bits(0x5fe6ec85e7de30da - ((d + 1e-320).to_bits() >> 1));
+    let mut x = f64::from_bits(0x5fe6ec85e7de30da - ((d + 1e-320).to_bits() >> 1));
 
     x = x * (1.5 - 0.5 * d * x * x);
     x = x * (1.5 - 0.5 * d * x * x);
@@ -121,8 +120,8 @@ pub fn sqrt(mut d: f64) -> f64 {
 
     let ret = (d2.0 + d2.1) * q;
 
-    let ret = if d == SLEEF_INFINITY {
-        SLEEF_INFINITY
+    let ret = if d == f64::INFINITY {
+        f64::INFINITY
     } else {
         ret
     };
@@ -149,14 +148,14 @@ pub fn hypot(mut x: f64, mut y: f64) -> f64 {
     t = (t.square() + 1.).sqrt() * max;
     let ret = t.0 + t.1;
 
-    if (x == SLEEF_INFINITY) || (y == SLEEF_INFINITY) {
-        SLEEF_INFINITY
+    if (x == f64::INFINITY) || (y == f64::INFINITY) {
+        f64::INFINITY
     } else if x.is_nan() || y.is_nan() {
-        SLEEF_NAN
+        f64::NAN
     } else if min == 0. {
         max
     } else if ret.is_nan() {
-        SLEEF_INFINITY
+        f64::INFINITY
     } else {
         ret
     }

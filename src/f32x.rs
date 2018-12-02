@@ -27,7 +27,7 @@ macro_rules! impl_math_f32 {
         #[inline]
         fn vgt_vi2_vi2_vi2(x: $i32x, y: $i32x) -> $i32x { $i32x::from_bits(x.gt(y)) }
 
-        
+
         impl SqrtAsDoubled for $f32x {
             #[inline]
             fn sqrt_as_doubled(self) -> Doubled<Self> {
@@ -74,7 +74,7 @@ macro_rules! impl_math_f32 {
         //----------???????
 
         //-------------------
-        
+
         //----------------------
         #[inline]
         fn vsel_vf_vo_f_f(o: $m32x, v1: f32, v0: f32) -> $f32x {
@@ -90,7 +90,7 @@ macro_rules! impl_math_f32 {
         fn vsel_vf_vo_vo_vo_f_f_f_f(o0: $m32x, o1: $m32x, o2: $m32x, d0: f32, d1: f32, d2: f32, d3: f32) -> $f32x {
           o0.select($f32x::splat(d0), o1.select($f32x::splat(d1), vsel_vf_vo_f_f(o2, d2, d3)))
         }
-        
+
 
         #[inline]
         fn vsel_vf2_vo_vf2_vf2(m: $m32x, x: Doubled<$f32x>, y: Doubled<$f32x>) -> Doubled<$f32x> {
@@ -131,11 +131,11 @@ macro_rules! impl_math_f32 {
                 ),
             )
         }
-        
+
         //---------------------
-        
-        
-        
+
+
+
 
         #[inline]
         fn visnegzero_vo_vf(d: $f32x) -> $m32x {
@@ -371,7 +371,7 @@ macro_rules! impl_math_f32 {
                 $f32x::from_cast(e)
             }/* else {
                 let mut e = vgetexp_vf_vf(d * $f32x::splat(1. / 0.75));
-                e = e.ispinf().select($f32x::splat(128.), e);
+                e = e.eq($f32x::INFINITY).select($f32x::splat(128.), e);
                 m = vgetmant_vf_vf(d);
                 e
             }*/;
@@ -500,7 +500,7 @@ macro_rules! impl_math_f32 {
 
             u = d
                 .ge($f32x::splat(128.))
-                .select($f32x::splat(SLEEF_INFINITY_F), u);
+                .select($f32x::INFINITY, u);
             $f32x::from_bits(vandnot_vm_vo32_vm(
                 d.lt($f32x::splat(-150.)),
                 $u32x::from_bits(u),
@@ -523,7 +523,7 @@ macro_rules! impl_math_f32 {
                     Doubled::from((0.69314718246459960938, -1.904654323148236017e-09)) * $f32x::from_cast(e)
                 }/* else {
                     let e = vgetexp_vf_vf(dp1, $f32x::splat(1. / 0.75));
-                    let e = e.ispinf().select($f32x::splat(128.), e);
+                    let e = e.eq($f32x::INFINITY).select($f32x::splat(128.), e);
                     let t = vldexp3_vf_vf_vi2($f32x::splat(1.), -e.rinti());
                     m = d.mul_add(t, t - $f32x::splat(1.));
                     Doubled::from((0.69314718246459960938, -1.904654323148236017e-09)) * e
@@ -543,11 +543,11 @@ macro_rules! impl_math_f32 {
 
             r = d
                 .gt($f32x::splat(1e+38))
-                .select($f32x::splat(SLEEF_INFINITY_F), r);
+                .select($f32x::INFINITY, r);
             r = $f32x::from_bits(vor_vm_vo32_vm($f32x::splat(-1.).gt(d), $u32x::from_bits(r)));
             r = d
                 .eq($f32x::splat(-1.))
-                .select($f32x::splat(-SLEEF_INFINITY_F), r);
+                .select($f32x::NEG_INFINITY, r);
             visnegzero_vo_vf(d).select($f32x::splat(-0.), r)
         }
 
@@ -696,7 +696,7 @@ macro_rules! impl_math_f32 {
 
             ret = (x.eq($f32x::splat(0.)) & y.eq($f32x::splat(0.))).select(y, ret);
 
-            (x.is_nan() | y.is_nan()).select($f32x::splat(SLEEF_NAN_F), ret)
+            (x.is_nan() | y.is_nan()).select($f32x::NAN, ret)
         }
 
         pub fn frfrexpf(x: $f32x) -> $f32x {
@@ -712,7 +712,7 @@ macro_rules! impl_math_f32 {
             let ret = $f32x::from_bits(xm);
 
             let ret =
-                x.is_infinite().select(vmulsign_vf_vf_vf($f32x::splat(SLEEF_INFINITY_F), x), ret);
+                x.is_infinite().select(vmulsign_vf_vf_vf($f32x::INFINITY, x), ret);
             x.eq($f32x::splat(0.)).select(x, ret)
         }
 
@@ -774,7 +774,7 @@ macro_rules! impl_math_f32 {
 
             ret = nu.lt(de).select(x, ret);
             de.eq($f32x::splat(0.))
-                .select($f32x::splat(SLEEF_NAN_F), ret)
+                .select($f32x::NAN, ret)
         }
 
         //
@@ -1056,7 +1056,7 @@ macro_rules! impl_math_f32 {
                 vldexp2_vf_vf_vi2(u + $f32x::splat(1.), q) - $f32x::splat(1.),
             )
         }
-        
+
         pub mod u05 {
             //! Functions with 0.5 ULP error bound
             use super::*;
@@ -1124,7 +1124,7 @@ macro_rules! impl_math_f32 {
             }
 
             pub fn sqrtf(d: $f32x) -> $f32x {
-                let d = d.lt($f32x::splat(0.)).select($f32x::splat(SLEEF_NAN_F), d);
+                let d = d.lt($f32x::splat(0.)).select($f32x::NAN, d);
 
                 let o = d.lt($f32x::splat(5.2939559203393770e-23));
                 let d = o.select(d * $f32x::splat(1.8889465931478580e+22), d);
@@ -1153,7 +1153,7 @@ macro_rules! impl_math_f32 {
 
                 x = (d2.0 + d2.1) * q;
 
-                x = d.ispinf().select($f32x::splat(SLEEF_INFINITY_F), x);
+                x = d.eq($f32x::INFINITY).select($f32x::INFINITY, x);
                 d.eq($f32x::splat(0.)).select(d, x)
             }
 
@@ -1172,11 +1172,11 @@ macro_rules! impl_math_f32 {
                 let t = Doubled::new(n, $f32x::splat(0.)) / Doubled::new(d, $f32x::splat(0.));
                 let t = (t.square() + $f32x::splat(1.)).sqrt() * max;
                 let mut ret = t.0 + t.1;
-                ret = ret.is_nan().select($f32x::splat(SLEEF_INFINITY_F), ret);
+                ret = ret.is_nan().select($f32x::INFINITY, ret);
                 ret = min.eq($f32x::splat(0.)).select(max, ret);
-                ret = (x.is_nan() | y.is_nan()).select($f32x::splat(SLEEF_NAN_F), ret);
-                (x.eq($f32x::splat(SLEEF_INFINITY_F)) | y.eq($f32x::splat(SLEEF_INFINITY_F)))
-                    .select($f32x::splat(SLEEF_INFINITY_F), ret)
+                ret = (x.is_nan() | y.is_nan()).select($f32x::NAN, ret);
+                (x.eq($f32x::INFINITY) | y.eq($f32x::INFINITY))
+                    .select($f32x::INFINITY, ret)
             }
 
             pub fn xsinpif(d: $f32x) -> $f32x {
@@ -1581,7 +1581,7 @@ macro_rules! impl_math_f32 {
                 ));
                 $f32x::splat(100.)
                     .lt(d)
-                    .select($f32x::splat(SLEEF_INFINITY_F), u)
+                    .select($f32x::INFINITY, u)
             }
 
             pub fn cbrtf(mut d: $f32x) -> $f32x {
@@ -1637,13 +1637,13 @@ macro_rules! impl_math_f32 {
                 v *= q2;
                 z = vldexp2_vf_vf_vi2(v.0 + v.1, qu - $i32x::splat(2048));
 
-                z = d.is_infinite().select(vmulsign_vf_vf_vf($f32x::splat(SLEEF_INFINITY_F), q2.0), z);
+                z = d.is_infinite().select(vmulsign_vf_vf_vf($f32x::INFINITY, q2.0), z);
                 z = d
                     .eq($f32x::splat(0.))
                     .select($f32x::from_bits(vsignbit_vm_vf(q2.0)), z);
 
                 /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
-                    z = s.is_infinite().select(vmulsign_vf_vf_vf($f32x::splat(SLEEF_INFINITY_F), s), z);
+                    z = s.is_infinite().select(vmulsign_vf_vf_vf($f32x::INFINITY, s), z);
                     z = s
                         .eq($f32x::splat(0.))
                         .select(vmulsign_vf_vf_vf($f32x::splat(0.), s), z);
@@ -1667,7 +1667,7 @@ macro_rules! impl_math_f32 {
                     Doubled::from((0.69314718246459960938, -1.904654323148236017e-09)) * $f32x::from_cast(e)
                 }/* else {
                     let mut e = vgetexp_vf_vf(d * $f32x::splat(1. / 0.75));
-                    e = e.ispinf().select($f32x::splat(128.), e);
+                    e = e.eq($f32x::INFINITY).select($f32x::splat(128.), e);
                     m = vgetmant_vf_vf(d);
                     Doubled::from((0.69314718246459960938, -1.904654323148236017e-09)) * e
                 }*/;
@@ -1685,11 +1685,11 @@ macro_rules! impl_math_f32 {
                 let r = s.0 + s.1;
 
                 /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
-                    let r = d.ispinf().select($f32x::splat(SLEEF_INFINITY_F), r);
+                    let r = d.eq($f32x::INFINITY).select($f32x::INFINITY, r);
                     let r =
-                        (d.lt($f32x::splat(0.)) | d.is_nan()).select($f32x::splat(SLEEF_NAN_F), r);
+                        (d.lt($f32x::splat(0.)) | d.is_nan()).select($f32x::NAN, r);
                     d.eq($f32x::splat(0.))
-                        .select($f32x::splat(-SLEEF_INFINITY_F), r)
+                        .select($f32x::NEG_INFINITY, r)
                 /*} else {
                     vfixup_vf_vf_vf_vi2_i(
                         r,
@@ -1715,13 +1715,13 @@ macro_rules! impl_math_f32 {
 
                     let mut result = expkf(logkf(x.abs()) * y);
 
-                    result = result.is_nan().select($f32x::splat(SLEEF_INFINITY_F), result);
+                    result = result.is_nan().select($f32x::INFINITY, result);
 
                     result *= x.gt($f32x::splat(0.)).select(
                         $f32x::splat(1.),
                         yisint.select(
                             yisodd.select($f32x::splat(-1.), $f32x::splat(1.)),
-                            $f32x::splat(SLEEF_NAN_F),
+                            $f32x::NAN,
                         ),
                     );
 
@@ -1732,7 +1732,7 @@ macro_rules! impl_math_f32 {
                             efx.lt($f32x::splat(0.)),
                             $u32x::from_bits(
                                 efx.eq($f32x::splat(0.))
-                                    .select($f32x::splat(1.), $f32x::splat(SLEEF_INFINITY_F)),
+                                    .select($f32x::splat(1.), $f32x::INFINITY),
                             ),
                         )),
                         result,
@@ -1742,7 +1742,7 @@ macro_rules! impl_math_f32 {
                         yisodd.select(vsign_vf_vf(x), $f32x::splat(1.)) * $f32x::from_bits(
                             vandnot_vm_vo32_vm(
                                 x.eq($f32x::splat(0.)).select(-y, y).lt($f32x::splat(0.)),
-                                $u32x::from_bits($f32x::splat(SLEEF_INFINITY_F)),
+                                $u32x::from_bits($f32x::INFINITY),
                             ),
                         ),
                         result,
@@ -1768,7 +1768,7 @@ macro_rules! impl_math_f32 {
                 y = (d.0 + d.1) * $f32x::splat(0.5);
 
                 y = (x.abs().gt($f32x::splat(89.)) | y.is_nan())
-                    .select($f32x::splat(SLEEF_INFINITY_F), y);
+                    .select($f32x::INFINITY, y);
                 y = vmulsign_vf_vf_vf(y, x);
                 $f32x::from_bits(vor_vm_vo32_vm(x.is_nan(), $u32x::from_bits(y)))
             }
@@ -1780,7 +1780,7 @@ macro_rules! impl_math_f32 {
                 y = (d.0 + d.1) * $f32x::splat(0.5);
 
                 y = (x.abs().gt($f32x::splat(89.)) | y.is_nan())
-                    .select($f32x::splat(SLEEF_INFINITY_F), y);
+                    .select($f32x::INFINITY, y);
                 $f32x::from_bits(vor_vm_vo32_vm(x.is_nan(), $u32x::from_bits(y)))
             }
 
@@ -1810,7 +1810,7 @@ macro_rules! impl_math_f32 {
                 y = d.0 + d.1;
 
                 y = (x.abs().gt($f32x::splat(SQRT_FLT_MAX)) | y.is_nan())
-                    .select(vmulsign_vf_vf_vf($f32x::splat(SLEEF_INFINITY_F), x), y);
+                    .select(vmulsign_vf_vf_vf($f32x::INFINITY, x), y);
                 y = $f32x::from_bits(vor_vm_vo32_vm(x.is_nan(), $u32x::from_bits(y)));
                 visnegzero_vo_vf(x).select($f32x::splat(-0.), y)
             }
@@ -1822,7 +1822,7 @@ macro_rules! impl_math_f32 {
                 let mut y = d.0 + d.1;
 
                 y = (x.abs().gt($f32x::splat(SQRT_FLT_MAX)) | y.is_nan())
-                    .select($f32x::splat(SLEEF_INFINITY_F), y);
+                    .select($f32x::INFINITY, y);
 
                 y = $f32x::from_bits(vandnot_vm_vo32_vm(
                     x.eq($f32x::splat(1.)),
@@ -1839,7 +1839,7 @@ macro_rules! impl_math_f32 {
                 y = $f32x::from_bits(vor_vm_vo32_vm(
                     y.gt($f32x::splat(1.)),
                     $u32x::from_bits(y.eq($f32x::splat(1.)).select(
-                        $f32x::splat(SLEEF_INFINITY_F),
+                        $f32x::INFINITY,
                         (d.0 + d.1) * $f32x::splat(0.5),
                     )),
                 ));
@@ -1877,7 +1877,7 @@ macro_rules! impl_math_f32 {
 
                 u = d
                     .gt($f32x::splat(38.5318394191036238941387))
-                    .select($f32x::splat(SLEEF_INFINITY_F), u);
+                    .select($f32x::INFINITY, u);
                 $f32x::from_bits(vandnot_vm_vo32_vm(
                     d.lt($f32x::splat(-50.)),
                     $u32x::from_bits(u),
@@ -1889,7 +1889,7 @@ macro_rules! impl_math_f32 {
                 let mut x = d.0 + d.1;
                 x = a
                     .gt($f32x::splat(88.72283172607421875))
-                    .select($f32x::splat(SLEEF_INFINITY_F), x);
+                    .select($f32x::INFINITY, x);
                 x = a
                     .lt($f32x::splat(-16.635532333438687426013570))
                     .select($f32x::splat(-1.), x);
@@ -1909,7 +1909,7 @@ macro_rules! impl_math_f32 {
                         Doubled::from((0.30103001, -1.432098889e-08)) * $f32x::from_cast(e)
                     }/* else {
                         let mut e = vgetexp_vf_vf(d * $f32x::splat(1. / 0.75));
-                        e = e.ispinf().select($f32x::splat(128.), e);
+                        e = e.eq($f32x::INFINITY).select($f32x::splat(128.), e);
                         m = vgetmant_vf_vf(d);
                         Doubled::from((0.30103001, -1.432098889e-08)) * e
                     }*/;
@@ -1927,10 +1927,10 @@ macro_rules! impl_math_f32 {
                 let mut r = s.0 + s.1;
 
                 /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
-                    r = d.ispinf().select($f32x::splat(SLEEF_INFINITY_F), r);
-                    r = (d.lt($f32x::splat(0.)) | d.is_nan()).select($f32x::splat(SLEEF_NAN_F), r);
+                    r = d.eq($f32x::INFINITY).select($f32x::INFINITY, r);
+                    r = (d.lt($f32x::splat(0.)) | d.is_nan()).select($f32x::NAN, r);
                     d.eq($f32x::splat(0.))
-                        .select($f32x::splat(-SLEEF_INFINITY_F), r)
+                        .select($f32x::NEG_INFINITY, r)
                 /*} else {
                     vfixup_vf_vf_vf_vi2_i(
                         r,
@@ -1954,7 +1954,7 @@ macro_rules! impl_math_f32 {
                         $f32x::from_cast(e)
                     }/* else {
                         let mut e = vgetexp_vf_vf(d * $f32x::splat(1. / 0.75));
-                        e = e.ispinf().select($f32x::splat(128.), e);
+                        e = e.eq($f32x::INFINITY).select($f32x::splat(128.), e);
                         m = vgetmant_vf_vf(d);
                         e
                     }*/;
@@ -1971,10 +1971,10 @@ macro_rules! impl_math_f32 {
                 let mut r = s.0 + s.1;
 
                 /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
-                    r = d.ispinf().select($f32x::splat(SLEEF_INFINITY_F), r);
-                    r = (d.lt($f32x::splat(0.)) | d.is_nan()).select($f32x::splat(SLEEF_NAN_F), r);
+                    r = d.eq($f32x::INFINITY).select($f32x::INFINITY, r);
+                    r = (d.lt($f32x::splat(0.)) | d.is_nan()).select($f32x::NAN, r);
                     d.eq($f32x::splat(0.))
-                        .select($f32x::splat(-SLEEF_INFINITY_F), r)
+                        .select($f32x::NEG_INFINITY, r)
                 /*} else {
                     vfixup_vf_vf_vf_vi2_i(
                         r,
@@ -1992,15 +1992,15 @@ macro_rules! impl_math_f32 {
                 let y = expk2f(da) * db;
                 let r = y.0 + y.1;
 
-                let o = a.eq($f32x::splat(-SLEEF_INFINITY_F))
+                let o = a.eq($f32x::NEG_INFINITY)
                     | (a.lt($f32x::splat(0.)) & visint_vo_vf(a))
                     | (visnumber_vo_vf(a) & a.lt($f32x::splat(0.)) & r.is_nan());
-                let r = o.select($f32x::splat(SLEEF_NAN_F), r);
+                let r = o.select($f32x::NAN, r);
 
-                let o = (a.eq($f32x::splat(SLEEF_INFINITY_F)) | visnumber_vo_vf(a))
+                let o = (a.eq($f32x::INFINITY) | visnumber_vo_vf(a))
                     & a.ge($f32x::splat(-f32::MIN))
                     & (a.eq($f32x::splat(0.)) | a.gt($f32x::splat(36.)) | r.is_nan());
-                o.select(vmulsign_vf_vf_vf($f32x::splat(SLEEF_INFINITY_F), a), r)
+                o.select(vmulsign_vf_vf_vf($f32x::INFINITY, a), r)
             }
 
             pub fn lgammaf(a: $f32x) -> $f32x {
@@ -2011,7 +2011,7 @@ macro_rules! impl_math_f32 {
                 let o = a.is_infinite()
                     | ((a.le($f32x::splat(0.)) & visint_vo_vf(a))
                         | (visnumber_vo_vf(a) & r.is_nan()));
-                o.select($f32x::splat(SLEEF_INFINITY_F), r)
+                o.select($f32x::INFINITY, r)
             }
 
             /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
@@ -2082,7 +2082,7 @@ macro_rules! impl_math_f32 {
                 d *= a;
                 d = vsel_vf2_vo_vf2_vf2(o0, d, $f32x::splat(1.).add_checked(-expk2f(d)));
                 let u = vmulsign_vf_vf_vf(o2.select(d.0 + d.1, $f32x::splat(1.)), s);
-                a.is_nan().select($f32x::splat(SLEEF_NAN_F), u)
+                a.is_nan().select($f32x::NAN, u)
             }
 
         }
@@ -2199,7 +2199,7 @@ macro_rules! impl_math_f32 {
 
                 let mut r = o3.select(x.0 + x.1, $f32x::splat(0.));
                 r = vsignbit_vo_vf(s).select($f32x::splat(2.) - r, r);
-                s.is_nan().select($f32x::splat(SLEEF_NAN_F), r)
+                s.is_nan().select($f32x::NAN, r)
             }
 
         }
@@ -2624,7 +2624,7 @@ macro_rules! impl_math_f32 {
                     $f32x::from_cast(e)
                 }/* else {
                     let mut e = vgetexp_vf_vf(d * $f32x::splat(1. / 0.75));
-                    e = e.ispinf().select($f32x::splat(128.), e);
+                    e = e.eq($f32x::INFINITY).select($f32x::splat(128.), e);
                     m = vgetmant_vf_vf(d);
                     e
                 }*/;
@@ -2640,10 +2640,10 @@ macro_rules! impl_math_f32 {
 
                 x = x.mul_add(t, $f32x::splat(0.693147180559945286226764) * ef);
                 /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
-                    x = d.ispinf().select($f32x::splat(SLEEF_INFINITY_F), x);
-                    x = (d.lt($f32x::splat(0.)) | d.is_nan()).select($f32x::splat(SLEEF_NAN_F), x);
+                    x = d.eq($f32x::INFINITY).select($f32x::INFINITY, x);
+                    x = (d.lt($f32x::splat(0.)) | d.is_nan()).select($f32x::NAN, x);
                     d.eq($f32x::splat(0.))
-                        .select($f32x::splat(-SLEEF_INFINITY_F), x)
+                        .select($f32x::NEG_INFINITY, x)
                 /*} else {
                     vfixup_vf_vf_vf_vi2_i(x, d, $i32x::splat(5 << (5 * 4)), 0)
                 }*/
@@ -2668,7 +2668,7 @@ macro_rules! impl_math_f32 {
                 ));
                 u = e * u;
 
-                u = d.is_infinite().select($f32x::splat(SLEEF_INFINITY_F), u);
+                u = d.is_infinite().select($f32x::INFINITY, u);
                 u = $f32x::from_bits(vor_vm_vo32_vm(
                     d.is_nan() | d.lt($f32x::splat(0.)),
                     $u32x::from_bits(u),
@@ -2679,7 +2679,7 @@ macro_rules! impl_math_f32 {
                     pub fn xsqrtf_u35(d: $f32x) -> $f32x {
                         let mut q = d.sqrt();
                         q = visnegzero_vo_vf(d).select($f32x::splat(-0.), q);
-                        d.ispinf().select($f32x::splat(SLEEF_INFINITY_F), q)
+                        d.eq($f32x::INFINITY).select($f32x::INFINITY, q)
                     }*/
             #[cfg(all(
                         not(feature = "enable_neon32"),
@@ -2725,7 +2725,7 @@ macro_rules! impl_math_f32 {
                 y = (y - $f32x::splat(2. / 3.) * y * y.mul_add(x, $f32x::splat(-1.))) * q;
 
                 /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
-                    y = s.is_infinite().select(vmulsign_vf_vf_vf($f32x::splat(SLEEF_INFINITY_F), s), y);
+                    y = s.is_infinite().select(vmulsign_vf_vf_vf($f32x::INFINITY, s), y);
                     y = s
                         .eq($f32x::splat(0.))
                         .select(vmulsign_vf_vf_vf($f32x::splat(0.), s), y);
@@ -2741,7 +2741,7 @@ macro_rules! impl_math_f32 {
                 y *= $f32x::splat(0.5) * e;
 
                 y = (x.abs().gt($f32x::splat(88.)) | y.is_nan())
-                    .select($f32x::splat(SLEEF_INFINITY_F), y);
+                    .select($f32x::INFINITY, y);
                 y = vmulsign_vf_vf_vf(y, x);
                 $f32x::from_bits(vor_vm_vo32_vm(x.is_nan(), $u32x::from_bits(y)))
             }
@@ -2751,7 +2751,7 @@ macro_rules! impl_math_f32 {
                 let mut y = $f32x::splat(0.5).mul_add(e, $f32x::splat(0.5) / e);
 
                 y = (x.abs().gt($f32x::splat(88.)) | y.is_nan())
-                    .select($f32x::splat(SLEEF_INFINITY_F), y);
+                    .select($f32x::INFINITY, y);
                 $f32x::from_bits(vor_vm_vo32_vm(x.is_nan(), $u32x::from_bits(y)))
             }
 
@@ -2775,9 +2775,9 @@ macro_rules! impl_math_f32 {
                 let t = min / max;
                 let mut ret = max * t.mul_add(t, $f32x::splat(1.)).sqrt();
                 ret = min.eq($f32x::splat(0.)).select(max, ret);
-                ret = (x.is_nan() | y.is_nan()).select($f32x::splat(SLEEF_NAN_F), ret);
-                (x.eq($f32x::splat(SLEEF_INFINITY_F)) | y.eq($f32x::splat(SLEEF_INFINITY_F)))
-                    .select($f32x::splat(SLEEF_INFINITY_F), ret)
+                ret = (x.is_nan() | y.is_nan()).select($f32x::NAN, ret);
+                (x.eq($f32x::INFINITY) | y.eq($f32x::INFINITY))
+                    .select($f32x::INFINITY, ret)
             }
 
 

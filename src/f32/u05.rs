@@ -8,7 +8,7 @@ use super::*;
 pub fn sqrtf(mut d: f32) -> f32 {
     let mut q = 0.5;
 
-    d = if d < 0. { SLEEF_NAN_F } else { d };
+    d = if d < 0. { f32::NAN } else { d };
 
     if d < 5.2939559203393770e-23 {
         d *= 1.8889465931478580e+22;
@@ -29,7 +29,7 @@ pub fn sqrtf(mut d: f32) -> f32 {
 
     let d2 = (d + x.mul_as_doubled(x)) * x.recpre();
 
-    if (d == 0.) || (d == SLEEF_INFINITY_F) {
+    if (d == 0.) || (d == f32::INFINITY) {
         d
     } else {
         (d2.0 + d2.1) * q
@@ -91,8 +91,8 @@ pub fn sincospif(d: f32) -> (f32, f32) {
         rcos = 1.;
     }
     if d.is_infinite() {
-        rsin = SLEEF_NAN_F;
-        rcos = SLEEF_NAN_F;
+        rsin = f32::NAN;
+        rcos = f32::NAN;
     }
 
     (rsin, rcos)
@@ -117,14 +117,14 @@ pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
     t = (t.square() + 1.).sqrt() * max;
 
     let ret = t.0 + t.1;
-    if (x == SLEEF_INFINITY_F) || (y == SLEEF_INFINITY_F) {
-        SLEEF_INFINITY_F
+    if (x == f32::INFINITY) || (y == f32::INFINITY) {
+        f32::INFINITY
     } else if x.is_nan() || y.is_nan() {
-        SLEEF_NAN_F
+        f32::NAN
     } else if min == 0. {
         max
     } else if ret.is_nan() {
-        SLEEF_INFINITY_F
+        f32::INFINITY
     } else {
         ret
     }
@@ -136,12 +136,12 @@ pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
 /// The error bound of the returned value is `max(0.506 ULP, f32::MIN)`
 /// if [-1e+7, 1e+7] for the single-precision function.
 /// If ***a*** is a finite value out of this range, an arbitrary value within [-1, 1] is returned.
-/// If ***a*** is a NaN or infinity, a NaN is returned. 
+/// If ***a*** is a NaN or infinity, a NaN is returned.
 pub fn sinpif(d: f32) -> f32 {
     let x = super::sinpifk(d);
 
     if d.is_infinite() {
-        SLEEF_NAN_F
+        f32::NAN
     } else if fabsfk(d) > TRIGRANGEMAX4_F {
         0.
     } else if xisnegzerof(d) {
@@ -157,12 +157,12 @@ pub fn sinpif(d: f32) -> f32 {
 /// The error bound of the returned value is `max(0.506 ULP, f32::MIN)`
 /// if [-1e+7, 1e+7] for the single-precision function.
 /// If ***a*** is a finite value out of this range, an arbitrary value within [-1, 1] is returned.
-/// If ***a*** is a NaN or infinity, a NaN is returned. 
+/// If ***a*** is a NaN or infinity, a NaN is returned.
 pub fn cospif(d: f32) -> f32 {
     let x = super::cospifk(d);
 
     if d.is_infinite() {
-        SLEEF_NAN_F
+        f32::NAN
     } else if fabsfk(d) > TRIGRANGEMAX4_F {
         1.
     } else {

@@ -11,9 +11,19 @@ pub fn atan2f(y: f32, x: f32) -> f32 {
     let mut r = atan2kf(fabsfk(y), x);
 
     r = if x.is_infinite() || (x == 0.) {
-        M_PI_2_F - (if x.is_infinite() { signf(x) * M_PI_2_F } else { 0. })
+        M_PI_2_F
+            - (if x.is_infinite() {
+                signf(x) * M_PI_2_F
+            } else {
+                0.
+            })
     } else if y.is_infinite() {
-        M_PI_2_F - (if x.is_infinite() { signf(x) * M_PI_4_F } else { 0. })
+        M_PI_2_F
+            - (if x.is_infinite() {
+                signf(x) * M_PI_4_F
+            } else {
+                0.
+            })
     } else if y == 0. {
         (if signf(x) == -1. { M_PI_F } else { 0. })
     } else {
@@ -21,7 +31,7 @@ pub fn atan2f(y: f32, x: f32) -> f32 {
     };
 
     if x.is_nan() || y.is_nan() {
-        SLEEF_NAN_F
+        f32::NAN
     } else {
         mulsignf(r, y)
     }
@@ -54,11 +64,11 @@ pub fn logf(mut d: f32) -> f32 {
         .mul_add(x2, 2.);
 
     if d == 0. {
-        -SLEEF_INFINITY_F
+        f32::NEG_INFINITY
     } else if (d < 0.) || d.is_nan() {
-        SLEEF_NAN_F
+        f32::NAN
     } else if d.is_infinite() {
-        SLEEF_INFINITY_F
+        f32::INFINITY
     } else {
         x * t + 0.693147180559945286226764 * (e as f32)
     }
@@ -70,7 +80,7 @@ pub fn logf(mut d: f32) -> f32 {
 /// and store the two values in *first* and *second* position in the returned value, respectively.
 /// The error bound of the returned values is 3.5 ULP if ***a*** is in [-1e+7, 1e+7].
 /// If a is a finite value out of this range, an arbitrary value within [-1, 1] is returned.
-/// If a is a NaN or infinity, a NaN is returned. 
+/// If a is a NaN or infinity, a NaN is returned.
 pub fn sincospif(d: f32) -> (f32, f32) {
     let u = d * 4.;
     let q = ceilfk(u) & !1_i32;
@@ -108,8 +118,8 @@ pub fn sincospif(d: f32) -> (f32, f32) {
         rcos = 1.;
     }
     if d.is_infinite() {
-        rsin = SLEEF_NAN_F;
-        rcos = SLEEF_NAN_F;
+        rsin = f32::NAN;
+        rcos = f32::NAN;
     }
 
     (rsin, rcos)
@@ -126,11 +136,11 @@ pub fn sinhf(x: f32) -> f32 {
     let e = expm1kf(fabsfk(x));
     let mut y = (e + 2.) / (e + 1.) * (0.5 * e);
 
-    y = if fabsfk(x) > 88. { SLEEF_INFINITY_F } else { y };
-    y = if y.is_nan() { SLEEF_INFINITY_F } else { y };
+    y = if fabsfk(x) > 88. { f32::INFINITY } else { y };
+    y = if y.is_nan() { f32::INFINITY } else { y };
     y = mulsignf(y, x);
     if x.is_nan() {
-        SLEEF_NAN_F
+        f32::NAN
     } else {
         y
     }
@@ -147,10 +157,10 @@ pub fn coshf(x: f32) -> f32 {
     let e = u10::expf(fabsfk(x));
     let mut y = 0.5 * e + 0.5 / e;
 
-    y = if fabsfk(x) > 88. { SLEEF_INFINITY_F } else { y };
-    y = if y.is_nan() { SLEEF_INFINITY_F } else { y };
+    y = if fabsfk(x) > 88. { f32::INFINITY } else { y };
+    y = if y.is_nan() { f32::INFINITY } else { y };
     if x.is_nan() {
-        SLEEF_NAN_F
+        f32::NAN
     } else {
         y
     }
@@ -170,7 +180,7 @@ pub fn tanhf(x: f32) -> f32 {
     y = if y.is_nan() { 1. } else { y };
     y = mulsignf(y, x);
     if x.is_nan() {
-        SLEEF_NAN_F
+        f32::NAN
     } else {
         y
     }
@@ -186,10 +196,10 @@ pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
     let max = fmaxfk(x, y);
 
     let t = min / max;
-    if (x == SLEEF_INFINITY_F) || (y == SLEEF_INFINITY_F) {
-        SLEEF_INFINITY_F
+    if (x == f32::INFINITY) || (y == f32::INFINITY) {
+        f32::INFINITY
     } else if x.is_nan() || y.is_nan() {
-        SLEEF_NAN_F
+        f32::NAN
     } else if min == 0. {
         max
     } else {
@@ -203,7 +213,7 @@ pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
 pub fn sqrtf(mut d: f32) -> f32 {
     let mut q = 1.;
 
-    d = if d < 0. { SLEEF_NAN_F } else { d };
+    d = if d < 0. { f32::NAN } else { d };
 
     if d < 5.2939559203393770e-23 {
         d *= 1.8889465931478580e+22;
@@ -223,8 +233,8 @@ pub fn sqrtf(mut d: f32) -> f32 {
     x *= 1.5 - 0.5 * d * x * x;
     x *= 1.5 - 0.5 * d * x * x;
 
-    if d == SLEEF_INFINITY_F {
-        SLEEF_INFINITY_F
+    if d == f32::INFINITY {
+        f32::INFINITY
     } else {
         (x * d * q)
     }
@@ -262,7 +272,7 @@ pub fn sinf(mut d: f32) -> f32 {
         }
         d = dfidf.0 + dfidf.1;
         if t.is_infinite() || t.is_nan() {
-            d = SLEEF_NAN_F;
+            d = f32::NAN;
         }
     }
 
@@ -322,7 +332,7 @@ pub fn cosf(mut d: f32) -> f32 {
         }
         d = dfidf.0 + dfidf.1;
         if t.is_infinite() || t.is_nan() {
-            d = SLEEF_NAN_F;
+            d = f32::NAN;
         }
     }
 
@@ -369,7 +379,7 @@ pub fn sincosf(d: f32) -> (f32, f32) {
         q = dfii;
         s = dfidf.0 + dfidf.1;
         if d.is_infinite() || d.is_nan() {
-            s = SLEEF_NAN_F;
+            s = f32::NAN;
         }
     }
 
@@ -438,7 +448,7 @@ pub fn tanf(d: f32) -> f32 {
         q = dfii;
         x = dfidf.0 + dfidf.1;
         if d.is_infinite() || d.is_nan() {
-            x = SLEEF_NAN_F;
+            x = f32::NAN;
         }
     }
 

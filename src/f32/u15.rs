@@ -26,7 +26,8 @@ pub fn erfcf(mut a: f32) -> f32 {
         -0.3869504035e+0
     } else {
         0.1115344167e+1
-    }.mul_add(
+    }
+    .mul_add(
         u.0,
         if o0 {
             0.6000166177e-3
@@ -37,7 +38,8 @@ pub fn erfcf(mut a: f32) -> f32 {
         } else {
             -0.9454904199e+0
         },
-    ).mul_add(
+    )
+    .mul_add(
         u.0,
         if o0 {
             -0.1665703603e-2
@@ -48,7 +50,8 @@ pub fn erfcf(mut a: f32) -> f32 {
         } else {
             -0.3667259514e+0
         },
-    ).mul_add(
+    )
+    .mul_add(
         u.0,
         if o0 {
             0.1795156277e-3
@@ -59,7 +62,8 @@ pub fn erfcf(mut a: f32) -> f32 {
         } else {
             0.7155663371e+0
         },
-    ).mul_add(
+    )
+    .mul_add(
         u.0,
         if o0 {
             0.1914106123e-1
@@ -114,7 +118,7 @@ pub fn erfcf(mut a: f32) -> f32 {
         r = 2. - r;
     }
     if s.is_nan() {
-        SLEEF_NAN_F
+        f32::NAN
     } else {
         r
     }

@@ -5,34 +5,34 @@ pub const M_2_PI: f64 = 0.636619772367581343075535053490057448;
 pub const SLEEF_FP_ILOGB0: i32 = -2147483648;
 pub const SLEEF_FP_ILOGBNAN: i32 = 2147483647;
 /*
-  PI_A to PI_D are constants that satisfy the following two conditions.
+ PI_A to PI_D are constants that satisfy the following two conditions.
 
-  * For PI_A, PI_B and PI_C, the last 28 bits are zero.
-  * PI_A + PI_B + PI_C + PI_D is close to PI as much as possible.
+ * For PI_A, PI_B and PI_C, the last 28 bits are zero.
+ * PI_A + PI_B + PI_C + PI_D is close to PI as much as possible.
 
-  The argument of a trig function is multiplied by 1/PI, and the
-  integral part is divided into two parts, each has at most 28
-  bits. So, the maximum argument that could be correctly reduced
-  should be 2^(28*2-1) PI = 1.1e+17. However, due to internal
-  double precision calculation, the actual maximum argument that can
-  be correctly reduced is around 2^47.
- */
+ The argument of a trig function is multiplied by 1/PI, and the
+ integral part is divided into two parts, each has at most 28
+ bits. So, the maximum argument that could be correctly reduced
+ should be 2^(28*2-1) PI = 1.1e+17. However, due to internal
+ double precision calculation, the actual maximum argument that can
+ be correctly reduced is around 2^47.
+*/
 pub const PI_A: f64 = 3.1415926218032836914;
 pub const PI_B: f64 = 3.1786509424591713469e-08;
 pub const PI_C: f64 = 1.2246467864107188502e-16;
 pub const PI_D: f64 = 1.2736634327021899816e-24;
 pub const TRIGRANGEMAX: f64 = 1e+14;
 /*
-  PI_A2 and PI_B2 are constants that satisfy the following two conditions.
+ PI_A2 and PI_B2 are constants that satisfy the following two conditions.
 
-  * The last 3 bits of PI_A2 are zero.
-  * PI_A2 + PI_B2 is close to PI as much as possible.
+ * The last 3 bits of PI_A2 are zero.
+ * PI_A2 + PI_B2 is close to PI as much as possible.
 
-  The argument of a trig function is multiplied by 1/PI, and the
-  integral part is multiplied by PI_A2. So, the maximum argument that
-  could be correctly reduced should be 2^(3-1) PI = 12.6. By testing,
-  we confirmed that it correctly reduces the argument up to around 15.
- */
+ The argument of a trig function is multiplied by 1/PI, and the
+ integral part is multiplied by PI_A2. So, the maximum argument that
+ could be correctly reduced should be 2^(3-1) PI = 12.6. By testing,
+ we confirmed that it correctly reduces the argument up to around 15.
+*/
 pub const PI_A2: f64 = 3.141592653589793116;
 pub const PI_B2: f64 = 1.2246467991473532072e-16;
 pub const TRIGRANGEMAX2: f64 = 15.;

@@ -20,7 +20,7 @@ pub fn exp2f(d: f32) -> f32 {
     u = (1.).add_checked(u.mul_as_doubled(s)).normalize().0;
 
     if d >= 128. {
-        SLEEF_INFINITY_F
+        f32::INFINITY
     } else if d < -150. {
         0.
     } else {
@@ -53,7 +53,7 @@ pub fn sinf(d: f32) -> f32 {
         }
         s = dfidf.normalize();
         if d.is_infinite() || d.is_nan() {
-            s.0 = SLEEF_NAN_F;
+            s.0 = f32::NAN;
         }
     }
 
@@ -110,7 +110,7 @@ pub fn cosf(mut d: f32) -> f32 {
         }
         s = dfidf.normalize();
         if d.is_infinite() || d.is_nan() {
-            s.0 = SLEEF_NAN_F;
+            s.0 = f32::NAN;
         }
     }
 
@@ -154,7 +154,7 @@ pub fn sincosf(d: f32) -> (f32, f32) {
         q = dfii;
         s = dfidf;
         if d.is_infinite() || d.is_nan() {
-            s.0 = SLEEF_NAN_F;
+            s.0 = f32::NAN;
         }
     }
 
@@ -215,7 +215,7 @@ pub fn tanf(d: f32) -> f32 {
         q = dfii;
         s = dfidf;
         if d.is_infinite() || d.is_nan() {
-            s.0 = SLEEF_NAN_F;
+            s.0 = f32::NAN;
         }
     }
 
@@ -298,15 +298,25 @@ pub fn atan2f(mut y: f32, mut x: f32) -> f32 {
     r = if y == 0. {
         (if signf(x) == -1. { M_PI_F } else { 0. })
     } else if y.is_infinite() {
-        M_PI_2_F - (if x.is_infinite() { signf(x) * M_PI_4_F } else { 0. })
+        M_PI_2_F
+            - (if x.is_infinite() {
+                signf(x) * M_PI_4_F
+            } else {
+                0.
+            })
     } else if x.is_infinite() || (x == 0.) {
-        M_PI_2_F - (if x.is_infinite() { signf(x) * M_PI_2_F } else { 0. })
+        M_PI_2_F
+            - (if x.is_infinite() {
+                signf(x) * M_PI_2_F
+            } else {
+                0.
+            })
     } else {
         r
     };
 
     if x.is_nan() || y.is_nan() {
-        SLEEF_NAN_F
+        f32::NAN
     } else {
         mulsignf(r, y)
     }
@@ -415,11 +425,11 @@ pub fn logf(mut d: f32) -> f32 {
         .add_checked(x2 * x.0 * t);
 
     if d == 0. {
-        -SLEEF_INFINITY_F
+        f32::NEG_INFINITY
     } else if (d < 0.) || d.is_nan() {
-        SLEEF_NAN_F
+        f32::NAN
     } else if d.is_infinite() {
-        SLEEF_INFINITY_F
+        f32::INFINITY
     } else {
         s.0 + s.1
     }
@@ -471,7 +481,7 @@ pub fn cbrtf(mut d: f32) -> f32 {
     if d == 0. {
         mulsignf(0., q2.0)
     } else if d.is_infinite() {
-        mulsignf(SLEEF_INFINITY_F, q2.0)
+        mulsignf(f32::INFINITY, q2.0)
     } else {
         ldexp2kf(v.0 + v.1, (e + 6144) / 3 - 2048)
     }
@@ -484,18 +494,18 @@ pub fn tgammaf(a: f32) -> f32 {
     let (da, db) = gammafk(a);
     let y = expk2f(da) * db;
     let mut r = y.0 + y.1;
-    r = if ((a == -SLEEF_INFINITY_F) || ((a < 0.) && xisintf(a)))
+    r = if ((a == f32::NEG_INFINITY) || ((a < 0.) && xisintf(a)))
         || (a.is_finite() && (a < 0.) && r.is_nan())
     {
-        SLEEF_NAN_F
+        f32::NAN
     } else {
         r
     };
-    if ((a == SLEEF_INFINITY_F) || a.is_finite())
+    if ((a == f32::INFINITY) || a.is_finite())
         && (a >= -f32::MIN)
         && ((a == 0.) || (a > 36.) || r.is_nan())
     {
-        mulsignf(SLEEF_INFINITY_F, a)
+        mulsignf(f32::INFINITY, a)
     } else {
         r
     }
@@ -511,7 +521,7 @@ pub fn lgammaf(a: f32) -> f32 {
     let y = da + logk2f(db.abs());
     let r = y.0 + y.1;
     if a.is_infinite() || (a <= 0. && xisintf(a)) || (a.is_finite() && r.is_nan()) {
-        SLEEF_INFINITY_F
+        f32::INFINITY
     } else {
         r
     }
@@ -535,7 +545,8 @@ pub fn erff(mut a: f32) -> f32 {
         -0.1792667899e-4
     } else {
         -0.9495757695e-5
-    }.mul_add(
+    }
+    .mul_add(
         u,
         if o0 {
             -0.7768311189e-3
@@ -544,7 +555,8 @@ pub fn erff(mut a: f32) -> f32 {
         } else {
             0.2481465926e-3
         },
-    ).mul_add(
+    )
+    .mul_add(
         u,
         if o0 {
             0.5159463733e-2
@@ -553,7 +565,8 @@ pub fn erff(mut a: f32) -> f32 {
         } else {
             -0.2918176819e-2
         },
-    ).mul_add(
+    )
+    .mul_add(
         u,
         if o0 {
             -0.2683781274e-1
@@ -562,7 +575,8 @@ pub fn erff(mut a: f32) -> f32 {
         } else {
             0.2059706673e-1
         },
-    ).mul_add(
+    )
+    .mul_add(
         u,
         if o0 {
             0.1128318012e+0
@@ -592,7 +606,7 @@ pub fn erff(mut a: f32) -> f32 {
     d = if o0 { d } else { (1.).add_checked(-expk2f(d)) };
     u = mulsignf(if o2 { d.0 + d.1 } else { 1. }, s);
     if a.is_nan() {
-        SLEEF_NAN_F
+        f32::NAN
     } else {
         u
     }
@@ -620,7 +634,7 @@ pub fn expf(d: f32) -> f32 {
     if d < -104. {
         0.
     } else if d > 104. {
-        SLEEF_INFINITY_F
+        f32::INFINITY
     } else {
         ldexp2kf(u, q)
     }
@@ -637,14 +651,14 @@ pub fn powf(x: f32, y: f32) -> f32 {
     let mut result = expkf(logkf(fabsfk(x)) * y);
 
     result = if result.is_nan() {
-        SLEEF_INFINITY_F
+        f32::INFINITY
     } else {
         result
     };
     result *= if x >= 0. {
         1.
     } else if !yisint {
-        SLEEF_NAN_F
+        f32::NAN
     } else if yisodd {
         -1.
     } else {
@@ -655,13 +669,13 @@ pub fn powf(x: f32, y: f32) -> f32 {
     if (y == 0.) || (x == 1.) {
         1.
     } else if x.is_nan() || y.is_nan() {
-        SLEEF_NAN_F
+        f32::NAN
     } else if x.is_infinite() || (x == 0.) {
         (if yisodd { signf(x) } else { 1. })
             * (if (if x == 0. { -y } else { y }) < 0. {
                 0.
             } else {
-                SLEEF_INFINITY_F
+                f32::INFINITY
             })
     } else if y.is_infinite() {
         if efx < 0. {
@@ -669,7 +683,7 @@ pub fn powf(x: f32, y: f32) -> f32 {
         } else if efx == 0. {
             1.
         } else {
-            SLEEF_INFINITY_F
+            f32::INFINITY
         }
     } else {
         result
@@ -690,11 +704,11 @@ pub fn sinhf(x: f32) -> f32 {
     d = d.sub_checked(d.recpre());
     y = (d.0 + d.1) * 0.5;
 
-    y = if fabsfk(x) > 89. { SLEEF_INFINITY_F } else { y };
-    y = if y.is_nan() { SLEEF_INFINITY_F } else { y };
+    y = if fabsfk(x) > 89. { f32::INFINITY } else { y };
+    y = if y.is_nan() { f32::INFINITY } else { y };
     y = mulsignf(y, x);
     if x.is_nan() {
-        SLEEF_NAN_F
+        f32::NAN
     } else {
         y
     }
@@ -714,10 +728,10 @@ pub fn coshf(x: f32) -> f32 {
     d = d.add_checked(d.recpre());
     y = (d.0 + d.1) * 0.5;
 
-    y = if fabsfk(x) > 89. { SLEEF_INFINITY_F } else { y };
-    y = if y.is_nan() { SLEEF_INFINITY_F } else { y };
+    y = if fabsfk(x) > 89. { f32::INFINITY } else { y };
+    y = if y.is_nan() { f32::INFINITY } else { y };
     if x.is_nan() {
-        SLEEF_NAN_F
+        f32::NAN
     } else {
         y
     }
@@ -739,7 +753,7 @@ pub fn tanhf(x: f32) -> f32 {
     y = if y.is_nan() { 1. } else { y };
     y = mulsignf(y, x);
     if x.is_nan() {
-        SLEEF_NAN_F
+        f32::NAN
     } else {
         y
     }
@@ -764,11 +778,11 @@ pub fn asinhf(x: f32) -> f32 {
     y = d.0 + d.1;
 
     y = if fabsfk(x) > SQRT_FLT_MAX || y.is_nan() {
-        mulsignf(SLEEF_INFINITY_F, x)
+        mulsignf(f32::INFINITY, x)
     } else {
         y
     };
-    y = if x.is_nan() { SLEEF_NAN_F } else { y };
+    y = if x.is_nan() { f32::NAN } else { y };
     if xisnegzerof(x) {
         -0.
     } else {
@@ -789,14 +803,14 @@ pub fn acoshf(x: f32) -> f32 {
     let mut y = d.0 + d.1;
 
     y = if (x > SQRT_FLT_MAX) || y.is_nan() {
-        SLEEF_INFINITY_F
+        f32::INFINITY
     } else {
         y
     };
     y = if x == 1. { 0. } else { y };
-    y = if x < 1. { SLEEF_NAN_F } else { y };
+    y = if x < 1. { f32::NAN } else { y };
     if x.is_nan() {
-        SLEEF_NAN_F
+        f32::NAN
     } else {
         y
     }
@@ -811,21 +825,21 @@ pub fn atanhf(x: f32) -> f32 {
     let mut y = fabsfk(x);
     let d = logk2f((1.).add_as_doubled(y) / (1.).add_as_doubled(-y));
     y = if y > 1. {
-        SLEEF_NAN_F
+        f32::NAN
     } else if y == 1. {
-        SLEEF_INFINITY_F
+        f32::INFINITY
     } else {
         (d.0 + d.1) * 0.5
     };
 
     y = if x.is_infinite() || y.is_nan() {
-        SLEEF_NAN_F
+        f32::NAN
     } else {
         y
     };
     y = mulsignf(y, x);
     if x.is_nan() {
-        SLEEF_NAN_F
+        f32::NAN
     } else {
         y
     }
@@ -851,7 +865,7 @@ pub fn exp10f(d: f32) -> f32 {
     u = (1.).add_checked(u.mul_as_doubled(s)).normalize().0;
 
     if d > 38.5318394191036238941387 {
-        SLEEF_INFINITY_F // log10(FLT_MAX)
+        f32::INFINITY // log10(FLT_MAX)
     } else if d < -50. {
         0.
     } else {
@@ -870,7 +884,7 @@ pub fn expm1f(a: f32) -> f32 {
     } else if a < -16.635532333438687426013570 {
         -1.
     } else if a > 88.72283172607421875 {
-        SLEEF_INFINITY_F
+        f32::INFINITY
     } else {
         d.0 + d.1
     }
@@ -906,11 +920,11 @@ pub fn log10f(mut d: f32) -> f32 {
             .add_checked(x2 * x.0 * t);
 
     if d == 0. {
-        -SLEEF_INFINITY_F
+        f32::NEG_INFINITY
     } else if (d < 0.) || d.is_nan() {
-        SLEEF_NAN_F
+        f32::NAN
     } else if d.is_infinite() {
-        SLEEF_INFINITY_F
+        f32::INFINITY
     } else {
         s.0 + s.1
     }
@@ -944,11 +958,11 @@ pub fn log2f(mut d: f32) -> f32 {
     s += x2 * x.0 * t;
 
     if d == 0. {
-        -SLEEF_INFINITY_F
+        f32::NEG_INFINITY
     } else if (d < 0.) || d.is_nan() {
-        SLEEF_NAN_F
+        f32::NAN
     } else if d.is_infinite() {
-        SLEEF_INFINITY_F
+        f32::INFINITY
     } else {
         s.0 + s.1
     }
@@ -989,11 +1003,11 @@ pub fn log1pf(d: f32) -> f32 {
     if xisnegzerof(d) {
         -0.
     } else if d == -1. {
-        -SLEEF_INFINITY_F
+        f32::NEG_INFINITY
     } else if d < -1. {
-        SLEEF_NAN_F
+        f32::NAN
     } else if d > 1e+38 {
-        SLEEF_INFINITY_F
+        f32::INFINITY
     } else {
         s.0 + s.1
     }

@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
-use doubled::*;
 use crate::common::*;
+use doubled::*;
 
 use core::f32;
 use core::i32;
@@ -15,7 +15,6 @@ pub mod u05;
 pub mod u10;
 pub mod u15;
 pub mod u35;
-
 
 #[inline]
 pub fn xisintf(x: f32) -> bool {
@@ -354,9 +353,13 @@ fn sinpifk(d: f32) -> Doubled<f32> {
 
     //
 
-    let u = (if o { -0.2430611801e-7_f32 } else { 0.3093842054e-6 })
-        .mul_add(s, if o { 0.3590577080e-5 } else { -0.3657307388e-4 })
-        .mul_add(s, if o { -0.3259917721e-3 } else { 0.2490393585e-2 });
+    let u = (if o {
+        -0.2430611801e-7_f32
+    } else {
+        0.3093842054e-6
+    })
+    .mul_add(s, if o { 0.3590577080e-5 } else { -0.3657307388e-4 })
+    .mul_add(s, if o { -0.3259917721e-3 } else { 0.2490393585e-2 });
     let mut x = u * s
         + (if o {
             df(0.015854343771934509277, 4.4940051354032242811e-10)
@@ -394,9 +397,13 @@ fn cospifk(d: f32) -> Doubled<f32> {
 
     //
 
-    let u = (if o { -0.2430611801e-7_f32 } else { 0.3093842054e-6 })
-        .mul_add(s, if o { 0.3590577080e-5 } else { -0.3657307388e-4 })
-        .mul_add(s, if o { -0.3259917721e-3 } else { 0.2490393585e-2 });
+    let u = (if o {
+        -0.2430611801e-7_f32
+    } else {
+        0.3093842054e-6
+    })
+    .mul_add(s, if o { 0.3590577080e-5 } else { -0.3657307388e-4 })
+    .mul_add(s, if o { -0.3259917721e-3 } else { 0.2490393585e-2 });
     let mut x = u * s
         + (if o {
             df(0.015854343771934509277, 4.4940051354032242811e-10)
@@ -454,7 +461,8 @@ fn gammafk(a: f32) -> (Doubled<f32>, Doubled<f32>) {
         0.9435157776e+0
     } else {
         0.1102489550e-3
-    }).mul_add(
+    })
+    .mul_add(
         t,
         if o2 {
             -5.17179090826059219329394422e-05
@@ -463,7 +471,8 @@ fn gammafk(a: f32) -> (Doubled<f32>, Doubled<f32>) {
         } else {
             0.8160019934e-4
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             -0.000592166437353693882857342347
@@ -472,7 +481,8 @@ fn gammafk(a: f32) -> (Doubled<f32>, Doubled<f32>) {
         } else {
             0.1528468856e-3
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             6.97281375836585777403743539e-05
@@ -481,7 +491,8 @@ fn gammafk(a: f32) -> (Doubled<f32>, Doubled<f32>) {
         } else {
             -0.2355068718e-3
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             0.000784039221720066627493314301
@@ -490,7 +501,8 @@ fn gammafk(a: f32) -> (Doubled<f32>, Doubled<f32>) {
         } else {
             0.4962242092e-3
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             -0.000229472093621399176949318732
@@ -499,7 +511,8 @@ fn gammafk(a: f32) -> (Doubled<f32>, Doubled<f32>) {
         } else {
             -0.1193488017e-2
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             -0.002681327160493827160473958490
@@ -508,7 +521,8 @@ fn gammafk(a: f32) -> (Doubled<f32>, Doubled<f32>) {
         } else {
             0.2891599433e-2
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             0.003472222222222222222175164840
@@ -517,7 +531,8 @@ fn gammafk(a: f32) -> (Doubled<f32>, Doubled<f32>) {
         } else {
             -0.7385451812e-2
         },
-    ).mul_add(
+    )
+    .mul_add(
         t,
         if o2 {
             0.083333333333333333335592087900
@@ -554,7 +569,11 @@ fn gammafk(a: f32) -> (Doubled<f32>, Doubled<f32>) {
 
     let mut clc = if o2 { y } else { z };
 
-    let mut clld = if o2 { u.mul_as_doubled(t) + 1. } else { df(1., 0.) };
+    let mut clld = if o2 {
+        u.mul_as_doubled(t) + 1.
+    } else {
+        df(1., 0.)
+    };
 
     y = clln;
 
@@ -758,7 +777,7 @@ pub fn nextafterf(x: f32, y: f32) -> f32 {
     let cxf = f32::from_bits(cxi as u32);
 
     if x.is_nan() || y.is_nan() {
-        SLEEF_NAN_F
+        f32::NAN
     } else if (x == 0.) && (y == 0.) {
         y
     } else if (cxf == 0.) && (x != 0.) {
@@ -781,7 +800,7 @@ pub fn frfrexpf(mut x: f32) -> f32 {
     if x == 0. {
         x
     } else if x.is_infinite() {
-        mulsignf(SLEEF_INFINITY_F, x)
+        mulsignf(f32::INFINITY, x)
     } else {
         f32::from_bits(cxu)
     }
@@ -837,7 +856,7 @@ pub fn fmodf(x: f32, y: f32) -> f32 {
     }
     ret = mulsignf(ret, x);
     if de == 0. {
-        SLEEF_NAN_F
+        f32::NAN
     } else if nu < de {
         x
     } else {
@@ -849,7 +868,7 @@ pub fn fmodf(x: f32, y: f32) -> f32 {
 ///
 /// This function compute (***x*** × ***y*** + ***z***) without rounding, and then return the rounded value of the result.
 /// This function may return infinity with a correct sign if the absolute value of the correct return value is greater than 1e+33.
-/// The error bounds of the returned value is max(0.50001 ULP, f32::MIN). 
+/// The error bounds of the returned value is max(0.50001 ULP, f32::MIN).
 pub fn fmaf(mut x: f32, mut y: f32, mut z: f32) -> f32 {
     const C0: f32 = F1_25;
     const C1: f32 = C0 * C0;

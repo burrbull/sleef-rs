@@ -104,21 +104,21 @@ pub fn atan2(mut y: f64, mut x: f64) -> f64 {
 
     r = if y == 0. {
         if sign(x) == -1. {
-            M_PI
+            PI
         } else {
             0.
         }
     } else if y.is_infinite() {
-        M_PI / 2.
+        FRAC_PI_2
             - (if x.is_infinite() {
-                (sign(x) * (M_PI * 1. / 4.))
+                sign(x) * FRAC_PI_4
             } else {
                 0.
             })
     } else if x.is_infinite() || (x == 0.) {
-        M_PI / 2.
+        FRAC_PI_2
             - (if x.is_infinite() {
-                (sign(x) * (M_PI / 2.))
+                sign(x) * FRAC_PI_2
             } else {
                 0.
             })
@@ -169,12 +169,12 @@ pub fn sin(d: f64) -> f64 {
     let ql: isize;
 
     if fabsk(d) < TRIGRANGEMAX2 {
-        let qlf = rintk(d * M_1_PI);
+        let qlf = rintk(d * FRAC_1_PI);
         ql = qlf as isize;
         s = qlf.mul_add(-PI_A2, d).add_checked_as_doubled(qlf * -PI_B2);
     } else if fabsk(d) < TRIGRANGEMAX {
-        let dqh = trunck(d * (M_1_PI / D1_24)) * D1_24;
-        let qlf = rintk(d.mul_add(M_1_PI, -dqh));
+        let dqh = trunck(d * (FRAC_1_PI / D1_24)) * D1_24;
+        let qlf = rintk(d.mul_add(FRAC_1_PI, -dqh));
         ql = qlf as isize;
 
         s = dqh.mul_add(-PI_A, d).add_checked_as_doubled(qlf * -PI_A);
@@ -230,14 +230,14 @@ pub fn cos(d: f64) -> f64 {
     let d = fabsk(d);
 
     if d < TRIGRANGEMAX2 {
-        ql = (2_f64).mul_add(rintk(d * M_1_PI - 0.5), 1.) as isize;
+        ql = (2_f64).mul_add(rintk(d * FRAC_1_PI - 0.5), 1.) as isize;
         let qlf = ql as f64;
         s = d
             .add_as_doubled(qlf * (-PI_A2 * 0.5))
             .add_checked(qlf * (-PI_B2 * 0.5));
     } else if d < TRIGRANGEMAX {
-        let mut dqh = trunck(d * (M_1_PI / D1_23) - 0.5 * (M_1_PI / D1_23));
-        let qlf = 2. * rintk(d * M_1_PI - 0.5 - dqh * D1_23) + 1.;
+        let mut dqh = trunck(d * (FRAC_1_PI / D1_23) - 0.5 * (FRAC_1_PI / D1_23));
+        let qlf = 2. * rintk(d * FRAC_1_PI - 0.5 - dqh * D1_23) + 1.;
         ql = qlf as isize;
         dqh *= D1_24;
 
@@ -296,14 +296,14 @@ pub fn sincos(d: f64) -> (f64, f64) {
     let ql: isize;
 
     if fabsk(d) < TRIGRANGEMAX2 {
-        let qlf = rintk(d * (2. * M_1_PI));
+        let qlf = rintk(d * (FRAC_2_PI));
         ql = qlf as isize;
         s = qlf
             .mul_add(-PI_A2 * 0.5, d)
             .add_checked_as_doubled(qlf * (-PI_B2 * 0.5));
     } else if fabsk(d) < TRIGRANGEMAX {
-        let dqh = trunck(d * ((2. * M_1_PI) / D1_24)) * D1_24;
-        let qlf = rintk(d * (2. * M_1_PI) - dqh);
+        let dqh = trunck(d * ((FRAC_2_PI) / D1_24)) * D1_24;
+        let qlf = rintk(d * (FRAC_2_PI) - dqh);
         ql = qlf as isize;
 
         s = dqh
@@ -373,13 +373,13 @@ pub fn tan(d: f64) -> f64 {
     let ql: isize;
 
     if fabsk(d) < TRIGRANGEMAX2 {
-        let qlf = rintk(d * (2. * M_1_PI));
+        let qlf = rintk(d * (2. * FRAC_1_PI));
         ql = qlf as isize;
         s = qlf
             .mul_add(-PI_A2 * 0.5, d)
             .add_checked_as_doubled(qlf * (-PI_B2 * 0.5));
     } else if fabsk(d) < TRIGRANGEMAX {
-        let dqh = trunck(d * (M_2_PI / D1_24)) * D1_24;
+        let dqh = trunck(d * (FRAC_2_PI / D1_24)) * D1_24;
         s = dd(M_2_PI_H, M_2_PI_L) * d + ((if d < 0. { -0.5 } else { 0.5 }) - dqh);
         ql = (s.0 + s.1) as isize;
 

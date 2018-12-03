@@ -11,21 +11,21 @@ pub fn atan2f(y: f32, x: f32) -> f32 {
     let mut r = atan2kf(fabsfk(y), x);
 
     r = if x.is_infinite() || (x == 0.) {
-        M_PI_2_F
+        FRAC_PI_2
             - (if x.is_infinite() {
-                signf(x) * M_PI_2_F
+                signf(x) * FRAC_PI_2
             } else {
                 0.
             })
     } else if y.is_infinite() {
-        M_PI_2_F
+        FRAC_PI_2
             - (if x.is_infinite() {
-                signf(x) * M_PI_4_F
+                signf(x) * FRAC_PI_4
             } else {
                 0.
             })
     } else if y == 0. {
-        (if signf(x) == -1. { M_PI_F } else { 0. })
+        (if signf(x) == -1. { PI } else { 0. })
     } else {
         mulsignf(r, x)
     };
@@ -249,13 +249,13 @@ pub fn sinf(mut d: f32) -> f32 {
     let t = d;
 
     if fabsfk(d) < TRIGRANGEMAX2_F {
-        let qf = rintfk(d * M_1_PI_F);
+        let qf = rintfk(d * FRAC_1_PI);
         q = qf as i32;
         d = qf.mul_add(-PI_A2_F, d);
         d = qf.mul_add(-PI_B2_F, d);
         d = qf.mul_add(-PI_C2_F, d);
     } else if fabsfk(d) < TRIGRANGEMAX_F {
-        let qf = rintfk(d * M_1_PI_F);
+        let qf = rintfk(d * FRAC_1_PI);
         q = qf as i32;
         d = qf.mul_add(-PI_A_F, d);
         d = qf.mul_add(-PI_B_F, d);
@@ -303,13 +303,13 @@ pub fn cosf(mut d: f32) -> f32 {
     let t = d;
 
     if fabsfk(d) < TRIGRANGEMAX2_F {
-        q = 1 + 2 * (rintfk(d * M_1_PI_F - 0.5) as i32);
+        q = 1 + 2 * (rintfk(d * FRAC_1_PI - 0.5) as i32);
         let qf = q as f32;
         d = qf.mul_add(-PI_A2_F * 0.5, d);
         d = qf.mul_add(-PI_B2_F * 0.5, d);
         d = qf.mul_add(-PI_C2_F * 0.5, d);
     } else if fabsfk(d) < TRIGRANGEMAX_F {
-        q = 1 + 2 * (rintfk(d * M_1_PI_F - 0.5) as i32);
+        q = 1 + 2 * (rintfk(d * FRAC_1_PI - 0.5) as i32);
         let qf = q as f32;
         d = qf.mul_add(-PI_A_F * 0.5, d);
         d = qf.mul_add(-PI_B_F * 0.5, d);
@@ -362,13 +362,13 @@ pub fn sincosf(d: f32) -> (f32, f32) {
     let mut s = d;
 
     if fabsfk(d) < TRIGRANGEMAX2_F {
-        let qf = rintfk(d * M_2_PI_F);
+        let qf = rintfk(d * FRAC_2_PI);
         q = qf as i32;
         s = qf.mul_add(-PI_A2_F * 0.5, s);
         s = qf.mul_add(-PI_B2_F * 0.5, s);
         s = qf.mul_add(-PI_C2_F * 0.5, s);
     } else if fabsfk(d) < TRIGRANGEMAX_F {
-        let qf = rintfk(d * M_2_PI_F);
+        let qf = rintfk(d * FRAC_2_PI);
         q = qf as i32;
         s = qf.mul_add(-PI_A_F * 0.5, s);
         s = qf.mul_add(-PI_B_F * 0.5, s);
@@ -431,13 +431,13 @@ pub fn tanf(d: f32) -> f32 {
     let mut x = d;
 
     if fabsfk(d) < TRIGRANGEMAX2_F * 0.5 {
-        let qf = rintfk(d * M_2_PI_F);
+        let qf = rintfk(d * FRAC_2_PI);
         q = qf as i32;
         x = qf.mul_add(-PI_A2_F * 0.5, x);
         x = qf.mul_add(-PI_B2_F * 0.5, x);
         x = qf.mul_add(-PI_C2_F * 0.5, x);
     } else if fabsfk(d) < TRIGRANGEMAX_F {
-        let qf = rintfk(d * M_2_PI_F);
+        let qf = rintfk(d * FRAC_2_PI);
         q = qf as i32;
         x = qf.mul_add(-PI_A_F * 0.5, x);
         x = qf.mul_add(-PI_B_F * 0.5, x);
@@ -529,7 +529,7 @@ pub fn asinf(d: f32) -> f32 {
         .mul_add(x2, 0.1666677296e+0)
         .mul_add(x * x2, x);
 
-    let r = if o { u } else { (M_PI_F / 2. - 2. * u) };
+    let r = if o { u } else { (FRAC_PI_2 - 2. * u) };
     mulsignf(r, d)
 }
 

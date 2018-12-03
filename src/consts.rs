@@ -1,7 +1,3 @@
-pub const M_PI: f64 = 3.141592653589793238462643383279502884;
-pub const M_1_PI: f64 = 0.318309886183790671537767526745028724;
-pub const M_2_PI: f64 = 0.636619772367581343075535053490057448;
-
 pub const SLEEF_FP_ILOGB0: i32 = -2147483648;
 pub const SLEEF_FP_ILOGBNAN: i32 = 2147483647;
 /*
@@ -78,7 +74,8 @@ pub const L2U_F: f32 = 0.693145751953125;
 pub const L2L_F: f32 = 1.428606765330187045e-06;
 
 pub const R_LN2_F: f32 = 1.442695040888963407359924681001892137426645954152985934135449406931;
-pub const M_PI_F: f32 = M_PI as f32;
+
+pub const LOG10_2_F: f32 = LOG10_2 as f32;
 
 //#[repr(align = "8")]
 pub const REMPITABDP: [f64; 3859/*3876*/] = [
@@ -4375,29 +4372,3 @@ pub const REMPITABSP: [f32; 412] = [
     -3.242678858e-28,
     3.057750017e-36,
 ];
-
-pub const M_1_PI_F: f32 = M_1_PI as f32;
-pub const M_2_PI_F: f32 = M_2_PI as f32;
-pub const M_PI_2_F: f32 = (M_PI / 2.) as f32;
-pub const M_PI_4_F: f32 = (M_PI / 4.) as f32;
-
-pub const LOG10_2_F: f32 = LOG10_2 as f32;
-
-pub const F1_32: f32 = (1u64 << 32) as f32;
-pub const F1_30: f32 = (1u32 << 30) as f32;
-pub const F1_25: f32 = (1u32 << 25) as f32;
-pub const F1_24: f32 = (1u32 << 24) as f32;
-pub const F1_23: f32 = (1u32 << 23) as f32;
-pub const F1_12: f32 = (1u32 << 12) as f32;
-pub const F1_10: f32 = (1u32 << 10) as f32;
-
-pub const D1_63: f64 = (1u64 << 63) as f64;
-pub const D1_60: f64 = (1u64 << 60) as f64;
-pub const D1_54: f64 = (1u64 << 54) as f64;
-pub const D1_53: f64 = (1u64 << 53) as f64;
-pub const D1_52: f64 = (1u64 << 52) as f64;
-pub const D1_32: f64 = (1u64 << 32) as f64;
-pub const D1_31: f64 = (1u64 << 31) as f64;
-pub const D1_28: f64 = (1u64 << 28) as f64;
-pub const D1_24: f64 = (1u64 << 24) as f64;
-pub const D1_23: f64 = (1u64 << 23) as f64;

@@ -9,5 +9,6 @@ git = "https://github.com/burrbull/doubled-rs"
 features = ["packed_simd"]
 
 [dependencies.packed_simd]
-version = "0.3"
+#version = "0.3"
+git = "https://github.com/rust-lang-nursery/packed_simd"
 features = ["into_bits"]

@@ -1,9 +1,21 @@
 #![allow(dead_code)]
 use core::f64;
+use core::f64::consts::{FRAC_1_PI, FRAC_2_PI, FRAC_PI_2, FRAC_PI_4, PI};
 use core::isize;
 
 use crate::common::*;
 use doubled::*;
+
+const D1_63: f64 = (1u64 << 63) as f64;
+const D1_60: f64 = (1u64 << 60) as f64;
+const D1_54: f64 = (1u64 << 54) as f64;
+const D1_53: f64 = (1u64 << 53) as f64;
+const D1_52: f64 = (1u64 << 52) as f64;
+const D1_32: f64 = (1u64 << 32) as f64;
+const D1_31: f64 = (1u64 << 31) as f64;
+const D1_28: f64 = (1u64 << 28) as f64;
+const D1_24: f64 = (1u64 << 24) as f64;
+const D1_23: f64 = (1u64 << 23) as f64;
 
 #[inline]
 pub fn dd(h: f64, l: f64) -> Doubled<f64> {
@@ -170,7 +182,7 @@ fn atan2k(mut y: f64, mut x: f64) -> f64 {
         .mul_add(t, -0.333333333333311110369124);
 
     let t = u * t * s + s;
-    (q as f64) * (M_PI / 2.) + t
+    (q as f64) * f64::consts::FRAC_PI_2 + t
 }
 
 fn rempisub(x: f64) -> (f64, i32) {

@@ -1,10 +1,19 @@
 #![allow(dead_code)]
 
 use crate::common::*;
+use core::f32::consts::{FRAC_1_PI, FRAC_2_PI, FRAC_PI_2, FRAC_PI_4, PI};
 use doubled::*;
 
 use core::f32;
 use core::i32;
+
+const F1_32: f32 = (1u64 << 32) as f32;
+const F1_30: f32 = (1u32 << 30) as f32;
+const F1_25: f32 = (1u32 << 25) as f32;
+const F1_24: f32 = (1u32 << 24) as f32;
+const F1_23: f32 = (1u32 << 23) as f32;
+const F1_12: f32 = (1u32 << 12) as f32;
+const F1_10: f32 = (1u32 << 10) as f32;
 
 #[inline]
 pub fn df(h: f32, l: f32) -> Doubled<f32> {
@@ -195,7 +204,7 @@ fn atan2kf(mut y: f32, mut x: f32) -> f32 {
         .mul_add(t, -0.333331018686294555664062);
 
     t = u * t * s + s;
-    (q as f32) * M_PI_2_F + t
+    (q as f32) * f32::consts::FRAC_PI_2 + t
 }
 
 #[inline]

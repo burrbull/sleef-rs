@@ -37,7 +37,7 @@ pub fn sinf(d: f32) -> f32 {
     let mut s: Doubled<f32>;
 
     if fabsfk(d) < TRIGRANGEMAX2_F {
-        let qf = rintfk(d * M_1_PI_F);
+        let qf = rintfk(d * FRAC_1_PI);
         q = qf as i32;
         let u = qf.mul_add(-PI_A2_F, d);
         s = u.add_as_doubled(qf * (-PI_B2_F));
@@ -88,7 +88,7 @@ pub fn cosf(mut d: f32) -> f32 {
 
     if fabsfk(d) < TRIGRANGEMAX2_F {
         d = fabsfk(d);
-        let dq = rintfk(d * M_1_PI_F - 0.5).mul_add(2., 1.);
+        let dq = rintfk(d * FRAC_1_PI - 0.5).mul_add(2., 1.);
         q = dq as i32;
         s = d.add_as_doubled(dq * (-PI_A2_F * 0.5));
         s += dq * (-PI_B2_F * 0.5);
@@ -144,7 +144,7 @@ pub fn sincosf(d: f32) -> (f32, f32) {
     let mut s: Doubled<f32>;
 
     if fabsfk(d) < TRIGRANGEMAX2_F {
-        let qf = rintfk(d * M_2_PI_F);
+        let qf = rintfk(d * FRAC_2_PI);
         q = qf as i32;
         let u = qf.mul_add(-PI_A2_F * 0.5, d);
         s = u.add_as_doubled(qf * (-PI_B2_F * 0.5));
@@ -205,7 +205,7 @@ pub fn tanf(d: f32) -> f32 {
     let q: i32;
     let mut s: Doubled<f32>;
     if fabsfk(d) < TRIGRANGEMAX2_F {
-        let qf = rintfk(d * M_2_PI_F);
+        let qf = rintfk(d * FRAC_2_PI);
         q = qf as i32;
         let u = qf.mul_add(-PI_A2_F * 0.5, d);
         s = u.add_as_doubled(qf * (-PI_B2_F * 0.5));
@@ -296,18 +296,18 @@ pub fn atan2f(mut y: f32, mut x: f32) -> f32 {
 
     r = mulsignf(r, x);
     r = if y == 0. {
-        (if signf(x) == -1. { M_PI_F } else { 0. })
+        (if signf(x) == -1. { PI } else { 0. })
     } else if y.is_infinite() {
-        M_PI_2_F
+        FRAC_PI_2
             - (if x.is_infinite() {
-                signf(x) * M_PI_4_F
+                signf(x) * FRAC_PI_4
             } else {
                 0.
             })
     } else if x.is_infinite() || (x == 0.) {
-        M_PI_2_F
+        FRAC_PI_2
             - (if x.is_infinite() {
-                signf(x) * M_PI_2_F
+                signf(x) * FRAC_PI_2
             } else {
                 0.
             })

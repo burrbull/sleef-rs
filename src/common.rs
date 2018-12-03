@@ -98,3 +98,15 @@ impl MulAdd for f64 {
         self * y + z
     }
 }
+
+pub trait VectorizedSelect<T> {
+    type Output;
+    fn select_splat(self, l: T, r: T) -> Self::Output;
+}
+
+pub trait DoubledSelect<T>
+where
+    T: core::marker::Sized,
+{
+    fn select_doubled(self, l: Doubled<T>, r: Doubled<T>) -> Doubled<T>;
+}

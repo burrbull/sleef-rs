@@ -110,3 +110,14 @@ where
 {
     fn select_doubled(self, l: Doubled<T>, r: Doubled<T>) -> Doubled<T>;
 }
+
+pub trait Sign {
+    type Mask;
+    fn is_sign_negative(self) -> Self::Mask;
+    fn is_sign_positive(self) -> Self::Mask;
+}
+
+pub trait IsInt {
+    type Mask;
+    fn is_integer(self) -> Self::Mask;
+}

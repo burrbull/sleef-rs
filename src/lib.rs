@@ -1,5 +1,12 @@
 #![deny(warnings)]
 #![no_std]
+#![allow(clippy::many_single_char_names)]
+#![allow(clippy::mistyped_literal_suffixes)]
+#![allow(clippy::excessive_precision)]
+#![allow(clippy::approx_constant)]
+#![allow(clippy::cast_lossless)]
+#![allow(clippy::float_cmp)]
+#![allow(clippy::cyclomatic_complexity)]
 
 mod common;
 mod consts;

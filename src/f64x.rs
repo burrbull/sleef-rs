@@ -322,12 +322,12 @@ macro_rules! impl_math_f64 {
                     + (fr * $f64x::splat(8.)).truncatei();
                 vi = (($ix::splat(7) & vi) - $ix::splat(3)) >> 1;
                 fr = fr - $f64x::splat(0.25) * fr
-                    .mul_add($f64x::splat(4.), vmulsign_vd_vd_vd($f64x::splat(0.5), x))
+                    .mul_add($f64x::splat(4.), vmulsign_vd_vd_vd(HALF, x))
                     .truncate();
                 fr = fr
                     .abs()
                     .gt($f64x::splat(0.25))
-                    .select(fr - vmulsign_vd_vd_vd($f64x::splat(0.5), x), fr);
+                    .select(fr - vmulsign_vd_vd_vd(HALF, x), fr);
                 fr = fr.abs().gt($f64x::splat(1e+10)).select(ZERO, fr);
                 let o = x.abs().eq($f64x::splat(0.124_999_999_999_999_986_12));
                 fr = o.select(x, fr);
@@ -533,7 +533,7 @@ macro_rules! impl_math_f64 {
                 .mul_add(s, $f64x::splat(0.008_333_333_333_316_527_216_649_84))
                 .mul_add(s, $f64x::splat(0.041_666_666_666_666_504_759_142_2))
                 .mul_add(s, $f64x::splat(0.166_666_666_666_666_851_703_837))
-                .mul_add(s, $f64x::splat(0.5));
+                .mul_add(s, HALF);
             u = (s * s).mul_add(u, s);
 
             $m64x::from_cast(q.eq($ix::splat(0))).select(
@@ -636,7 +636,7 @@ macro_rules! impl_math_f64 {
                 .mul_add(s.0, $f64x::splat(0.416_666_666_666_666_990_5_e-1));
 
             let mut t = s * u + $f64x::splat(0.166_666_666_666_666_657_4);
-            t = s * t + $f64x::splat(0.5);
+            t = s * t + HALF;
             t = s + s.square() * t;
 
             t = ONE.add_checked(t);
@@ -765,7 +765,7 @@ macro_rules! impl_math_f64 {
         }
 
         pub fn round(d: $f64x) -> $f64x {
-            let mut x = d + $f64x::splat(0.5);
+            let mut x = d + HALF;
             let mut fr = x
                 - D1_31X
                     * $f64x::from_cast((x * (ONE / D1_31X)).truncatei());
@@ -780,7 +780,7 @@ macro_rules! impl_math_f64 {
         }
 
         pub fn rint(d: $f64x) -> $f64x {
-            let mut x = d + $f64x::splat(0.5);
+            let mut x = d + HALF;
             let mut fr = x
                 - D1_31X
                     * $f64x::from_cast((x * (ONE / D1_31X)).truncatei());
@@ -968,7 +968,7 @@ macro_rules! impl_math_f64 {
             let mut clld = Doubled::from((1., 0.));
 
             let otiny = a.abs().lt($f64x::splat(1e-306));
-            let oref = a.lt($f64x::splat(0.5));
+            let oref = a.lt(HALF);
 
             let mut x = otiny.select_doubled(Doubled::from((0., 0.)),
                 oref.select_doubled(ONE.add_as_doubled(-a),
@@ -976,7 +976,7 @@ macro_rules! impl_math_f64 {
                 ),
             );
 
-            let o0 = $f64x::splat(0.5).le(x.0) & x.0.le($f64x::splat(1.1));
+            let o0 = HALF.le(x.0) & x.0.le($f64x::splat(1.1));
             let o2 = $f64x::splat(2.3).le(x.0);
 
             let mut y = ((x + ONE) * x).normalize();

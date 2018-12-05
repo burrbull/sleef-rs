@@ -78,8 +78,8 @@ macro_rules! impl_math_f64_u10 {
                 let dql = d.mul_add($f64x::FRAC_1_PI, $f64x::splat(-0.5)).rint();
                 let dql = $f64x::splat(2.).mul_add(dql, ONE);
                 ql = dql.rinti();
-                s = d.add_as_doubled(dql * (-PI_A2) * $f64x::splat(0.5));
-                s = s.add_checked(dql * (-PI_B2) * $f64x::splat(0.5));
+                s = d.add_as_doubled(dql * (-PI_A2) * HALF);
+                s = s.add_checked(dql * (-PI_B2) * HALF);
             } else if d.abs().lt(TRIGRANGEMAX).all() {
                 let dqh = d
                     .mul_add($f64x::FRAC_1_PI / D1_23X, -$f64x::FRAC_1_PI / D1_24X)
@@ -90,13 +90,13 @@ macro_rules! impl_math_f64_u10 {
                 ql = ql + ql + $ix::splat(1);
                 let dql = $f64x::from_cast(ql);
 
-                let u = dqh.mul_add(-PI_A * $f64x::splat(0.5), d);
-                s = u.add_as_doubled(dql * -PI_A * $f64x::splat(0.5));
-                s += dqh * (-PI_B) * $f64x::splat(0.5);
-                s += dql * (-PI_B) * $f64x::splat(0.5);
-                s += dqh * (-PI_C) * $f64x::splat(0.5);
-                s += dql * (-PI_C) * $f64x::splat(0.5);
-                s = s.add_checked((dqh + dql) * (-PI_D) * $f64x::splat(0.5));
+                let u = dqh.mul_add(-PI_A * HALF, d);
+                s = u.add_as_doubled(dql * -PI_A * HALF);
+                s += dqh * (-PI_B) * HALF;
+                s += dql * (-PI_B) * HALF;
+                s += dqh * (-PI_C) * HALF;
+                s += dql * (-PI_C) * HALF;
+                s = s.add_checked((dqh + dql) * (-PI_D) * HALF);
             } else {
                 let (mut ddidd, ddii) = rempi(d);
                 ql = ddii & $ix::splat(3);
@@ -153,21 +153,21 @@ macro_rules! impl_math_f64_u10 {
             if d.abs().lt(TRIGRANGEMAX2).all() {
                 let dql = (d * $f64x::FRAC_2_PI).rint();
                 ql = dql.rinti();
-                let u = dql.mul_add(-PI_A2 * $f64x::splat(0.5), d);
-                s = u.add_checked_as_doubled(dql * (-PI_B2) * $f64x::splat(0.5));
+                let u = dql.mul_add(-PI_A2 * HALF, d);
+                s = u.add_checked_as_doubled(dql * (-PI_B2) * HALF);
             } else if d.abs().lt(TRIGRANGEMAX).all() {
                 let dqh = (d * ($f64x::FRAC_2_PI / D1_24X)).truncate();
                 let dqh = dqh * D1_24X;
                 let dql = (d * $f64x::FRAC_2_PI - dqh).rint();
                 ql = dql.rinti();
 
-                let u = dqh.mul_add(-PI_A * $f64x::splat(0.5), d);
-                s = u.add_checked_as_doubled(dql * (-PI_A) * $f64x::splat(0.5));
-                s += dqh * (-PI_B) * $f64x::splat(0.5);
-                s += dql * (-PI_B) * $f64x::splat(0.5);
-                s += dqh * (-PI_C) * $f64x::splat(0.5);
-                s += dql * (-PI_C) * $f64x::splat(0.5);
-                s += (dqh + dql) * (-PI_D) * $f64x::splat(0.5);
+                let u = dqh.mul_add(-PI_A * HALF, d);
+                s = u.add_checked_as_doubled(dql * (-PI_A) * HALF);
+                s += dqh * (-PI_B) * HALF;
+                s += dql * (-PI_B) * HALF;
+                s += dqh * (-PI_C) * HALF;
+                s += dql * (-PI_C) * HALF;
+                s += (dqh + dql) * (-PI_D) * HALF;
             } else {
                 let (ddidd, ddii) = rempi(d);
                 ql = ddii;
@@ -230,8 +230,8 @@ macro_rules! impl_math_f64_u10 {
             if d.abs().lt(TRIGRANGEMAX2).all() {
                 let dql = (d * $f64x::FRAC_2_PI).rint();
                 ql = dql.rinti();
-                let u = dql.mul_add(-PI_A2 * $f64x::splat(0.5), d);
-                s = u.add_checked_as_doubled(dql * (-PI_B2) * $f64x::splat(0.5));
+                let u = dql.mul_add(-PI_A2 * HALF, d);
+                s = u.add_checked_as_doubled(dql * (-PI_B2) * HALF);
             } else if d.abs().lt(TRIGRANGEMAX).all() {
                 let dqh = (d * ($f64x::FRAC_2_PI / D1_24X)).truncate();
                 let dqh = dqh * D1_24X;
@@ -242,13 +242,13 @@ macro_rules! impl_math_f64_u10 {
                 let dql = (s.0 + s.1).truncate();
                 ql = dql.rinti();
 
-                let u = dqh.mul_add(-PI_A * $f64x::splat(0.5), d);
-                s = u.add_checked_as_doubled(dql * (-PI_A) * $f64x::splat(0.5));
-                s += dqh * (-PI_B) * $f64x::splat(0.5);
-                s += dql * (-PI_B) * $f64x::splat(0.5);
-                s += dqh * (-PI_C) * $f64x::splat(0.5);
-                s += dql * (-PI_C) * $f64x::splat(0.5);
-                s += (dqh + dql) * (-PI_D) * $f64x::splat(0.5);
+                let u = dqh.mul_add(-PI_A * HALF, d);
+                s = u.add_checked_as_doubled(dql * (-PI_A) * HALF);
+                s += dqh * (-PI_B) * HALF;
+                s += dql * (-PI_B) * HALF;
+                s += dqh * (-PI_C) * HALF;
+                s += dql * (-PI_C) * HALF;
+                s += (dqh + dql) * (-PI_D) * HALF;
             } else {
                 let (ddidd, ddii) = rempi(d);
                 ql = ddii;
@@ -567,8 +567,8 @@ macro_rules! impl_math_f64_u10 {
 
                     u = v
                         .mul_add(s, u)
-                        .mul_adde(s, $f64x::splat(1.))
-                        .mul_adde(s, $f64x::splat(1.));
+                        .mul_adde(s, ONE)
+                        .mul_adde(s, ONE);
                 } else {
                     u = $f64x::splat(0.208_127_637_823_716_445_7_e-8)
                         .mul_adde(s, $f64x::splat(0.251_121_070_304_228_802_2_e-7))
@@ -581,8 +581,8 @@ macro_rules! impl_math_f64_u10 {
                         .mul_adde(s, $f64x::splat(0.416_666_666_666_660_259_8_e-1))
                         .mul_adde(s, $f64x::splat(0.166_666_666_666_666_907_2))
                         .mul_adde(s, HALF)
-                        .mul_adde(s, $f64x::splat(1.))
-                        .mul_adde(s, $f64x::splat(1.));
+                        .mul_adde(s, ONE)
+                        .mul_adde(s, ONE);
                 }
             } else {
                 u = $f64x::splat(2.088_606_211_072_836_875_363_41_e-9)

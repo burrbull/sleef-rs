@@ -14,6 +14,7 @@ macro_rules! impl_math_f32 {
 
         const ZERO: $f32x = $f32x::splat(0.);
         const ONE: $f32x = $f32x::splat(1.);
+        const HALF: $f32x = $f32x::splat(0.5);
         const F1_32X: $f32x = $f32x::splat((1u64 << 32) as f32);
         const F1_30X: $f32x = $f32x::splat((1u32 << 30) as f32);
         const F1_25X: $f32x = $f32x::splat((1u32 << 25) as f32);
@@ -326,12 +327,12 @@ macro_rules! impl_math_f32 {
                     + (fr * $f32x::splat(8.)).truncatei();
                 vi = (($i32x::splat(7) & vi) - $i32x::splat(3)) >> 1;
                 fr -= $f32x::splat(0.25)
-                    * (fr.mul_add($f32x::splat(4.), vmulsign_vf_vf_vf($f32x::splat(0.5), x)))
+                    * (fr.mul_add($f32x::splat(4.), vmulsign_vf_vf_vf(HALF, x)))
                         .truncate();
                 fr = fr
                     .abs()
                     .gt($f32x::splat(0.25))
-                    .select(fr - vmulsign_vf_vf_vf($f32x::splat(0.5), x), fr);
+                    .select(fr - vmulsign_vf_vf_vf(HALF, x), fr);
                 fr = fr.abs().gt($f32x::splat(1e+10)).select(ZERO, fr);
                 let o = x.abs().eq($f32x::splat(0.124_999_992_549_419_403_08));
                 fr = o.select(x, fr);
@@ -489,7 +490,7 @@ macro_rules! impl_math_f32 {
                 .mul_add(s.0, $f32x::splat(0.416_663_736_1_e-1));
 
             let mut t = s * u + $f32x::splat(0.166_666_659_414_234_244_790_680_580_464);
-            t = s * t + $f32x::splat(0.5);
+            t = s * t + HALF;
             t = s + s.square() * t;
 
             t = ONE.add_checked(t);
@@ -666,7 +667,7 @@ macro_rules! impl_math_f32 {
         }
 
         pub fn roundf(d: $f32x) -> $f32x {
-            let mut x = d + $f32x::splat(0.5);
+            let mut x = d + HALF;
             let fr = x - $f32x::from_cast(x.truncatei());
             x = (x.le(ZERO) & fr.eq(ZERO)).select(x - ONE, x);
             let fr = fr.lt(ZERO).select(fr + ONE, fr);
@@ -678,7 +679,7 @@ macro_rules! impl_math_f32 {
         }
 
         pub fn rintf(d: $f32x) -> $f32x {
-            let mut x = d + $f32x::splat(0.5);
+            let mut x = d + HALF;
             let isodd = ($i32x::splat(1) & x.truncatei()).eq($i32x::splat(1));
             let mut fr = x - $f32x::from_cast(x.truncatei());
             fr = (fr.lt(ZERO) | (fr.eq(ZERO) & isodd))
@@ -935,7 +936,7 @@ macro_rules! impl_math_f32 {
             let mut clld = Doubled::from((1., 0.));
 
             let otiny = a.abs().lt($f32x::splat(1e-30));
-            let oref = a.lt($f32x::splat(0.5));
+            let oref = a.lt(HALF);
 
             let x = otiny.select_doubled(Doubled::from((0., 0.)),
                 oref.select_doubled(ONE.add_as_doubled(-a),
@@ -943,7 +944,7 @@ macro_rules! impl_math_f32 {
                 ),
             );
 
-            let o0 = $f32x::splat(0.5).le(x.0) & x.0.le($f32x::splat(1.2));
+            let o0 = HALF.le(x.0) & x.0.le($f32x::splat(1.2));
             let o2 = $f32x::splat(2.3).le(x.0);
 
             let mut y = ((x + ONE) * x).normalize();
@@ -1087,7 +1088,7 @@ macro_rules! impl_math_f32 {
                 .mul_add(s, $f32x::splat(0.008_333_360_776_305_198_669_433_59))
                 .mul_add(s, $f32x::splat(0.041_666_485_369_205_474_853_515_6))
                 .mul_add(s, $f32x::splat(0.166_666_671_633_720_397_949_219))
-                .mul_add(s, $f32x::splat(0.5));
+                .mul_add(s, HALF);
 
             let u = (s * s).mul_add(u, s);
 

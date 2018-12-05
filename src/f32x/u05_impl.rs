@@ -87,7 +87,7 @@ macro_rules! impl_math_f32_u05 {
             let d = o.select(d * $f32x::splat(1.888_946_593_147_858_e+22), d);
             let q = o.select(
                 $f32x::splat(7.275_957_614_183_426_e-12 * 0.5),
-                $f32x::splat(0.5),
+                HALF,
             );
 
             let o = d.gt($f32x::splat(1.844_674_407_370_955_2_e+19));
@@ -99,9 +99,9 @@ macro_rules! impl_math_f32_u05 {
                     - $i32x::from_bits($u32x::from_bits(d + $f32x::splat(1e-45)) >> 1),
             );
 
-            x *= $f32x::splat(1.5) - $f32x::splat(0.5) * d * x * x;
-            x *= $f32x::splat(1.5) - $f32x::splat(0.5) * d * x * x;
-            x *= $f32x::splat(1.5) - $f32x::splat(0.5) * d * x * x;
+            x *= $f32x::splat(1.5) - HALF * d * x * x;
+            x *= $f32x::splat(1.5) - HALF * d * x * x;
+            x *= $f32x::splat(1.5) - HALF * d * x * x;
             x *= d;
 
             let d2 = (d + x.mul_as_doubled(x)) * x.recpre_as_doubled();

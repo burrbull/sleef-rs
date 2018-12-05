@@ -78,8 +78,8 @@ macro_rules! impl_math_f64_u35 {
                     ONE,
                 );
                 ql = dql.rinti();
-                d = dql.mul_add(-PI_A2 * $f64x::splat(0.5), d);
-                d = dql.mul_add(-PI_B2 * $f64x::splat(0.5), d);
+                d = dql.mul_add(-PI_A2 * HALF, d);
+                d = dql.mul_add(-PI_B2 * HALF, d);
             } else if d.abs().lt(TRIGRANGEMAX).all() {
                 let dqh = d
                     .mul_add($f64x::FRAC_1_PI / D1_23X, -$f64x::FRAC_1_PI / D1_24X)
@@ -150,8 +150,8 @@ macro_rules! impl_math_f64_u35 {
             if d.abs().lt(TRIGRANGEMAX2).all() {
                 let dql = (d * $f64x::FRAC_2_PI).rint();
                 ql = dql.rinti();
-                s = dql.mul_add(-PI_A2 * $f64x::splat(0.5), d);
-                s = dql.mul_add(-PI_B2 * $f64x::splat(0.5), s);
+                s = dql.mul_add(-PI_A2 * HALF, d);
+                s = dql.mul_add(-PI_B2 * HALF, s);
             } else if d.abs().lt(TRIGRANGEMAX).all() {
                 let dqh = (d * ($f64x::FRAC_2_PI / D1_24X)).truncate();
                 let dqh = dqh * D1_24X;
@@ -284,8 +284,8 @@ macro_rules! impl_math_f64_u35 {
             if d.abs().lt(TRIGRANGEMAX2).all() {
                 let dql = (d * $f64x::FRAC_2_PI).rint();
                 ql = dql.rinti();
-                x = dql.mul_add(-PI_A2 * $f64x::splat(0.5), d);
-                x = dql.mul_add(-PI_B2 * $f64x::splat(0.5), x);
+                x = dql.mul_add(-PI_A2 * HALF, d);
+                x = dql.mul_add(-PI_B2 * HALF, x);
             } else if d.abs().lt($f64x::splat(1e+7)).all() {
                 let dqh = (d * ($f64x::FRAC_2_PI / D1_24X)).truncate();
                 let dqh = dqh * D1_24X;
@@ -298,7 +298,7 @@ macro_rules! impl_math_f64_u35 {
                 x = dql.mul_add(-PI_B * HALF, x);
                 x = dqh.mul_add(-PI_C * HALF, x);
                 x = dql.mul_add(-PI_C * HALF, x);
-                x = (dqh + dql).mul_add(-PI_D * $f64x::splat(0.5), x);
+                x = (dqh + dql).mul_add(-PI_D * HALF, x);
             } else {
                 let (ddidd, ddii) = rempi(d);
                 ql = ddii;

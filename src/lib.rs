@@ -9,7 +9,7 @@
 #![allow(clippy::cyclomatic_complexity)]
 
 mod common;
-mod consts;
+mod tables;
 
 pub mod f32;
 pub mod f64;

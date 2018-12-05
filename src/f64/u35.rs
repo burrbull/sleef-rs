@@ -1,5 +1,4 @@
 //! Functions with 3.5 ULP error bound
-
 use super::*;
 
 pub fn sincospi(d: f64) -> (f64, f64) {

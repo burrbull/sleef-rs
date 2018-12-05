@@ -17,6 +17,54 @@ const D1_28: f64 = (1u64 << 28) as f64;
 const D1_24: f64 = (1u64 << 24) as f64;
 const D1_23: f64 = (1u64 << 23) as f64;
 
+const SLEEF_FP_ILOGB0: i32 = -2_147_483_648;
+const SLEEF_FP_ILOGBNAN: i32 = 2_147_483_647;
+const SQRT_DBL_MAX: f64 = 1.340_780_792_994_259_635_5_e+154;
+const M_2_PI_H: f64 = 0.636_619_772_367_581_382_43;
+const M_2_PI_L: f64 = -3.935_735_335_036_497_176_4_e-17;
+const TRIGRANGEMAX3: f64 = 1e+9;
+const L2U: f64 = 0.693_147_180_559_662_956_511_601_805_686_950_683_593_75;
+const L2L: f64 = 0.282_352_905_630_315_771_225_884_481_750_134_360_255_254_120_68_e-12;
+const R_LN2: f64 =
+    1.442_695_040_888_963_407_359_924_681_001_892_137_426_645_954_152_985_934_135_449_406_931;
+const L10U: f64 = 0.301_029_995_663_839_144_98; // log 2 / log 10
+const L10L: f64 = 1.420_502_322_726_609_941_8_e-13;
+const LOG10_2: f64 = 3.321_928_094_887_362_347_870_319_429_489_390_175_864_831_393;
+
+/*
+ PI_A to PI_D are constants that satisfy the following two conditions.
+
+ * For PI_A, PI_B and PI_C, the last 28 bits are zero.
+ * PI_A + PI_B + PI_C + PI_D is close to PI as much as possible.
+
+ The argument of a trig function is multiplied by 1/PI, and the
+ integral part is divided into two parts, each has at most 28
+ bits. So, the maximum argument that could be correctly reduced
+ should be 2^(28*2-1) PI = 1.1e+17. However, due to internal
+ double precision calculation, the actual maximum argument that can
+ be correctly reduced is around 2^47.
+*/
+const PI_A: f64 = 3.141_592_621_803_283_691_4;
+const PI_B: f64 = 3.178_650_942_459_171_346_9_e-8;
+const PI_C: f64 = 1.224_646_786_410_718_850_2_e-16;
+const PI_D: f64 = 1.273_663_432_702_189_981_6_e-24;
+const TRIGRANGEMAX: f64 = 1e+14;
+
+/*
+ PI_A2 and PI_B2 are constants that satisfy the following two conditions.
+
+ * The last 3 bits of PI_A2 are zero.
+ * PI_A2 + PI_B2 is close to PI as much as possible.
+
+ The argument of a trig function is multiplied by 1/PI, and the
+ integral part is multiplied by PI_A2. So, the maximum argument that
+ could be correctly reduced should be 2^(3-1) PI = 12.6. By testing,
+ we confirmed that it correctly reduces the argument up to around 15.
+*/
+const PI_A2: f64 = 3.141_592_653_589_793_116;
+const PI_B2: f64 = 1.224_646_799_147_353_207_2_e-16;
+const TRIGRANGEMAX2: f64 = 15.;
+
 #[inline]
 pub fn dd(h: f64, l: f64) -> Doubled<f64> {
     Doubled::new(h, l)
@@ -214,18 +262,18 @@ fn rempi(a: f64) -> (Doubled<f64>, i32) {
         ex = 0;
     }
     let ex = (ex * 4) as usize;
-    let mut x = a.mul_as_doubled(REMPITABDP[ex]);
+    let mut x = a.mul_as_doubled(crate::tables::REMPITABDP[ex]);
     let (did, dii) = rempisub(x.0);
     let mut q = dii;
     x.0 = did;
     x = x.normalize();
-    let mut y = a.mul_as_doubled(REMPITABDP[ex + 1]);
+    let mut y = a.mul_as_doubled(crate::tables::REMPITABDP[ex + 1]);
     x += y;
     let (did, dii) = rempisub(x.0);
     q += dii;
     x.0 = did;
     x = x.normalize();
-    y = dd(REMPITABDP[ex + 2], REMPITABDP[ex + 3]) * a;
+    y = dd(crate::tables::REMPITABDP[ex + 2], crate::tables::REMPITABDP[ex + 3]) * a;
     x += y;
     x = x.normalize()
         * dd(

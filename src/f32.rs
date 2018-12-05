@@ -15,6 +15,29 @@ const F1_23: f32 = (1u32 << 23) as f32;
 const F1_12: f32 = (1u32 << 12) as f32;
 const F1_10: f32 = (1u32 << 10) as f32;
 
+const PI_A_F: f32 = 3.140_625;
+const PI_B_F: f32 = 0.000_967_025_756_835_937_5;
+const PI_C_F: f32 = 6.277_114_152_908_325_195_3_e-7;
+const PI_D_F: f32 = 1.215_420_125_655_342_076_2_e-10;
+const TRIGRANGEMAX_F: f32 = 39000.;
+
+const PI_A2_F: f32 = 3.141_479_492_187_5;
+const PI_B2_F: f32 = 0.000_113_159_418_106_079_101_56;
+const PI_C2_F: f32 = 1.984_187_258_941_005_893_6_e-9;
+const TRIGRANGEMAX2_F: f32 = 125.0;
+
+const SLEEF_FP_ILOGB0: i32 = -2_147_483_648;
+const SLEEF_FP_ILOGBNAN: i32 = 2_147_483_647;
+const SQRT_FLT_MAX: f32 = 18_446_743_523_953_729_536.;
+const L10U_F: f32 = 0.301_025_390_6;
+const L10L_F: f32 = 4.605_038_981_e-6;
+const TRIGRANGEMAX4_F: f32 = 8e+6;
+const L2U_F: f32 = 0.693_145_751_953_125;
+const L2L_F: f32 = 1.428_606_765_330_187_045_e-6;
+const R_LN2_F: f32 =
+    1.442_695_040_888_963_407_359_924_681_001_892_137_426_645_954_152_985_934_135_449_406_931;
+const LOG10_2_F: f32 = 3.321_928_094_887_362_347_870_319_429_489_390_175_864_831_393;
+
 #[inline]
 pub fn df(h: f32, l: f32) -> Doubled<f32> {
     Doubled::new(h, l)
@@ -158,18 +181,18 @@ fn rempif(a: f32) -> (Doubled<f32>, i32) {
         ex = 0;
     }
     let ex = (ex * 4) as usize;
-    let mut x = a.mul_as_doubled(REMPITABSP[ex]);
+    let mut x = a.mul_as_doubled(crate::tables::REMPITABSP[ex]);
     let (did, dii) = rempisubf(x.0);
     q = dii;
     x.0 = did;
     x = x.normalize();
-    let mut y = a.mul_as_doubled(REMPITABSP[ex + 1]);
+    let mut y = a.mul_as_doubled(crate::tables::REMPITABSP[ex + 1]);
     x += y;
     let (did, dii) = rempisubf(x.0);
     q += dii;
     x.0 = did;
     x = x.normalize();
-    y = df(REMPITABSP[ex + 2], REMPITABSP[ex + 3]) * a;
+    y = df(crate::tables::REMPITABSP[ex + 2], crate::tables::REMPITABSP[ex + 3]) * a;
     x += y;
     x = x.normalize();
     x *= df(

@@ -867,7 +867,7 @@ pub fn atanhf(x: f32) -> f32 {
 /// This function returns 10 raised to ***a***.
 /// The error bound of the returned value is 1.09 ULP.
 pub fn exp10f(d: f32) -> f32 {
-    let qf = rintfk(d * (LOG10_2 as f32));
+    let qf = rintfk(d * LOG10_2_F);
 
     let q = qf as i32;
     let s = qf.mul_add(-L10U_F, d);

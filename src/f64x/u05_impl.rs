@@ -2,6 +2,7 @@ macro_rules! impl_math_f64_u05 {
     ($f64x:ident, $u64x:ident, $m64x:ident, $i64x:ident, $ux:ident, $mx:ident, $ix:ident) => {
         use super::*;
 
+        #[cfg(not(feature="deterministic"))]
         pub fn sincospi(d: $f64x) -> ($f64x, $f64x) {
             let u = d * $f64x::splat(4.);
             let mut q = u.trunci();
@@ -85,6 +86,7 @@ macro_rules! impl_math_f64_u05 {
             (rsin, rcos)
         }
 
+        #[cfg(not(feature="deterministic"))]
         pub fn sinpi(d: $f64x) -> $f64x {
             let x = sinpik(d);
             let mut r = x.0 + x.1;
@@ -97,6 +99,7 @@ macro_rules! impl_math_f64_u05 {
             $f64x::from_bits(vor_vm_vo64_vm(d.is_infinite(), $u64x::from_bits(r)))
         }
 
+        #[cfg(not(feature="deterministic"))]
         pub fn cospi(d: $f64x) -> $f64x {
             let x = cospik(d);
             let r = x.0 + x.1;
@@ -105,6 +108,7 @@ macro_rules! impl_math_f64_u05 {
             $f64x::from_bits(vor_vm_vo64_vm(d.is_infinite(), $u64x::from_bits(r)))
         }
 
+        #[cfg(not(feature="deterministic"))]
         pub fn sqrt(d: $f64x) -> $f64x {
             let d = d.lt(ZERO).select($f64x::NAN, d);
 
@@ -134,6 +138,7 @@ macro_rules! impl_math_f64_u05 {
             d.eq(ZERO).select(d, x)
         }
 
+        #[cfg(not(feature="deterministic"))]
         pub fn hypot(x: $f64x, y: $f64x) -> $f64x {
             let x = x.abs();
             let y = y.abs();

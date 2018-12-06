@@ -81,25 +81,25 @@ macro_rules! impl_math_f64 {
         //---------???????
         //--------- Naive implementation ???????
         #[inline]
-        fn vandnot_vm_vm_vm(x: $u64x, y: $u64x) -> $u64x { y & !x }
+        fn vandnot_vm_vm_vm(x: $u64x, y: $u64x) -> $u64x { !x & y  }
 
         #[inline]
-        fn vandnot_vo_vo_vo(x: $m64x, y: $m64x) -> $m64x { y & !x }
+        fn vandnot_vo_vo_vo(x: $m64x, y: $m64x) -> $m64x { !x & y  }
 
         #[inline]
         fn vand_vm_vo64_vm(x: $m64x, y: $u64x) -> $u64x { $u64x::from_bits(x) & y }
         #[inline]
         fn vor_vm_vo64_vm(x: $m64x, y: $u64x) -> $u64x { $u64x::from_bits(x) | y }
         #[inline]
-        fn vandnot_vm_vo64_vm(x: $m64x, y: $u64x) -> $u64x { y & !$u64x::from_bits(x) }
+        fn vandnot_vm_vo64_vm(x: $m64x, y: $u64x) -> $u64x { !$u64x::from_bits(x) & y }
 
         #[inline]
-        fn vandnot_vi_vi_vi(x: $ix, y: $ix) -> $ix { y & !x }
+        fn vandnot_vi_vi_vi(x: $ix, y: $ix) -> $ix { !x & y  }
 
         #[inline]
         fn vand_vi_vo_vi(x: $mx, y: $ix) -> $ix { $ix::from_bits(x) & y }
         #[inline]
-        fn vandnot_vi_vo_vi(x: $mx, y: $ix) -> $ix { $ix::from_bits(x) & !y }
+        fn vandnot_vi_vo_vi(x: $mx, y: $ix) -> $ix { !$ix::from_bits(x) & y }
 
         #[inline]
         fn veq_vi2_vi2_vi2(x: $i64x, y: $i64x) -> $i64x { $i64x::from_bits(x.eq(y)) }
@@ -665,6 +665,7 @@ macro_rules! impl_math_f64 {
             t
         }
 
+        #[cfg(not(feature="deterministic"))]
         #[inline]
         fn logk2(d: Doubled<$f64x>) -> Doubled<$f64x> {
             let e = vilogbk_vi_vd(d.0 * $f64x::splat(1. / 0.75));
@@ -712,38 +713,46 @@ macro_rules! impl_math_f64 {
           $i64x::from_bits(Simd::<[u32; L*2]>::from_slice_aligned(&a))
         }
 
+        #[cfg(not(feature="deterministic"))]
         #[inline]
         pub fn fabs(x: $f64x) -> $f64x {
             x.abs()
         }
 
+        #[cfg(not(feature="deterministic"))]
         #[inline]
         pub fn copysign(x: $f64x, y: $f64x) -> $f64x {
             x.copy_sign(y)
         }
 
+        #[cfg(not(feature="deterministic"))]
         #[cfg(any(target_arch = "x86", target_arch = "x86_64"))] //  && !defined(ENABLE_VECEXT) && !defined(ENABLE_PUREC)
         pub fn fmax(x: $f64x, y: $f64x) -> $f64x {
             y.is_nan().select(x, x.max(y))
         }
+        #[cfg(not(feature="deterministic"))]
         #[cfg(all(not(target_arch = "x86"), not(target_arch = "x86_64")))]
         pub fn fmax(x: $f64x, y: $f64x) -> $f64x {
             y.is_nan().select(x, x.gt(y).select(x, y))
         }
+        #[cfg(not(feature="deterministic"))]
         #[cfg(any(target_arch = "x86", target_arch = "x86_64"))] //  && !defined(ENABLE_VECEXT) && !defined(ENABLE_PUREC)
         pub fn fmin(x: $f64x, y: $f64x) -> $f64x {
             y.is_nan().select(x, x.min(y))
         }
+        #[cfg(not(feature="deterministic"))]
         #[cfg(all(not(target_arch = "x86"), not(target_arch = "x86_64")))]
         pub fn fmin(x: $f64x, y: $f64x) -> $f64x {
             y.is_nan().select(x, y.gt(x).select(x, y))
         }
 
+        #[cfg(not(feature="deterministic"))]
         pub fn fdim(x: $f64x, y: $f64x) -> $f64x {
             let ret = x - y;
             (ret.lt(ZERO) | x.eq(y)).select(ZERO, ret)
         }
 
+        #[cfg(not(feature="deterministic"))]
         pub fn trunc(x: $f64x) -> $f64x {
             let mut fr = x
                 - D1_31X
@@ -753,6 +762,7 @@ macro_rules! impl_math_f64 {
                 .select(x, (x - fr).copy_sign(x))
         }
 
+        #[cfg(not(feature="deterministic"))]
         pub fn floor(x: $f64x) -> $f64x {
             let mut fr = x
                 - D1_31X
@@ -763,6 +773,7 @@ macro_rules! impl_math_f64 {
                 .select(x, (x - fr).copy_sign(x))
         }
 
+        #[cfg(not(feature="deterministic"))]
         pub fn ceil(x: $f64x) -> $f64x {
             let mut fr = x
                 - D1_31X
@@ -773,6 +784,7 @@ macro_rules! impl_math_f64 {
                 .select(x, (x - fr).copy_sign(x))
         }
 
+        #[cfg(not(feature="deterministic"))]
         pub fn round(d: $f64x) -> $f64x {
             let mut x = d + HALF;
             let mut fr = x
@@ -788,6 +800,7 @@ macro_rules! impl_math_f64 {
                 .select(d, (x - fr).copy_sign(d))
         }
 
+        #[cfg(not(feature="deterministic"))]
         pub fn rint(d: $f64x) -> $f64x {
             let mut x = d + HALF;
             let mut fr = x
@@ -804,6 +817,7 @@ macro_rules! impl_math_f64 {
                 .select(d, (x - fr).copy_sign(d))
         }
 
+        #[cfg(not(feature="deterministic"))]
         pub fn nextafter(x: $f64x, y: $f64x) -> $f64x {
             let x = x
                 .eq(ZERO)
@@ -840,6 +854,7 @@ macro_rules! impl_math_f64 {
             (x.is_nan() | y.is_nan()).select($f64x::NAN, ret)
         }
 
+        #[cfg(not(feature="deterministic"))]
         pub fn frfrexp(x: $f64x) -> $f64x {
             let x = x
                 .abs()
@@ -857,6 +872,7 @@ macro_rules! impl_math_f64 {
             x.eq(ZERO).select(x, ret)
         }
 
+        #[cfg(not(feature="deterministic"))]
         pub fn expfrexp(x: $f64x) -> $ix {
             let x = x
                 .abs()
@@ -870,6 +886,7 @@ macro_rules! impl_math_f64 {
             (x.eq(ZERO) | x.is_nan() | x.is_infinite()).select($ix::splat(0), ret)
         }
 
+        #[cfg(not(feature="deterministic"))]
         pub fn fma(mut x: $f64x, mut y: $f64x, mut z: $f64x) -> $f64x {
             let mut h2 = x * y + z;
             let mut q = ONE;
@@ -904,6 +921,7 @@ macro_rules! impl_math_f64 {
             o.select(h2, ret * q)
         }
 
+        #[cfg(not(feature="deterministic"))]
         //#[cfg(feature = "accurate_sqrt")]
         pub fn sqrt(d: $f64x) -> $f64x {
             d.sqrt()
@@ -914,12 +932,15 @@ macro_rules! impl_math_f64 {
             u05::sqrt(d)
         }*/
 
+        #[cfg(not(feature="deterministic"))]
         #[inline]
         fn vtoward0(x: $f64x) -> $f64x {
             // returns nextafter(x, 0)
             let t = $f64x::from_bits($u64x::from_bits(x) + $u64x::from_bits(vcast_vi2_i_i(-1, -1)));
             x.eq(ZERO).select(ZERO, t)
         }
+        
+        #[cfg(not(feature="deterministic"))]
         #[cfg(feature = "full_fp_rounding")]
         #[inline]
         fn vptrunc(x: $f64x) -> $f64x {
@@ -938,6 +959,7 @@ macro_rules! impl_math_f64 {
         }
 
         /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
+        #[cfg(not(feature="deterministic"))]
         pub fn fmod(x: $f64x, y: $f64x) -> $f64x {
             let nu = x.abs();
             let de = y.abs();
@@ -972,6 +994,7 @@ macro_rules! impl_math_f64 {
         }
 
         /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
+        #[cfg(not(feature="deterministic"))]
         fn gammak(a: $f64x) -> (Doubled<$f64x>, Doubled<$f64x>) {
             let mut clln = Doubled::from((1., 0.));
             let mut clld = Doubled::from((1., 0.));
@@ -1310,6 +1333,7 @@ macro_rules! impl_math_f64 {
             x
         }
 
+        #[cfg(not(feature="deterministic"))]
         pub fn modf(x: $f64x) -> ($f64x, $f64x) {
             let mut fr = x
                 - D1_31X

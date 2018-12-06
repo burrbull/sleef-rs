@@ -2,6 +2,7 @@ macro_rules! impl_math_f64_u35 {
     ($f64x:ident, $u64x:ident, $m64x:ident, $i64x:ident, $ux:ident, $mx:ident, $ix:ident) => {
         use super::*;
 
+        #[cfg(not(feature="deterministic"))]
         pub fn sin(mut d: $f64x) -> $f64x {
             let r = d;
             let mut ql: $ix;
@@ -67,7 +68,82 @@ macro_rules! impl_math_f64_u35 {
 
             r.is_neg_zero().select(r, u)
         }
+        
+        /*
+        
+        #[cfg(feature="deterministic")]
+        pub fn sin(mut d: $f64x) -> $f64x {
+        
+// This is the deterministic implementation of sin function. Returned
+// values from deterministic functions are bitwise consistent across
+// all platforms. The function name xsin will be renamed to
+// Sleef_cinz_sind2_u35sse2 with renamesse2.h, for example. The
+// renaming by rename*.h is switched according to DETERMINISTIC macro.
+  vdouble u, s, r = d;
+  vint ql;
 
+  vdouble dql = (d * vcast_vd_d(M_1_PI)).round();
+  ql = vrint_vi_vd(dql);
+  d = dql.mul_add(-PI_A2, d);
+  d = dql.mul_add(-PI_B2, d);
+  vopmask g = r.abs().lt(TRIGRANGEMAX2);
+
+  if (!LIKELY(vtestallones_i_vo64(g))) {
+    vdouble dqh = (r * vcast_vd_d(M_1_PI / (1 << 24))).trunc();
+    dqh = dqh * vcast_vd_d(1 << 24);
+    vdouble dql = (vmlapn_vd_vd_vd_vd(r, vcast_vd_d(M_1_PI), dqh)).round();
+
+    u = dqh.mul_add(-PI_A, r);
+    u = dql.mul_add(-PI_A, u);
+    u = dqh.mul_add(-PI_B, u);
+    u = dql.mul_add(-PI_B, u);
+    u = dqh.mul_add(-PI_C, u);
+    u = dql.mul_add(-PI_C, u);
+    u = (dqh + dql).mul_add(-PI_D, u);
+
+    ql = vcast_vo32_vo64(g).select(ql, vrint_vi_vd(dql));
+    d = g.select(d, u);
+    g = r.abs().lt(TRIGRANGEMAX);
+
+    if (!LIKELY(vtestallones_i_vo64(g))) {
+      ddi_t ddi = rempi(r);
+      vint ql2 = (ddi.i & vcast_vi_i(3));
+      ql2 = ql2 + ql2 + vcast_vo32_vo64(vgt_vo_vd_vd(ddi.dd.0, ZERO)).select(vcast_vi_i(2), vcast_vi_i(1)));
+      ql2 = vsra_vi_vi_i(ql2, 2);
+      vopmask o = (ddi.i & vcast_vi_i(1)).eq(vcast_vi_i(1));
+      vdouble2 x = vcast_vd2_vd_vd(vmulsign_vd_vd_vd(vcast_vd_d(-3.141592653589793116 * 0.5), ddi.dd.0), 
+				   vmulsign_vd_vd_vd(vcast_vd_d(-1.2246467991473532072e-16 * 0.5), ddi.dd.0));
+      x = ddadd2_vd2_vd2_vd2(ddi.dd, x);
+      ddi.dd = vcast_vo64_vo32(o).select_doubled(x, ddi.dd);
+      u = ddi.dd.0 + ddi.dd.1;
+      ql = vcast_vo32_vo64(g).select(ql, ql2);
+      d = g.select(d, u);
+      d = vreinterpret_vd_vm(vor_vm_vo64_vm(vor_vo_vo_vo(visinf_vo_vd(r), visnan_vo_vd(r)), vreinterpret_vm_vd(d)));
+    }
+  }
+
+  s = d * d;
+
+  d = vreinterpret_vd_vm(vxor_vm_vm_vm(vand_vm_vo64_vm(vcast_vo64_vo32((ql & vcast_vi_i(1)).eq(vcast_vi_i(1))), vreinterpret_vm_vd(NEG_ZERO)), vreinterpret_vm_vd(d)));
+
+  u = $f64x::splat(-7.97255955009037868891952e-18)
+      .mul_add(s, $f64x::splat(2.81009972710863200091251e-15))
+      .mul_add(s, $f64x::splat(-7.64712219118158833288484e-13))
+      .mul_add(s, $f64x::splat(1.60590430605664501629054e-10))
+      .mul_add(s, $f64x::splat(-2.50521083763502045810755e-08))
+      .mul_add(s, $f64x::splat(2.75573192239198747630416e-06))
+      .mul_add(s, $f64x::splat(-0.000198412698412696162806809))
+      .mul_add(s, $f64x::splat(0.00833333333333332974823815))
+      .mul_add(s, $f64x::splat(-0.166666666666666657414808));
+
+  u = s * (u * d) + d;
+
+  u = r.is_neg_zero().select(r, u);
+  
+  return u;
+    }
+*/
+        #[cfg(not(feature="deterministic"))]
         pub fn cos(mut d: $f64x) -> $f64x {
             let r = d;
             let mut ql: $ix;
@@ -142,7 +218,77 @@ macro_rules! impl_math_f64_u35 {
 
             s * (u * d) + d
         }
+        /*
+        #[cfg(feature="deterministic")]
+        pub fn cos(mut d: $f64x) -> $f64x {
+            
+  vdouble u, s, r = d;
+  vint ql;
 
+  vopmask g = d.abs().lt(TRIGRANGEMAX2);
+  vdouble dql = vcast_vd_d(2).mul_add((d.mul_add(vcast_vd_d(M_1_PI), vcast_vd_d(-0.5))).round(), vcast_vd_d(1));
+  ql = vrint_vi_vd(dql);
+  d = dql.mul_add(-PI_A2 * HALF, d);
+  d = dql.mul_add(-PI_B2 * HALF, d);
+
+  if (!LIKELY(vtestallones_i_vo64(g))) {
+    vdouble dqh = (r.mul_add(vcast_vd_d(M_1_PI / (1 << 23)), vcast_vd_d(-M_1_PI / (1 << 24)))).trunc();
+    vint ql2 = vrint_vi_vd(r * vcast_vd_d(M_1_PI) +
+                    dqh.mul_add(vcast_vd_d(-(1 << 23)), vcast_vd_d(-0.5)));
+    dqh = dqh * vcast_vd_d(1 << 24);
+    ql2 = ql2 + ql2 + vcast_vi_i(1));
+    vdouble dql = vcast_vd_vi(ql2);
+
+    u = dqh.mul_add(-PI_A * HALF, r);
+    u = dql.mul_add(-PI_A * HALF, u);
+    u = dqh.mul_add(-PI_B * HALF, u);
+    u = dql.mul_add(-PI_B * HALF, u);
+    u = dqh.mul_add(-PI_C * HALF, u);
+    u = dql.mul_add(-PI_C * HALF, u);
+    u = (dqh + dql).mul_add(-PI_D * HALF, u);
+
+    ql = vcast_vo32_vo64(g).select(ql, ql2);
+    d = g.select(d, u);
+    g = r.abs().lt(TRIGRANGEMAX);
+
+    if (!LIKELY(vtestallones_i_vo64(g))) {
+      ddi_t ddi = rempi(r);
+      vint ql2 = (ddi.i & vcast_vi_i(3));
+      ql2 = ql2 + ql2 + vcast_vo32_vo64(vgt_vo_vd_vd(ddi.dd.0, ZERO)).select(vcast_vi_i(8), vcast_vi_i(7));
+      ql2 = vsra_vi_vi_i(ql2, 1);
+      vopmask o = (ddi.i & vcast_vi_i(1)).eq(vcast_vi_i(0));
+      vdouble y = vgt_vo_vd_vd(ddi.dd.0, ZERO).select(ZERO, vcast_vd_d(-1));
+      vdouble2 x = vcast_vd2_vd_vd(vmulsign_vd_vd_vd(vcast_vd_d(-3.141592653589793116 * 0.5), y), 
+				   vmulsign_vd_vd_vd(vcast_vd_d(-1.2246467991473532072e-16 * 0.5), y));
+      x = ddadd2_vd2_vd2_vd2(ddi.dd, x);
+      ddi.dd = vcast_vo64_vo32(o).select_doubled(x, ddi.dd);
+      u = (ddi.dd.0 + ddi.dd.1);
+      ql = vcast_vo32_vo64(g).select(ql, ql2);
+      d = g.select(d, u);
+      d = vreinterpret_vd_vm(vor_vm_vo64_vm(vor_vo_vo_vo(visinf_vo_vd(r), visnan_vo_vd(r)), vreinterpret_vm_vd(d)));
+    }
+  }
+
+  s = d * d;
+
+  d = vreinterpret_vd_vm(vxor_vm_vm_vm(vand_vm_vo64_vm(vcast_vo64_vo32((ql & vcast_vi_i(2)).eq(vcast_vi_i(0))), vreinterpret_vm_vd(NEG_ZERO)), vreinterpret_vm_vd(d)));
+
+  u = $f64x::splat(-7.97255955009037868891952e-18)
+      .mul_add(s, $f64x::splat(2.81009972710863200091251e-15))
+      .mul_add(s, $f64x::splat(-7.64712219118158833288484e-13))
+      .mul_add(s, $f64x::splat(1.60590430605664501629054e-10))
+      .mul_add(s, $f64x::splat(-2.50521083763502045810755e-08))
+      .mul_add(s, $f64x::splat(2.75573192239198747630416e-06))
+      .mul_add(s, $f64x::splat(-0.000198412698412696162806809))
+      .mul_add(s, $f64x::splat(0.00833333333333332974823815))
+      .mul_add(s, $f64x::splat(-0.166666666666666657414808));
+
+  u = s * (u * d) + d;
+  
+  return u;
+        }*/
+
+        #[cfg(not(feature="deterministic"))]
         pub fn sincos(d: $f64x) -> ($f64x, $f64x) {
             let mut s: $f64x;
             let ql: $ix;
@@ -215,7 +361,87 @@ macro_rules! impl_math_f64_u35 {
 
             (rsin, rcos)
         }
+        /*
+        #[cfg(not(feature="deterministic"))]
+        pub fn sincos(d: $f64x) -> ($f64x, $f64x) {
+            
+  vopmask o;
+  vdouble u, t, rx, ry, s = d;
+  vdouble2 r;
+  vint ql;
 
+  vdouble dql = (s * vcast_vd_d(2 * M_1_PI)).round();
+  ql = vrint_vi_vd(dql);
+  s = dql.mul_add(-PI_A2 * HALF, s);
+  s = dql.mul_add(-PI_B2 * HALF, s);
+  vopmask g = d.abs().lt(TRIGRANGEMAX2);
+
+  if (!LIKELY(vtestallones_i_vo64(g))) {
+    vdouble dqh = (d * vcast_vd_d(2*M_1_PI / (1 << 24))).trunc();
+    dqh = dqh * vcast_vd_d(1 << 24);
+    vdouble dql = (d * vcast_vd_d(2*M_1_PI) - dqh).round();
+
+    u = dqh.mul_add(-PI_A * HALF, d);
+    u = dql.mul_add(-PI_A * HALF, u);
+    u = dqh.mul_add(-PI_B * HALF, u);
+    u = dql.mul_add(-PI_B * HALF, u);
+    u = dqh.mul_add(-PI_C * HALF, u);
+    u = dql.mul_add(-PI_C * HALF, u);
+    u = (dqh + dql).mul_add(-PI_D * HALF, u);
+
+    ql = vcast_vo32_vo64(g).select(ql, vrint_vi_vd(dql));
+    s = g.select(s, u);
+    g = d.abs().lt(TRIGRANGEMAX);
+
+    if (!LIKELY(vtestallones_i_vo64(g))) {
+      ddi_t ddi = rempi(d);
+      u = ddi.dd.0 + ddi.dd.1;
+      u = vreinterpret_vd_vm(vor_vm_vo64_vm(vor_vo_vo_vo(visinf_vo_vd(d), visnan_vo_vd(d)), vreinterpret_vm_vd(u)));
+
+      ql = vcast_vo32_vo64(g).select(ql, ddi.i);
+      s = g.select(s, u);
+    }
+  }
+  
+  t = s;
+
+  s = s * s;
+
+  u = $f64x::splat(1.58938307283228937328511e-10)
+      .mul_add(s, $f64x::splat(-2.50506943502539773349318e-08))
+      .mul_add(s, $f64x::splat(2.75573131776846360512547e-06))
+      .mul_add(s, $f64x::splat(-0.000198412698278911770864914))
+      .mul_add(s, $f64x::splat(0.0083333333333191845961746))
+      .mul_add(s, $f64x::splat(-0.166666666666666130709393));
+
+  rx = (u * s).mul_add(t, t);
+  rx = d.is_neg_zero().select(NEG_ZERO, rx);
+
+  u = $f64x::splat(-1.13615350239097429531523e-11)
+      .mul_add(s, $f64x::splat(2.08757471207040055479366e-09))
+      .mul_add(s, $f64x::splat(-2.75573144028847567498567e-07))
+      .mul_add(s, $f64x::splat(2.48015872890001867311915e-05))
+      .mul_add(s, $f64x::splat(-0.00138888888888714019282329))
+      .mul_add(s, $f64x::splat(0.0416666666666665519592062))
+      .mul_add(s, $f64x::splat(-0.5));
+
+  ry = s.mul_add(u, vcast_vd_d(1));
+
+  o = vcast_vo64_vo32((ql & vcast_vi_i(1)).eq(vcast_vi_i(0)));
+  r.0 = o.select(rx, ry);
+  r.1 = o.select(ry, rx);
+
+  o = vcast_vo64_vo32((ql & vcast_vi_i(2)).eq(vcast_vi_i(2)));
+  r.0 = vreinterpret_vd_vm(vxor_vm_vm_vm(vand_vm_vo64_vm(o, vreinterpret_vm_vd(NEG_ZERO)), vreinterpret_vm_vd(r.0)));
+
+  o = vcast_vo64_vo32(((ql + vcast_vi_i(1)) & vcast_vi_i(2)).eq(vcast_vi_i(2)));
+  r.1 = vreinterpret_vd_vm(vxor_vm_vm_vm(vand_vm_vo64_vm(o, vreinterpret_vm_vd(NEG_ZERO)), vreinterpret_vm_vd(r.1)));
+  
+  return r;
+        }
+        */
+
+        #[cfg(not(feature="deterministic"))]
         pub fn sincospi(d: $f64x) -> ($f64x, $f64x) {
             let u = d * $f64x::splat(4.);
             let mut q = u.trunci();
@@ -276,6 +502,8 @@ macro_rules! impl_math_f64_u35 {
 
             (rsin, rcos)
         }
+        
+        #[cfg(not(feature="deterministic"))]
         pub fn tan(d: $f64x) -> $f64x {
             let ql: $ix;
 
@@ -364,6 +592,107 @@ macro_rules! impl_math_f64_u35 {
             u = o.select(u.recpre(), u);
             d.eq(ZERO).select(d, u)
         }
+        
+        /*
+        #[cfg(feature="deterministic")]
+        pub fn tan(d: $f64x) -> $f64x {
+            
+  vdouble u, s, x;
+  vopmask o;
+  vint ql;
+
+  vdouble dql = (d * vcast_vd_d(2 * M_1_PI)).round();
+  ql = vrint_vi_vd(dql);
+  s = dql.mul_add(-PI_A2 * HALF, d);
+  s = dql.mul_add(-PI_B2 * HALF, s);
+  vopmask g = d.abs().lt(TRIGRANGEMAX2);
+
+  if (!LIKELY(vtestallones_i_vo64(g))) {
+    vdouble dqh = (d * vcast_vd_d(2*M_1_PI / (1 << 24))).trunc();
+    dqh = dqh * vcast_vd_d(1 << 24);
+    vdouble dql = (d * vcast_vd_d(2*M_1_PI) - dqh).round();
+
+    u = dqh.mul_add(-PI_A * HALF, d);
+    u = dql.mul_add(-PI_A * HALF, u);
+    u = dqh.mul_add(-PI_B * HALF, u);
+    u = dql.mul_add(-PI_B * HALF, u);
+    u = dqh.mul_add(-PI_C * HALF, u);
+    u = dql.mul_add(-PI_C * HALF, u);
+    u = (dqh + dql).mul_add(-PI_D * HALF, u);
+
+    ql = vcast_vo32_vo64(g).select(ql, vrint_vi_vd(dql));
+    s = g.select(s, u);
+    g = d.abs().lt($f64x::splat(1e+7));
+
+    if (!LIKELY(vtestallones_i_vo64(g))) {
+      ddi_t ddi = rempi(d);
+      vint ql2 = ddi.i;
+      u = ddi.dd.0 + ddi.dd.1;
+      u = vreinterpret_vd_vm(vor_vm_vo64_vm(vor_vo_vo_vo(visinf_vo_vd(d), visnan_vo_vd(d)), vreinterpret_vm_vd(u)));
+
+      ql = vcast_vo32_vo64(g).select(ql, ql2);
+      s = g.select(s, u);
+    }
+  }
+
+  x = s;
+
+  s = s * s;
+
+  o = vcast_vo64_vo32((ql & vcast_vi_i(1)).eq(vcast_vi_i(1)));
+  x = vreinterpret_vd_vm(vxor_vm_vm_vm(vand_vm_vo64_vm(o, vreinterpret_vm_vd(NEG_ZERO)), vreinterpret_vm_vd(x)));
+
+#ifdef SPLIT_KERNEL
+  vdouble s2 = (s * s);
+   v;
+
+  u = $f64x::splat(-4.31184585467324750724175e-05)
+      .mul_add(s2, $f64x::splat(-0.000137892809714281708733524))
+      .mul_add(s2, $f64x::splat(-6.07500301486087879295969e-05))
+      .mul_add(s2, $f64x::splat(0.000219040550724571513561967))
+      .mul_add(s2, $f64x::splat(0.00145461240472358871965441))
+      .mul_add(s2, $f64x::splat(0.00886321546662684547901456))
+      .mul_add(s2, $f64x::splat(0.0539682539049961967903002))
+      .mul_add(s2, $f64x::splat(0.333333333333320047664472));
+
+  v = $f64x::splat(9.99583485362149960784268e-06)
+      .mul_add(s2, $f64x::splat(0.000103573238391744000389851))
+      .mul_add(s2, $f64x::splat(0.000157624358465342784274554))
+      .mul_add(s2, $f64x::splat(0.000148898734751616411290179))
+      .mul_add(s2, $f64x::splat(0.000595799595197098359744547))
+      .mul_add(s2, $f64x::splat(0.0035923150771440177410343))
+      .mul_add(s2, $f64x::splat(0.0218694899718446938985394))
+      .mul_add(s2, $f64x::splat(0.133333333334818976423364));
+  
+  u = v.mul_add(s, u);
+#else // #ifdef SPLIT_KERNEL
+  u = $f64x::splat(9.99583485362149960784268e-06)
+      .mul_add(s, $f64x::splat(-4.31184585467324750724175e-05))
+      .mul_add(s, $f64x::splat(0.000103573238391744000389851))
+      .mul_add(s, $f64x::splat(-0.000137892809714281708733524))
+      .mul_add(s, $f64x::splat(0.000157624358465342784274554))
+      .mul_add(s, $f64x::splat(-6.07500301486087879295969e-05))
+      .mul_add(s, $f64x::splat(0.000148898734751616411290179))
+      .mul_add(s, $f64x::splat(0.000219040550724571513561967))
+      .mul_add(s, $f64x::splat(0.000595799595197098359744547))
+      .mul_add(s, $f64x::splat(0.00145461240472358871965441))
+      .mul_add(s, $f64x::splat(0.0035923150771440177410343))
+      .mul_add(s, $f64x::splat(0.00886321546662684547901456))
+      .mul_add(s, $f64x::splat(0.0218694899718446938985394))
+      .mul_add(s, $f64x::splat(0.0539682539049961967903002))
+      .mul_add(s, $f64x::splat(0.133333333334818976423364))
+      .mul_add(s, $f64x::splat(0.333333333333320047664472));
+#endif // #ifdef SPLIT_KERNEL
+  
+  u = s.mul_add(u * x, x);
+
+  u = o.select(vrec_vd_vd(u), u);
+
+  u = d.eq(ZERO).select(d, u);
+  
+  return u;
+        }
+        */
 
         pub fn atan2(y: $f64x, x: $f64x) -> $f64x {
             let mut r = atan2k(y.abs(), x);
@@ -571,6 +900,7 @@ macro_rules! impl_math_f64_u35 {
             t
         }
 
+        #[cfg(not(feature="deterministic"))]
         pub fn log(mut d: $f64x) -> $f64x {
             let m: $f64x;
 
@@ -612,6 +942,7 @@ macro_rules! impl_math_f64_u35 {
             }*/
         }
 
+        #[cfg(not(feature="deterministic"))]
         pub fn sinh(x: $f64x) -> $f64x {
             let e = expm1k(x.abs());
 
@@ -624,6 +955,7 @@ macro_rules! impl_math_f64_u35 {
             $f64x::from_bits(vor_vm_vo64_vm(x.is_nan(), $u64x::from_bits(y)))
         }
 
+        #[cfg(not(feature="deterministic"))]
         pub fn cosh(x: $f64x) -> $f64x {
             let e = u10::exp(x.abs());
             let mut y = HALF.mul_add(e, HALF / e);
@@ -633,6 +965,7 @@ macro_rules! impl_math_f64_u35 {
             $f64x::from_bits(vor_vm_vo64_vm(x.is_nan(), $u64x::from_bits(y)))
         }
 
+        #[cfg(not(feature="deterministic"))]
         pub fn tanh(x: $f64x) -> $f64x {
             let d = expm1k($f64x::splat(2.) * x.abs());
             let mut y = d / ($f64x::splat(2.) + d);
@@ -643,6 +976,7 @@ macro_rules! impl_math_f64_u35 {
             $f64x::from_bits(vor_vm_vo64_vm(x.is_nan(), $u64x::from_bits(y)))
         }
 
+        #[cfg(not(feature="deterministic"))]
         pub fn cbrt(mut d: $f64x) -> $f64x {
             let mut q = ONE;
             /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
@@ -688,10 +1022,12 @@ macro_rules! impl_math_f64_u35 {
             y
         }
 
+        #[cfg(not(feature="deterministic"))]
         pub fn sqrt(d: $f64x) -> $f64x {
             return u05::sqrt(d);
         }
 
+        #[cfg(not(feature="deterministic"))]
         pub fn hypot(x: $f64x, y: $f64x) -> $f64x {
             let x = x.abs();
             let y = y.abs();

@@ -13,6 +13,7 @@ macro_rules! impl_math_f64 {
         use doubled::*;
 
         const ZERO: $f64x = $f64x::splat(0.);
+        const NEG_ZERO: $f64x = $f64x::splat(-0.);
         const ONE: $f64x = $f64x::splat(1.);
         const HALF: $f64x = $f64x::splat(0.5);
         const D1_63X: $f64x = $f64x::splat((1u64 << 63) as f64);
@@ -75,6 +76,27 @@ macro_rules! impl_math_f64 {
         #[inline]
         fn veq_vi2_vi2_vi2(x: $i64x, y: $i64x) -> $i64x { $i64x::from_bits(x.eq(y)) }
 
+        #[inline]
+        fn vgather_vd_p_vi(ptr: &[f64], vi: $ix) -> $f64x {
+            let mut ar = [0_f64; $f64x::lanes()];
+            for i in 0..$f64x::lanes() {
+                ar[i] = ptr[vi.extract(i) as usize];
+            }
+            $f64x::from_slice_aligned(&ar)
+        }
+
+        #[inline]
+        fn vrev21_vi2_vi2(i: $i64x) -> $i64x {
+            const L : usize = $i64x::lanes()*2;
+            let i2 = Simd::<[i32;L]>::from_bits(i);
+            let mut r = [0_i32;L];
+            i2.write_to_slice_aligned(&mut r);
+            for i in 0..L/2 {
+                r.swap(i*2, i*2+1);
+            }
+            $i64x::from_bits(Simd::<[i32;L]>::from_slice_aligned(&r))
+        }
+
         impl Round for $f64x {
             type Int = $ix;
             #[inline]
@@ -101,32 +123,6 @@ macro_rules! impl_math_f64 {
                 self*y - z
             }
         }
-
-        #[inline]
-        fn vgather_vd_p_vi(ptr: &[f64], vi: $ix) -> $f64x {
-            let mut ar = [0_f64; $f64x::lanes()];
-            for i in 0..$f64x::lanes() {
-                ar[i] = ptr[vi.extract(i) as usize];
-            }
-            $f64x::from_slice_aligned(&ar)
-        }
-
-        #[inline]
-        fn vrev21_vi2_vi2(i: $i64x) -> $i64x {
-            const L : usize = $i64x::lanes()*2;
-            let i2 = Simd::<[i32;L]>::from_bits(i);
-            let mut r = [0_i32;L];
-            i2.write_to_slice_aligned(&mut r);
-            for i in 0..L/2 {
-                r.swap(i*2, i*2+1);
-            }
-            $i64x::from_bits(Simd::<[i32;L]>::from_slice_aligned(&r))
-        }
-
-        //----------???????
-        //----------???????
-
-        // ------------
 
         impl SqrtAsDoubled for $f64x {
             #[inline]
@@ -207,6 +203,15 @@ macro_rules! impl_math_f64 {
             }
         }
 
+        impl NegZero for $f64x {
+            type Mask = $m64x;
+            type Bits = $u64x;
+            #[inline]
+            fn is_neg_zero(self) -> Self::Mask {
+                Self::Bits::from_bits(self).eq(Self::Bits::from_bits(NEG_ZERO))
+            }
+        }
+
         // return d0 < d1 ? x : y
         #[inline]
         fn vsel_vi_vd_vd_vi_vi(d0: $f64x, d1: $f64x, x: $ix, y: $ix) -> $ix {
@@ -217,10 +222,6 @@ macro_rules! impl_math_f64 {
         #[inline]
         fn vsel_vi_vd_vi(d: $f64x, x: $ix) -> $ix {
             vand_vi_vo_vi($mx::from_cast(d.is_sign_negative()), x)
-        }
-        #[inline]
-        fn visnegzero_vo_vd(d: $f64x) -> $m64x {
-            $u64x::from_bits(d).eq($u64x::from_bits($f64x::splat(-0.)))
         }
         #[inline]
         fn vpow2i_vd_vi(q: $ix) -> $f64x {
@@ -434,10 +435,10 @@ macro_rules! impl_math_f64 {
 
             let o = $m64x::from_cast((q + $ix::splat(2) & $ix::splat(4)).eq($ix::splat(4)));
             x.0 = $f64x::from_bits(
-                vand_vm_vo64_vm(o, $u64x::from_bits($f64x::splat(-0.))) ^ $u64x::from_bits(x.0),
+                vand_vm_vo64_vm(o, $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(x.0),
             );
             x.1 = $f64x::from_bits(
-                vand_vm_vo64_vm(o, $u64x::from_bits($f64x::splat(-0.))) ^ $u64x::from_bits(x.1),
+                vand_vm_vo64_vm(o, $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(x.1),
             );
 
             x
@@ -511,7 +512,7 @@ macro_rules! impl_math_f64 {
         fn visinf2_vd_vd_vd(d: $f64x, m: $f64x) -> $f64x {
             $f64x::from_bits(vand_vm_vo64_vm(
                 d.is_infinite(),
-                ($u64x::from_bits(d) & $u64x::from_bits($f64x::splat(-0.))) | $u64x::from_bits(m),
+                ($u64x::from_bits(d) & $u64x::from_bits(NEG_ZERO)) | $u64x::from_bits(m),
             ))
         }
 
@@ -1296,10 +1297,10 @@ macro_rules! impl_math_f64 {
 
             let o = $m64x::from_cast((q & $ix::splat(4)).eq($ix::splat(4)));
             x.0 = $f64x::from_bits(
-                vand_vm_vo64_vm(o, $u64x::from_bits($f64x::splat(-0.))) ^ $u64x::from_bits(x.0),
+                vand_vm_vo64_vm(o, $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(x.0),
             );
             x.1 = $f64x::from_bits(
-                vand_vm_vo64_vm(o, $u64x::from_bits($f64x::splat(-0.))) ^ $u64x::from_bits(x.1),
+                vand_vm_vo64_vm(o, $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(x.1),
             );
 
             x

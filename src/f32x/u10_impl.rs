@@ -51,11 +51,11 @@ macro_rules! impl_math_f32_u10 {
             u = $f32x::from_bits(
                 vand_vm_vo32_vm(
                     (q & $i32x::splat(1)).eq($i32x::splat(1)),
-                    $u32x::from_bits($f32x::splat(-0.)),
+                    $u32x::from_bits(NEG_ZERO),
                 ) ^ $u32x::from_bits(u),
             );
 
-            visnegzero_vo_vf(d).select(d, u)
+            d.is_neg_zero().select(d, u)
         }
 
         pub fn cosf(d: $f32x) -> $f32x {
@@ -113,7 +113,7 @@ macro_rules! impl_math_f32_u10 {
             $f32x::from_bits(
                 vand_vm_vo32_vm(
                     (q & $i32x::splat(2)).eq($i32x::splat(0)),
-                    $u32x::from_bits($f32x::splat(-0.)),
+                    $u32x::from_bits(NEG_ZERO),
                 ) ^ $u32x::from_bits(u),
             )
         }
@@ -148,7 +148,7 @@ macro_rules! impl_math_f32_u10 {
             let x = t.add_checked(u);
             let rx = x.0 + x.1;
 
-            let rx = visnegzero_vo_vf(d).select($f32x::splat(-0.), rx);
+            let rx = d.is_neg_zero().select(NEG_ZERO, rx);
 
             let u = $f32x::splat(-2.718_118_423_672_422_068_193_55_e-7)
                 .mul_add(s.0, $f32x::splat(2.479_904_469_510_074_704_885_48_e-5))
@@ -165,12 +165,12 @@ macro_rules! impl_math_f32_u10 {
 
             let o = (q & $i32x::splat(2)).eq($i32x::splat(2));
             rsin = $f32x::from_bits(
-                vand_vm_vo32_vm(o, $u32x::from_bits($f32x::splat(-0.))) ^ $u32x::from_bits(rsin),
+                vand_vm_vo32_vm(o, $u32x::from_bits(NEG_ZERO)) ^ $u32x::from_bits(rsin),
             );
 
             let o = ((q + $i32x::splat(1)) & $i32x::splat(2)).eq($i32x::splat(2));
             rcos = $f32x::from_bits(
-                vand_vm_vo32_vm(o, $u32x::from_bits($f32x::splat(-0.))) ^ $u32x::from_bits(rcos),
+                vand_vm_vo32_vm(o, $u32x::from_bits(NEG_ZERO)) ^ $u32x::from_bits(rcos),
             );
 
             (rsin, rcos)
@@ -197,7 +197,7 @@ macro_rules! impl_math_f32_u10 {
             };
 
             let o = (q & $i32x::splat(1)).eq($i32x::splat(1));
-            let n = vand_vm_vo32_vm(o, $u32x::from_bits($f32x::splat(-0.)));
+            let n = vand_vm_vo32_vm(o, $u32x::from_bits(NEG_ZERO));
             s.0 = $f32x::from_bits($u32x::from_bits(s.0) ^ n);
             s.1 = $f32x::from_bits($u32x::from_bits(s.1) ^ n);
 
@@ -220,7 +220,7 @@ macro_rules! impl_math_f32_u10 {
 
             let u = x.0 + x.1;
 
-            visnegzero_vo_vf(d).select(d, u)
+            d.is_neg_zero().select(d, u)
         }
 
 
@@ -230,7 +230,7 @@ macro_rules! impl_math_f32_u10 {
             let q =
                 vsel_vi2_vf_vf_vi2_vi2(x.0, ZERO, $i32x::splat(-2), $i32x::splat(0));
             let p = x.0.lt(ZERO);
-            let r = vand_vm_vo32_vm(p, $u32x::from_bits($f32x::splat(-0.)));
+            let r = vand_vm_vo32_vm(p, $u32x::from_bits(NEG_ZERO));
             x.0 = $f32x::from_bits($u32x::from_bits(x.0) ^ r);
             x.1 = $f32x::from_bits($u32x::from_bits(x.1) ^ r);
 
@@ -600,7 +600,7 @@ macro_rules! impl_math_f32_u10 {
             y = (x.abs().gt(SQRT_FLT_MAX) | y.is_nan())
                 .select($f32x::INFINITY, x).mul_sign(y);
             y = $f32x::from_bits(vor_vm_vo32_vm(x.is_nan(), $u32x::from_bits(y)));
-            visnegzero_vo_vf(x).select($f32x::splat(-0.), y)
+            x.is_neg_zero().select(NEG_ZERO, y)
         }
 
         pub fn acoshf(x: $f32x) -> $f32x {
@@ -681,7 +681,7 @@ macro_rules! impl_math_f32_u10 {
             x = a
                 .lt($f32x::splat(-16.635_532_333_438_687_426_013_570))
                 .select($f32x::splat(-1.), x);
-            visnegzero_vo_vf(a).select($f32x::splat(-0.), x)
+            a.is_neg_zero().select(NEG_ZERO, x)
         }
 
         pub fn log10f(mut d: $f32x) -> $f32x {

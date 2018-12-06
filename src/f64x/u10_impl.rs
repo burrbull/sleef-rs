@@ -64,7 +64,7 @@ macro_rules! impl_math_f64_u10 {
             u = $f64x::from_bits(
                 vand_vm_vo64_vm(
                     $m64x::from_cast((ql & $ix::splat(1)).eq($ix::splat(1))),
-                    $u64x::from_bits($f64x::splat(-0.)),
+                    $u64x::from_bits(NEG_ZERO),
                 ) ^ $u64x::from_bits(u),
             );
             d.eq(ZERO).select(d, u)
@@ -141,7 +141,7 @@ macro_rules! impl_math_f64_u10 {
             $f64x::from_bits(
                 vand_vm_vo64_vm(
                     $m64x::from_cast((ql & $ix::splat(2)).eq($ix::splat(0))),
-                    $u64x::from_bits($f64x::splat(-0.)),
+                    $u64x::from_bits(NEG_ZERO),
                 ) ^ $u64x::from_bits(u),
             )
         }
@@ -193,7 +193,7 @@ macro_rules! impl_math_f64_u10 {
             let x = t.add_checked(u);
             let rx = x.0 + x.1;
 
-            let rx = visnegzero_vo_vd(d).select($f64x::splat(-0.), rx);
+            let rx = d.is_neg_zero().select(NEG_ZERO, rx);
 
             let u = $f64x::splat(-1.136_153_502_390_974_295_315_23_e-11)
                 .mul_add(s.0, $f64x::splat(2.087_574_712_070_400_554_793_66_e-9))
@@ -212,12 +212,12 @@ macro_rules! impl_math_f64_u10 {
 
             let o = $m64x::from_cast((ql & $ix::splat(2)).eq($ix::splat(2)));
             rsin = $f64x::from_bits(
-                vand_vm_vo64_vm(o, $u64x::from_bits($f64x::splat(-0.))) ^ $u64x::from_bits(rsin),
+                vand_vm_vo64_vm(o, $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(rsin),
             );
 
             let o = $m64x::from_cast(((ql + $ix::splat(1)) & $ix::splat(2)).eq($ix::splat(2)));
             rcos = $f64x::from_bits(
-                vand_vm_vo64_vm(o, $u64x::from_bits($f64x::splat(-0.))) ^ $u64x::from_bits(rcos),
+                vand_vm_vo64_vm(o, $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(rcos),
             );
 
             (rsin, rcos)
@@ -259,7 +259,7 @@ macro_rules! impl_math_f64_u10 {
             }
 
             let o = $m64x::from_cast((ql & $ix::splat(1)).eq($ix::splat(1)));
-            let n = vand_vm_vo64_vm(o, $u64x::from_bits($f64x::splat(-0.)));
+            let n = vand_vm_vo64_vm(o, $u64x::from_bits(NEG_ZERO));
             s.0 = $f64x::from_bits($u64x::from_bits(s.0) ^ n);
             s.1 = $f64x::from_bits($u64x::from_bits(s.1) ^ n);
 
@@ -320,7 +320,7 @@ macro_rules! impl_math_f64_u10 {
         fn atan2k_u1(y: Doubled<$f64x>, mut x: Doubled<$f64x>) -> Doubled<$f64x> {
             let q = vsel_vi_vd_vi(x.0, $ix::splat(-2));
             let p = x.0.lt(ZERO);
-            let b = vand_vm_vo64_vm(p, $u64x::from_bits($f64x::splat(-0.)));
+            let b = vand_vm_vo64_vm(p, $u64x::from_bits(NEG_ZERO));
             x.0 = $f64x::from_bits(b ^ $u64x::from_bits(x.0));
             x.1 = $f64x::from_bits(b ^ $u64x::from_bits(x.1));
 
@@ -765,7 +765,7 @@ macro_rules! impl_math_f64_u10 {
                 .select($f64x::INFINITY.mul_sign(x), y);
 
             y = $f64x::from_bits(vor_vm_vo64_vm(x.is_nan(), $u64x::from_bits(y)));
-            visnegzero_vo_vd(x).select($f64x::splat(-0.), y)
+            x.is_neg_zero().select(NEG_ZERO, y)
         }
 
         pub fn acosh(x: $f64x) -> $f64x {
@@ -984,7 +984,7 @@ macro_rules! impl_math_f64_u10 {
             x = a
                 .lt($f64x::splat(-36.736_800_569_677_101_399_113_302_437))
                 .select($f64x::splat(-1.), x);
-            visnegzero_vo_vd(a).select($f64x::splat(-0.), x)
+            a.is_neg_zero().select(NEG_ZERO, x)
         }
 
         pub fn log10(mut d: $f64x) -> $f64x {
@@ -1133,7 +1133,7 @@ macro_rules! impl_math_f64_u10 {
             r = d
                 .eq($f64x::splat(-1.))
                 .select($f64x::NEG_INFINITY, r);
-            visnegzero_vo_vd(d).select($f64x::splat(-0.), r)
+            d.is_neg_zero().select(NEG_ZERO, r)
         }
 
         pub fn tgamma(a: $f64x) -> $f64x {

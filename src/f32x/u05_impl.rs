@@ -32,7 +32,7 @@ macro_rules! impl_math_f32_u05 {
             x *= t;
             let rx = x.0 + x.1;
 
-            let rx = visnegzero_vo_vf(d).select($f32x::splat(-0.), rx);
+            let rx = d.is_neg_zero().select(NEG_ZERO, rx);
 
             //
 
@@ -61,12 +61,12 @@ macro_rules! impl_math_f32_u05 {
 
             let o = (q & $i32x::splat(4)).eq($i32x::splat(4));
             rsin = $f32x::from_bits(
-                vand_vm_vo32_vm(o, $u32x::from_bits($f32x::splat(-0.))) ^ $u32x::from_bits(rsin),
+                vand_vm_vo32_vm(o, $u32x::from_bits(NEG_ZERO)) ^ $u32x::from_bits(rsin),
             );
 
             let o = ((q + $i32x::splat(2)) & $i32x::splat(4)).eq($i32x::splat(4));
             rcos = $f32x::from_bits(
-                vand_vm_vo32_vm(o, $u32x::from_bits($f32x::splat(-0.))) ^ $u32x::from_bits(rcos),
+                vand_vm_vo32_vm(o, $u32x::from_bits(NEG_ZERO)) ^ $u32x::from_bits(rcos),
             );
 
             let o = d.abs().gt($f32x::splat(1e+7));
@@ -134,7 +134,7 @@ macro_rules! impl_math_f32_u05 {
             let x = sinpifk(d);
             let mut r = x.0 + x.1;
 
-            r = visnegzero_vo_vf(d).select($f32x::splat(-0.), r);
+            r = d.is_neg_zero().select(NEG_ZERO, r);
             r = $f32x::from_bits(vandnot_vm_vo32_vm(
                 d.abs().gt(TRIGRANGEMAX4_F),
                 $u32x::from_bits(r),

@@ -34,7 +34,7 @@ macro_rules! impl_math_f64_u05 {
             x *= t;
             let rx = x.0 + x.1;
 
-            let rx = visnegzero_vo_vd(d).select($f64x::splat(-0.), rx);
+            let rx = d.is_neg_zero().select(NEG_ZERO, rx);
 
             //
 
@@ -66,12 +66,12 @@ macro_rules! impl_math_f64_u05 {
 
             let o = $m64x::from_cast((q & $ix::splat(4)).eq($ix::splat(4)));
             rsin = $f64x::from_bits(
-                vand_vm_vo64_vm(o, $u64x::from_bits($f64x::splat(-0.))) ^ $u64x::from_bits(rsin),
+                vand_vm_vo64_vm(o, $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(rsin),
             );
 
             let o = $m64x::from_cast(((q + $ix::splat(2)) & $ix::splat(4)).eq($ix::splat(4)));
             rcos = $f64x::from_bits(
-                vand_vm_vo64_vm(o, $u64x::from_bits($f64x::splat(-0.))) ^ $u64x::from_bits(rcos),
+                vand_vm_vo64_vm(o, $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(rcos),
             );
 
             let o = d.abs().gt(TRIGRANGEMAX3 / $f64x::splat(4.));
@@ -89,7 +89,7 @@ macro_rules! impl_math_f64_u05 {
             let x = sinpik(d);
             let mut r = x.0 + x.1;
 
-            r = visnegzero_vo_vd(d).select($f64x::splat(-0.), r);
+            r = d.is_neg_zero().select(NEG_ZERO, r);
             r = $f64x::from_bits(vandnot_vm_vo64_vm(
                 d.abs().gt(TRIGRANGEMAX3 / $f64x::splat(4.)),
                 $u64x::from_bits(r),

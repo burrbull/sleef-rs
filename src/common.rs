@@ -125,3 +125,9 @@ pub trait IsInt {
     type Mask;
     fn is_integer(self) -> Self::Mask;
 }
+
+pub trait NegZero {
+    type Mask;
+    type Bits;
+    fn is_neg_zero(self) -> Self::Mask;
+}

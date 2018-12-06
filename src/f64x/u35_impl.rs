@@ -7,15 +7,15 @@ macro_rules! impl_math_f64_u35 {
             let mut ql: $ix;
 
             if d.abs().lt(TRIGRANGEMAX2).all() {
-                let dql = (d * $f64x::FRAC_1_PI).rint();
-                ql = dql.rinti();
+                let dql = (d * $f64x::FRAC_1_PI).round();
+                ql = dql.roundi();
                 d = dql.mul_add(-PI_A2, d);
                 d = dql.mul_add(-PI_B2, d);
             } else if d.abs().lt(TRIGRANGEMAX).all() {
-                let dqh = (d * ($f64x::FRAC_1_PI / D1_24X)).truncate();
+                let dqh = (d * ($f64x::FRAC_1_PI / D1_24X)).trunc();
                 let dqh = dqh * D1_24X;
-                let dql = d.mul_sub($f64x::FRAC_1_PI, dqh).rint();
-                ql = dql.rinti();
+                let dql = d.mul_sub($f64x::FRAC_1_PI, dqh).round();
+                ql = dql.roundi();
 
                 d = dqh.mul_add(-PI_A, d);
                 d = dql.mul_add(-PI_A, d);
@@ -32,8 +32,8 @@ macro_rules! impl_math_f64_u35 {
                 ql >>= 2;
                 let o = (ddii & $ix::splat(1)).eq($ix::splat(1));
                 let mut x = Doubled::new(
-                    vmulsign_vd_vd_vd($f64x::splat(-3.141_592_653_589_793_116 * 0.5), ddidd.0),
-                    vmulsign_vd_vd_vd($f64x::splat(-1.224_646_799_147_353_207_2_e-16 * 0.5), ddidd.0),
+                    $f64x::splat(-3.141_592_653_589_793_116 * 0.5).mul_sign(ddidd.0),
+                    $f64x::splat(-1.224_646_799_147_353_207_2_e-16 * 0.5).mul_sign(ddidd.0),
                 );
                 x = ddidd + x;
                 ddidd = $m64x::from_cast(o).select_doubled(x, ddidd);
@@ -74,18 +74,18 @@ macro_rules! impl_math_f64_u35 {
 
             if d.abs().lt(TRIGRANGEMAX2).all() {
                 let dql = $f64x::splat(2.).mul_add(
-                    d.mul_add($f64x::FRAC_1_PI, $f64x::splat(-0.5)).rint(),
+                    d.mul_add($f64x::FRAC_1_PI, $f64x::splat(-0.5)).round(),
                     ONE,
                 );
-                ql = dql.rinti();
+                ql = dql.roundi();
                 d = dql.mul_add(-PI_A2 * HALF, d);
                 d = dql.mul_add(-PI_B2 * HALF, d);
             } else if d.abs().lt(TRIGRANGEMAX).all() {
                 let dqh = d
                     .mul_add($f64x::FRAC_1_PI / D1_23X, -$f64x::FRAC_1_PI / D1_24X)
-                    .truncate();
+                    .trunc();
                 ql = (d * $f64x::FRAC_1_PI
-                    + dqh.mul_add(-D1_23X, $f64x::splat(-0.5))).rinti();
+                    + dqh.mul_add(-D1_23X, $f64x::splat(-0.5))).roundi();
                 let dqh = dqh * D1_24X;
                 ql = ql + ql + $ix::splat(1);
                 let dql = $f64x::from_cast(ql);
@@ -109,8 +109,8 @@ macro_rules! impl_math_f64_u35 {
                     .gt(ZERO)
                     .select(ZERO, $f64x::splat(-1.));
                 let mut x = Doubled::new(
-                    vmulsign_vd_vd_vd($f64x::splat(-3.141_592_653_589_793_116 * 0.5), y),
-                    vmulsign_vd_vd_vd($f64x::splat(-1.224_646_799_147_353_207_2_e-16 * 0.5), y),
+                    $f64x::splat(-3.141_592_653_589_793_116 * 0.5).mul_sign(y),
+                    $f64x::splat(-1.224_646_799_147_353_207_2_e-16 * 0.5).mul_sign(y),
                 );
                 x = ddidd + x;
                 ddidd = $m64x::from_cast(o).select_doubled(x, ddidd);
@@ -148,15 +148,15 @@ macro_rules! impl_math_f64_u35 {
             let ql: $ix;
 
             if d.abs().lt(TRIGRANGEMAX2).all() {
-                let dql = (d * $f64x::FRAC_2_PI).rint();
-                ql = dql.rinti();
+                let dql = (d * $f64x::FRAC_2_PI).round();
+                ql = dql.roundi();
                 s = dql.mul_add(-PI_A2 * HALF, d);
                 s = dql.mul_add(-PI_B2 * HALF, s);
             } else if d.abs().lt(TRIGRANGEMAX).all() {
-                let dqh = (d * ($f64x::FRAC_2_PI / D1_24X)).truncate();
+                let dqh = (d * ($f64x::FRAC_2_PI / D1_24X)).trunc();
                 let dqh = dqh * D1_24X;
-                let dql = (d * $f64x::FRAC_2_PI - dqh).rint();
-                ql = dql.rinti();
+                let dql = (d * $f64x::FRAC_2_PI - dqh).round();
+                ql = dql.roundi();
 
                 s = dqh.mul_add(-PI_A * HALF, d);
                 s = dql.mul_add(-PI_A * HALF, s);
@@ -218,7 +218,7 @@ macro_rules! impl_math_f64_u35 {
 
         pub fn sincospi(d: $f64x) -> ($f64x, $f64x) {
             let u = d * $f64x::splat(4.);
-            let mut q = u.truncatei();
+            let mut q = u.trunci();
             q = (q + ($ix::from_bits($ux::from_bits(q) >> 31) ^ $ix::splat(1))) & $ix::splat(!1);
             let s = u - $f64x::from_cast(q);
 
@@ -282,15 +282,15 @@ macro_rules! impl_math_f64_u35 {
             let mut x: $f64x;
 
             if d.abs().lt(TRIGRANGEMAX2).all() {
-                let dql = (d * $f64x::FRAC_2_PI).rint();
-                ql = dql.rinti();
+                let dql = (d * $f64x::FRAC_2_PI).round();
+                ql = dql.roundi();
                 x = dql.mul_add(-PI_A2 * HALF, d);
                 x = dql.mul_add(-PI_B2 * HALF, x);
             } else if d.abs().lt($f64x::splat(1e+7)).all() {
-                let dqh = (d * ($f64x::FRAC_2_PI / D1_24X)).truncate();
+                let dqh = (d * ($f64x::FRAC_2_PI / D1_24X)).trunc();
                 let dqh = dqh * D1_24X;
-                let dql = (d * $f64x::FRAC_2_PI - dqh).rint();
-                ql = dql.rinti();
+                let dql = (d * $f64x::FRAC_2_PI - dqh).round();
+                ql = dql.roundi();
 
                 x = dqh.mul_add(-PI_A * HALF, d);
                 x = dql.mul_add(-PI_A * HALF, x);
@@ -368,15 +368,15 @@ macro_rules! impl_math_f64_u35 {
         pub fn atan2(y: $f64x, x: $f64x) -> $f64x {
             let mut r = atan2k(y.abs(), x);
 
-            r = vmulsign_vd_vd_vd(r, x);
+            r = r.mul_sign(x);
             r = (x.is_infinite() | x.eq(ZERO)).select(
                 $f64x::FRAC_PI_2
-                    - visinf2_vd_vd_vd(x, vmulsign_vd_vd_vd($f64x::FRAC_PI_2, x)),
+                    - visinf2_vd_vd_vd(x, $f64x::FRAC_PI_2.mul_sign(x)),
                 r,
             );
             r = y.is_infinite().select(
                 $f64x::FRAC_PI_2
-                    - visinf2_vd_vd_vd(x, vmulsign_vd_vd_vd($f64x::FRAC_PI_4, x)),
+                    - visinf2_vd_vd_vd(x, $f64x::FRAC_PI_4.mul_sign(x)),
                 r,
             );
             r = y.eq(ZERO).select(
@@ -389,7 +389,7 @@ macro_rules! impl_math_f64_u35 {
 
             $f64x::from_bits(vor_vm_vo64_vm(
                 x.is_nan() | y.is_nan(),
-                $u64x::from_bits(vmulsign_vd_vd_vd(r, y)),
+                $u64x::from_bits(r.mul_sign(y)),
             ))
         }
 
@@ -436,7 +436,7 @@ macro_rules! impl_math_f64_u35 {
             u = u.mul_add(x * x2, x);
 
             let r = o.select(u, u.mul_add($f64x::splat(-2.), $f64x::FRAC_PI_2));
-            vmulsign_vd_vd_vd(r, d)
+            r.mul_sign(d)
         }
         pub fn acos(d: $f64x) -> $f64x {
             let o = d.abs().lt(HALF);
@@ -481,7 +481,7 @@ macro_rules! impl_math_f64_u35 {
 
             u *= x2 * x;
 
-            let y = $f64x::FRAC_PI_2 - (vmulsign_vd_vd_vd(x, d) + vmulsign_vd_vd_vd(u, d));
+            let y = $f64x::FRAC_PI_2 - (x.mul_sign(d) + u.mul_sign(d));
             x += u;
             let r = o.select(y, x * $f64x::splat(2.));
             vandnot_vo_vo_vo(o, d.lt(ZERO)).select(
@@ -620,7 +620,7 @@ macro_rules! impl_math_f64_u35 {
 
             y = (x.abs().gt($f64x::splat(709.)) | y.is_nan())
                 .select($f64x::INFINITY, y);
-            y = vmulsign_vd_vd_vd(y, x);
+            y = y.mul_sign(x);
             $f64x::from_bits(vor_vm_vo64_vm(x.is_nan(), $u64x::from_bits(y)))
         }
 
@@ -639,7 +639,7 @@ macro_rules! impl_math_f64_u35 {
 
             y = (x.abs().gt($f64x::splat(18.714_973_875)) | y.is_nan())
                 .select(ONE, y);
-            y = vmulsign_vd_vd_vd(y, x);
+            y = y.mul_sign(x);
             $f64x::from_bits(vor_vm_vo64_vm(x.is_nan(), $u64x::from_bits(y)))
         }
 
@@ -652,8 +652,8 @@ macro_rules! impl_math_f64_u35 {
             d = vldexp2_vd_vd_vi(d, -e);
 
             let t = $f64x::from_cast(e) + $f64x::splat(6144.);
-            let qu = (t * $f64x::splat(1. / 3.)).truncatei();
-            let re = (t * ($f64x::from_cast(qu) * $f64x::splat(3.))).truncatei();
+            let qu = (t * $f64x::splat(1. / 3.)).trunci();
+            let re = (t * ($f64x::from_cast(qu) * $f64x::splat(3.))).trunci();
 
             q = $m64x::from_cast(re.eq($ix::splat(1)))
                 .select($f64x::splat(1.259_921_049_894_873_164_767_210_6), q);
@@ -661,7 +661,7 @@ macro_rules! impl_math_f64_u35 {
                 .select($f64x::splat(1.587_401_051_968_199_474_751_705_6), q);
             q = vldexp2_vd_vd_vi(q, qu - $ix::splat(2048));
 
-            q = vmulsign_vd_vd_vd(q, d);
+            q = q.mul_sign(d);
 
             d = d.abs();
 
@@ -679,10 +679,10 @@ macro_rules! impl_math_f64_u35 {
             y = (y - $f64x::splat(2. / 3.) * y * y.mul_add(x, $f64x::splat(-1.))) * q;
 
             /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
-                y = s.is_infinite().select(vmulsign_vd_vd_vd($f64x::INFINITY, s), y);
+                y = s.is_infinite().select($f64x::INFINITY.mul_sign(s), y);
                 y = s
                     .eq(ZERO)
-                    .select(vmulsign_vd_vd_vd(ZERO, s), y);
+                    .select(ZERO.mul_sign(s), y);
             }*/
 
             y

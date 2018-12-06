@@ -192,7 +192,10 @@ fn rempif(a: f32) -> (Doubled<f32>, i32) {
     q += dii;
     x.0 = did;
     x = x.normalize();
-    y = df(crate::tables::REMPITABSP[ex + 2], crate::tables::REMPITABSP[ex + 3]) * a;
+    y = df(
+        crate::tables::REMPITABSP[ex + 2],
+        crate::tables::REMPITABSP[ex + 3],
+    ) * a;
     x += y;
     x = x.normalize();
     x *= df(

@@ -67,13 +67,13 @@ impl Sqrt for Doubled<f64> {
 pub trait Round {
     type Int;
 
-    fn truncate(self) -> Self;
+    fn trunc(self) -> Self;
 
-    fn truncatei(self) -> Self::Int;
+    fn trunci(self) -> Self::Int;
 
-    fn rint(self) -> Self;
+    fn round(self) -> Self;
 
-    fn rinti(self) -> Self::Int;
+    fn roundi(self) -> Self::Int;
 }
 
 pub trait MulAdd {
@@ -112,8 +112,13 @@ where
 
 pub trait Sign {
     type Mask;
+    type Bits;
     fn is_sign_negative(self) -> Self::Mask;
     fn is_sign_positive(self) -> Self::Mask;
+    fn sign_bit(self) -> Self::Bits;
+    fn sign(self) -> Self;
+    fn mul_sign(self, other: Self) -> Self;
+    fn copy_sign(self, other: Self) -> Self;
 }
 
 pub trait IsInt {

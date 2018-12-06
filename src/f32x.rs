@@ -101,20 +101,20 @@ macro_rules! impl_math_f32 {
         impl Round for $f32x {
             type Int = $i32x;
             #[inline]
-            fn truncate(self) -> Self {
-                Self::from_cast(self.truncatei())
+            fn trunc(self) -> Self {
+                Self::from_cast(self.trunci())
             }
             #[inline]
-            fn truncatei(self) -> Self::Int {
+            fn trunci(self) -> Self::Int {
                 Self::Int::from_cast(self)
             }
             #[inline]
-            fn rint(self) -> Self {
+            fn round(self) -> Self {
                 rintf(self)
             }
             #[inline]
-            fn rinti(self) -> Self::Int {
-                Self::Int::from_cast(self.rint())
+            fn roundi(self) -> Self::Int {
+                Self::Int::from_cast(self.round())
             }
         }
 
@@ -196,39 +196,35 @@ macro_rules! impl_math_f32 {
             $i32x::from_bits(d).eq($i32x::from_bits($f32x::splat(-0.)))
         }
 
-        #[inline]
-        fn vsignbit_vm_vf(f: $f32x) -> $u32x {
-            $u32x::from_bits(f) & $u32x::from_bits($f32x::splat(-0.))
-        }
-        #[inline]
-        fn vmulsign_vf_vf_vf(x: $f32x, y: $f32x) -> $f32x {
-            $f32x::from_bits($u32x::from_bits(x) ^ vsignbit_vm_vf(y))
-        }
-        #[inline]
-        fn vcopysign_vf_vf_vf(x: $f32x, y: $f32x) -> $f32x {
-            $f32x::from_bits(
-                vandnot_vm_vm_vm($u32x::from_bits($f32x::splat(-0.)), $u32x::from_bits(x))
-                    ^ ($u32x::from_bits($f32x::splat(-0.)) & $u32x::from_bits(y)),
-            )
-        }
-        #[inline]
-        fn vsign_vf_vf(f: $f32x) -> $f32x {
-            $f32x::from_bits(
-                $u32x::from_bits(ONE)
-                    | ($u32x::from_bits($f32x::splat(-0.)) & $u32x::from_bits(f)),
-            )
-        }
-
         impl Sign for $f32x {
             type Mask = $m32x;
+            type Bits = $u32x;
             #[inline]
             fn is_sign_negative(self) -> Self::Mask {
-                ($u32x::from_bits(self) & $u32x::splat(((-0.) as f32).to_bits()))
-                    .ne($u32x::splat(0))
+                self.sign_bit().ne(Self::Bits::splat(0))
             }
             #[inline]
             fn is_sign_positive(self) -> Self::Mask {
                 !self.is_sign_negative()
+            }
+            #[inline]
+            fn sign_bit(self) -> Self::Bits {
+                Self::Bits::from_bits(self) & Self::Bits::from_bits(Self::splat(-0.))
+            }
+            #[inline]
+            fn sign(self) -> Self {
+                Self::from_bits(Self::Bits::from_bits(ONE) | (self.sign_bit()))
+            }
+            #[inline]
+            fn mul_sign(self, other: Self) -> Self {
+                Self::from_bits(Self::Bits::from_bits(self) ^ other.sign_bit())
+            }
+            #[inline]
+            fn copy_sign(self, other: Self) -> Self {
+                Self::from_bits(
+                    vandnot_vm_vm_vm(Self::Bits::from_bits(Self::splat(-0.)), Self::Bits::from_bits(self))
+                        ^ (other.sign_bit()),
+                )
             }
         }
 
@@ -245,7 +241,7 @@ macro_rules! impl_math_f32 {
             type Mask = $m32x;
             #[inline]
             fn is_integer(self) -> Self::Mask {
-                self.truncate().eq(self)
+                self.trunc().eq(self)
             }
         }
 
@@ -316,23 +312,23 @@ macro_rules! impl_math_f32 {
         #[inline]
         fn rempisubf(x: $f32x) -> ($f32x, $i32x) {
             if cfg!(feature = "full_fp_rounding") {
-                let y = (x * $f32x::splat(4.)).rint();
-                let vi = (y - x.rint() * $f32x::splat(4.)).truncatei();
+                let y = (x * $f32x::splat(4.)).round();
+                let vi = (y - x.round() * $f32x::splat(4.)).trunci();
                 (x - y * $f32x::splat(0.25), vi)
             } else {
-                let mut fr = x - F1_10X * (x * (ONE / F1_10X)).truncate();
+                let mut fr = x - F1_10X * (x * (ONE / F1_10X)).trunc();
                 let mut vi = x
                     .gt(ZERO)
                     .select($i32x::splat(4), $i32x::splat(3))
-                    + (fr * $f32x::splat(8.)).truncatei();
+                    + (fr * $f32x::splat(8.)).trunci();
                 vi = (($i32x::splat(7) & vi) - $i32x::splat(3)) >> 1;
                 fr -= $f32x::splat(0.25)
-                    * (fr.mul_add($f32x::splat(4.), vmulsign_vf_vf_vf(HALF, x)))
-                        .truncate();
+                    * (fr.mul_add($f32x::splat(4.), HALF.mul_sign(x)))
+                        .trunc();
                 fr = fr
                     .abs()
                     .gt($f32x::splat(0.25))
-                    .select(fr - vmulsign_vf_vf_vf(HALF, x), fr);
+                    .select(fr - HALF.mul_sign(x), fr);
                 fr = fr.abs().gt($f32x::splat(1e+10)).select(ZERO, fr);
                 let o = x.abs().eq($f32x::splat(0.124_999_992_549_419_403_08));
                 fr = o.select(x, fr);
@@ -377,9 +373,9 @@ macro_rules! impl_math_f32 {
         }
 
         pub fn modff(x: $f32x) -> ($f32x, $f32x) {
-            let fr = x - $f32x::from_cast(x.truncatei());
+            let fr = x - $f32x::from_cast(x.trunci());
             let fr = x.abs().gt(F1_23X).select(ZERO, fr);
-            (vcopysign_vf_vf_vf(fr, x), vcopysign_vf_vf_vf(x - fr, x))
+            (fr.copy_sign(x), (x - fr).copy_sign(x))
         }
 
         #[inline]
@@ -411,7 +407,7 @@ macro_rules! impl_math_f32 {
         fn visinf2_vf_vf_vf(d: $f32x, m: $f32x) -> $f32x {
             $f32x::from_bits(vand_vm_vo32_vm(
                 d.is_infinite(),
-                vsignbit_vm_vf(d) | $u32x::from_bits(m),
+                d.sign_bit() | $u32x::from_bits(m),
             ))
         }
 
@@ -451,7 +447,7 @@ macro_rules! impl_math_f32 {
         #[inline]
         fn expkf(d: Doubled<$f32x>) -> $f32x {
             let u = (d.0 + d.1) * R_LN2_F;
-            let q = u.rinti();
+            let q = u.roundi();
 
             let mut s = d + $f32x::from_cast(q) * (-L2U_F);
             s += $f32x::from_cast(q) * (-L2L_F);
@@ -479,7 +475,7 @@ macro_rules! impl_math_f32 {
         #[inline]
         fn expk2f(d: Doubled<$f32x>) -> Doubled<$f32x> {
             let u = (d.0 + d.1) * R_LN2_F;
-            let q = u.rinti();
+            let q = u.roundi();
 
             let mut s = d + $f32x::from_cast(q) * (-L2U_F);
             s += $f32x::from_cast(q) * (-L2L_F);
@@ -515,7 +511,7 @@ macro_rules! impl_math_f32 {
             let e = /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
                 vilogbk_vi2_vf(d.0 * $f32x::splat(1. / 0.75))
             /*} else {
-                vgetexp_vf_vf(d.0 * $f32x::splat(1. / 0.75)).rinti()
+                vgetexp_vf_vf(d.0 * $f32x::splat(1. / 0.75)).roundi()
             }*/;
             let m = d.scale(vpow2i_vf_vi2(-e));
 
@@ -536,8 +532,8 @@ macro_rules! impl_math_f32 {
         }
 
         pub fn exp2f(d: $f32x) -> $f32x {
-            let mut u = d.rint();
-            let q = u.rinti();
+            let mut u = d.round();
+            let q = u.roundi();
 
             let s = d - u;
 
@@ -582,7 +578,7 @@ macro_rules! impl_math_f32 {
                 }/* else {
                     let e = vgetexp_vf_vf(dp1, $f32x::splat(1. / 0.75));
                     let e = e.eq($f32x::INFINITY).select($f32x::splat(128.), e);
-                    let t = vldexp3_vf_vf_vi2(ONE, -e.rinti());
+                    let t = vldexp3_vf_vf_vi2(ONE, -e.roundi());
                     m = d.mul_add(t, t - ONE);
                     Doubled::from((0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9)) * e
                 }*/;
@@ -616,7 +612,7 @@ macro_rules! impl_math_f32 {
         }
 
         pub fn copysignf(x: $f32x, y: $f32x) -> $f32x {
-            vcopysign_vf_vf_vf(x, y)
+            x.copy_sign(y)
         }
 
         pub fn fmaxf(x: $f32x, y: $f32x) -> $f32x {
@@ -647,48 +643,48 @@ macro_rules! impl_math_f32 {
         }
 
         pub fn truncf(x: $f32x) -> $f32x {
-            let fr = x - $f32x::from_cast(x.truncatei());
+            let fr = x - $f32x::from_cast(x.trunci());
             (x.is_infinite() | x.abs().ge(F1_23X))
-                .select(x, vcopysign_vf_vf_vf(x - fr, x))
+                .select(x, (x - fr).copy_sign(x))
         }
 
         pub fn floorf(x: $f32x) -> $f32x {
-            let fr = x - $f32x::from_cast(x.truncatei());
+            let fr = x - $f32x::from_cast(x.trunci());
             let fr = fr.lt(ZERO).select(fr + ONE, fr);
             (x.is_infinite() | x.abs().ge(F1_23X))
-                .select(x, vcopysign_vf_vf_vf(x - fr, x))
+                .select(x, (x - fr).copy_sign(x))
         }
 
         pub fn ceilf(x: $f32x) -> $f32x {
-            let fr = x - $f32x::from_cast(x.truncatei());
+            let fr = x - $f32x::from_cast(x.trunci());
             let fr = fr.le(ZERO).select(fr, fr - ONE);
             (x.is_infinite() | x.abs().ge(F1_23X))
-                .select(x, vcopysign_vf_vf_vf(x - fr, x))
+                .select(x, (x - fr).copy_sign(x))
         }
 
         pub fn roundf(d: $f32x) -> $f32x {
             let mut x = d + HALF;
-            let fr = x - $f32x::from_cast(x.truncatei());
+            let fr = x - $f32x::from_cast(x.trunci());
             x = (x.le(ZERO) & fr.eq(ZERO)).select(x - ONE, x);
             let fr = fr.lt(ZERO).select(fr + ONE, fr);
             x = d
                 .eq($f32x::splat(0.499_999_970_197_677_612_3))
                 .select(ZERO, x);
             (d.is_infinite() | d.abs().ge(F1_23X))
-                .select(d, vcopysign_vf_vf_vf(x - fr, d))
+                .select(d, (x - fr).copy_sign(d))
         }
 
         pub fn rintf(d: $f32x) -> $f32x {
             let mut x = d + HALF;
-            let isodd = ($i32x::splat(1) & x.truncatei()).eq($i32x::splat(1));
-            let mut fr = x - $f32x::from_cast(x.truncatei());
+            let isodd = ($i32x::splat(1) & x.trunci()).eq($i32x::splat(1));
+            let mut fr = x - $f32x::from_cast(x.trunci());
             fr = (fr.lt(ZERO) | (fr.eq(ZERO) & isodd))
                 .select(fr + ONE, fr);
             x = d
                 .eq($f32x::splat(0.500_000_059_604_644_775_39))
                 .select(ZERO, x);
             (d.is_infinite() | d.abs().ge(F1_23X))
-                .select(d, vcopysign_vf_vf_vf(x - fr, d))
+                .select(d, (x - fr).copy_sign(d))
         }
 
         pub fn fmaf(mut x: $f32x, mut y: $f32x, mut z: $f32x) -> $f32x {
@@ -735,9 +731,7 @@ macro_rules! impl_math_f32 {
         }
 
         pub fn nextafterf(x: $f32x, y: $f32x) -> $f32x {
-            let x = x
-                .eq(ZERO)
-                .select(vmulsign_vf_vf_vf(ZERO, y), x);
+            let x = x.eq(ZERO).select(ZERO.mul_sign(y), x);
             let mut xi2 = $i32x::from_bits(x);
             let c = x.is_sign_negative() ^ y.ge(x);
 
@@ -750,7 +744,7 @@ macro_rules! impl_math_f32 {
             let mut ret = $f32x::from_bits(xi2);
 
             ret = (ret.eq(ZERO) & x.ne(ZERO))
-                .select(vmulsign_vf_vf_vf(ZERO, x), ret);
+                .select(ZERO.mul_sign(x), ret);
 
             ret = (x.eq(ZERO) & y.eq(ZERO)).select(y, ret);
 
@@ -770,7 +764,7 @@ macro_rules! impl_math_f32 {
             let ret = $f32x::from_bits(xm);
 
             let ret =
-                x.is_infinite().select(vmulsign_vf_vf_vf($f32x::INFINITY, x), ret);
+                x.is_infinite().select($f32x::INFINITY.mul_sign(x), ret);
             x.eq(ZERO).select(x, ret)
         }
 
@@ -793,9 +787,9 @@ macro_rules! impl_math_f32 {
         #[inline]
         fn vptruncf(x: $f32x) -> $f32x {
             if cfg!(feature = "full_fp_rounding") {
-                x.truncate()
+                x.trunc()
             } else {
-                let fr = x - $f32x::from_cast(x.truncatei());
+                let fr = x - $f32x::from_cast(x.trunci());
                 x.abs().ge(F1_23X).select(x, x - fr)
             }
         }
@@ -828,7 +822,7 @@ macro_rules! impl_math_f32 {
             let mut ret = (r.0 + r.1) * s;
             ret = (r.0 + r.1).eq(de).select(ZERO, ret);
 
-            ret = vmulsign_vf_vf_vf(ret, x);
+            ret = ret.mul_sign(x);
 
             ret = nu.lt(de).select(x, ret);
             de.eq(ZERO)
@@ -839,7 +833,7 @@ macro_rules! impl_math_f32 {
         #[inline]
         fn sinpifk(d: $f32x) -> Doubled<$f32x> {
             let u = d * $f32x::splat(4.);
-            let q = u.truncatei();
+            let q = u.trunci();
             let q = (q + ($i32x::from_bits($u32x::from_bits(q) >> 31) ^ $i32x::splat(1)))
                 & $i32x::splat(!1);
             let o = (q & $i32x::splat(2)).eq($i32x::splat(2));
@@ -886,7 +880,7 @@ macro_rules! impl_math_f32 {
         #[inline]
         fn cospifk(d: $f32x) -> Doubled<$f32x> {
             let u = d * $f32x::splat(4.);
-            let q = u.truncatei();
+            let q = u.trunci();
             let q = (q + ($i32x::from_bits($u32x::from_bits(q) >> 31) ^ $i32x::splat(1)))
                 & $i32x::splat(!1);
             let o = (q & $i32x::splat(2)).eq($i32x::splat(0));
@@ -1066,7 +1060,7 @@ macro_rules! impl_math_f32 {
 
             if !(!oref).all() {
                 let t = a
-                    - F1_12X * $f32x::from_cast((a * (ONE / F1_12X)).truncatei());
+                    - F1_12X * $f32x::from_cast((a * (ONE / F1_12X)).trunci());
                 x = clld * sinpifk(t);
             }
 
@@ -1079,7 +1073,7 @@ macro_rules! impl_math_f32 {
 
         #[inline]
         fn expm1fk(d: $f32x) -> $f32x {
-            let q = (d * R_LN2_F).rinti();
+            let q = (d * R_LN2_F).roundi();
             let s = $f32x::from_cast(q).mul_add(-L2U_F, d);
             let s = $f32x::from_cast(q).mul_add(-L2L_F, s);
 

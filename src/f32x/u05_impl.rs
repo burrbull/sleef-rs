@@ -4,7 +4,7 @@ macro_rules! impl_math_f32_u05 {
 
         pub fn sincospif(d: $f32x) -> ($f32x, $f32x) {
             let u = d * $f32x::splat(4.);
-            let q = u.truncatei();
+            let q = u.trunci();
             let q = (q + ($i32x::from_bits($u32x::from_bits(q) >> 31) ^ $i32x::splat(1)))
                 & $i32x::splat(!1);
             let s = u - $f32x::from_cast(q);
@@ -85,10 +85,7 @@ macro_rules! impl_math_f32_u05 {
 
             let o = d.lt($f32x::splat(5.293_955_920_339_377_e-23));
             let d = o.select(d * $f32x::splat(1.888_946_593_147_858_e+22), d);
-            let q = o.select(
-                $f32x::splat(7.275_957_614_183_426_e-12 * 0.5),
-                HALF,
-            );
+            let q = o.select($f32x::splat(7.275_957_614_183_426_e-12 * 0.5), HALF);
 
             let o = d.gt($f32x::splat(1.844_674_407_370_955_2_e+19));
             let d = o.select(d * $f32x::splat(5.421_010_862_427_522_e-20), d);

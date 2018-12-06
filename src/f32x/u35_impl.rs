@@ -8,13 +8,13 @@ macro_rules! impl_math_f32_u35 {
             let r = d;
 
             if d.abs().lt(TRIGRANGEMAX2_F).all() {
-                q = (d * $f32x::FRAC_1_PI).rinti();
+                q = (d * $f32x::FRAC_1_PI).roundi();
                 u = $f32x::from_cast(q);
                 d = u.mul_add(-PI_A2_F, d);
                 d = u.mul_add(-PI_B2_F, d);
                 d = u.mul_add(-PI_C2_F, d);
             } else if d.abs().lt(TRIGRANGEMAX_F).all() {
-                q = (d * $f32x::FRAC_1_PI).rinti();
+                q = (d * $f32x::FRAC_1_PI).roundi();
                 u = $f32x::from_cast(q);
                 d = u.mul_add(-PI_A_F, d);
                 d = u.mul_add(-PI_B_F, d);
@@ -30,8 +30,8 @@ macro_rules! impl_math_f32_u35 {
                 q >>= 2;
                 let o = (dfii & $i32x::splat(1)).eq($i32x::splat(1));
                 let mut x = Doubled::new(
-                    vmulsign_vf_vf_vf($f32x::splat(3.141_592_741_012_573_242_2 * -0.5), dfidf.0),
-                    vmulsign_vf_vf_vf($f32x::splat(-8.742_277_657_347_585_773_1_e-8 * -0.5), dfidf.0),
+                    $f32x::splat(3.141_592_741_012_573_242_2 * -0.5).mul_sign(dfidf.0),
+                    $f32x::splat(-8.742_277_657_347_585_773_1_e-8 * -0.5).mul_sign(dfidf.0),
                 );
                 x = dfidf + x;
                 dfidf = o.select_doubled(x, dfidf);
@@ -67,7 +67,7 @@ macro_rules! impl_math_f32_u35 {
             let r = d;
 
             if d.abs().lt(TRIGRANGEMAX2_F).all() {
-                q = (d * $f32x::FRAC_1_PI - HALF).rinti();
+                q = (d * $f32x::FRAC_1_PI - HALF).roundi();
                 q = q + q + $i32x::splat(1);
 
                 let u = $f32x::from_cast(q);
@@ -75,7 +75,7 @@ macro_rules! impl_math_f32_u35 {
                 d = u.mul_add(-PI_B2_F * HALF, d);
                 d = u.mul_add(-PI_C2_F * HALF, d);
             } else if d.abs().lt(TRIGRANGEMAX_F).all() {
-                q = (d * $f32x::FRAC_1_PI - HALF).rinti();
+                q = (d * $f32x::FRAC_1_PI - HALF).roundi();
                 q = q + q + $i32x::splat(1);
 
                 let u = $f32x::from_cast(q);
@@ -97,8 +97,8 @@ macro_rules! impl_math_f32_u35 {
                     .gt(ZERO)
                     .select(ZERO, $f32x::splat(-1.));
                 let mut x = Doubled::new(
-                    vmulsign_vf_vf_vf($f32x::splat(3.141_592_741_012_573_242_2 * -0.5), y),
-                    vmulsign_vf_vf_vf($f32x::splat(-8.742_277_657_347_585_773_1_e-8 * -0.5), y),
+                    $f32x::splat(3.141_592_741_012_573_242_2 * -0.5).mul_sign(y),
+                    $f32x::splat(-8.742_277_657_347_585_773_1_e-8 * -0.5).mul_sign(y),
                 );
                 x = dfidf + x;
                 dfidf = o.select_doubled(x, dfidf);
@@ -133,13 +133,13 @@ macro_rules! impl_math_f32_u35 {
             let mut x = d;
 
             if d.abs().lt(TRIGRANGEMAX2_F * HALF).all() {
-                q = (d * $f32x::FRAC_2_PI).rinti();
+                q = (d * $f32x::FRAC_2_PI).roundi();
                 let u = $f32x::from_cast(q);
                 x = u.mul_add(-PI_A2_F * HALF, x);
                 x = u.mul_add(-PI_B2_F * HALF, x);
                 x = u.mul_add(-PI_C2_F * HALF, x);
             } else if d.abs().lt(TRIGRANGEMAX_F).all() {
-                q = (d * (2. * $f32x::FRAC_1_PI)).rinti();
+                q = (d * (2. * $f32x::FRAC_1_PI)).roundi();
                 let u = $f32x::from_cast(q);
                 x = u.mul_add(-PI_A_F * HALF, x);
                 x = u.mul_add(-PI_B_F * HALF, x);
@@ -180,13 +180,13 @@ macro_rules! impl_math_f32_u35 {
             let mut s = d;
 
             if d.abs().lt(TRIGRANGEMAX2_F).all() {
-                q = (d * $f32x::FRAC_2_PI).rinti();
+                q = (d * $f32x::FRAC_2_PI).roundi();
                 let u = $f32x::from_cast(q);
                 s = u.mul_add(-PI_A2_F * HALF, s);
                 s = u.mul_add(-PI_B2_F * HALF, s);
                 s = u.mul_add(-PI_C2_F * HALF, s);
             } else if d.abs().lt(TRIGRANGEMAX_F).all() {
-                q = (d * $f32x::FRAC_2_PI).rinti();
+                q = (d * $f32x::FRAC_2_PI).roundi();
                 let u = $f32x::from_cast(q);
                 s = u.mul_add(-PI_A_F * HALF, s);
                 s = u.mul_add(-PI_B_F * HALF, s);
@@ -240,7 +240,7 @@ macro_rules! impl_math_f32_u35 {
 
         pub fn sincospif(d: $f32x) -> ($f32x, $f32x) {
             let u = d * $f32x::splat(4.);
-            let q = u.truncatei();
+            let q = u.trunci();
             let q = (q + ($i32x::from_bits($u32x::from_bits(q) >> 31) ^ $i32x::splat(1)))
                 & $i32x::splat(!1);
             let s = u - $f32x::from_cast(q);
@@ -327,7 +327,7 @@ macro_rules! impl_math_f32_u35 {
 
             if cfg!(feature = "enable_neon32") || cfg!(feature = "enable_neon32vfpv4") {
                 t = d.is_infinite().select(
-                    vmulsign_vf_vf_vf($f32x::splat(1.587_401_051_968_199_474_751_705_6), d),
+                    $f32x::splat(1.587_401_051_968_199_474_751_705_6).mul_sign(d),
                     t,
                 );
             }
@@ -338,15 +338,15 @@ macro_rules! impl_math_f32_u35 {
         pub fn atan2f(y: $f32x, x: $f32x) -> $f32x {
             let mut r = atan2kf(y.abs(), x);
 
-            r = vmulsign_vf_vf_vf(r, x);
+            r = r.mul_sign(x);
             r = (x.is_infinite() | x.eq(ZERO)).select(
                 $f32x::FRAC_PI_2
-                    - visinf2_vf_vf_vf(x, vmulsign_vf_vf_vf($f32x::FRAC_PI_2, x)),
+                    - visinf2_vf_vf_vf(x, $f32x::FRAC_PI_2.mul_sign(x)),
                 r,
             );
             r = y.is_infinite().select(
                 $f32x::FRAC_PI_2
-                    - visinf2_vf_vf_vf(x, vmulsign_vf_vf_vf($f32x::FRAC_PI_4, x)),
+                    - visinf2_vf_vf_vf(x, $f32x::FRAC_PI_4.mul_sign(x)),
                 r,
             );
 
@@ -360,7 +360,7 @@ macro_rules! impl_math_f32_u35 {
 
             $f32x::from_bits(vor_vm_vo32_vm(
                 x.is_nan() | y.is_nan(),
-                $u32x::from_bits(vmulsign_vf_vf_vf(r, y)),
+                $u32x::from_bits(r.mul_sign(y)),
             ))
         }
 
@@ -377,7 +377,7 @@ macro_rules! impl_math_f32_u35 {
                 .mul_add(x * x2, x);
 
             let r = o.select(u, u.mul_add($f32x::splat(-2.), $f32x::FRAC_PI_2));
-            vmulsign_vf_vf_vf(r, d)
+            r.mul_sign(d)
         }
 
         pub fn acosf(d: $f32x) -> $f32x {
@@ -394,7 +394,7 @@ macro_rules! impl_math_f32_u35 {
                 * (x2 * x);
 
             let y = $f32x::splat(3.141_592_653_589_793_2 / 2.)
-                - (vmulsign_vf_vf_vf(x, d) + vmulsign_vf_vf_vf(u, d));
+                - (x.mul_sign(d) + u.mul_sign(d));
             x += u;
             let r = o.select(y, x * $f32x::splat(2.));
             vandnot_vo_vo_vo(o, d.lt(ZERO)).select(
@@ -467,7 +467,7 @@ macro_rules! impl_math_f32_u35 {
                 d.is_nan() | d.lt(ZERO),
                 $u32x::from_bits(u),
             ));
-            vmulsign_vf_vf_vf(u, d)
+            u.mul_sign(d)
         }
         /*#[cfg(feature = "enable_vecext")]
                 pub fn xsqrtf_u35(d: $f32x) -> $f32x {
@@ -494,8 +494,8 @@ macro_rules! impl_math_f32_u35 {
             d = vldexp2_vf_vf_vi2(d, -e);
 
             let t = $f32x::from_cast(e) + $f32x::splat(6144.);
-            let qu = (t * $f32x::splat(1. / 3.)).truncatei();
-            let re = (t - $f32x::from_cast(qu) * $f32x::splat(3.)).truncatei();
+            let qu = (t * $f32x::splat(1. / 3.)).trunci();
+            let re = (t - $f32x::from_cast(qu) * $f32x::splat(3.)).trunci();
 
             q = re
                 .eq($i32x::splat(1))
@@ -505,7 +505,7 @@ macro_rules! impl_math_f32_u35 {
                 .select($f32x::splat(1.587_401_051_968_199_474_751_705_6), q);
             q = vldexp2_vf_vf_vi2(q, qu - $i32x::splat(2048));
 
-            q = vmulsign_vf_vf_vf(q, d);
+            q = q.mul_sign(d);
             d = d.abs();
 
             let x = $f32x::splat(-0.601_564_466_953_277_587_890_625)
@@ -519,10 +519,10 @@ macro_rules! impl_math_f32_u35 {
             y = (y - $f32x::splat(2. / 3.) * y * y.mul_add(x, $f32x::splat(-1.))) * q;
 
             /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
-                y = s.is_infinite().select(vmulsign_vf_vf_vf($f32x::INFINITY, s), y);
+                y = s.is_infinite().select($f32x::INFINITY.mul_sign(s), y);
                 y = s
                     .eq(ZERO)
-                    .select(vmulsign_vf_vf_vf(ZERO, s), y);
+                    .select(ZERO.mul_sign(s), y);
             }*/
 
             y
@@ -536,7 +536,7 @@ macro_rules! impl_math_f32_u35 {
 
             y = (x.abs().gt($f32x::splat(88.)) | y.is_nan())
                 .select($f32x::INFINITY, y);
-            y = vmulsign_vf_vf_vf(y, x);
+            y = y.mul_sign(x);
             $f32x::from_bits(vor_vm_vo32_vm(x.is_nan(), $u32x::from_bits(y)))
         }
 
@@ -555,7 +555,7 @@ macro_rules! impl_math_f32_u35 {
 
             y = (x.abs().gt($f32x::splat(8.664_339_742)) | y.is_nan())
                 .select(ONE, y);
-            y = vmulsign_vf_vf_vf(y, x);
+            y = y.mul_sign(x);
             $f32x::from_bits(vor_vm_vo32_vm(x.is_nan(), $u32x::from_bits(y)))
         }
 

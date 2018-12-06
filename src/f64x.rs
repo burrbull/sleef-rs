@@ -78,20 +78,20 @@ macro_rules! impl_math_f64 {
         impl Round for $f64x {
             type Int = $ix;
             #[inline]
-            fn truncate(self) -> Self {
-                Self::from_cast(self.truncatei())
+            fn trunc(self) -> Self {
+                Self::from_cast(self.trunci())
             }
             #[inline]
-            fn truncatei(self) -> Self::Int {
+            fn trunci(self) -> Self::Int {
                 Self::Int::from_cast(self)
             }
             #[inline]
-            fn rint(self) -> Self {
+            fn round(self) -> Self {
                 rint(self)
             }
             #[inline]
-            fn rinti(self) -> Self::Int {
-                Self::Int::from_cast(self.rint())
+            fn roundi(self) -> Self::Int {
+                Self::Int::from_cast(self.round())
             }
         }
 
@@ -177,14 +177,33 @@ macro_rules! impl_math_f64 {
         // -----------
         impl Sign for $f64x {
             type Mask = $m64x;
+            type Bits = $u64x;
             #[inline]
             fn is_sign_negative(self) -> Self::Mask {
-                ($u64x::from_bits(self) & $u64x::splat(((-0.) as f64).to_bits()))
-                    .ne($u64x::splat(0))
+                self.sign_bit().ne(Self::Bits::splat(0))
             }
             #[inline]
             fn is_sign_positive(self) -> Self::Mask {
                 !self.is_sign_negative()
+            }
+            #[inline]
+            fn sign_bit(self) -> Self::Bits {
+                Self::Bits::from_bits(self) & Self::Bits::from_bits(Self::splat(-0.))
+            }
+            #[inline]
+            fn sign(self) -> Self {
+                ONE.mul_sign(self)
+            }
+            #[inline]
+            fn mul_sign(self, other: Self) -> Self {
+                Self::from_bits(Self::Bits::from_bits(self) ^ other.sign_bit())
+            }
+            #[inline]
+            fn copy_sign(self, other: Self) -> Self {
+                Self::from_bits(
+                    vandnot_vm_vm_vm(Self::Bits::from_bits(Self::splat(-0.)), Self::Bits::from_bits(self))
+                        ^ (other.sign_bit()),
+                )
             }
         }
 
@@ -202,25 +221,6 @@ macro_rules! impl_math_f64 {
         #[inline]
         fn visnegzero_vo_vd(d: $f64x) -> $m64x {
             $u64x::from_bits(d).eq($u64x::from_bits($f64x::splat(-0.)))
-        }
-        #[inline]
-        fn vsignbit_vm_vd(d: $f64x) -> $u64x {
-            $u64x::from_bits(d) & $u64x::from_bits($f64x::splat(-0.))
-        }
-        #[inline]
-        fn vmulsign_vd_vd_vd(x: $f64x, y: $f64x) -> $f64x {
-            $f64x::from_bits($u64x::from_bits(x) ^ vsignbit_vm_vd(y))
-        }
-        #[inline]
-        fn vcopysign_vd_vd_vd(x: $f64x, y: $f64x) -> $f64x {
-            $f64x::from_bits(
-                vandnot_vm_vm_vm($u64x::from_bits($f64x::splat(-0.)), $u64x::from_bits(x))
-                    ^ ($u64x::from_bits($f64x::splat(-0.)) & $u64x::from_bits(y)),
-            )
-        }
-        #[inline]
-        fn vsign_vd_vd(d: $f64x) -> $f64x {
-            vmulsign_vd_vd_vd(ONE, d)
         }
         #[inline]
         fn vpow2i_vd_vi(q: $ix) -> $f64x {
@@ -278,18 +278,18 @@ macro_rules! impl_math_f64 {
             type Mask = $m64x;
             #[inline]
             fn is_integer(self) -> Self::Mask {
-                let mut x = (self * (ONE / D1_31X)).truncate();
+                let mut x = (self * (ONE / D1_31X)).trunc();
                 x = (-D1_31X).mul_add(x, self);
-                x.truncate().eq(x) | self.abs().gt(D1_53X)
+                x.trunc().eq(x) | self.abs().gt(D1_53X)
             }
         }
 
         #[inline]
         fn visodd_vo_vd(d: $f64x) -> $m64x {
-            let mut x = (d * (ONE / D1_31X)).truncate();
+            let mut x = (d * (ONE / D1_31X)).trunc();
             x = (-D1_31X).mul_add(x, d);
 
-            $m64x::from_cast((x.truncatei() & $ix::splat(1)).eq($ix::splat(1)))
+            $m64x::from_cast((x.trunci() & $ix::splat(1)).eq($ix::splat(1)))
                 & d.abs().lt(D1_53X)
         }
 
@@ -306,28 +306,28 @@ macro_rules! impl_math_f64 {
                 .select(SLEEF_FP_ILOGB0, e);
             e = d.is_nan().select(SLEEF_FP_ILOGBNAN, e);
             e = d.is_infinite().select($f64x::splat(f64::MAX), e);
-            e.rinti()
+            e.roundi()
         }
 
         #[inline]
         fn rempisub(x: $f64x) -> ($f64x, $ix) {
             if cfg!(feature = "full_fp_rounding") {
-                let y = (x * $f64x::splat(4.)).rint();
-                let vi = (y - x.rint() * $f64x::splat(4.)).truncatei();
+                let y = (x * $f64x::splat(4.)).round();
+                let vi = (y - x.round() * $f64x::splat(4.)).trunci();
                 (x - y * $f64x::splat(0.25), vi)
             } else {
-                let mut fr = x - D1_28X * (x * (ONE / D1_28X)).truncate();
+                let mut fr = x - D1_28X * (x * (ONE / D1_28X)).trunc();
                 let mut vi = $mx::from_cast(x.gt(ZERO))
                     .select($ix::splat(4), $ix::splat(3))
-                    + (fr * $f64x::splat(8.)).truncatei();
+                    + (fr * $f64x::splat(8.)).trunci();
                 vi = (($ix::splat(7) & vi) - $ix::splat(3)) >> 1;
                 fr = fr - $f64x::splat(0.25) * fr
-                    .mul_add($f64x::splat(4.), vmulsign_vd_vd_vd(HALF, x))
-                    .truncate();
+                    .mul_add($f64x::splat(4.), HALF.mul_sign(x))
+                    .trunc();
                 fr = fr
                     .abs()
                     .gt($f64x::splat(0.25))
-                    .select(fr - vmulsign_vd_vd_vd(HALF, x), fr);
+                    .select(fr - HALF.mul_sign(x), fr);
                 fr = fr.abs().gt($f64x::splat(1e+10)).select(ZERO, fr);
                 let o = x.abs().eq($f64x::splat(0.124_999_999_999_999_986_12));
                 fr = o.select(x, fr);
@@ -375,7 +375,7 @@ macro_rules! impl_math_f64 {
         #[inline]
         fn cospik(d: $f64x) -> Doubled<$f64x> {
             let u = d * $f64x::splat(4.);
-            let mut q = u.truncatei();
+            let mut q = u.trunci();
             q = (q + ($ix::from_bits($ux::from_bits(q) >> 31) ^ $ix::splat(1))) & $ix::splat(!1);
             let o = $m64x::from_cast((q & $ix::splat(2)).eq($ix::splat(0)));
 
@@ -517,8 +517,8 @@ macro_rules! impl_math_f64 {
 
         #[inline]
         fn expm1k(d: $f64x) -> $f64x {
-            let mut u = (d * R_LN2).rint();
-            let q = u.rinti();
+            let mut u = (d * R_LN2).round();
+            let q = u.roundi();
 
             let s = u.mul_add(-L2U, d);
             let s = u.mul_add(-L2L, s);
@@ -585,8 +585,8 @@ macro_rules! impl_math_f64 {
         #[inline]
         fn expk(d: Doubled<$f64x>) -> $f64x {
             let mut u = (d.0 + d.1) * R_LN2;
-            let dq = u.rint();
-            let q = dq.rinti();
+            let dq = u.round();
+            let q = dq.roundi();
 
             let mut s = d + dq * (-L2U);
             s += dq * (-L2L);
@@ -619,8 +619,8 @@ macro_rules! impl_math_f64 {
         #[inline]
         fn expk2(d: Doubled<$f64x>) -> Doubled<$f64x> {
             let u = (d.0 + d.1) * R_LN2;
-            let dq = u.rint();
-            let q = dq.rinti();
+            let dq = u.round();
+            let q = dq.roundi();
 
             let s = d + dq * (-L2U) + dq * (-L2L);
 
@@ -710,7 +710,7 @@ macro_rules! impl_math_f64 {
 
         #[inline]
         pub fn copysign(x: $f64x, y: $f64x) -> $f64x {
-            vcopysign_vd_vd_vd(x, y)
+            x.copy_sign(y)
         }
 
         #[cfg(any(target_arch = "x86", target_arch = "x86_64"))] //  && !defined(ENABLE_VECEXT) && !defined(ENABLE_PUREC)
@@ -738,67 +738,67 @@ macro_rules! impl_math_f64 {
         pub fn trunc(x: $f64x) -> $f64x {
             let mut fr = x
                 - D1_31X
-                    * $f64x::from_cast((x * (ONE / D1_31X)).truncatei());
-            fr -= $f64x::from_cast(fr.truncatei());
+                    * $f64x::from_cast((x * (ONE / D1_31X)).trunci());
+            fr -= $f64x::from_cast(fr.trunci());
             (x.is_infinite() | x.abs().ge(D1_52X))
-                .select(x, vcopysign_vd_vd_vd(x - fr, x))
+                .select(x, (x - fr).copy_sign(x))
         }
 
         pub fn floor(x: $f64x) -> $f64x {
             let mut fr = x
                 - D1_31X
-                    * $f64x::from_cast((x * (ONE / D1_31X)).truncatei());
-            fr -= $f64x::from_cast(fr.truncatei());
+                    * $f64x::from_cast((x * (ONE / D1_31X)).trunci());
+            fr -= $f64x::from_cast(fr.trunci());
             fr = fr.lt(ZERO).select(fr + ONE, fr);
             (x.is_infinite() | x.abs().ge(D1_52X))
-                .select(x, vcopysign_vd_vd_vd(x - fr, x))
+                .select(x, (x - fr).copy_sign(x))
         }
 
         pub fn ceil(x: $f64x) -> $f64x {
             let mut fr = x
                 - D1_31X
-                    * $f64x::from_cast((x * (ONE / D1_31X)).truncatei());
-            fr -= $f64x::from_cast(fr.truncatei());
+                    * $f64x::from_cast((x * (ONE / D1_31X)).trunci());
+            fr -= $f64x::from_cast(fr.trunci());
             fr = fr.le(ZERO).select(fr, fr - ONE);
             (x.is_infinite() | x.abs().ge(D1_52X))
-                .select(x, vcopysign_vd_vd_vd(x - fr, x))
+                .select(x, (x - fr).copy_sign(x))
         }
 
         pub fn round(d: $f64x) -> $f64x {
             let mut x = d + HALF;
             let mut fr = x
                 - D1_31X
-                    * $f64x::from_cast((x * (ONE / D1_31X)).truncatei());
-            fr -= $f64x::from_cast(fr.truncatei());
+                    * $f64x::from_cast((x * (ONE / D1_31X)).trunci());
+            fr -= $f64x::from_cast(fr.trunci());
             x = (x.le(ZERO) & fr.eq(ZERO)).select(x - ONE, x);
             fr = fr.lt(ZERO).select(fr + ONE, fr);
             x = d
                 .eq($f64x::splat(0.499_999_999_999_999_944_49))
                 .select(ZERO, x);
             (d.is_infinite() | d.abs().ge(D1_52X))
-                .select(d, vcopysign_vd_vd_vd(x - fr, d))
+                .select(d, (x - fr).copy_sign(d))
         }
 
         pub fn rint(d: $f64x) -> $f64x {
             let mut x = d + HALF;
             let mut fr = x
                 - D1_31X
-                    * $f64x::from_cast((x * (ONE / D1_31X)).truncatei());
-            let isodd = $m64x::from_cast(($ix::splat(1) & fr.truncatei()).eq($ix::splat(1)));
-            fr -= $f64x::from_cast(fr.truncatei());
+                    * $f64x::from_cast((x * (ONE / D1_31X)).trunci());
+            let isodd = $m64x::from_cast(($ix::splat(1) & fr.trunci()).eq($ix::splat(1)));
+            fr -= $f64x::from_cast(fr.trunci());
             fr = (fr.lt(ZERO) | (fr.eq(ZERO) & isodd))
                 .select(fr + ONE, fr);
             x = d
                 .eq($f64x::splat(0.500_000_000_000_000_111_02))
                 .select(ZERO, x);
             (d.is_infinite() | d.abs().ge(D1_52X))
-                .select(d, vcopysign_vd_vd_vd(x - fr, d))
+                .select(d, (x - fr).copy_sign(d))
         }
 
         pub fn nextafter(x: $f64x, y: $f64x) -> $f64x {
             let x = x
                 .eq(ZERO)
-                .select(vmulsign_vd_vd_vd(ZERO, y), x);
+                .select(ZERO.mul_sign(y), x);
             let mut xi2 = $i64x::from_bits(x);
             let c = x.is_sign_negative() ^ y.ge(x);
 
@@ -824,7 +824,7 @@ macro_rules! impl_math_f64 {
             let mut ret = $f64x::from_bits(xi2);
 
             ret = (ret.eq(ZERO) & x.ne(ZERO))
-                .select(vmulsign_vd_vd_vd(ZERO, x), ret);
+                .select(ZERO.mul_sign(x), ret);
 
             ret = (x.eq(ZERO) & y.eq(ZERO)).select(y, ret);
 
@@ -844,7 +844,7 @@ macro_rules! impl_math_f64 {
             let ret = $f64x::from_bits(xm);
 
             let ret =
-                x.is_infinite().select(vmulsign_vd_vd_vd($f64x::INFINITY, x), ret);
+                x.is_infinite().select($f64x::INFINITY.mul_sign(x), ret);
             x.eq(ZERO).select(x, ret)
         }
 
@@ -915,16 +915,16 @@ macro_rules! impl_math_f64 {
         #[inline]
         fn vptrunc(x: $f64x) -> $f64x {
             // round to integer toward 0, positive argument only
-            x.truncate()
+            x.trunc()
         }
         #[cfg(not(feature = "full_fp_rounding"))]
         #[inline]
         fn vptrunc(x: $f64x) -> $f64x {
             let mut fr = (-D1_31X).mul_add(
-                $f64x::from_cast((x * (ONE / D1_31X)).truncatei()),
+                $f64x::from_cast((x * (ONE / D1_31X)).trunci()),
                 x,
             );
-            fr -= $f64x::from_cast(fr.truncatei());
+            fr -= $f64x::from_cast(fr.trunci());
             x.abs().ge(D1_52X).select(x, x - fr)
         }
 
@@ -956,7 +956,7 @@ macro_rules! impl_math_f64 {
             let mut ret = r.0 * s;
             ret = (r.0 + r.1).eq(de).select(ZERO, ret);
 
-            ret = vmulsign_vd_vd_vd(ret, x);
+            ret = ret.mul_sign(x);
 
             ret = nu.lt(de).select(x, ret);
             de.eq(ZERO).select($f64x::NAN, ret)
@@ -1223,7 +1223,7 @@ macro_rules! impl_math_f64 {
             );
 
             if !(!oref).all() {
-                let t = a - D1_28X * $f64x::from_cast((a * (ONE / D1_28X)).truncatei());
+                let t = a - D1_28X * $f64x::from_cast((a * (ONE / D1_28X)).trunci());
                 x = clld * sinpik(t);
             }
 
@@ -1237,7 +1237,7 @@ macro_rules! impl_math_f64 {
         #[inline]
         fn sinpik(d: $f64x) -> Doubled<$f64x> {
             let u = d * $f64x::splat(4.);
-            let mut q = u.truncatei();
+            let mut q = u.trunci();
             q = (q + ($ix::from_bits($ux::from_bits(q) >> 31) ^ $ix::splat(1))) & $ix::splat(!1);
             let o = $m64x::from_cast((q & $ix::splat(2)).eq($ix::splat(2)));
 
@@ -1308,11 +1308,11 @@ macro_rules! impl_math_f64 {
         pub fn modf(x: $f64x) -> ($f64x, $f64x) {
             let mut fr = x
                 - D1_31X
-                    * $f64x::from_cast((x * (ONE / D1_31X)).truncatei());
-            fr -= $f64x::from_cast(fr.truncatei());
+                    * $f64x::from_cast((x * (ONE / D1_31X)).trunci());
+            fr -= $f64x::from_cast(fr.trunci());
             fr = x.abs().gt(D1_52X).select(ZERO, fr);
 
-            (vcopysign_vd_vd_vd(fr, x), vcopysign_vd_vd_vd(x - fr, x))
+            (fr.copy_sign(x), (x - fr).copy_sign(x))
         }
 
         pub mod u05 {

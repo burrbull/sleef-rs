@@ -4,7 +4,7 @@ macro_rules! impl_math_f64_u05 {
 
         pub fn sincospi(d: $f64x) -> ($f64x, $f64x) {
             let u = d * $f64x::splat(4.);
-            let mut q = u.truncatei();
+            let mut q = u.trunci();
             q = (q + ($ix::from_bits($ux::from_bits(q) >> 31) ^ $ix::splat(1))) & $ix::splat(!1);
             let s = u - $f64x::from_cast(q);
 

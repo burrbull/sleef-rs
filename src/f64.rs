@@ -273,7 +273,10 @@ fn rempi(a: f64) -> (Doubled<f64>, i32) {
     q += dii;
     x.0 = did;
     x = x.normalize();
-    y = dd(crate::tables::REMPITABDP[ex + 2], crate::tables::REMPITABDP[ex + 3]) * a;
+    y = dd(
+        crate::tables::REMPITABDP[ex + 2],
+        crate::tables::REMPITABDP[ex + 3],
+    ) * a;
     x += y;
     x = x.normalize()
         * dd(

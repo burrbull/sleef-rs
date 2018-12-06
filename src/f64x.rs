@@ -12,6 +12,27 @@ macro_rules! impl_math_f64 {
         use crate::common::*;
         use doubled::*;
 
+        impl BaseType for $f64x {
+            type Base = f64;
+        }
+
+        impl BaseType for $u64x {
+            type Base = u64;
+        }
+
+        impl BaseType for $i64x {
+            type Base = i64;
+        }
+/*
+        impl BaseType for $m64x {
+            type Base = m64;
+        }
+*/
+        impl FloatAssociatedTypes for $f64x {
+            type Mask = $m64x;
+            type Bits = $u64x;
+        }
+
         const ZERO: $f64x = $f64x::splat(0.);
         const NEG_ZERO: $f64x = $f64x::splat(-0.);
         const ONE: $f64x = $f64x::splat(1.);
@@ -172,8 +193,6 @@ macro_rules! impl_math_f64 {
         }
         // -----------
         impl Sign for $f64x {
-            type Mask = $m64x;
-            type Bits = $u64x;
             #[inline]
             fn is_sign_negative(self) -> Self::Mask {
                 self.sign_bit().ne(Self::Bits::splat(0))
@@ -184,7 +203,7 @@ macro_rules! impl_math_f64 {
             }
             #[inline]
             fn sign_bit(self) -> Self::Bits {
-                Self::Bits::from_bits(self) & Self::Bits::from_bits(Self::splat(-0.))
+                Self::Bits::from_bits(self) & Self::Bits::from_bits(NEG_ZERO)
             }
             #[inline]
             fn sign(self) -> Self {
@@ -197,18 +216,25 @@ macro_rules! impl_math_f64 {
             #[inline]
             fn copy_sign(self, other: Self) -> Self {
                 Self::from_bits(
-                    vandnot_vm_vm_vm(Self::Bits::from_bits(Self::splat(-0.)), Self::Bits::from_bits(self))
+                    vandnot_vm_vm_vm(Self::Bits::from_bits(NEG_ZERO), Self::Bits::from_bits(self))
                         ^ (other.sign_bit()),
                 )
             }
         }
 
         impl NegZero for $f64x {
-            type Mask = $m64x;
-            type Bits = $u64x;
             #[inline]
             fn is_neg_zero(self) -> Self::Mask {
                 Self::Bits::from_bits(self).eq(Self::Bits::from_bits(NEG_ZERO))
+            }
+        }
+
+        impl IsInt for $f64x {
+            #[inline]
+            fn is_integer(self) -> Self::Mask {
+                let mut x = (self * (ONE / D1_31X)).trunc();
+                x = (-D1_31X).mul_add(x, self);
+                x.trunc().eq(x) | self.abs().gt(D1_53X)
             }
         }
 
@@ -273,16 +299,6 @@ macro_rules! impl_math_f64 {
             q = $ix::from_bits($ux::from_bits(q) >> 20);
             q &= $ix::splat(0x7ff);
             q - $ix::splat(0x3ff)
-        }
-
-        impl IsInt for $f64x {
-            type Mask = $m64x;
-            #[inline]
-            fn is_integer(self) -> Self::Mask {
-                let mut x = (self * (ONE / D1_31X)).trunc();
-                x = (-D1_31X).mul_add(x, self);
-                x.trunc().eq(x) | self.abs().gt(D1_53X)
-            }
         }
 
         #[inline]

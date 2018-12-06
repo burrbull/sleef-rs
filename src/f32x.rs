@@ -12,6 +12,27 @@ macro_rules! impl_math_f32 {
         use crate::common::*;
         use doubled::*;
 
+        impl BaseType for $f32x {
+            type Base = f32;
+        }
+
+        impl BaseType for $u32x {
+            type Base = u32;
+        }
+
+        impl BaseType for $i32x {
+            type Base = i32;
+        }
+/*
+        impl BaseType for $m32x {
+            type Base = m32;
+        }
+*/
+        impl FloatAssociatedTypes for $f32x {
+            type Mask = $m32x;
+            type Bits = $u32x;
+        }
+
         const ZERO: $f32x = $f32x::splat(0.);
         const NEG_ZERO: $f32x = $f32x::splat(-0.);
         const ONE: $f32x = $f32x::splat(1.);
@@ -193,8 +214,6 @@ macro_rules! impl_math_f32 {
         }
 
         impl Sign for $f32x {
-            type Mask = $m32x;
-            type Bits = $u32x;
             #[inline]
             fn is_sign_negative(self) -> Self::Mask {
                 self.sign_bit().ne(Self::Bits::splat(0))
@@ -205,7 +224,7 @@ macro_rules! impl_math_f32 {
             }
             #[inline]
             fn sign_bit(self) -> Self::Bits {
-                Self::Bits::from_bits(self) & Self::Bits::from_bits(Self::splat(-0.))
+                Self::Bits::from_bits(self) & Self::Bits::from_bits(NEG_ZERO)
             }
             #[inline]
             fn sign(self) -> Self {
@@ -218,15 +237,13 @@ macro_rules! impl_math_f32 {
             #[inline]
             fn copy_sign(self, other: Self) -> Self {
                 Self::from_bits(
-                    vandnot_vm_vm_vm(Self::Bits::from_bits(Self::splat(-0.)), Self::Bits::from_bits(self))
+                    vandnot_vm_vm_vm(Self::Bits::from_bits(NEG_ZERO), Self::Bits::from_bits(self))
                         ^ (other.sign_bit()),
                 )
             }
         }
 
         impl NegZero for $f32x {
-            type Mask = $m32x;
-            type Bits = $u32x;
             #[inline]
             fn is_neg_zero(self) -> Self::Mask {
                 Self::Bits::from_bits(self).eq(Self::Bits::from_bits(NEG_ZERO))
@@ -234,7 +251,6 @@ macro_rules! impl_math_f32 {
         }
 
         impl IsInt for $f32x {
-            type Mask = $m32x;
             #[inline]
             fn is_integer(self) -> Self::Mask {
                 self.trunc().eq(self)

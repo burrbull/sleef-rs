@@ -813,10 +813,10 @@ macro_rules! impl_math_f32_u10 {
             let u = o0.select(a * a, a);
 
             let t =
-                vsel_vf_vo_vo_f_f_f(o0, o1, 0.708_929_219_4_e-4, -0.179_266_789_9_e-4, -0.949_575_769_5_e-5)
+                $f32x::select3(o0, o1, 0.708_929_219_4_e-4, -0.179_266_789_9_e-4, -0.949_575_769_5_e-5)
                     .mul_add(
                         u,
-                        vsel_vf_vo_vo_f_f_f(
+                        $f32x::select3(
                             o0,
                             o1,
                             -0.776_831_118_9_e-3,
@@ -825,7 +825,7 @@ macro_rules! impl_math_f32_u10 {
                         ),
                     ).mul_add(
                         u,
-                        vsel_vf_vo_vo_f_f_f(
+                        $f32x::select3(
                             o0,
                             o1,
                             0.515_946_373_3_e-2,
@@ -834,7 +834,7 @@ macro_rules! impl_math_f32_u10 {
                         ),
                     ).mul_add(
                         u,
-                        vsel_vf_vo_vo_f_f_f(
+                        $f32x::select3(
                             o0,
                             o1,
                             -0.268_378_127_4_e-1,
@@ -843,7 +843,7 @@ macro_rules! impl_math_f32_u10 {
                         ),
                     ).mul_add(
                         u,
-                        vsel_vf_vo_vo_f_f_f(
+                        $f32x::select3(
                             o0,
                             o1,
                             0.112_831_801_2,
@@ -852,7 +852,7 @@ macro_rules! impl_math_f32_u10 {
                         ),
                     );
             let mut d = t.mul_as_doubled(u);
-            d += vsel_vf2_vo_vo_d_d_d(
+            d += Doubled::select3(
                 o0,
                 o1,
                 -0.376_125_876_000_657_465_175_213_237_214,
@@ -860,7 +860,7 @@ macro_rules! impl_math_f32_u10 {
                 -0.643_598_050_547_891_613_081_201_721_633,
             );
             d *= u;
-            d += vsel_vf2_vo_vo_d_d_d(
+            d += Doubled::select3(
                 o0,
                 o1,
                 0.112_837_916_021_059_138_255_978_217_023_e+1,

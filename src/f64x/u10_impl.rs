@@ -1172,7 +1172,7 @@ macro_rules! impl_math_f64_u10 {
             let o2 = a.lt($f64x::splat(6.));
             let u = o0.select(a * a, a);
 
-            let t = vsel_vd_vo_vo_d_d_d(
+            let t = $f64x::select3(
                 o0,
                 o1,
                 0.680_107_240_139_539_215_7_e-20,
@@ -1180,7 +1180,7 @@ macro_rules! impl_math_f64_u10 {
                 -0.584_675_040_426_961_049_3_e-17,
             ).mul_add(
                 u,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o0,
                     o1,
                     -0.216_176_624_757_005_639_1_e-18,
@@ -1189,7 +1189,7 @@ macro_rules! impl_math_f64_u10 {
                 ),
             ).mul_add(
                 u,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o0,
                     o1,
                     0.469_591_917_330_159_875_2_e-17,
@@ -1198,7 +1198,7 @@ macro_rules! impl_math_f64_u10 {
                 ),
             ).mul_add(
                 u,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o0,
                     o1,
                     -0.904_914_041_988_801_081_9_e-16,
@@ -1207,7 +1207,7 @@ macro_rules! impl_math_f64_u10 {
                 ),
             ).mul_add(
                 u,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o0,
                     o1,
                     0.163_401_890_355_741_151_7_e-14,
@@ -1216,7 +1216,7 @@ macro_rules! impl_math_f64_u10 {
                 ),
             ).mul_add(
                 u,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o0,
                     o1,
                     -0.278_348_578_633_345_521_6_e-13,
@@ -1225,7 +1225,7 @@ macro_rules! impl_math_f64_u10 {
                 ),
             ).mul_add(
                 u,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o0,
                     o1,
                     0.446_322_127_678_641_272_2_e-12,
@@ -1234,7 +1234,7 @@ macro_rules! impl_math_f64_u10 {
                 ),
             ).mul_add(
                 u,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o0,
                     o1,
                     -0.671_136_662_285_013_898_7_e-11,
@@ -1243,7 +1243,7 @@ macro_rules! impl_math_f64_u10 {
                 ),
             ).mul_add(
                 u,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o0,
                     o1,
                     0.942_275_905_023_265_834_6_e-10,
@@ -1252,7 +1252,7 @@ macro_rules! impl_math_f64_u10 {
                 ),
             ).mul_add(
                 u,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o0,
                     o1,
                     -0.122_905_553_010_022_847_7_e-8,
@@ -1261,7 +1261,7 @@ macro_rules! impl_math_f64_u10 {
                 ),
             ).mul_add(
                 u,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o0,
                     o1,
                     0.148_071_928_158_508_502_3_e-7,
@@ -1270,7 +1270,7 @@ macro_rules! impl_math_f64_u10 {
                 ),
             ).mul_add(
                 u,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o0,
                     o1,
                     -0.163_658_446_912_340_271_4_e-6,
@@ -1279,7 +1279,7 @@ macro_rules! impl_math_f64_u10 {
                 ),
             ).mul_add(
                 u,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o0,
                     o1,
                     0.164_621_143_658_892_336_3_e-5,
@@ -1288,7 +1288,7 @@ macro_rules! impl_math_f64_u10 {
                 ),
             ).mul_add(
                 u,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o0,
                     o1,
                     -0.149_256_503_584_062_486_6_e-4,
@@ -1297,7 +1297,7 @@ macro_rules! impl_math_f64_u10 {
                 ),
             ).mul_add(
                 u,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o0,
                     o1,
                     0.120_553_329_817_896_649_6_e-3,
@@ -1306,7 +1306,7 @@ macro_rules! impl_math_f64_u10 {
                 ),
             ).mul_add(
                 u,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o0,
                     o1,
                     -0.854_832_702_345_085_116_6_e-3,
@@ -1315,7 +1315,7 @@ macro_rules! impl_math_f64_u10 {
                 ),
             ).mul_add(
                 u,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o0,
                     o1,
                     0.522_397_762_544_218_879_9_e-2,
@@ -1324,7 +1324,7 @@ macro_rules! impl_math_f64_u10 {
                 ),
             ).mul_add(
                 u,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o0,
                     o1,
                     -0.268_661_706_451_312_556_9_e-1,
@@ -1333,7 +1333,7 @@ macro_rules! impl_math_f64_u10 {
                 ),
             ).mul_add(
                 u,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o0,
                     o1,
                     0.112_837_916_709_551_275_3,
@@ -1342,7 +1342,7 @@ macro_rules! impl_math_f64_u10 {
                 ),
             ).mul_add(
                 u,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o0,
                     o1,
                     -0.376_126_389_031_837_538,
@@ -1353,14 +1353,14 @@ macro_rules! impl_math_f64_u10 {
             let mut d = t.mul_as_doubled(u);
 
             d += Doubled::new(
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o0,
                     o1,
                     1.128_379_167_095_512_558_6,
                     3.411_064_473_619_613_758_7_e-8,
                     0.000_249_630_356_905_264_382_85,
                 ),
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o0,
                     o1,
                     1.533_545_961_316_582_267_4_e-17,

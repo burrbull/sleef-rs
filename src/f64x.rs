@@ -28,9 +28,16 @@ macro_rules! impl_math_f64 {
             type Base = m64;
         }
 */
-        impl FloatAssociatedTypes for $f64x {
+        impl MaskType for $f64x {
             type Mask = $m64x;
+        }
+
+        impl BitsType for $f64x {
             type Bits = $u64x;
+        }
+
+        impl MaskType for Doubled<$f64x> {
+            type Mask = $m64x;
         }
 
         const ZERO: $f64x = $f64x::splat(0.);
@@ -165,31 +172,31 @@ macro_rules! impl_math_f64 {
             }
         }
 
+        impl SelectSeveral<f64> for $f64x {
+            #[inline]
+            fn select3(o0: Self::Mask, o1: Self::Mask, d0: f64, d1: f64, d2: f64) -> Self {
+                o0.select(Self::splat(d0), o1.select_splat(d1, d2))
+            }
+            fn select4(o0: Self::Mask, o1: Self::Mask, o2: Self::Mask, d0: f64, d1: f64, d2: f64, d3: f64) -> Self {
+                o0.select(Self::splat(d0), o1.select(Self::splat(d1), o2.select_splat(d2, d3)))
+            }
+        }
+
+        // return d0 < d1 ? x : y
         #[inline]
-        fn vsel_vd_vo_vo_d_d_d(o0: $m64x, o1: $m64x, d0: f64, d1: f64, d2: f64) -> $f64x {
-            o0.select($f64x::splat(d0), o1.select_splat(d1, d2))
+        fn vsel_vi_vd_vd_vi_vi(d0: $f64x, d1: $f64x, x: $ix, y: $ix) -> $ix {
+            d0.lt(d1).select(x, y)
+        }
+
+        // return d0 < 0 ? x : 0
+        #[inline]
+        fn vsel_vi_vd_vi(d: $f64x, x: $ix) -> $ix {
+            vand_vi_vo_vi($mx::from_cast(d.is_sign_negative()), x)
         }
 
         #[inline]
-        fn vsel_vd_vo_vo_vo_d_d_d_d(
-            o0: $m64x,
-            o1: $m64x,
-            o2: $m64x,
-            d0: f64,
-            d1: f64,
-            d2: f64,
-            d3: f64,
-        ) -> $f64x {
-            o0.select(
-                $f64x::splat(d0),
-                o1.select($f64x::splat(d1), o2.select_splat(d2, d3)),
-            )
-        }
-        // -------------------
-
-        #[inline]
-        fn vsel_vd2_vo_d_d_d_d(o: $m64x, x1: f64, y1: f64, x0: f64, y0: f64) -> Doubled<$f64x> {
-            Doubled::new(o.select_splat(x1, x0), o.select_splat(y1, y0))
+        fn vsel_vd2_vo_d_d_d_d(o: $m64x, x1: (f64, f64), x0: (f64, f64)) -> Doubled<$f64x> {
+            Doubled::new(o.select_splat(x1.0, x0.0), o.select_splat(x1.1, x0.1))
         }
         // -----------
         impl Sign for $f64x {
@@ -238,17 +245,6 @@ macro_rules! impl_math_f64 {
             }
         }
 
-        // return d0 < d1 ? x : y
-        #[inline]
-        fn vsel_vi_vd_vd_vi_vi(d0: $f64x, d1: $f64x, x: $ix, y: $ix) -> $ix {
-            d0.lt(d1).select(x, y)
-        }
-
-        // return d0 < 0 ? x : 0
-        #[inline]
-        fn vsel_vi_vd_vi(d: $f64x, x: $ix) -> $ix {
-            vand_vi_vo_vi($mx::from_cast(d.is_sign_negative()), x)
-        }
         #[inline]
         fn vpow2i_vd_vi(q: $ix) -> $f64x {
             let q = $ix::splat(0x3ff) + q;
@@ -433,17 +429,13 @@ macro_rules! impl_math_f64 {
             );
             let mut x = u * s + vsel_vd2_vo_d_d_d_d(
                 o,
-                0.015_854_344_243_815_501_891_425_9,
-                -1.046_932_722_806_315_219_088_45_e-18,
-                -0.080_745_512_188_280_785_248_473_1,
-                3.618_524_750_670_371_048_499_87_e-18,
+                (0.015_854_344_243_815_501_891_425_9, -1.046_932_722_806_315_219_088_45_e-18),
+                (-0.080_745_512_188_280_785_248_473_1, 3.618_524_750_670_371_048_499_87_e-18),
             );
             x = s2 * x + vsel_vd2_vo_d_d_d_d(
                 o,
-                -0.308_425_137_534_042_437_259_529,
-                -1.956_984_921_336_335_503_383_45_e-17,
-                0.785_398_163_397_448_278_999_491,
-                3.062_871_137_271_550_026_071_05_e-17,
+                (-0.308_425_137_534_042_437_259_529, -1.956_984_921_336_335_503_383_45_e-17),
+                (0.785_398_163_397_448_278_999_491, 3.062_871_137_271_550_026_071_05_e-17),
             );
 
             x *= o.select_doubled(s2, Doubled::new(t, ZERO));
@@ -1008,7 +1000,7 @@ macro_rules! impl_math_f64 {
 
             let t = o2.select(x.0.recpre(), (x + o0.select_splat(-1., -2.)).normalize().0);
 
-            let u = vsel_vd_vo_vo_d_d_d(
+            let u = $f64x::select3(
                 o2,
                 o0,
                 -156.801_412_704_022_726_379_848_862,
@@ -1016,7 +1008,7 @@ macro_rules! impl_math_f64 {
                 0.707_481_600_086_460_927_9_e-7,
             ).mul_add(
                 t,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o2,
                     o0,
                     1.120_804_464_289_911_606_838_558_16,
@@ -1025,7 +1017,7 @@ macro_rules! impl_math_f64 {
                 ),
             ).mul_add(
                 t,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o2,
                     o0,
                     13.397_985_455_142_589_218_333_060_2,
@@ -1034,7 +1026,7 @@ macro_rules! impl_math_f64 {
                 ),
             ).mul_add(
                 t,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o2,
                     o0,
                     -0.116_546_276_599_463_200_848_033_357,
@@ -1043,7 +1035,7 @@ macro_rules! impl_math_f64 {
                 ),
             ).mul_add(
                 t,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o2,
                     o0,
                     -1.391_801_093_265_337_481_495_562_41,
@@ -1052,7 +1044,7 @@ macro_rules! impl_math_f64 {
                 ),
             ).mul_add(
                 t,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o2,
                     o0,
                     0.015_056_113_040_026_424_412_918_973_4,
@@ -1061,7 +1053,7 @@ macro_rules! impl_math_f64 {
                 ),
             ).mul_add(
                 t,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o2,
                     o0,
                     0.179_540_117_061_234_856_098_844_714,
@@ -1070,7 +1062,7 @@ macro_rules! impl_math_f64 {
                 ),
             ).mul_add(
                 t,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o2,
                     o0,
                     -0.002_481_743_600_264_997_730_942_489_28,
@@ -1079,7 +1071,7 @@ macro_rules! impl_math_f64 {
                 ),
             ).mul_add(
                 t,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o2,
                     o0,
                     -0.029_527_880_945_699_120_504_851_034_1,
@@ -1088,7 +1080,7 @@ macro_rules! impl_math_f64 {
                 ),
             ).mul_add(
                 t,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o2,
                     o0,
                     0.000_540_164_767_892_604_515_196_325_186,
@@ -1097,7 +1089,7 @@ macro_rules! impl_math_f64 {
                 ),
             ).mul_add(
                 t,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o2,
                     o0,
                     0.006_403_362_833_808_069_794_787_256_2,
@@ -1106,7 +1098,7 @@ macro_rules! impl_math_f64 {
                 ),
             ).mul_add(
                 t,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o2,
                     o0,
                     -0.000_162_516_262_783_915_816_896_611_252,
@@ -1115,7 +1107,7 @@ macro_rules! impl_math_f64 {
                 ),
             ).mul_add(
                 t,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o2,
                     o0,
                     -0.001_914_438_498_565_477_526_465_972_39,
@@ -1124,7 +1116,7 @@ macro_rules! impl_math_f64 {
                 ),
             ).mul_add(
                 t,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o2,
                     o0,
                     7.204_895_416_020_010_558_983_115_17_e-5,
@@ -1133,7 +1125,7 @@ macro_rules! impl_math_f64 {
                 ),
             ).mul_add(
                 t,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o2,
                     o0,
                     0.000_839_498_720_672_087_279_971_000_786,
@@ -1142,7 +1134,7 @@ macro_rules! impl_math_f64 {
                 ),
             ).mul_add(
                 t,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o2,
                     o0,
                     -5.171_790_908_260_592_193_293_944_22_e-5,
@@ -1151,7 +1143,7 @@ macro_rules! impl_math_f64 {
                 ),
             ).mul_add(
                 t,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o2,
                     o0,
                     -0.000_592_166_437_353_693_882_857_342_347,
@@ -1160,7 +1152,7 @@ macro_rules! impl_math_f64 {
                 ),
             ).mul_add(
                 t,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o2,
                     o0,
                     6.972_813_758_365_857_774_037_435_39_e-5,
@@ -1169,7 +1161,7 @@ macro_rules! impl_math_f64 {
                 ),
             ).mul_add(
                 t,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o2,
                     o0,
                     0.000_784_039_221_720_066_627_493_314_301,
@@ -1178,7 +1170,7 @@ macro_rules! impl_math_f64 {
                 ),
             ).mul_add(
                 t,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o2,
                     o0,
                     -0.000_229_472_093_621_399_176_949_318_732,
@@ -1187,7 +1179,7 @@ macro_rules! impl_math_f64 {
                 ),
             ).mul_add(
                 t,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o2,
                     o0,
                     -0.002_681_327_160_493_827_160_473_958_490,
@@ -1196,7 +1188,7 @@ macro_rules! impl_math_f64 {
                 ),
             ).mul_add(
                 t,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o2,
                     o0,
                     0.003_472_222_222_222_222_222_175_164_840,
@@ -1205,7 +1197,7 @@ macro_rules! impl_math_f64 {
                 ),
             ).mul_add(
                 t,
-                vsel_vd_vo_vo_d_d_d(
+                $f64x::select3(
                     o2,
                     o0,
                     0.083_333_333_333_333_333_335_592_087_900,
@@ -1295,17 +1287,13 @@ macro_rules! impl_math_f64 {
             );
             let mut x = u * s + vsel_vd2_vo_d_d_d_d(
                 o,
-                0.015_854_344_243_815_501_891_425_9,
-                -1.046_932_722_806_315_219_088_45_e-18,
-                -0.080_745_512_188_280_785_248_473_1,
-                3.618_524_750_670_371_048_499_87_e-18,
+                (0.015_854_344_243_815_501_891_425_9, -1.046_932_722_806_315_219_088_45_e-18),
+                (-0.080_745_512_188_280_785_248_473_1, 3.618_524_750_670_371_048_499_87_e-18),
             );
             x = s2 * x + vsel_vd2_vo_d_d_d_d(
                 o,
-                -0.308_425_137_534_042_437_259_529,
-                -1.956_984_921_336_335_503_383_45_e-17,
-                0.785_398_163_397_448_278_999_491,
-                3.062_871_137_271_550_026_071_05_e-17,
+                (-0.308_425_137_534_042_437_259_529, -1.956_984_921_336_335_503_383_45_e-17),
+                (0.785_398_163_397_448_278_999_491, 3.062_871_137_271_550_026_071_05_e-17),
             );
 
             x *= o.select_doubled(s2, Doubled::new(t, ZERO));

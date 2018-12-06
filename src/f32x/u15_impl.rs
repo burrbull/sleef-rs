@@ -16,7 +16,7 @@ macro_rules! impl_math_f32_u15 {
                 Doubled::from((1., 0.)) / Doubled::new(a, ZERO),
             );
 
-            let t = vsel_vf_vo_vo_vo_f_f_f_f(
+            let t = $f32x::select4(
                 o0,
                 o1,
                 o2,
@@ -27,7 +27,7 @@ macro_rules! impl_math_f32_u15 {
             )
             .mul_add(
                 u.0,
-                vsel_vf_vo_vo_vo_f_f_f_f(
+                $f32x::select4(
                     o0,
                     o1,
                     o2,
@@ -39,7 +39,7 @@ macro_rules! impl_math_f32_u15 {
             )
             .mul_add(
                 u.0,
-                vsel_vf_vo_vo_vo_f_f_f_f(
+                $f32x::select4(
                     o0,
                     o1,
                     o2,
@@ -51,7 +51,7 @@ macro_rules! impl_math_f32_u15 {
             )
             .mul_add(
                 u.0,
-                vsel_vf_vo_vo_vo_f_f_f_f(
+                $f32x::select4(
                     o0,
                     o1,
                     o2,
@@ -63,7 +63,7 @@ macro_rules! impl_math_f32_u15 {
             )
             .mul_add(
                 u.0,
-                vsel_vf_vo_vo_vo_f_f_f_f(
+                $f32x::select4(
                     o0,
                     o1,
                     o2,
@@ -75,7 +75,7 @@ macro_rules! impl_math_f32_u15 {
             );
 
             let mut d = u * t;
-            d += vsel_vf2_vo_vo_vo_d_d_d_d(
+            d += Doubled::select4(
                 o0,
                 o1,
                 o2,
@@ -85,7 +85,7 @@ macro_rules! impl_math_f32_u15 {
                 -0.498_961_546_254_537_647_970_305_302_739,
             );
             d *= u;
-            d += vsel_vf2_vo_vo_vo_d_d_d_d(
+            d += Doubled::select4(
                 o0,
                 o1,
                 o2,
@@ -95,7 +95,7 @@ macro_rules! impl_math_f32_u15 {
                 -0.471_199_543_422_848_492_080_722_832_666_e-4,
             );
             d *= u;
-            d += vsel_vf2_vo_vo_vo_d_d_d_d(
+            d += Doubled::select4(
                 o0,
                 o1,
                 o2,

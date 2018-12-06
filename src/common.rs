@@ -110,7 +110,7 @@ where
     fn select_doubled(self, l: Doubled<T>, r: Doubled<T>) -> Doubled<T>;
 }
 
-pub trait Sign: FloatAssociatedTypes {
+pub trait Sign: MaskType + BitsType {
     fn is_sign_negative(self) -> Self::Mask;
     fn is_sign_positive(self) -> Self::Mask;
     fn sign_bit(self) -> Self::Bits;
@@ -119,11 +119,11 @@ pub trait Sign: FloatAssociatedTypes {
     fn copy_sign(self, other: Self) -> Self;
 }
 
-pub trait IsInt: FloatAssociatedTypes {
+pub trait IsInt: MaskType {
     fn is_integer(self) -> Self::Mask;
 }
 
-pub trait NegZero: FloatAssociatedTypes {
+pub trait NegZero: MaskType + BitsType {
     fn is_neg_zero(self) -> Self::Mask;
 }
 
@@ -131,7 +131,15 @@ pub trait BaseType {
     type Base;
 }
 
-pub trait FloatAssociatedTypes: BaseType {
+pub trait MaskType {
     type Mask;
+}
+
+pub trait BitsType {
     type Bits;
+}
+
+pub trait SelectSeveral<T>: MaskType {
+    fn select3(o0: Self::Mask, o1: Self::Mask, d0: T, d1: T, d2: T) -> Self;
+    fn select4(o0: Self::Mask, o1: Self::Mask, o2: Self::Mask, d0: T, d1: T, d2: T, d3: T) -> Self;
 }

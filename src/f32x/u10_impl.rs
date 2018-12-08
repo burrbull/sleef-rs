@@ -335,7 +335,7 @@ macro_rules! impl_math_f32_u10 {
 
             y = o.select_doubled(y, x.scale($f32x::splat(2.)));
 
-            y = vandnot_vo_vo_vo(o, d.lt(ZERO)).select_doubled(Doubled::from((3.141_592_741_012_573_242_2, -8.742_277_657_347_585_773_1_e-8)).sub_checked(y),
+            y = (!o & d.lt(ZERO)).select_doubled(Doubled::from((3.141_592_741_012_573_242_2, -8.742_277_657_347_585_773_1_e-8)).sub_checked(y),
                 y,
             );
 
@@ -367,10 +367,10 @@ macro_rules! impl_math_f32_u10 {
 
             u = vldexp2_vf_vf_vi2(u, q);
 
-            u = $f32x::from_bits(vandnot_vm_vo32_vm(
-                d.lt($f32x::splat(-104.)),
-                $u32x::from_bits(u),
-            ));
+            u = $f32x::from_bits(
+                !$u32x::from_bits(d.lt($f32x::splat(-104.))) &
+                $u32x::from_bits(u)
+            );
             $f32x::splat(100.)
                 .lt(d)
                 .select($f32x::INFINITY, u)
@@ -498,7 +498,7 @@ macro_rules! impl_math_f32_u10 {
 
                 #[cfg(any(feature = "enable_neon32", feature = "enable_neon32vfpv4"))]
                 {
-                    let yisodd = vandnot_vm_vo32_vm(y.is_infinite(), yisodd);
+                    let yisodd = !$u32x::from_bits(y.is_infinite()) & yisodd;
                 }
 
                 let mut result = expkf(logkf(x.abs()) * y);
@@ -516,22 +516,20 @@ macro_rules! impl_math_f32_u10 {
                 let efx = (x.abs() - ONE).mul_sign(y);
 
                 result = y.is_infinite().select(
-                    $f32x::from_bits(vandnot_vm_vo32_vm(
-                        efx.lt(ZERO),
+                    $f32x::from_bits(
+                        !$u32x::from_bits(efx.lt(ZERO)) &
                         $u32x::from_bits(
                             efx.eq(ZERO)
                                 .select(ONE, $f32x::INFINITY),
-                        ),
-                    )),
+                        )
+                    ),
                     result,
                 );
 
                 result = (x.is_infinite() | x.eq(ZERO)).select(
                     yisodd.select(x.sign(), ONE) * $f32x::from_bits(
-                        vandnot_vm_vo32_vm(
-                            x.eq(ZERO).select(-y, y).lt(ZERO),
-                            $u32x::from_bits($f32x::INFINITY),
-                        ),
+                            !$u32x::from_bits(x.eq(ZERO).select(-y, y).lt(ZERO)) &
+                            $u32x::from_bits($f32x::INFINITY)
                     ),
                     result,
                 );
@@ -612,10 +610,10 @@ macro_rules! impl_math_f32_u10 {
             y = (x.abs().gt(SQRT_FLT_MAX) | y.is_nan())
                 .select($f32x::INFINITY, y);
 
-            y = $f32x::from_bits(vandnot_vm_vo32_vm(
-                x.eq(ONE),
-                $u32x::from_bits(y),
-            ));
+            y = $f32x::from_bits(
+                !$u32x::from_bits(x.eq(ONE)) &
+                $u32x::from_bits(y)
+            );
 
             y = $f32x::from_bits(vor_vm_vo32_vm(x.lt(ONE), $u32x::from_bits(y)));
             $f32x::from_bits(vor_vm_vo32_vm(x.is_nan(), $u32x::from_bits(y)))
@@ -666,10 +664,10 @@ macro_rules! impl_math_f32_u10 {
             u = d
                 .gt($f32x::splat(38.531_839_419_103_623_894_138_7))
                 .select($f32x::INFINITY, u);
-            $f32x::from_bits(vandnot_vm_vo32_vm(
-                d.lt($f32x::splat(-50.)),
-                $u32x::from_bits(u),
-            ))
+            $f32x::from_bits(
+                !$u32x::from_bits(d.lt($f32x::splat(-50.))) &
+                $u32x::from_bits(u)
+            )
         }
 
         pub fn expm1f(a: $f32x) -> $f32x {

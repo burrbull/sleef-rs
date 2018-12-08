@@ -12,3 +12,7 @@ features = ["packed_simd"]
 #version = "0.3"
 git = "https://github.com/rust-lang-nursery/packed_simd"
 features = ["into_bits"]
+
+[features]
+default = []
+deterministic = []

@@ -284,8 +284,8 @@ macro_rules! impl_math_f32_u35 {
             );
 
             let o = d.abs().gt($f32x::splat(1e+7));
-            rsin = $f32x::from_bits(vandnot_vm_vo32_vm(o, $u32x::from_bits(rsin)));
-            rcos = $f32x::from_bits(vandnot_vm_vo32_vm(o, $u32x::from_bits(rcos)));
+            rsin = $f32x::from_bits(!$u32x::from_bits(o) & $u32x::from_bits(rsin));
+            rcos = $f32x::from_bits(!$u32x::from_bits(o) & $u32x::from_bits(rcos));
 
             let o = d.is_infinite();
             rsin = $f32x::from_bits(vor_vm_vo32_vm(o, $u32x::from_bits(rsin)));
@@ -397,7 +397,7 @@ macro_rules! impl_math_f32_u35 {
                 - (x.mul_sign(d) + u.mul_sign(d));
             x += u;
             let r = o.select(y, x * $f32x::splat(2.));
-            vandnot_vo_vo_vo(o, d.lt(ZERO)).select(
+            (!o & d.lt(ZERO)).select(
                 Doubled::from((3.141_592_741_012_573_242_2, -8.742_277_657_347_585_773_1_e-8))
                     .add_checked(-r)
                     .0,
@@ -456,10 +456,10 @@ macro_rules! impl_math_f32_u35 {
             x = vmulq_f32(x, vrsqrtsq_f32(m, vmulq_f32(x, x)));
             let mut u = vmulq_f32(x, m);
             u = vmlaq_f32(u, vmlsq_f32(m, u, u), vmulq_f32(x, vdupq_n_f32(0.5)));
-            e = $f32x::from_bits(vandnot_vm_vo32_vm(
-                d.eq(ZERO),
-                $u32x::from_bits(e),
-            ));
+            e = $f32x::from_bits(
+                !$u32x::from_bits(d.eq(ZERO)) &
+                $u32x::from_bits(e)
+            );
             u = e * u;
 
             u = d.is_infinite().select($f32x::INFINITY, u);

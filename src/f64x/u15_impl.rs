@@ -3,7 +3,7 @@ macro_rules! impl_math_f64_u15 {
         use super::*;
 
         /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
-        #[cfg(not(feature="deterministic"))]
+        #[cfg(not(feature = "deterministic"))]
         pub fn xerfc(a: $f64x) -> $f64x {
             let s = a;
             let a = a.abs();

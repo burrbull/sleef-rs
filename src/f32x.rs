@@ -96,27 +96,11 @@ macro_rules! impl_math_f32 {
 
         //---------???????
         //--------- Naive implementation ???????
-        #[inline]
-        fn vandnot_vm_vm_vm(x: $u32x, y: $u32x) -> $u32x { !x & y }
-
-        #[inline]
-        fn vandnot_vo_vo_vo(x: $m32x, y: $m32x) -> $m32x { !x & y }
 
         #[inline]
         fn vand_vm_vo32_vm(x: $m32x, y: $u32x) -> $u32x { $u32x::from_bits(x) & y }
         #[inline]
         fn vor_vm_vo32_vm(x: $m32x, y: $u32x) -> $u32x {  $u32x::from_bits(x) | y }
-        #[inline]
-        fn vandnot_vm_vo32_vm(x: $m32x, y: $u32x) -> $u32x { !$u32x::from_bits(x) & y }
-
-        #[inline]
-        fn vandnot_vi2_vi2_vi2(x: $i32x, y: $i32x) -> $i32x { !x & y }
-
-        #[inline]
-        fn vand_vi2_vo_vi2(x: $m32x, y: $i32x) -> $i32x { $i32x::from_bits(x) & y }
-
-        #[inline]
-        fn vgt_vi2_vi2_vi2(x: $i32x, y: $i32x) -> $i32x { $i32x::from_bits(x.gt(y)) }
 
         #[inline]
         fn vmlanp_vf_vf_vf_vf(x: $f32x, y: $f32x, z: $f32x) -> $f32x { z - x * y }
@@ -210,7 +194,7 @@ macro_rules! impl_math_f32 {
 
         #[inline]
         fn vsel_vi2_vf_vi2(d: $f32x, x: $i32x) -> $i32x {
-            vand_vi2_vo_vi2(d.is_sign_negative(), x)
+            $i32x::from_bits(d.is_sign_negative()) & x
         }
 
         impl Sign for $f32x {
@@ -237,7 +221,7 @@ macro_rules! impl_math_f32 {
             #[inline]
             fn copy_sign(self, other: Self) -> Self {
                 Self::from_bits(
-                    vandnot_vm_vm_vm(Self::Bits::from_bits(NEG_ZERO), Self::Bits::from_bits(self))
+                    (!Self::Bits::from_bits(NEG_ZERO) & Self::Bits::from_bits(self))
                         ^ (other.sign_bit()),
                 )
             }
@@ -300,9 +284,9 @@ macro_rules! impl_math_f32 {
             m = (((m + q) >> 6) - m) << 4;
             q -= m << 2;
             m += $i32x::splat(0x7f);
-            m = vgt_vi2_vi2_vi2(m, $i32x::splat(0)) & m;
-            let n = vgt_vi2_vi2_vi2(m, $i32x::splat(0xff));
-            m = vandnot_vi2_vi2_vi2(n, m) | (n & $i32x::splat(0xff));
+            m = $i32x::from_bits(m.gt($i32x::splat(0))) & m;
+            let n = $i32x::from_bits(m.gt($i32x::splat(0xff)));
+            m = (!n & m) | (n & $i32x::splat(0xff));
             let u = $f32x::from_bits($u32x::from_bits(m << 23));
             x *= u * u * u * u;
             let u = $f32x::from_bits($u32x::from_bits((q + $i32x::splat(0x7f)) << 23));
@@ -352,13 +336,13 @@ macro_rules! impl_math_f32 {
         fn rempif(mut a: $f32x) -> (Doubled<$f32x>, $i32x) {
             let mut ex = vilogb2k_vi2_vf(a);
             /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
-                ex = vandnot_vi2_vi2_vi2(ex >> 31, ex);
+                ex = !(ex >> 31) & ex;
                 ex = ex & $i32x::splat(127);
             }*/
             ex -= $i32x::splat(25);
-            let q = vand_vi2_vo_vi2(ex.gt($i32x::splat(90 - 25)), $i32x::splat(-64));
+            let q = $i32x::from_bits(ex.gt($i32x::splat(90 - 25))) & $i32x::splat(-64);
             a = vldexp3_vf_vf_vi2(a, q);
-            ex = vandnot_vi2_vi2_vi2(ex >> 31, ex);
+            ex = !(ex >> 31) & ex;
             ex <<= 2;
             let mut x = a.mul_as_doubled(vgather_vf_p_vi2(&crate::tables::REMPITABSP, ex));
             let (did, mut q) = rempisubf(x.0);
@@ -479,10 +463,10 @@ macro_rules! impl_math_f32 {
             u = t.0 + t.1;
             u = vldexp_vf_vf_vi2(u, q);
 
-            $f32x::from_bits(vandnot_vm_vo32_vm(
-                d.0.lt($f32x::splat(-104.)),
-                $u32x::from_bits(u),
-            ))
+            $f32x::from_bits(
+                !$u32x::from_bits(d.0.lt($f32x::splat(-104.))) &
+                $u32x::from_bits(u)
+            )
         }
 
         #[inline]
@@ -507,14 +491,14 @@ macro_rules! impl_math_f32 {
             t.0 = vldexp2_vf_vf_vi2(t.0, q);
             t.1 = vldexp2_vf_vf_vi2(t.1, q);
 
-            t.0 = $f32x::from_bits(vandnot_vm_vo32_vm(
-                d.0.lt($f32x::splat(-104.)),
-                $u32x::from_bits(t.0),
-            ));
-            t.1 = $f32x::from_bits(vandnot_vm_vo32_vm(
-                d.0.lt($f32x::splat(-104.)),
-                $u32x::from_bits(t.1),
-            ));
+            t.0 = $f32x::from_bits(
+                !$u32x::from_bits(d.0.lt($f32x::splat(-104.))) &
+                $u32x::from_bits(t.0)
+            );
+            t.1 = $f32x::from_bits(
+                !$u32x::from_bits(d.0.lt($f32x::splat(-104.))) &
+                $u32x::from_bits(t.1)
+            );
 
             t
         }
@@ -569,10 +553,10 @@ macro_rules! impl_math_f32 {
             u = d
                 .ge($f32x::splat(128.))
                 .select($f32x::INFINITY, u);
-            $f32x::from_bits(vandnot_vm_vo32_vm(
-                d.lt($f32x::splat(-150.)),
-                $u32x::from_bits(u),
-            ))
+            $f32x::from_bits(
+                !$u32x::from_bits(d.lt($f32x::splat(-150.))) &
+                $u32x::from_bits(u)
+            )
         }
 
         #[cfg(not(feature="deterministic"))]
@@ -736,10 +720,10 @@ macro_rules! impl_math_f32 {
             let d = x.mul_as_doubled(y) + z;
             let ret = (x.eq(ZERO) | y.eq(ZERO)).select(z, d.0 + d.1);
             let mut o = z.is_infinite();
-            o = vandnot_vo_vo_vo(x.is_infinite(), o);
-            o = vandnot_vo_vo_vo(x.is_nan(), o);
-            o = vandnot_vo_vo_vo(y.is_infinite(), o);
-            o = vandnot_vo_vo_vo(y.is_nan(), o);
+            o = !x.is_infinite() & o;
+            o = !x.is_nan() & o;
+            o = !y.is_infinite() & o;
+            o = !y.is_nan() & o;
             let h2 = o.select(z, h2);
 
             o = h2.is_infinite() | h2.is_nan();

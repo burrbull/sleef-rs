@@ -81,28 +81,9 @@ macro_rules! impl_math_f64 {
         //---------???????
         //--------- Naive implementation ???????
         #[inline]
-        fn vandnot_vm_vm_vm(x: $u64x, y: $u64x) -> $u64x { !x & y  }
-
-        #[inline]
-        fn vandnot_vo_vo_vo(x: $m64x, y: $m64x) -> $m64x { !x & y  }
-
-        #[inline]
         fn vand_vm_vo64_vm(x: $m64x, y: $u64x) -> $u64x { $u64x::from_bits(x) & y }
         #[inline]
         fn vor_vm_vo64_vm(x: $m64x, y: $u64x) -> $u64x { $u64x::from_bits(x) | y }
-        #[inline]
-        fn vandnot_vm_vo64_vm(x: $m64x, y: $u64x) -> $u64x { !$u64x::from_bits(x) & y }
-
-        #[inline]
-        fn vandnot_vi_vi_vi(x: $ix, y: $ix) -> $ix { !x & y  }
-
-        #[inline]
-        fn vand_vi_vo_vi(x: $mx, y: $ix) -> $ix { $ix::from_bits(x) & y }
-        #[inline]
-        fn vandnot_vi_vo_vi(x: $mx, y: $ix) -> $ix { !$ix::from_bits(x) & y }
-
-        #[inline]
-        fn veq_vi2_vi2_vi2(x: $i64x, y: $i64x) -> $i64x { $i64x::from_bits(x.eq(y)) }
 
         #[inline]
         fn vgather_vd_p_vi(ptr: &[f64], vi: $ix) -> $f64x {
@@ -191,7 +172,7 @@ macro_rules! impl_math_f64 {
         // return d0 < 0 ? x : 0
         #[inline]
         fn vsel_vi_vd_vi(d: $f64x, x: $ix) -> $ix {
-            vand_vi_vo_vi($mx::from_cast(d.is_sign_negative()), x)
+            $ix::from_bits($mx::from_cast(d.is_sign_negative())) & x
         }
 
         #[inline]
@@ -223,7 +204,7 @@ macro_rules! impl_math_f64 {
             #[inline]
             fn copy_sign(self, other: Self) -> Self {
                 Self::from_bits(
-                    vandnot_vm_vm_vm(Self::Bits::from_bits(NEG_ZERO), Self::Bits::from_bits(self))
+                    (!Self::Bits::from_bits(NEG_ZERO) & Self::Bits::from_bits(self))
                         ^ (other.sign_bit()),
                 )
             }
@@ -257,7 +238,7 @@ macro_rules! impl_math_f64 {
             m = (((m + q) >> 9) - m) << 7;
             let q = q - (m << 2);
             m = $ix::splat(0x3ff) + m;
-            m = vandnot_vi_vo_vi($ix::splat(0).gt(m), m);
+            m = !$ix::from_bits($ix::splat(0).gt(m)) & m;
             m = m.gt($ix::splat(0x7ff)).select($ix::splat(0x7ff), m);
             let r = $i64x::from_cast(m);
             let y = $f64x::from_bits(r << 20);
@@ -352,13 +333,13 @@ macro_rules! impl_math_f64 {
         fn rempi(mut a: $f64x) -> (Doubled<$f64x>, $ix) {
             let mut ex = vilogb2k_vi_vd(a);
             /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
-                ex = vandnot_vi_vi_vi(ex >> 31, ex);
+                ex = !(ex >> 31) & ex;
                 ex = ex & $ix::splat(1023);
             }*/
             ex -= $ix::splat(55);
-            let mut q = vand_vi_vo_vi(ex.gt($ix::splat(700 - 55)), $ix::splat(-64));
+            let mut q = $ix::from_bits(ex.gt($ix::splat(700 - 55))) & $ix::splat(-64);
             a = vldexp3_vd_vd_vi(a, q);
-            ex = vandnot_vi_vi_vi(ex >> 31, ex);
+            ex = !(ex >> 31) & ex;
             ex <<= 2;
             let mut x = a.mul_as_doubled(vgather_vd_p_vi(&crate::tables::REMPITABDP, ex));
             let (did, dii) = rempisub(x.0);
@@ -381,7 +362,7 @@ macro_rules! impl_math_f64 {
             x *= Doubled::from((3.141_592_653_589_793_116 * 2., 1.224_646_799_147_353_207_2_e-16 * 2.));
             let o = a.abs().lt($f64x::splat(0.7));
             x.0 = o.select(a, x.0);
-            x.1 = $f64x::from_bits(vandnot_vm_vo64_vm(o, $u64x::from_bits(x.1)));
+            x.1 = $f64x::from_bits(!$u64x::from_bits(o) & $u64x::from_bits(x.1));
             (x, q)
         }
 
@@ -619,10 +600,10 @@ macro_rules! impl_math_f64 {
             u = t.0 + t.1;
             u = vldexp2_vd_vd_vi(u, q);
 
-            $f64x::from_bits(vandnot_vm_vo64_vm(
-                d.0.lt($f64x::splat(-1000.)),
-                $u64x::from_bits(u),
-            ))
+            $f64x::from_bits(
+                !$u64x::from_bits(d.0.lt($f64x::splat(-1000.))) &
+                $u64x::from_bits(u)
+            )
         }
 
         #[inline]
@@ -653,15 +634,14 @@ macro_rules! impl_math_f64 {
             t.0 = vldexp2_vd_vd_vi(t.0, q);
             t.1 = vldexp2_vd_vd_vi(t.1, q);
 
-            t.0 = $f64x::from_bits(vandnot_vm_vo64_vm(
-                d.0.lt($f64x::splat(-1000.)),
-                $u64x::from_bits(t.0),
-            ));
-            t.1 = $f64x::from_bits(vandnot_vm_vo64_vm(
-                d.0.lt($f64x::splat(-1000.)),
-                $u64x::from_bits(t.1),
-            ));
-
+            t.0 = $f64x::from_bits(
+                !$u64x::from_bits(d.0.lt($f64x::splat(-1000.))) &
+                $u64x::from_bits(t.0)
+            );
+            t.1 = $f64x::from_bits(
+                !$u64x::from_bits(d.0.lt($f64x::splat(-1000.))) &
+                $u64x::from_bits(t.1)
+            );
             t
         }
 
@@ -826,7 +806,7 @@ macro_rules! impl_math_f64 {
             let c = x.is_sign_negative() ^ y.ge(x);
 
             let mut t = (xi2 ^ vcast_vi2_u_u(0x_7fff_ffff, 0x_ffff_ffff)) + vcast_vi2_i_i(0, 1);
-            t += vrev21_vi2_vi2(vcast_vi2_i_i(0, 1) & veq_vi2_vi2_vi2(t, vcast_vi2_i_i(-1, 0)));
+            t += vrev21_vi2_vi2(vcast_vi2_i_i(0, 1) & $i64x::from_bits(t.eq(vcast_vi2_i_i(-1, 0))));
             xi2 = $i64x::from_bits(c.select($f64x::from_bits(t), $f64x::from_bits(xi2)));
 
             xi2 -= $i64x::from_cast(vand_vm_vo64_vm(x.ne(y), $u64x::from_u32((0, 1))));
@@ -834,14 +814,14 @@ macro_rules! impl_math_f64 {
             xi2 = $i64x::from_bits(x.ne(y).select(
                 $f64x::from_bits(
                     xi2 + vrev21_vi2_vi2(
-                        vcast_vi2_i_i(0, -1) & veq_vi2_vi2_vi2(xi2, vcast_vi2_i_i(0, -1)),
+                        vcast_vi2_i_i(0, -1) & $i64x::from_bits(xi2.eq(vcast_vi2_i_i(0, -1))),
                     ),
                 ),
                 $f64x::from_bits(xi2),
             ));
 
             let mut t = (xi2 ^ vcast_vi2_u_u(0x_7fff_ffff, 0x_ffff_ffff)) + vcast_vi2_i_i(0, 1);
-            t += vrev21_vi2_vi2(vcast_vi2_i_i(0, 1) & veq_vi2_vi2_vi2(t, vcast_vi2_i_i(-1, 0)));
+            t += vrev21_vi2_vi2(vcast_vi2_i_i(0, 1) & $i64x::from_bits(t.eq(vcast_vi2_i_i(-1, 0))));
             xi2 = $i64x::from_bits(c.select($f64x::from_bits(t), $f64x::from_bits(xi2)));
 
             let mut ret = $f64x::from_bits(xi2);
@@ -910,10 +890,10 @@ macro_rules! impl_math_f64 {
             let d = x.mul_as_doubled(y) + z;
             let ret = (x.eq(ZERO) | y.eq(ZERO)).select(z, d.0 + d.1);
             let mut o = z.is_infinite();
-            o = vandnot_vo_vo_vo(x.is_infinite(), o);
-            o = vandnot_vo_vo_vo(x.is_nan(), o);
-            o = vandnot_vo_vo_vo(y.is_infinite(), o);
-            o = vandnot_vo_vo_vo(y.is_nan(), o);
+            o = !x.is_infinite() & o;
+            o = !x.is_nan() & o;
+            o = !y.is_infinite() & o;
+            o = !y.is_nan() & o;
             h2 = o.select(z, h2);
 
             let o = h2.is_infinite() | h2.is_nan();
@@ -939,7 +919,7 @@ macro_rules! impl_math_f64 {
             let t = $f64x::from_bits($u64x::from_bits(x) + $u64x::from_bits(vcast_vi2_i_i(-1, -1)));
             x.eq(ZERO).select(ZERO, t)
         }
-        
+
         #[cfg(not(feature="deterministic"))]
         #[cfg(feature = "full_fp_rounding")]
         #[inline]

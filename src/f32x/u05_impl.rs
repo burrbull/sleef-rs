@@ -70,8 +70,8 @@ macro_rules! impl_math_f32_u05 {
             );
 
             let o = d.abs().gt($f32x::splat(1e+7));
-            rsin = $f32x::from_bits(vandnot_vm_vo32_vm(o, $u32x::from_bits(rsin)));
-            rcos = $f32x::from_bits(vandnot_vm_vo32_vm(o, $u32x::from_bits(rcos)));
+            rsin = $f32x::from_bits(!$u32x::from_bits(o) & $u32x::from_bits(rsin));
+            rcos = $f32x::from_bits(!$u32x::from_bits(o) & $u32x::from_bits(rcos));
 
             let o = d.is_infinite();
             rsin = $f32x::from_bits(vor_vm_vo32_vm(o, $u32x::from_bits(rsin)));
@@ -135,10 +135,9 @@ macro_rules! impl_math_f32_u05 {
             let mut r = x.0 + x.1;
 
             r = d.is_neg_zero().select(NEG_ZERO, r);
-            r = $f32x::from_bits(vandnot_vm_vo32_vm(
-                d.abs().gt(TRIGRANGEMAX4_F),
-                $u32x::from_bits(r),
-            ));
+            r = $f32x::from_bits(
+                !$u32x::from_bits(d.abs().gt(TRIGRANGEMAX4_F)) & $u32x::from_bits(r),
+            );
             $f32x::from_bits(vor_vm_vo32_vm(d.is_infinite(), $u32x::from_bits(r)))
         }
 

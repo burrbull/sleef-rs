@@ -1,22 +1,22 @@
 macro_rules! impl_math_f32_u15 {
-    ($f32x:ident, $u32x:ident, $m32x:ident, $i32x:ident) => {
+    () => {
         use super::*;
 
         /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
-        pub fn erfcf(a: $f32x) -> $f32x {
+        pub fn erfcf(a: F32x) -> F32x {
             let s = a;
             let a = a.abs();
             let o0 = a.lt(ONE);
-            let o1 = a.lt($f32x::splat(2.2));
-            let o2 = a.lt($f32x::splat(4.3));
-            let o3 = a.lt($f32x::splat(10.1));
+            let o1 = a.lt(F32x::splat(2.2));
+            let o2 = a.lt(F32x::splat(4.3));
+            let o3 = a.lt(F32x::splat(10.1));
 
             let u = o1.select_doubled(
                 Doubled::new(a, ZERO),
                 Doubled::from((1., 0.)) / Doubled::new(a, ZERO),
             );
 
-            let t = $f32x::select4(
+            let t = F32x::select4(
                 o0,
                 o1,
                 o2,
@@ -27,7 +27,7 @@ macro_rules! impl_math_f32_u15 {
             )
             .mul_add(
                 u.0,
-                $f32x::select4(
+                F32x::select4(
                     o0,
                     o1,
                     o2,
@@ -39,7 +39,7 @@ macro_rules! impl_math_f32_u15 {
             )
             .mul_add(
                 u.0,
-                $f32x::select4(
+                F32x::select4(
                     o0,
                     o1,
                     o2,
@@ -51,7 +51,7 @@ macro_rules! impl_math_f32_u15 {
             )
             .mul_add(
                 u.0,
-                $f32x::select4(
+                F32x::select4(
                     o0,
                     o1,
                     o2,
@@ -63,7 +63,7 @@ macro_rules! impl_math_f32_u15 {
             )
             .mul_add(
                 u.0,
-                $f32x::select4(
+                F32x::select4(
                     o0,
                     o1,
                     o2,
@@ -112,8 +112,8 @@ macro_rules! impl_math_f32_u15 {
             x = o1.select_doubled(x, x * u);
 
             let mut r = o3.select(x.0 + x.1, ZERO);
-            r = s.is_sign_negative().select($f32x::splat(2.) - r, r);
-            s.is_nan().select($f32x::NAN, r)
+            r = s.is_sign_negative().select(F32x::splat(2.) - r, r);
+            s.is_nan().select(F32x::NAN, r)
         }
     };
 }

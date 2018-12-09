@@ -1,15 +1,15 @@
 macro_rules! impl_math_f64_u15 {
-    ($f64x:ident, $u64x:ident, $m64x:ident, $i64x:ident, $ux:ident, $mx:ident, $ix:ident) => {
+    () => {
         use super::*;
 
         /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
-        pub fn xerfc(a: $f64x) -> $f64x {
+        pub fn xerfc(a: F64x) -> F64x {
             let s = a;
             let a = a.abs();
             let o0 = a.lt(ONE);
-            let o1 = a.lt($f64x::splat(2.2));
-            let o2 = a.lt($f64x::splat(4.2));
-            let o3 = a.lt($f64x::splat(27.3));
+            let o1 = a.lt(F64x::splat(2.2));
+            let o2 = a.lt(F64x::splat(4.2));
+            let o3 = a.lt(F64x::splat(27.3));
 
             let u = o0.select_doubled(
                 a.mul_as_doubled(a),
@@ -19,7 +19,7 @@ macro_rules! impl_math_f64_u15 {
                 ),
             );
 
-            let t = $f64x::select4(
+            let t = F64x::select4(
                 o0,
                 o1,
                 o2,
@@ -30,7 +30,7 @@ macro_rules! impl_math_f64_u15 {
             )
             .mul_add(
                 u.0,
-                $f64x::select4(
+                F64x::select4(
                     o0,
                     o1,
                     o2,
@@ -42,7 +42,7 @@ macro_rules! impl_math_f64_u15 {
             )
             .mul_add(
                 u.0,
-                $f64x::select4(
+                F64x::select4(
                     o0,
                     o1,
                     o2,
@@ -54,7 +54,7 @@ macro_rules! impl_math_f64_u15 {
             )
             .mul_add(
                 u.0,
-                $f64x::select4(
+                F64x::select4(
                     o0,
                     o1,
                     o2,
@@ -66,7 +66,7 @@ macro_rules! impl_math_f64_u15 {
             )
             .mul_add(
                 u.0,
-                $f64x::select4(
+                F64x::select4(
                     o0,
                     o1,
                     o2,
@@ -78,7 +78,7 @@ macro_rules! impl_math_f64_u15 {
             )
             .mul_add(
                 u.0,
-                $f64x::select4(
+                F64x::select4(
                     o0,
                     o1,
                     o2,
@@ -90,7 +90,7 @@ macro_rules! impl_math_f64_u15 {
             )
             .mul_add(
                 u.0,
-                $f64x::select4(
+                F64x::select4(
                     o0,
                     o1,
                     o2,
@@ -102,7 +102,7 @@ macro_rules! impl_math_f64_u15 {
             )
             .mul_add(
                 u.0,
-                $f64x::select4(
+                F64x::select4(
                     o0,
                     o1,
                     o2,
@@ -114,7 +114,7 @@ macro_rules! impl_math_f64_u15 {
             )
             .mul_add(
                 u.0,
-                $f64x::select4(
+                F64x::select4(
                     o0,
                     o1,
                     o2,
@@ -126,7 +126,7 @@ macro_rules! impl_math_f64_u15 {
             )
             .mul_add(
                 u.0,
-                $f64x::select4(
+                F64x::select4(
                     o0,
                     o1,
                     o2,
@@ -138,7 +138,7 @@ macro_rules! impl_math_f64_u15 {
             )
             .mul_add(
                 u.0,
-                $f64x::select4(
+                F64x::select4(
                     o0,
                     o1,
                     o2,
@@ -150,7 +150,7 @@ macro_rules! impl_math_f64_u15 {
             )
             .mul_add(
                 u.0,
-                $f64x::select4(
+                F64x::select4(
                     o0,
                     o1,
                     o2,
@@ -162,7 +162,7 @@ macro_rules! impl_math_f64_u15 {
             )
             .mul_add(
                 u.0,
-                $f64x::select4(
+                F64x::select4(
                     o0,
                     o1,
                     o2,
@@ -174,7 +174,7 @@ macro_rules! impl_math_f64_u15 {
             )
             .mul_add(
                 u.0,
-                $f64x::select4(
+                F64x::select4(
                     o0,
                     o1,
                     o2,
@@ -186,7 +186,7 @@ macro_rules! impl_math_f64_u15 {
             )
             .mul_add(
                 u.0,
-                $f64x::select4(
+                F64x::select4(
                     o0,
                     o1,
                     o2,
@@ -198,7 +198,7 @@ macro_rules! impl_math_f64_u15 {
             )
             .mul_add(
                 u.0,
-                $f64x::select4(
+                F64x::select4(
                     o0,
                     o1,
                     o2,
@@ -210,7 +210,7 @@ macro_rules! impl_math_f64_u15 {
             )
             .mul_add(
                 u.0,
-                $f64x::select4(
+                F64x::select4(
                     o0,
                     o1,
                     o2,
@@ -222,7 +222,7 @@ macro_rules! impl_math_f64_u15 {
             )
             .mul_add(
                 u.0,
-                $f64x::select4(
+                F64x::select4(
                     o0,
                     o1,
                     o2,
@@ -235,7 +235,7 @@ macro_rules! impl_math_f64_u15 {
 
             let mut d = u * t;
             d += Doubled::new(
-                $f64x::select4(
+                F64x::select4(
                     o0,
                     o1,
                     o2,
@@ -244,7 +244,7 @@ macro_rules! impl_math_f64_u15 {
                     -0.500_051_804_739_990_224_39,
                     -0.500_000_000_025_844_437_7,
                 ),
-                $f64x::select4(
+                F64x::select4(
                     o0,
                     o1,
                     o2,
@@ -256,7 +256,7 @@ macro_rules! impl_math_f64_u15 {
             );
             d *= u;
             d += Doubled::new(
-                $f64x::select4(
+                F64x::select4(
                     o0,
                     o1,
                     o2,
@@ -265,7 +265,7 @@ macro_rules! impl_math_f64_u15 {
                     1.601_106_273_924_963_368_e-6,
                     2.376_197_313_752_336_479_2_e-13,
                 ),
-                $f64x::select4(
+                F64x::select4(
                     o0,
                     o1,
                     o2,
@@ -277,7 +277,7 @@ macro_rules! impl_math_f64_u15 {
             );
             d *= u;
             d += Doubled::new(
-                $f64x::select4(
+                F64x::select4(
                     o0,
                     o1,
                     o2,
@@ -286,7 +286,7 @@ macro_rules! impl_math_f64_u15 {
                     -0.572_364_966_451_454_293_41,
                     -0.572_364_942_924_701_081_14,
                 ),
-                $f64x::select4(
+                F64x::select4(
                     o0,
                     o1,
                     o2,
@@ -303,8 +303,8 @@ macro_rules! impl_math_f64_u15 {
             x = o1.select_doubled(x, x * u);
 
             let mut r = o3.select(x.0 + x.1, ZERO);
-            r = s.is_sign_negative().select($f64x::splat(2.) - r, r);
-            s.is_nan().select($f64x::NAN, r)
+            r = s.is_sign_negative().select(F64x::splat(2.) - r, r);
+            s.is_nan().select(F64x::NAN, r)
         }
     };
 }

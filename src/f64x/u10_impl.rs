@@ -2,10 +2,10 @@ macro_rules! impl_math_f64_u10 {
     ($f64x:ident, $u64x:ident, $m64x:ident, $i64x:ident, $ux:ident, $mx:ident, $ix:ident) => {
         use super::*;
 
-        #[cfg(not(feature="deterministic"))]
+        #[cfg(not(feature = "deterministic"))]
         pub fn sin(d: $f64x) -> $f64x {
-            let mut s: Doubled<$f64x>;
-            let mut ql: $ix;
+            let mut s;
+            let mut ql;
 
             if d.abs().lt(TRIGRANGEMAX2).all() {
                 let dql = (d * $f64x::FRAC_1_PI).round();
@@ -28,20 +28,18 @@ macro_rules! impl_math_f64_u10 {
             } else {
                 let (mut ddidd, ddii) = rempi(d);
                 ql = ddii & $ix::splat(3);
-                ql = ql + ql + $mx::from_cast(ddidd.0.gt(ZERO))
-                    .select($ix::splat(2), $ix::splat(1));
+                ql = ql + ql + $mx::from_cast(ddidd.0.gt(ZERO)).select($ix::splat(2), $ix::splat(1));
                 ql >>= 2;
                 let o = (ddii & $ix::splat(1)).eq($ix::splat(1));
                 let mut x = Doubled::new(
-                   $f64x::splat(-3.141_592_653_589_793_116 * 0.5).mul_sign(ddidd.0),
+                    $f64x::splat(-3.141_592_653_589_793_116 * 0.5).mul_sign(ddidd.0),
                     $f64x::splat(-1.224_646_799_147_353_207_2_e-16 * 0.5).mul_sign(ddidd.0),
                 );
                 x = ddidd + x;
                 ddidd = $m64x::from_cast(o).select_doubled(x, ddidd);
                 s = ddidd.normalize();
                 s.0 = $f64x::from_bits(
-                    $u64x::from_bits(d.is_infinite() | d.is_nan()) |
-                    $u64x::from_bits(s.0)
+                    $u64x::from_bits(d.is_infinite() | d.is_nan()) | $u64x::from_bits(s.0),
                 );
             }
 
@@ -63,89 +61,92 @@ macro_rules! impl_math_f64_u10 {
             u = t.mul_as_f(x);
 
             u = $f64x::from_bits(
-                (
-                    $u64x::from_bits($m64x::from_cast((ql & $ix::splat(1)).eq($ix::splat(1)))) &
-                    $u64x::from_bits(NEG_ZERO)
-                ) ^ $u64x::from_bits(u),
+                ($u64x::from_bits($m64x::from_cast((ql & $ix::splat(1)).eq($ix::splat(1))))
+                    & $u64x::from_bits(NEG_ZERO))
+                    ^ $u64x::from_bits(u),
             );
             d.eq(ZERO).select(d, u)
         }
 
-        /*
-
-        #[cfg(feature="deterministic")]
+        #[cfg(feature = "deterministic")]
         pub fn sin(mut d: $f64x) -> $f64x {
+            let mut s;
+            let mut ql;
 
-  vdouble u;
-  vdouble2 s, t, x;
-  vint ql;
+            let g = d.abs().lt(TRIGRANGEMAX2);
+            let dql = (d * $f64x::FRAC_1_PI).round();
+            ql = dql.roundi();
+            let u = dql.mul_add(-PI_A2, d);
+            let mut x = u.add_checked_as_doubled(dql * (-PI_B2));
 
-  let g = d.abs().lt(TRIGRANGEMAX2);
-  let dql = (d * $f64x::FRAC_1_PI).round();
-  ql = dql.roundi();
-  u = dql.mul_add(-PI_A2, d);
-  x = u.add_checked_as_doubled(dql * (-PI_B2));
+            if !g.all() {
+                let mut dqh = (d * $f64x::FRAC_1_PI / D1_24X).trunc();
+                dqh *= D1_24X;
+                let dql = d.mul_sub($f64x::FRAC_1_PI, dqh).round();
 
-  if (!LIKELY(vtestallones_i_vo64(g))) {
-    vdouble dqh = (d * $f64x::FRAC_1_PI / D1_24X).trunc();
-    dqh = dqh * D1_24X;
-    const vdouble dql = (vmlapn_vd_vd_vd_vd(d, $f64x::FRAC_1_PI, dqh)).round();
+                let u = dqh.mul_add(-PI_A, d);
+                s = u.add_checked_as_doubled(dql * (-PI_A));
+                s += dqh * (-PI_B);
+                s += dql * (-PI_B);
+                s += dqh * (-PI_C);
+                s += dql * (-PI_C);
+                s = s.add_checked((dqh + dql) * (-PI_D));
 
-    u = dqh.mul_add(-PI_A, d);
-    s = u.add_checked_as_doubled(dql * (-PI_A));
-    s += dqh * (-PI_B);
-    s += dql * (-PI_B);
-    s += dqh * (-PI_C);
-    s += dql * (-PI_C);
-    s = s.add_checked((dqh + dql) * (-PI_D));
+                ql = $mx::from_cast(g).select(ql, dql.roundi());
+                x = g.select_doubled(x, s);
+                g = d.abs().lt(TRIGRANGEMAX);
 
-    ql = $mx::from_cast(g).select(ql, dql.roundi());
-    x = g.select_doubled(x, s);
-    g = d.abs().lt(TRIGRANGEMAX);
+                if !g.all() {
+                    let (mut ddidd, ddii) = rempi(d);
+                    let ql2 = ddii & $ix::splat(3);
+                    ql2 = ql2 + ql2 + $mx::from_cast(ddidd.0.gt(ZERO)).select($ix::splat(2), $ix::splat(1));
+                    ql2 >>= 2;
+                    let o = (ddii & $ix::splat(1)).eq($ix::splat(1));
+                    let mut t = Doubled::new(
+                        $f64x::splat(-3.141_592_653_589_793_116 * 0.5).mul_sign(ddidd.0),
+                        $f64x::splat(-1.224_646_799_147_353_207_2_e-16 * 0.5).mul_sign(ddidd.0),
+                    );
+                    t = ddidd + t;
+                    ddidd = $m64x::from_cast(o).select_doubled(t, ddidd);
+                    s = ddidd.normalize();
+                    ql = $mx::from_cast(g).select(ql, ql2);
+                    x = g.select_doubled(x, s);
+                    x.0 = $f64x::from_bits(
+                        $u64x::from_bits(d.is_infinite() | d.is_nan()) | $u64x::from_bits(x.0),
+                    );
+                }
+            }
 
-    if (!LIKELY(vtestallones_i_vo64(g))) {
-      let (mut ddidd, ddii) = rempi(d);
-      vint ql2 = ddii & $ix::splat(3);
-      ql2 = ql2 + ql2 + $mx::from_cast(ddidd.0.gt(ZERO)).select($ix::splat(2), $ix::splat(1)));
-      ql2 >>= 2;
-      let o = (ddii & $ix::splat(1)).eq($ix::splat(1));
-      vdouble2 t = Doubled::new($f64x::splat(-3.141592653589793116 * 0.5).mul_sign(ddidd.0),
-				   $f64x::splat(-1.2246467991473532072e-16 * 0.5).mul_sign(ddidd.0));
-      t = ddidd + t;
-      ddidd = $m64x::from_cast(o).select_doubled(t, ddidd);
-      s = ddidd.normalize();
-      ql = $mx::from_cast(g).select(ql, ql2);
-      x = g.select_doubled(x, s);
-      x.0 = $f64x::from_bits($u64x::from_bits(d.is_infinite() | d.is_nan()) | $u64x::from_bits(x.0));
-    }
-  }
+            let t = x;
+            s = x.square();
 
-  t = x;
-  s = x.square();
+            let mut u = $f64x::splat(2.720_524_161_385_295_679_179_83_e-15)
+                .mul_add(s.0, $f64x::splat(-7.642_925_941_139_544_719_002_3_e-13))
+                .mul_add(s.0, $f64x::splat(1.605_893_701_172_778_962_116_23_e-10))
+                .mul_add(s.0, $f64x::splat(-2.505_210_681_484_312_335_936_8_e-8))
+                .mul_add(s.0, $f64x::splat(2.755_731_921_044_282_247_773_79_e-6))
+                .mul_add(s.0, $f64x::splat(-0.000_198_412_698_412_046_454_654_947))
+                .mul_add(s.0, $f64x::splat(0.008_333_333_333_333_180_562_019_22));
 
-  u = $f64x::splat(2.72052416138529567917983e-15)
-      .mul_add(s.0, $f64x::splat(-7.6429259411395447190023e-13))
-      .mul_add(s.0, $f64x::splat(1.60589370117277896211623e-10))
-      .mul_add(s.0, $f64x::splat(-2.5052106814843123359368e-08))
-      .mul_add(s.0, $f64x::splat(2.75573192104428224777379e-06))
-      .mul_add(s.0, $f64x::splat(-0.000198412698412046454654947))
-      .mul_add(s.0, $f64x::splat(0.00833333333333318056201922));
+            x = ONE.add_checked(
+                $f64x::splat(-0.166_666_666_666_666_657_414_808).add_checked_as_doubled(u * s.0) * s,
+            );
 
-  x = ONE.add_checked($f64x::splat(-0.166666666666666657414808).add_checked_as_doubled(u * s.0) * s);
+            u = t.mul_as_f(x);
 
-  u = t.mul_as_f(x);
+            u = $f64x::from_bits(
+                ($u64x::from_bits($m64x::from_cast((ql & $ix::splat(1)).eq($ix::splat(1))))
+                    & $u64x::from_bits(NEG_ZERO))
+                    ^ $u64x::from_bits(u),
+            );
 
-  u = $f64x::from_bits(($u64x::from_bits($m64x::from_cast((ql & $ix::splat(1)).eq($ix::splat(1)))) &
-						       $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(u));
+            d.eq(ZERO).select(d, u)
+        }
 
-  d.eq(ZERO).select(d, u)
-}
-*/
-
-        #[cfg(not(feature="deterministic"))]
+        #[cfg(not(feature = "deterministic"))]
         pub fn cos(d: $f64x) -> $f64x {
-            let mut s: Doubled<$f64x>;
-            let mut ql: $ix;
+            let mut s;
+            let mut ql;
 
             if d.abs().lt(TRIGRANGEMAX2).all() {
                 let dql = d.mul_add($f64x::FRAC_1_PI, $f64x::splat(-0.5)).round();
@@ -157,8 +158,7 @@ macro_rules! impl_math_f64_u10 {
                 let dqh = d
                     .mul_add($f64x::FRAC_1_PI / D1_23X, -$f64x::FRAC_1_PI / D1_24X)
                     .trunc();
-                ql = (d * $f64x::FRAC_1_PI
-                    + dqh.mul_add(-D1_23X, $f64x::splat(-0.5))).roundi();
+                ql = (d * $f64x::FRAC_1_PI + dqh.mul_add(-D1_23X, $f64x::splat(-0.5))).roundi();
                 let dqh = dqh * D1_24X;
                 ql = ql + ql + $ix::splat(1);
                 let dql = $f64x::from_cast(ql);
@@ -173,14 +173,10 @@ macro_rules! impl_math_f64_u10 {
             } else {
                 let (mut ddidd, ddii) = rempi(d);
                 ql = ddii & $ix::splat(3);
-                ql = ql + ql + $mx::from_cast(ddidd.0.gt(ZERO))
-                    .select($ix::splat(8), $ix::splat(7));
+                ql = ql + ql + $mx::from_cast(ddidd.0.gt(ZERO)).select($ix::splat(8), $ix::splat(7));
                 ql >>= 1;
                 let o = (ddii & $ix::splat(1)).eq($ix::splat(0));
-                let y = ddidd
-                    .0
-                    .gt(ZERO)
-                    .select(ZERO, $f64x::splat(-1.));
+                let y = ddidd.0.gt(ZERO).select(ZERO, $f64x::splat(-1.));
                 let mut x = Doubled::new(
                     $f64x::splat(-3.141_592_653_589_793_116 * 0.5).mul_sign(y),
                     $f64x::splat(-1.224_646_799_147_353_207_2_e-16 * 0.5).mul_sign(y),
@@ -189,8 +185,7 @@ macro_rules! impl_math_f64_u10 {
                 ddidd = $m64x::from_cast(o).select_doubled(x, ddidd);
                 s = ddidd.normalize();
                 s.0 = $f64x::from_bits(
-                    $u64x::from_bits(d.is_infinite() | d.is_nan()) |
-                    $u64x::from_bits(s.0)
+                    $u64x::from_bits(d.is_infinite() | d.is_nan()) | $u64x::from_bits(s.0),
                 );
             }
 
@@ -212,89 +207,90 @@ macro_rules! impl_math_f64_u10 {
             let u = t.mul_as_f(x);
 
             $f64x::from_bits(
-                (
-                    $u64x::from_bits($m64x::from_cast((ql & $ix::splat(2)).eq($ix::splat(0)))) &
-                    $u64x::from_bits(NEG_ZERO)
-                ) ^ $u64x::from_bits(u),
+                ($u64x::from_bits($m64x::from_cast((ql & $ix::splat(2)).eq($ix::splat(0))))
+                    & $u64x::from_bits(NEG_ZERO))
+                    ^ $u64x::from_bits(u),
             )
         }
-        /*
-        #[cfg(feature="deterministic")]
+
+        #[cfg(feature = "deterministic")]
         pub fn cos(mut d: $f64x) -> $f64x {
+            let g = d.abs().lt(TRIGRANGEMAX2);
+            let mut dql = d.mul_add($f64x::FRAC_1_PI, $f64x::splat(-0.5)).round();
+            dql = $f64x::splat(2.).mul_add(dql, ONE);
+            let mut ql = dql.roundi();
+            let mut x = d.add_as_doubled(dql * (-PI_A2 * HALF));
+            x = x.add_checked(dql * (-PI_B2 * HALF));
 
-  vdouble u;
-  vdouble2 s, t, x;
-  vint ql;
+            if !g.all() {
+                let mut dqh = (d.mul_add($f64x::FRAC_1_PI / D1_23X, -$f64x::FRAC_1_PI / D1_24X)).trunc();
+                let mut ql2 = (d * $f64x::FRAC_1_PI + dqh.mul_add(-D1_23X, $f64x::splat(-0.5))).roundi();
+                dqh *= D1_24X;
+                ql2 = ql2 + ql2 + $ix::splat(1);
+                let dql = $f64x::from_cast(ql2);
 
-  let g = d.abs().lt(TRIGRANGEMAX2);
-  vdouble dql = d.mul_add($f64x::FRAC_1_PI, $f64x::splat(-0.5)).round();
-  dql = $f64x::splat(2.).mul_add(dql, ONE);
-  ql = dql.roundi();
-  x = d.add_as_doubled(dql * (-PI_A2*HALF));
-  x = x.add_checked(dql * (-PI_B2*HALF));
+                let u = dqh.mul_add(-PI_A * HALF, d);
+                let mut s = u.add_as_doubled(dql * (-PI_A * HALF));
+                s += dqh * (-PI_B * HALF);
+                s += dql * (-PI_B * HALF);
+                s += dqh * (-PI_C * HALF);
+                s += dql * (-PI_C * HALF);
+                s = s.add_checked((dqh + dql) * (-PI_D * HALF));
 
-  if (!LIKELY(vtestallones_i_vo64(g))) {
-    vdouble dqh = (d.mul_add($f64x::FRAC_1_PI / D1_23X, -$f64x::FRAC_1_PI / D1_24X)).trunc();
-    vint ql2 = (d * $f64x::FRAC_1_PI +
-                    dqh.mul_add(-D1_23X, $f64x::splat(-0.5))).roundi();
-    dqh = dqh * D1_24X;
-    ql2 = ql2 + ql2 + $ix::splat(1));
-    const vdouble dql = $f64x::from_cast(ql2);
+                ql = $mx::from_cast(g).select(ql, ql2);
+                x = g.select_doubled(x, s);
+                g = d.abs().lt(TRIGRANGEMAX);
 
-    u = dqh.mul_add(-PI_A * HALF, d);
-    s = u.add_as_doubled(dql * (-PI_A*HALF));
-    s += dqh * (-PI_B*HALF);
-    s += dql * (-PI_B*HALF);
-    s += dqh * (-PI_C*HALF);
-    s += dql * (-PI_C*HALF);
-    s = s.add_checked((dqh + dql) * (-PI_D*HALF));
+                if !g.all() {
+                    let (mut ddidd, ddii) = rempi(d);
+                    let mut ql2 = ddii & $ix::splat(3);
+                    ql2 = ql2 + ql2 + $mx::from_cast(ddidd.0.gt(ZERO)).select($ix::splat(8), $ix::splat(7));
+                    ql2 >>= 1;
+                    let o = (ddii & $ix::splat(1)).eq($ix::splat(0));
+                    let y = ddidd.0.gt(ZERO).select(ZERO, $f64x::splat(-1.));
+                    let mut t = Doubled::new(
+                        $f64x::splat(-3.141_592_653_589_793_116 * 0.5).mul_sign(y),
+                        $f64x::splat(-1.224_646_799_147_353_207_2_e-16 * 0.5).mul_sign(y),
+                    );
+                    t = ddidd + t;
+                    ddidd = $m64x::from_cast(o).select_doubled(t, ddidd);
+                    s = ddidd.normalize();
+                    ql = $mx::from_cast(g).select(ql, ql2);
+                    x = g.select_doubled(x, s);
+                    x.0 = $f64x::from_bits(
+                        $u64x::from_bits(d.is_infinite() | d.is_nan()) | $u64x::from_bits(x.0),
+                    );
+                }
+            }
 
-    ql = $mx::from_cast(g).select(ql, ql2);
-    x = g.select_doubled(x, s);
-    g = d.abs().lt(TRIGRANGEMAX);
+            let t = x;
+            let s = x.square();
 
-    if (!LIKELY(vtestallones_i_vo64(g))) {
-      let (mut ddidd, ddii) = rempi(d);
-      vint ql2 = (ddii & $ix::splat(3));
-      ql2 = ql2 + ql2 + $mx::from_cast(ddidd.0.gt(ZERO)).select($ix::splat(8), $ix::splat(7)));
-      ql2 >>= 1;
-      let o = (ddii & $ix::splat(1)).eq($ix::splat(0));
-      vdouble y = ddidd.0.gt(ZERO).select(ZERO, $f64x::splat(-1.));
-      vdouble2 t = Doubled::new($f64x::splat(-3.141592653589793116 * 0.5).mul_sign(y),
-				   $f64x::splat(-1.2246467991473532072e-16 * 0.5).mul_sign(y));
-      t = ddidd + t;
-      ddidd = $m64x::from_cast(o).select_doubled(t, ddidd);
-      s = ddidd.normalize();
-      ql = $mx::from_cast(g).select(ql, ql2);
-      x = g.select_doubled(x, s);
-      x.0 = $f64x::from_bits($u64x::from_bits(d.is_infinite() | d.is_nan()) | $u64x::from_bits(x.0));
-    }
-  }
+            let u = $f64x::splat(2.720_524_161_385_295_679_179_83_e-15)
+                .mul_add(s.0, $f64x::splat(-7.642_925_941_139_544_719_002_3_e-13))
+                .mul_add(s.0, $f64x::splat(1.605_893_701_172_778_962_116_23_e-10))
+                .mul_add(s.0, $f64x::splat(-2.505_210_681_484_312_335_936_8_e-8))
+                .mul_add(s.0, $f64x::splat(2.755_731_921_044_282_247_773_79_e-6))
+                .mul_add(s.0, $f64x::splat(-0.000_198_412_698_412_046_454_654_947))
+                .mul_add(s.0, $f64x::splat(0.008_333_333_333_333_180_562_019_22));
 
-  t = x;
-  s = x.square();
+            x = ONE.add_checked(
+                $f64x::splat(-0.166_666_666_666_666_657_414_808).add_checked_as_doubled(u * s.0) * s,
+            );
 
-  u = $f64x::splat(2.72052416138529567917983e-15)
-      .mul_add(s.0, $f64x::splat(-7.6429259411395447190023e-13))
-      .mul_add(s.0, $f64x::splat(1.60589370117277896211623e-10))
-      .mul_add(s.0, $f64x::splat(-2.5052106814843123359368e-08))
-      .mul_add(s.0, $f64x::splat(2.75573192104428224777379e-06))
-      .mul_add(s.0, $f64x::splat(-0.000198412698412046454654947))
-      .mul_add(s.0, $f64x::splat(0.00833333333333318056201922));
+            u = t.mul_as_f(x);
 
-  x = ONE.add_checked($f64x::splat(-0.166666666666666657414808).add_checked_as_doubled(u * s.0) * s);
-
-  u = t.mul_as_f(x);
-
-  $f64x::from_bits(($u64x::from_bits($m64x::from_cast((ql & $ix::splat(2)).eq($ix::splat(0)))) & $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(u))
-
+            $f64x::from_bits(
+                ($u64x::from_bits($m64x::from_cast((ql & $ix::splat(2)).eq($ix::splat(0))))
+                    & $u64x::from_bits(NEG_ZERO))
+                    ^ $u64x::from_bits(u),
+            )
         }
-        */
 
-        #[cfg(not(feature="deterministic"))]
+        #[cfg(not(feature = "deterministic"))]
         pub fn sincos(d: $f64x) -> ($f64x, $f64x) {
-            let mut s: Doubled<$f64x>;
-            let ql: $ix;
+            let mut s;
+            let ql;
 
             if d.abs().lt(TRIGRANGEMAX2).all() {
                 let dql = (d * $f64x::FRAC_2_PI).round();
@@ -327,14 +323,13 @@ macro_rules! impl_math_f64_u10 {
 
             s.0 = s.square_as_f();
 
-            let mut u = $f64x::splat(1.589_383_072_832_289_373_285_11_e-10)
+            let u = $f64x::splat(1.589_383_072_832_289_373_285_11_e-10)
                 .mul_add(s.0, $f64x::splat(-2.505_069_435_025_397_733_493_18_e-8))
                 .mul_add(s.0, $f64x::splat(2.755_731_317_768_463_605_125_47_e-6))
                 .mul_add(s.0, $f64x::splat(-0.000_198_412_698_278_911_770_864_914))
                 .mul_add(s.0, $f64x::splat(0.008_333_333_333_319_184_596_174_6))
-                .mul_add(s.0, $f64x::splat(-0.166_666_666_666_666_130_709_393));
-
-            u *= s.0 * t.0;
+                .mul_add(s.0, $f64x::splat(-0.166_666_666_666_666_130_709_393))
+                * (s.0 * t.0);
 
             let x = t.add_checked(u);
             let rx = x.0 + x.1;
@@ -369,94 +364,92 @@ macro_rules! impl_math_f64_u10 {
             (rsin, rcos)
         }
 
-
-        /*
-        #[cfg(not(feature="deterministic"))]
+        #[cfg(feature = "deterministic")]
         pub fn sincos(d: $f64x) -> ($f64x, $f64x) {
-  vdouble u, rx, ry;
-  vdouble2 r, s, t, x;
-  vint ql;
+            let dql = (d * $f64x::FRAC_2_PI).round();
+            let mut ql = dql.roundi();
+            let u = dql.mul_add(-PI_A2 * HALF, d);
+            let mut s = u.add_checked_as_doubled(dql * (-PI_B2 * HALF));
+            let g = d.abs().lt(TRIGRANGEMAX2);
 
-  const vdouble dql = (d * $f64x::FRAC_2_PI).round();
-  ql = dql.roundi();
-  u = dql.mul_add(-PI_A2*HALF, d);
-  s = u.add_checked_as_doubled(dql * (-PI_B2*HALF));
-  let g = d.abs().lt(TRIGRANGEMAX2);
+            if !g.all() {
+                let mut dqh = (d * $f64x::FRAC_2_PI / D1_24X).trunc();
+                dqh *= D1_24X;
+                let dql = (d * $f64x::FRAC_2_PI - dqh).round();
 
-  if (!LIKELY(vtestallones_i_vo64(g))) {
-    vdouble dqh = (d * $f64x::FRAC_2_PI / D1_24X).trunc();
-    dqh = dqh * D1_24X;
-    const vdouble dql = (d * $f64x::FRAC_2_PI - dqh).round();
+                let u = dqh.mul_add(-PI_A * HALF, d);
+                let mut x = u.add_checked_as_doubled(dql * (-PI_A * HALF));
+                x += dqh * (-PI_B * HALF);
+                x += dql * (-PI_B * HALF);
+                x += dqh * (-PI_C * HALF);
+                x += dql * (-PI_C * HALF);
+                x = x.add_checked((dqh + dql) * (-PI_D * HALF));
 
-    u = dqh.mul_add(-PI_A * HALF, d);
-    x = u.add_checked_as_doubled(dql * (-PI_A*HALF));
-    x += dqh * (-PI_B*HALF);
-    x += dql * (-PI_B*HALF);
-    x += dqh * (-PI_C*HALF);
-    x += dql * (-PI_C*HALF);
-    x = x.add_checked((dqh + dql) * (-PI_D*HALF));
+                ql = $mx::from_cast(g).select(ql, dql.roundi());
+                s = g.select_doubled(s, x);
+                g = d.abs().lt(TRIGRANGEMAX);
 
-    ql = $mx::from_cast(g).select(ql, dql.roundi());
-    s = g.select_doubled(s, x);
-    g = d.abs().lt(TRIGRANGEMAX);
+                if !g.all() {
+                    let (ddidd, ddii) = rempi(d);
+                    x = ddidd;
+                    let o = d.is_infinite() | d.is_nan();
+                    x.0 = $f64x::from_bits($u64x::from_bits(o) | $u64x::from_bits(x.0));
+                    x.1 = $f64x::from_bits($u64x::from_bits(o) | $u64x::from_bits(x.1));
 
-    if (!LIKELY(vtestallones_i_vo64(g))) {
-      let (ddidd, ddii) = rempi(d);
-      x = ddidd;
-      let o = d.is_infinite() | d.is_nan();
-      x.0 = $f64x::from_bits($u64x::from_bits(o) | $u64x::from_bits(x.0));
-      x.1 = $f64x::from_bits($u64x::from_bits(o) | $u64x::from_bits(x.1));
+                    ql = $mx::from_cast(g).select(ql, ddii);
+                    s = g.select_doubled(s, x);
+                }
+            }
 
-      ql = $mx::from_cast(g).select(ql, ddii);
-      s = g.select_doubled(s, x);
-    }
-  }
+            let t = s;
 
-  t = s;
+            s.0 = s.square_as_f();
 
-  s.0 = s.square_as_f();
+            let u = $f64x::splat(1.589_383_072_832_289_373_285_11_e-10)
+                .mul_add(s.0, $f64x::splat(-2.505_069_435_025_397_733_493_18_e-8))
+                .mul_add(s.0, $f64x::splat(2.755_731_317_768_463_605_125_47_e-6))
+                .mul_add(s.0, $f64x::splat(-0.000_198_412_698_278_911_770_864_914))
+                .mul_add(s.0, $f64x::splat(0.008_333_333_333_319_184_596_174_6))
+                .mul_add(s.0, $f64x::splat(-0.166_666_666_666_666_130_709_393))
+                * (s.0 * t.0);
 
-  let u = $f64x::splat(1.58938307283228937328511e-10)
-      .mul_add(s.0, $f64x::splat(-2.50506943502539773349318e-08))
-      .mul_add(s.0, $f64x::splat(2.75573131776846360512547e-06))
-      .mul_add(s.0, $f64x::splat(-0.000198412698278911770864914))
-      .mul_add(s.0, $f64x::splat(0.0083333333333191845961746))
-      .mul_add(s.0, $f64x::splat(-0.166666666666666130709393)) * (s.0 * t.0);
+            let x = t.add_checked(u);
+            let mut rx = x.0 + x.1;
 
-  x = t.add_checked(u);
-  let mut rx = x.0 + x.1;
+            rx = d.is_neg_zero().select(NEG_ZERO, rx);
 
-  rx = d.is_neg_zero().select(NEG_ZERO, rx);
+            let u = $f64x::splat(-1.136_153_502_390_974_295_315_23_e-11)
+                .mul_add(s.0, $f64x::splat(2.087_574_712_070_400_554_793_66_e-9))
+                .mul_add(s.0, $f64x::splat(-2.755_731_440_288_475_674_985_67_e-7))
+                .mul_add(s.0, $f64x::splat(2.480_158_728_900_018_673_119_15_e-5))
+                .mul_add(s.0, $f64x::splat(-0.001_388_888_888_887_140_192_823_29))
+                .mul_add(s.0, $f64x::splat(0.041_666_666_666_666_551_959_206_2))
+                .mul_add(s.0, $f64x::splat(-0.5));
 
-  let u = $f64x::splat(-1.13615350239097429531523e-11)
-      .mul_add(s.0, $f64x::splat(2.08757471207040055479366e-09))
-      .mul_add(s.0, $f64x::splat(-2.75573144028847567498567e-07))
-      .mul_add(s.0, $f64x::splat(2.48015872890001867311915e-05))
-      .mul_add(s.0, $f64x::splat(-0.00138888888888714019282329))
-      .mul_add(s.0, $f64x::splat(0.0416666666666665519592062))
-      .mul_add(s.0, $f64x::splat(-0.5));
+            let x = ONE.add_checked(s.0.mul_as_doubled(u));
+            let ry = x.0 + x.1;
 
-  x = ONE.add_checked(s.0.mul_as_doubled(u));
-  let ry = x.0 + x.1;
+            let o = $m64x::from_cast((ql & $ix::splat(1)).eq($ix::splat(0)));
+            let mut rsin = o.select(rx, ry);
+            let mut rcos = o.select(ry, rx);
 
-  let o = $m64x::from_cast((ql & $ix::splat(1)).eq($ix::splat(0)));
-  let mut rsin = o.select(rx, ry);
-  let mut rcos = o.select(ry, rx);
+            let o = $m64x::from_cast((ql & $ix::splat(2)).eq($ix::splat(2)));
+            rsin = $f64x::from_bits(
+                ($u64x::from_bits(o) & $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(rsin),
+            );
 
-  let o = $m64x::from_cast((ql & $ix::splat(2)).eq($ix::splat(2)));
-  rsin = $f64x::from_bits(($u64x::from_bits(o) & $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(r.0));
+            let o = $m64x::from_cast(((ql + $ix::splat(1)) & $ix::splat(2)).eq($ix::splat(2)));
+            rcos = $f64x::from_bits(
+                ($u64x::from_bits(o) & $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(rcos),
+            );
 
-  let o = $m64x::from_cast(((ql + $ix::splat(1)) & $ix::splat(2)).eq($ix::splat(2)));
-  rcos = $f64x::from_bits(($u64x::from_bits(o) & $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(r.1));
+            (rsin, rcos)
+        }
 
-  (rsin, rcos)
-    }
-    */
-
-        #[cfg(not(feature="deterministic"))]
+        #[cfg(not(feature = "deterministic"))]
         pub fn tan(d: $f64x) -> $f64x {
-            let mut s: Doubled<$f64x>;
-            let ql: $ix;
+            let mut s;
+            let ql;
 
             if d.abs().lt(TRIGRANGEMAX2).all() {
                 let dql = (d * $f64x::FRAC_2_PI).round();
@@ -467,9 +460,7 @@ macro_rules! impl_math_f64_u10 {
                 let dqh = (d * ($f64x::FRAC_2_PI / D1_24X)).trunc();
                 let dqh = dqh * D1_24X;
                 s = Doubled::new(M_2_PI_H, M_2_PI_L) * d
-                    + (d.lt(ZERO)
-                        .select($f64x::splat(-0.5), HALF)
-                        - dqh);
+                    + (d.lt(ZERO).select($f64x::splat(-0.5), HALF) - dqh);
                 let dql = (s.0 + s.1).trunc();
                 ql = dql.roundi();
 
@@ -497,11 +488,10 @@ macro_rules! impl_math_f64_u10 {
             let t = s;
             s = s.square();
 
-            let mut u: $f64x;
-            if cfg!(feature = "split_kernel") {
+            let u = if cfg!(feature = "split_kernel") {
                 let sx2 = s.0 * s.0;
 
-                u = $f64x::splat(-2.595_197_915_859_246_976_986_14_e-5)
+                let u = $f64x::splat(-2.595_197_915_859_246_976_986_14_e-5)
                     .mul_add(sx2, $f64x::splat(-3.050_330_144_339_464_882_256_16_e-5))
                     .mul_add(sx2, $f64x::splat(8.096_745_182_801_591_870_450_78_e-5))
                     .mul_add(sx2, $f64x::splat(0.000_588_505_168_743_587_154_904_506))
@@ -517,9 +507,9 @@ macro_rules! impl_math_f64_u10 {
                     .mul_add(sx2, $f64x::splat(0.008_863_239_443_624_016_181_133_56))
                     .mul_add(sx2, $f64x::splat(0.053_968_253_978_129_841_763_600_2));
 
-                u = v.mul_add(s.0, u);
+                v.mul_add(s.0, u)
             } else {
-                u = $f64x::splat(1.014_197_185_110_833_732_244_08_e-5)
+                $f64x::splat(1.014_197_185_110_833_732_244_08_e-5)
                     .mul_add(s.0, $f64x::splat(-2.595_197_915_859_246_976_986_14_e-5))
                     .mul_add(s.0, $f64x::splat(5.233_880_819_158_998_553_251_86_e-5))
                     .mul_add(s.0, $f64x::splat(-3.050_330_144_339_464_882_256_16_e-5))
@@ -532,8 +522,8 @@ macro_rules! impl_math_f64_u10 {
                     .mul_add(s.0, $f64x::splat(0.008_863_239_443_624_016_181_133_56))
                     .mul_add(s.0, $f64x::splat(0.021_869_488_285_384_638_959_207_8))
                     .mul_add(s.0, $f64x::splat(0.053_968_253_978_129_841_763_600_2))
-                    .mul_add(s.0, $f64x::splat(0.133_333_333_333_125_941_821_962));
-            }
+                    .mul_add(s.0, $f64x::splat(0.133_333_333_333_125_941_821_962))
+            };
 
             let mut x = ONE.add_checked(
                 $f64x::splat(0.333_333_333_333_334_980_164_153).add_checked_as_doubled(u * s.0) * s,
@@ -547,108 +537,100 @@ macro_rules! impl_math_f64_u10 {
             d.eq(ZERO).select(d, u)
         }
 
-        /*
-        #[cfg(feature="deterministic")]
+        #[cfg(feature = "deterministic")]
         pub fn tan(d: $f64x) -> $f64x {
+            let dql = (d * $f64x::FRAC_2_PI).round();
+            let mut ql = dql.roundi();
+            let u = dql.mul_add(-PI_A2 * HALF, d);
+            let mut s = u.add_checked_as_doubled(dql * (-PI_B2 * HALF));
+            let g = d.abs().lt(TRIGRANGEMAX2);
 
-  vdouble u;
-  vdouble2 s, t, x;
-  vint ql;
+            if !g.all() {
+                let mut dqh = (d * $f64x::FRAC_2_PI / D1_24X).trunc();
+                dqh *= D1_24X;
+                let mut x = Doubled::new(M_2_PI_H, M_2_PI_L) * d
+                    + (d.lt(ZERO).select($f64x::splat(-0.5), HALF) - dqh);
+                let dql = (x.0 + x.1).trunc();
 
-  const vdouble dql = (d * $f64x::FRAC_2_PI).round();
-  ql = dql.roundi();
-  u = dql.mul_add(-PI_A2*HALF, d);
-  s = u.add_checked_as_doubled(dql * (-PI_B2*HALF));
-  let g = d.abs().lt(TRIGRANGEMAX2);
+                let u = dqh.mul_add(-PI_A * HALF, d);
+                x = u.add_checked_as_doubled(dql * (-PI_A * HALF));
+                x += dqh * (-PI_B * HALF);
+                x += dql * (-PI_B * HALF);
+                x += dqh * (-PI_C * HALF);
+                x += dql * (-PI_C * HALF);
+                x = x.add_checked((dqh + dql) * (-PI_D * HALF));
 
-  if (!LIKELY(vtestallones_i_vo64(g))) {
-    vdouble dqh = (d * $f64x::FRAC_2_PI / D1_24X).trunc();
-    dqh = dqh * D1_24X;
-    x = Doubled::new(M_2_PI_H, M_2_PI_L) * d +
-			  (d.lt(ZERO).select($f64x::splat(-0.5), HALF) - dqh);
-    const vdouble dql = (x.0 + x.1).trunc();
+                ql = $mx::from_cast(g).select(ql, dql.roundi());
+                s = g.select_doubled(s, x);
+                g = d.abs().lt(TRIGRANGEMAX);
 
-    u = dqh.mul_add(-PI_A * HALF, d);
-    x = u.add_checked_as_doubled(dql * (-PI_A*HALF));
-    x += dqh * (-PI_B*HALF);
-    x += dql * (-PI_B*HALF );
-    x += dqh * (-PI_C*HALF);
-    x += dql * (-PI_C*HALF );
-    x = x.add_checked((dqh + dql) * (-PI_D*HALF));
+                if !g.all() {
+                    let (ddidd, ddii) = rempi(d);
+                    x = ddidd;
+                    let o = d.is_infinite() | d.is_nan();
+                    x.0 = $f64x::from_bits($u64x::from_bits(o) | $u64x::from_bits(x.0));
+                    x.1 = $f64x::from_bits($u64x::from_bits(o) | $u64x::from_bits(x.1));
 
-    ql = $mx::from_cast(g).select(ql, dql.roundi());
-    s = g.select_doubled(s, x);
-    g = d.abs().lt(TRIGRANGEMAX);
+                    ql = $mx::from_cast(g).select(ql, ddii);
+                    s = g.select_doubled(s, x);
+                }
+            }
 
-    if (!LIKELY(vtestallones_i_vo64(g))) {
-      let (ddidd, ddii) = rempi(d);
-      x = ddidd;
-      let o = d.is_infinite() | d.is_nan();
-      x.0 = $f64x::from_bits($u64x::from_bits(o) | $u64x::from_bits(x.0));
-      x.1 = $f64x::from_bits($u64x::from_bits(o) | $u64x::from_bits(x.1));
+            let o = $m64x::from_cast((ql & $ix::splat(1)).eq($ix::splat(1)));
+            let n = $u64x::from_bits(o) & $u64x::from_bits(NEG_ZERO);
+            s.0 = $f64x::from_bits($u64x::from_bits(s.0) ^ n);
+            s.1 = $f64x::from_bits($u64x::from_bits(s.1) ^ n);
 
-      ql = $mx::from_cast(g).select(ql, ddii);
-      s = g.select_doubled(s, x);
-    }
-  }
+            let t = s;
+            s = s.square();
 
-  let o = $m64x::from_cast((ql & $ix::splat(1)).eq($ix::splat(1)));
-  vmask n = $u64x::from_bits(o) & $u64x::from_bits(NEG_ZERO);
-  s.0 = $f64x::from_bits($u64x::from_bits(s.0) ^ n);
-  s.1 = $f64x::from_bits($u64x::from_bits(s.1) ^ n);
+            let mut u = if cfg!(feature = "split_kernel") {
+                let sx2 = s.0 * s.0;
 
-  t = s;
-  s = s.square();
+                let u = $f64x::splat(-2.595_197_915_859_246_976_986_14_e-5)
+                    .mul_add(sx2, $f64x::splat(-3.050_330_144_339_464_882_256_16_e-5))
+                    .mul_add(sx2, $f64x::splat(8.096_745_182_801_591_870_450_78_e-5))
+                    .mul_add(sx2, $f64x::splat(0.000_588_505_168_743_587_154_904_506))
+                    .mul_add(sx2, $f64x::splat(0.003_592_087_438_369_066_191_429_24))
+                    .mul_add(sx2, $f64x::splat(0.021_869_488_285_384_638_959_207_8))
+                    .mul_add(sx2, $f64x::splat(0.133_333_333_333_125_941_821_962));
 
-if cfg!(feature = "split_kernel") {
-  vdouble sx2 = s.0 * s.0;
-   v;
+                let v = $f64x::splat(1.014_197_185_110_833_732_244_08_e-5)
+                    .mul_add(sx2, $f64x::splat(5.233_880_819_158_998_553_251_86_e-5))
+                    .mul_add(sx2, $f64x::splat(7.147_075_040_842_427_442_674_97_e-5))
+                    .mul_add(sx2, $f64x::splat(0.000_244_884_931_879_331_847_054_404))
+                    .mul_add(sx2, $f64x::splat(0.001_456_127_889_228_124_279_788_48))
+                    .mul_add(sx2, $f64x::splat(0.008_863_239_443_624_016_181_133_56))
+                    .mul_add(sx2, $f64x::splat(0.053_968_253_978_129_841_763_600_2));
 
-  u = $f64x::splat(-2.59519791585924697698614e-05)
-      .mul_add(sx2, $f64x::splat(-3.05033014433946488225616e-05))
-      .mul_add(sx2, $f64x::splat(8.09674518280159187045078e-05))
-      .mul_add(sx2, $f64x::splat(0.000588505168743587154904506))
-      .mul_add(sx2, $f64x::splat(0.00359208743836906619142924))
-      .mul_add(sx2, $f64x::splat(0.0218694882853846389592078))
-      .mul_add(sx2, $f64x::splat(0.133333333333125941821962));
+                v.mul_add(s.0, u)
+            } else {
+                $f64x::splat(1.014_197_185_110_833_732_244_08_e-5)
+                    .mul_add(s.0, $f64x::splat(-2.595_197_915_859_246_976_986_14_e-5))
+                    .mul_add(s.0, $f64x::splat(5.233_880_819_158_998_553_251_86_e-5))
+                    .mul_add(s.0, $f64x::splat(-3.050_330_144_339_464_882_256_16_e-5))
+                    .mul_add(s.0, $f64x::splat(7.147_075_040_842_427_442_674_97_e-5))
+                    .mul_add(s.0, $f64x::splat(8.096_745_182_801_591_870_450_78_e-5))
+                    .mul_add(s.0, $f64x::splat(0.000_244_884_931_879_331_847_054_404))
+                    .mul_add(s.0, $f64x::splat(0.000_588_505_168_743_587_154_904_506))
+                    .mul_add(s.0, $f64x::splat(0.001_456_127_889_228_124_279_788_48))
+                    .mul_add(s.0, $f64x::splat(0.003_592_087_438_369_066_191_429_24))
+                    .mul_add(s.0, $f64x::splat(0.008_863_239_443_624_016_181_133_56))
+                    .mul_add(s.0, $f64x::splat(0.021_869_488_285_384_638_959_207_8))
+                    .mul_add(s.0, $f64x::splat(0.053_968_253_978_129_841_763_600_2))
+                    .mul_add(s.0, $f64x::splat(0.133_333_333_333_125_941_821_962))
+            };
 
-  v = $f64x::splat(1.01419718511083373224408e-05)
-      .mul_add(sx2, $f64x::splat(5.23388081915899855325186e-05))
-      .mul_add(sx2, $f64x::splat(7.14707504084242744267497e-05))
-      .mul_add(sx2, $f64x::splat(0.000244884931879331847054404))
-      .mul_add(sx2, $f64x::splat(0.00145612788922812427978848))
-      .mul_add(sx2, $f64x::splat(0.00886323944362401618113356))
-      .mul_add(sx2, $f64x::splat(0.0539682539781298417636002));
+            let mut x = ONE
+                .add_checked($f64x::splat(0.333333333333334980164153).add_checked_as_doubled(u * s.0) * s);
+            x = t * x;
 
-  u = v.mul_add(s.0, u);
-} else [
-  u = $f64x::splat(1.01419718511083373224408e-05)
-      .mul_add(s.0, $f64x::splat(-2.59519791585924697698614e-05))
-      .mul_add(s.0, $f64x::splat(5.23388081915899855325186e-05))
-      .mul_add(s.0, $f64x::splat(-3.05033014433946488225616e-05))
-      .mul_add(s.0, $f64x::splat(7.14707504084242744267497e-05))
-      .mul_add(s.0, $f64x::splat(8.09674518280159187045078e-05))
-      .mul_add(s.0, $f64x::splat(0.000244884931879331847054404))
-      .mul_add(s.0, $f64x::splat(0.000588505168743587154904506))
-      .mul_add(s.0, $f64x::splat(0.00145612788922812427978848))
-      .mul_add(s.0, $f64x::splat(0.00359208743836906619142924))
-      .mul_add(s.0, $f64x::splat(0.00886323944362401618113356))
-      .mul_add(s.0, $f64x::splat(0.0218694882853846389592078))
-      .mul_add(s.0, $f64x::splat(0.0539682539781298417636002))
-      .mul_add(s.0, $f64x::splat(0.133333333333125941821962));
-}
+            x = o.select_doubled(x.recpre(), x);
 
-  x = ONE.add_checked($f64x::splat(0.333333333333334980164153).add_checked_as_doubled(u * s.0) * s);
-  x = t * x;
+            u = x.0 + x.1;
 
-  x = o.select_doubled(ddrec_vd2_vd2(x), x);
-
-  u = (x.0 + x.1);
-
-  d.eq(ZERO).select(d, u)
-
+            d.eq(ZERO).select(d, u)
         }
-        */
 
         #[inline]
         fn atan2k_u1(y: Doubled<$f64x>, mut x: Doubled<$f64x>) -> Doubled<$f64x> {
@@ -719,8 +701,11 @@ if cfg!(feature = "split_kernel") {
 
             t *= u;
             t = s * ONE.add_checked(t);
-            (Doubled::from((1.570_796_326_794_896_557_998_982, 6.123_233_995_736_766_035_868_82_e-17))
-                * $f64x::from_cast(q)).add_checked(t)
+            (Doubled::from((
+                1.570_796_326_794_896_557_998_982,
+                6.123_233_995_736_766_035_868_82_e-17,
+            )) * $f64x::from_cast(q))
+            .add_checked(t)
         }
 
         pub fn atan2(y: $f64x, x: $f64x) -> $f64x {
@@ -728,37 +713,25 @@ if cfg!(feature = "split_kernel") {
             let x = o.select(x * D1_53X, x);
             let y = o.select(y * D1_23X, y);
 
-            let d = atan2k_u1(
-                Doubled::new(y.abs(), ZERO),
-                Doubled::new(x, ZERO),
-            );
+            let d = atan2k_u1(Doubled::new(y.abs(), ZERO), Doubled::new(x, ZERO));
             let mut r = d.0 + d.1;
 
             r = r.mul_sign(x);
             r = (x.is_infinite() | x.eq(ZERO)).select(
-                $f64x::FRAC_PI_2
-                    - visinf2_vd_vd_vd(x, $f64x::FRAC_PI_2.mul_sign(x)),
+                $f64x::FRAC_PI_2 - visinf2_vd_vd_vd(x, $f64x::FRAC_PI_2.mul_sign(x)),
                 r,
             );
             r = y.is_infinite().select(
-                $f64x::FRAC_PI_2
-                    - visinf2_vd_vd_vd(x, $f64x::FRAC_PI_4.mul_sign(x)),
+                $f64x::FRAC_PI_2 - visinf2_vd_vd_vd(x, $f64x::FRAC_PI_4.mul_sign(x)),
                 r,
             );
             r = y.eq(ZERO).select(
-                $f64x::from_bits((
-                    $u64x::from_bits(x.is_sign_negative()) &
-                    $u64x::from_bits($f64x::PI)
-                )),
+                $f64x::from_bits(($u64x::from_bits(x.is_sign_negative()) & $u64x::from_bits($f64x::PI))),
                 r,
             );
 
-            $f64x::from_bits(
-                $u64x::from_bits(x.is_nan() | y.is_nan()) |
-                $u64x::from_bits(r.mul_sign(y))
-            )
+            $f64x::from_bits($u64x::from_bits(x.is_nan() | y.is_nan()) | $u64x::from_bits(r.mul_sign(y)))
         }
-
 
         pub fn asin(d: $f64x) -> $f64x {
             let o = d.abs().lt(HALF);
@@ -803,14 +776,16 @@ if cfg!(feature = "split_kernel") {
 
             u *= x2 * x.0;
 
-            let y = Doubled::from((3.141_592_653_589_793_116 / 4., 1.224_646_799_147_353_207_2_e-16 / 4.))
-                .sub_checked(x)
-                .sub_checked(u);
+            let y = Doubled::from((
+                3.141_592_653_589_793_116 / 4.,
+                1.224_646_799_147_353_207_2_e-16 / 4.,
+            ))
+            .sub_checked(x)
+            .sub_checked(u);
 
             let r = o.select(u + x.0, (y.0 + y.1) * $f64x::splat(2.));
             r.mul_sign(d)
         }
-
 
         pub fn acos(d: $f64x) -> $f64x {
             let o = d.abs().lt(HALF);
@@ -854,13 +829,17 @@ if cfg!(feature = "split_kernel") {
 
             u *= x2 * x.0;
 
-            let mut y = Doubled::from((3.141_592_653_589_793_116 / 2., 1.224_646_799_147_353_207_2_e-16 / 2.))
-                .sub_checked(x.0.mul_sign(d).add_checked_as_doubled(u.mul_sign(d)));
+            let mut y = Doubled::from((
+                3.141_592_653_589_793_116 / 2.,
+                1.224_646_799_147_353_207_2_e-16 / 2.,
+            ))
+            .sub_checked(x.0.mul_sign(d).add_checked_as_doubled(u.mul_sign(d)));
             x = x.add_checked(u);
 
             y = o.select_doubled(y, x.scale($f64x::splat(2.)));
 
-            y = (!o & d.lt(ZERO)).select_doubled(Doubled::from((3.141_592_653_589_793_116, 1.224_646_799_147_353_207_2_e-16)).sub_checked(y),
+            y = (!o & d.lt(ZERO)).select_doubled(
+                Doubled::from((3.141_592_653_589_793_116, 1.224_646_799_147_353_207_2_e-16)).sub_checked(y),
                 y,
             );
 
@@ -870,10 +849,11 @@ if cfg!(feature = "split_kernel") {
         pub fn atan(d: $f64x) -> $f64x {
             let d2 = atan2k_u1(Doubled::new(d.abs(), ZERO), Doubled::from((1., 0.)));
             let mut r = d2.0 + d2.1;
-            r = d.is_infinite().select($f64x::splat(1.570_796_326_794_896_557_998_982), r);
+            r = d
+                .is_infinite()
+                .select($f64x::splat(1.570_796_326_794_896_557_998_982), r);
             r.mul_sign(d)
         }
-
 
         pub fn exp(d: $f64x) -> $f64x {
             let mut u = (d * R_LN2).round();
@@ -899,10 +879,7 @@ if cfg!(feature = "split_kernel") {
                         .mul_adde(s2, $f64x::splat(0.833_333_333_331_493_821_e-2))
                         .mul_adde(s2, $f64x::splat(0.166_666_666_666_666_907_2));
 
-                    u = v
-                        .mul_add(s, u)
-                        .mul_adde(s, ONE)
-                        .mul_adde(s, ONE);
+                    u = v.mul_add(s, u).mul_adde(s, ONE).mul_adde(s, ONE);
                 } else {
                     u = $f64x::splat(0.208_127_637_823_716_445_7_e-8)
                         .mul_adde(s, $f64x::splat(0.251_121_070_304_228_802_2_e-7))
@@ -939,30 +916,27 @@ if cfg!(feature = "split_kernel") {
             u = d
                 .gt($f64x::splat(709.782_711_149_557_429_092_172_174_26))
                 .select($f64x::INFINITY, u);
-            $f64x::from_bits(
-                !$u64x::from_bits(d.lt($f64x::splat(-1000.))) &
-                $u64x::from_bits(u)
-            )
+            $f64x::from_bits(!$u64x::from_bits(d.lt($f64x::splat(-1000.))) & $u64x::from_bits(u))
         }
 
-        #[cfg(not(feature="deterministic"))]
+        #[cfg(not(feature = "deterministic"))]
         pub fn log(mut d: $f64x) -> $f64x {
             let m: $f64x;
             let mut s =
-                /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
-                    let o = d.lt($f64x::splat(f64::MIN));
-                    d = o.select(d * (D1_32X * D1_32X), d);
-                    let mut e = vilogb2k_vi_vd(d * $f64x::splat(1. / 0.75));
-                    m = vldexp3_vd_vd_vi(d, -e);
-                    e = $mx::from_cast(o).select(e - $ix::splat(64), e);
-                    Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17))
-                        * $f64x::from_cast(e)
-                }/* else {
-                    let mut e = vgetexp_vd_vd(d * $f64x::splat(1. / 0.75));
-                    e = e.eq($f64x::INFINITY).select($f64x::splat(1024.), e);
-                    m = vgetmant_vd_vd(d);
-                    Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17)) * e
-                }*/;
+                        /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
+                            let o = d.lt($f64x::splat(f64::MIN));
+                            d = o.select(d * (D1_32X * D1_32X), d);
+                            let mut e = vilogb2k_vi_vd(d * $f64x::splat(1. / 0.75));
+                            m = vldexp3_vd_vd_vi(d, -e);
+                            e = $mx::from_cast(o).select(e - $ix::splat(64), e);
+                            Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17))
+                                * $f64x::from_cast(e)
+                        }/* else {
+                            let mut e = vgetexp_vd_vd(d * $f64x::splat(1. / 0.75));
+                            e = e.eq($f64x::INFINITY).select($f64x::splat(1024.), e);
+                            m = vgetmant_vd_vd(d);
+                            Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17)) * e
+                        }*/;
 
             let x = $f64x::splat(-1.).add_as_doubled(m) / ONE.add_as_doubled(m);
             let x2 = x.0 * x.0;
@@ -981,11 +955,9 @@ if cfg!(feature = "split_kernel") {
             let r = s.0 + s.1;
 
             /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
-                let r = d.eq($f64x::INFINITY).select($f64x::INFINITY, r);
-                let r =
-                    (d.lt(ZERO) | d.is_nan()).select($f64x::NAN, r);
-                d.eq(ZERO)
-                    .select($f64x::NEG_INFINITY, r)
+            let r = d.eq($f64x::INFINITY).select($f64x::INFINITY, r);
+            let r = (d.lt(ZERO) | d.is_nan()).select($f64x::NAN, r);
+            d.eq(ZERO).select($f64x::NEG_INFINITY, r)
             /*} else {
                 vfixup_vd_vd_vd_vi2_i(
                     r,
@@ -996,7 +968,7 @@ if cfg!(feature = "split_kernel") {
             }*/
         }
 
-        #[cfg(not(feature="deterministic"))]
+        #[cfg(not(feature = "deterministic"))]
         pub fn pow(x: $f64x, y: $f64x) -> $f64x {
             if true {
                 let yisint = y.is_integer();
@@ -1010,37 +982,30 @@ if cfg!(feature = "split_kernel") {
 
                 result *= x.gt(ZERO).select(
                     ONE,
-                    yisint.select(
-                        yisodd.select($f64x::splat(-1.), ONE),
-                        $f64x::NAN,
-                    ),
+                    yisint.select(yisodd.select($f64x::splat(-1.), ONE), $f64x::NAN),
                 );
 
                 let efx = (x.abs() - ONE).mul_sign(y);
 
                 result = y.is_infinite().select(
                     $f64x::from_bits(
-                        !$u64x::from_bits(efx.lt(ZERO)) &
-                        $u64x::from_bits(
-                            efx.eq(ZERO)
-                                .select(ONE, $f64x::INFINITY),
-                        ),
+                        !$u64x::from_bits(efx.lt(ZERO))
+                            & $u64x::from_bits(efx.eq(ZERO).select(ONE, $f64x::INFINITY)),
                     ),
                     result,
                 );
 
                 result = (x.is_infinite() | x.eq(ZERO)).select(
-                    yisodd.select(x.sign(), ONE) * $f64x::from_bits(
-                            !$u64x::from_bits(x.eq(ZERO).select(-y, y).lt(ZERO)) &
-                            $u64x::from_bits($f64x::INFINITY)
-                    ),
+                    yisodd.select(x.sign(), ONE)
+                        * $f64x::from_bits(
+                            !$u64x::from_bits(x.eq(ZERO).select(-y, y).lt(ZERO))
+                                & $u64x::from_bits($f64x::INFINITY),
+                        ),
                     result,
                 );
 
-                result = $f64x::from_bits(
-                    $u64x::from_bits(x.is_nan() | y.is_nan()) |
-                    $u64x::from_bits(result)
-                );
+                result =
+                    $f64x::from_bits($u64x::from_bits(x.is_nan() | y.is_nan()) | $u64x::from_bits(result));
 
                 (y.eq(ZERO) | x.eq(ONE)).select(ONE, result)
             } else {
@@ -1048,32 +1013,30 @@ if cfg!(feature = "split_kernel") {
             }
         }
 
-        #[cfg(not(feature="deterministic"))]
+        #[cfg(not(feature = "deterministic"))]
         pub fn sinh(x: $f64x) -> $f64x {
             let mut y = x.abs();
             let mut d = expk2(Doubled::new(y, ZERO));
             d = d.sub_checked(d.recpre());
             y = (d.0 + d.1) * HALF;
 
-            y = (x.abs().gt($f64x::splat(710.)) | y.is_nan())
-                .select($f64x::INFINITY, y);
+            y = (x.abs().gt($f64x::splat(710.)) | y.is_nan()).select($f64x::INFINITY, y);
             y = y.mul_sign(x);
             $f64x::from_bits($u64x::from_bits(x.is_nan()) | $u64x::from_bits(y))
         }
 
-        #[cfg(not(feature="deterministic"))]
+        #[cfg(not(feature = "deterministic"))]
         pub fn cosh(x: $f64x) -> $f64x {
             let mut y = x.abs();
             let mut d = expk2(Doubled::new(y, ZERO));
             d = d.add_checked(d.recpre());
             y = (d.0 + d.1) * HALF;
 
-            y = (x.abs().gt($f64x::splat(710.)) | y.is_nan())
-                .select($f64x::INFINITY, y);
+            y = (x.abs().gt($f64x::splat(710.)) | y.is_nan()).select($f64x::INFINITY, y);
             $f64x::from_bits($u64x::from_bits(x.is_nan()) | $u64x::from_bits(y))
         }
 
-        #[cfg(not(feature="deterministic"))]
+        #[cfg(not(feature = "deterministic"))]
         pub fn tanh(x: $f64x) -> $f64x {
             let mut y = x.abs();
             let mut d = expk2(Doubled::new(y, ZERO));
@@ -1081,13 +1044,12 @@ if cfg!(feature = "split_kernel") {
             d = (d + (-e)) / (d + e);
             y = d.0 + d.1;
 
-            y = (x.abs().gt($f64x::splat(18.714_973_875)) | y.is_nan())
-                .select(ONE, y);
+            y = (x.abs().gt($f64x::splat(18.714_973_875)) | y.is_nan()).select(ONE, y);
             y = y.mul_sign(x);
             $f64x::from_bits($u64x::from_bits(x.is_nan()) | $u64x::from_bits(y))
         }
 
-        #[cfg(not(feature="deterministic"))]
+        #[cfg(not(feature = "deterministic"))]
         pub fn asinh(x: $f64x) -> $f64x {
             let mut y = x.abs();
             let o = y.gt(ONE);
@@ -1099,49 +1061,39 @@ if cfg!(feature = "split_kernel") {
             d = logk2((d + x).normalize());
             y = d.0 + d.1;
 
-            y = (x.abs().gt(SQRT_DBL_MAX) | y.is_nan())
-                .select($f64x::INFINITY.mul_sign(x), y);
+            y = (x.abs().gt(SQRT_DBL_MAX) | y.is_nan()).select($f64x::INFINITY.mul_sign(x), y);
 
             y = $f64x::from_bits($u64x::from_bits(x.is_nan()) | $u64x::from_bits(y));
             x.is_neg_zero().select(NEG_ZERO, y)
         }
 
-        #[cfg(not(feature="deterministic"))]
+        #[cfg(not(feature = "deterministic"))]
         pub fn acosh(x: $f64x) -> $f64x {
-            let d = logk2(
-                x.add_as_doubled(ONE).sqrt() * x.add_as_doubled($f64x::splat(-1.)).sqrt() + x,
-            );
+            let d = logk2(x.add_as_doubled(ONE).sqrt() * x.add_as_doubled($f64x::splat(-1.)).sqrt() + x);
             let mut y = d.0 + d.1;
 
-            y = (x.abs().gt(SQRT_DBL_MAX) | y.is_nan())
-                .select($f64x::INFINITY, y);
+            y = (x.abs().gt(SQRT_DBL_MAX) | y.is_nan()).select($f64x::INFINITY, y);
             y = $f64x::from_bits(!$u64x::from_bits(x.eq(ONE)) & $u64x::from_bits(y));
 
             y = $f64x::from_bits($u64x::from_bits(x.lt(ONE)) | $u64x::from_bits(y));
             $f64x::from_bits($u64x::from_bits(x.is_nan()) | $u64x::from_bits(y))
         }
 
-        #[cfg(not(feature="deterministic"))]
+        #[cfg(not(feature = "deterministic"))]
         pub fn atanh(x: $f64x) -> $f64x {
             let mut y = x.abs();
             let d = logk2(ONE.add_as_doubled(y) / ONE.add_as_doubled(-y));
             y = $f64x::from_bits(
-                $u64x::from_bits(y.gt(ONE)) |
-                $u64x::from_bits(y.eq(ONE).select(
-                    $f64x::INFINITY,
-                    (d.0 + d.1) * HALF,
-                ))
+                $u64x::from_bits(y.gt(ONE))
+                    | $u64x::from_bits(y.eq(ONE).select($f64x::INFINITY, (d.0 + d.1) * HALF)),
             );
 
             y = y.mul_sign(x);
-            y = $f64x::from_bits(
-                $u64x::from_bits(x.is_infinite() | y.is_nan()) |
-                $u64x::from_bits(y)
-            );
+            y = $f64x::from_bits($u64x::from_bits(x.is_infinite() | y.is_nan()) | $u64x::from_bits(y));
             $f64x::from_bits($u64x::from_bits(x.is_nan()) | $u64x::from_bits(y))
         }
 
-        #[cfg(not(feature="deterministic"))]
+        #[cfg(not(feature = "deterministic"))]
         pub fn cbrt(mut d: $f64x) -> $f64x {
             let mut q2 = Doubled::from((1., 0.));
 
@@ -1155,10 +1107,18 @@ if cfg!(feature = "split_kernel") {
             let qu = (t * $f64x::splat(1. / 3.)).trunci();
             let re = (t - $f64x::from_cast(qu) * $f64x::splat(3.)).trunci();
 
-            q2 = $m64x::from_cast(re.eq($ix::splat(1))).select_doubled(Doubled::from((1.259_921_049_894_873_190_7, -2.589_933_375_300_506_917_7_e-17)),
+            q2 = $m64x::from_cast(re.eq($ix::splat(1))).select_doubled(
+                Doubled::from((
+                    1.259_921_049_894_873_190_7,
+                    -2.589_933_375_300_506_917_7_e-17,
+                )),
                 q2,
             );
-            q2 = $m64x::from_cast(re.eq($ix::splat(2))).select_doubled(Doubled::from((1.587_401_051_968_199_583_4, -1.086_900_819_419_782_298_6_e-16)),
+            q2 = $m64x::from_cast(re.eq($ix::splat(2))).select_doubled(
+                Doubled::from((
+                    1.587_401_051_968_199_583_4,
+                    -1.086_900_819_419_782_298_6_e-16,
+                )),
                 q2,
             );
 
@@ -1192,10 +1152,8 @@ if cfg!(feature = "split_kernel") {
             z = vldexp2_vd_vd_vi(v.0 + v.1, qu - $ix::splat(2048));
 
             /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
-                z = d.is_infinite()
-                    .select($f64x::INFINITY.mul_sign(q2.0), z);
-                d.eq(ZERO)
-                    .select($f64x::from_bits(q2.0.sign_bit()), z)
+            z = d.is_infinite().select($f64x::INFINITY.mul_sign(q2.0), z);
+            d.eq(ZERO).select($f64x::from_bits(q2.0.sign_bit()), z)
             /*} else {
                 z = s.is_infinite().select($f64x::INFINITY.mul_sign(s), z);
                 s.eq(ZERO)
@@ -1249,13 +1207,8 @@ if cfg!(feature = "split_kernel") {
 
             u = vldexp2_vd_vd_vi(u, q);
 
-            u = d
-                .ge($f64x::splat(1024.))
-                .select($f64x::INFINITY, u);
-            $f64x::from_bits(
-                !$u64x::from_bits(d.lt($f64x::splat(-2000.))) &
-                $u64x::from_bits(u)
-            )
+            u = d.ge($f64x::splat(1024.)).select($f64x::INFINITY, u);
+            $f64x::from_bits(!$u64x::from_bits(d.lt($f64x::splat(-2000.))) & $u64x::from_bits(u))
         }
 
         pub fn exp10(d: $f64x) -> $f64x {
@@ -1307,13 +1260,10 @@ if cfg!(feature = "split_kernel") {
             u = d
                 .gt($f64x::splat(308.254_715_559_916_71))
                 .select($f64x::INFINITY, u);
-            $f64x::from_bits(
-                !$u64x::from_bits(d.lt($f64x::splat(-350.))) &
-                $u64x::from_bits(u)
-            )
+            $f64x::from_bits(!$u64x::from_bits(d.lt($f64x::splat(-350.))) & $u64x::from_bits(u))
         }
 
-        #[cfg(not(feature="deterministic"))]
+        #[cfg(not(feature = "deterministic"))]
         pub fn expm1(a: $f64x) -> $f64x {
             let d = expk2(Doubled::new(a, ZERO)) + $f64x::splat(-1.);
             let mut x = d.0 + d.1;
@@ -1326,25 +1276,25 @@ if cfg!(feature = "split_kernel") {
             a.is_neg_zero().select(NEG_ZERO, x)
         }
 
-        #[cfg(not(feature="deterministic"))]
+        #[cfg(not(feature = "deterministic"))]
         pub fn log10(mut d: $f64x) -> $f64x {
             let m: $f64x;
 
             let mut s = /*if !cfg!(feature = "enable_avx512f")
-                && !cfg!(feature = "enable_avx512fnofma")*/
-            {
-                let o = d.lt($f64x::splat(f64::MIN));
-                d = o.select(d * (D1_32X * D1_32X), d);
-                let mut e = vilogb2k_vi_vd(d * $f64x::splat(1. / 0.75));
-                m = vldexp3_vd_vd_vi(d, -e);
-                e = $mx::from_cast(o).select(e - $ix::splat(64), e);
-                Doubled::from((0.301_029_995_663_981_198_02, -2.803_728_127_785_170_339_e-18)) * $f64x::from_cast(e)
-            }/* else {
-                let mut e = vgetexp_vd_vd(d * $f64x::splat(1. / 0.75));
-                e = e.eq($f64x::INFINITY).select($f64x::splat(1024.), e);
-                m = vgetmant_vd_vd(d);
-                Doubled::from((0.301_029_995_663_981_198_02, -2.803_728_127_785_170_339_e-18)) * e
-            }*/;
+                        && !cfg!(feature = "enable_avx512fnofma")*/
+                    {
+                        let o = d.lt($f64x::splat(f64::MIN));
+                        d = o.select(d * (D1_32X * D1_32X), d);
+                        let mut e = vilogb2k_vi_vd(d * $f64x::splat(1. / 0.75));
+                        m = vldexp3_vd_vd_vi(d, -e);
+                        e = $mx::from_cast(o).select(e - $ix::splat(64), e);
+                        Doubled::from((0.301_029_995_663_981_198_02, -2.803_728_127_785_170_339_e-18)) * $f64x::from_cast(e)
+                    }/* else {
+                        let mut e = vgetexp_vd_vd(d * $f64x::splat(1. / 0.75));
+                        e = e.eq($f64x::INFINITY).select($f64x::splat(1024.), e);
+                        m = vgetmant_vd_vd(d);
+                        Doubled::from((0.301_029_995_663_981_198_02, -2.803_728_127_785_170_339_e-18)) * e
+                    }*/;
 
             let x = $f64x::splat(-1.).add_as_doubled(m) / ONE.add_as_doubled(m);
             let x2 = x.0 * x.0;
@@ -1357,17 +1307,20 @@ if cfg!(feature = "split_kernel") {
                 .mul_add(x2, $f64x::splat(0.173_717_792_745_460_508_6))
                 .mul_add(x2, $f64x::splat(0.289_529_654_602_197_261_7));
 
-            s = s.add_checked(x * Doubled::from((0.868_588_963_806_503_633_34, 1.143_005_969_409_638_931_1_e-17)));
+            s = s.add_checked(
+                x * Doubled::from((
+                    0.868_588_963_806_503_633_34,
+                    1.143_005_969_409_638_931_1_e-17,
+                )),
+            );
             s = s.add_checked(x2 * x.0 * t);
 
             let r = s.0 + s.1;
 
             /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
-                let r = d.eq($f64x::INFINITY).select($f64x::INFINITY, r);
-                let r =
-                    (d.lt(ZERO) | d.is_nan()).select($f64x::NAN, r);
-                d.eq(ZERO)
-                    .select($f64x::NEG_INFINITY, r)
+            let r = d.eq($f64x::INFINITY).select($f64x::INFINITY, r);
+            let r = (d.lt(ZERO) | d.is_nan()).select($f64x::NAN, r);
+            d.eq(ZERO).select($f64x::NEG_INFINITY, r)
             /*} else {
                 vfixup_vd_vd_vd_vi2_i(
                     r,
@@ -1378,23 +1331,23 @@ if cfg!(feature = "split_kernel") {
             }*/
         }
 
-        #[cfg(not(feature="deterministic"))]
+        #[cfg(not(feature = "deterministic"))]
         pub fn log2(mut d: $f64x) -> $f64x {
             let m: $f64x;
             let ef =
-                /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
-                    let o = d.lt($f64x::splat(f64::MIN));
-                    d = o.select(d * (D1_32X * D1_32X), d);
-                    let mut e = vilogb2k_vi_vd(d * $f64x::splat(1. / 0.75));
-                    m = vldexp3_vd_vd_vi(d, -e);
-                    e = $mx::from_cast(o).select(e - $ix::splat(64), e);
-                    $f64x::from_cast(e)
-                }/* else {
-                    let e = vgetexp_vd_vd(d * $f64x::splat(1.0 / 0.75));
-                    e = e.eq($f64x::INFINITY).select($f64x::splat(1024.), e);
-                    m = vgetmant_vd_vd(d);
-                    e
-                }*/;
+            /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
+                let o = d.lt($f64x::splat(f64::MIN));
+                d = o.select(d * (D1_32X * D1_32X), d);
+                let mut e = vilogb2k_vi_vd(d * $f64x::splat(1. / 0.75));
+                m = vldexp3_vd_vd_vi(d, -e);
+                e = $mx::from_cast(o).select(e - $ix::splat(64), e);
+                $f64x::from_cast(e)
+            }/* else {
+                let e = vgetexp_vd_vd(d * $f64x::splat(1.0 / 0.75));
+                e = e.eq($f64x::INFINITY).select($f64x::splat(1024.), e);
+                m = vgetmant_vd_vd(d);
+                e
+            }*/;
 
             let x = $f64x::splat(-1.).add_as_doubled(m) / ONE.add_as_doubled(m);
             let x2 = x.0 * x.0;
@@ -1407,17 +1360,16 @@ if cfg!(feature = "split_kernel") {
                 .mul_add(x2, $f64x::splat(0.577_078_016_299_705_898_2))
                 .mul_add(x2, $f64x::splat(0.961_796_693_926_080_914_49));
 
-            let mut s = ef + x * Doubled::from((2.885_390_081_777_926_774, 6.056_160_499_551_673_643_4_e-18));
+            let mut s =
+                ef + x * Doubled::from((2.885_390_081_777_926_774, 6.056_160_499_551_673_643_4_e-18));
             s += x2 * x.0 * t;
 
             let r = s.0 + s.1;
 
             /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
-                let r = d.eq($f64x::INFINITY).select($f64x::INFINITY, r);
-                let r =
-                    (d.lt(ZERO) | d.is_nan()).select($f64x::NAN, r);
-                d.eq(ZERO)
-                    .select($f64x::NEG_INFINITY, r)
+            let r = d.eq($f64x::INFINITY).select($f64x::INFINITY, r);
+            let r = (d.lt(ZERO) | d.is_nan()).select($f64x::NAN, r);
+            d.eq(ZERO).select($f64x::NEG_INFINITY, r)
             /*} else {
                 vfixup_vd_vd_vd_vi2_i(
                     r,
@@ -1428,29 +1380,29 @@ if cfg!(feature = "split_kernel") {
             }*/
         }
 
-        #[cfg(not(feature="deterministic"))]
+        #[cfg(not(feature = "deterministic"))]
         pub fn log1p(d: $f64x) -> $f64x {
             let m: $f64x;
 
             let mut dp1 = d + ONE;
 
             let mut s =
-                /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
-                    let o = dp1.lt($f64x::splat(f64::MIN));
-                    dp1 = o.select(dp1 * (D1_32X * D1_32X), dp1);
-                    let mut e = vilogb2k_vi_vd(dp1 * $f64x::splat(1. / 0.75));
-                    let t = vldexp3_vd_vd_vi(ONE, -e);
-                    m = d.mul_add(t, t - ONE);
-                    e = $mx::from_cast(o).select(e - $ix::splat(64), e);
-                    Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17))
-                        * $f64x::from_cast(e)
-                }/* else {
-                    let e = vgetexp_vd_vd(dp1, $f64x::splat(1. / 0.75));
-                    e = e.eq($f64x::INFINITY).select($f64x::splat(1024.), e);
-                    let t = vldexp3_vd_vd_vi(ONE, -e.roundi());
-                    m = d.mul_add(t, t - ONE);
-                    Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17)) * e
-                }*/;
+            /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
+                let o = dp1.lt($f64x::splat(f64::MIN));
+                dp1 = o.select(dp1 * (D1_32X * D1_32X), dp1);
+                let mut e = vilogb2k_vi_vd(dp1 * $f64x::splat(1. / 0.75));
+                let t = vldexp3_vd_vd_vi(ONE, -e);
+                m = d.mul_add(t, t - ONE);
+                e = $mx::from_cast(o).select(e - $ix::splat(64), e);
+                Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17))
+                    * $f64x::from_cast(e)
+            }/* else {
+                let e = vgetexp_vd_vd(dp1, $f64x::splat(1. / 0.75));
+                e = e.eq($f64x::INFINITY).select($f64x::splat(1024.), e);
+                let t = vldexp3_vd_vd_vi(ONE, -e.roundi());
+                m = d.mul_add(t, t - ONE);
+                Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17)) * e
+            }*/;
 
             let x = Doubled::new(m, ZERO) / $f64x::splat(2.).add_checked_as_doubled(m);
             let x2 = x.0 * x.0;
@@ -1468,17 +1420,13 @@ if cfg!(feature = "split_kernel") {
 
             let mut r = s.0 + s.1;
 
-            r = d
-                .gt($f64x::splat(1e+307))
-                .select($f64x::INFINITY, r);
+            r = d.gt($f64x::splat(1e+307)).select($f64x::INFINITY, r);
             r = (d.lt($f64x::splat(-1.)) | d.is_nan()).select($f64x::NAN, r);
-            r = d
-                .eq($f64x::splat(-1.))
-                .select($f64x::NEG_INFINITY, r);
+            r = d.eq($f64x::splat(-1.)).select($f64x::NEG_INFINITY, r);
             d.is_neg_zero().select(NEG_ZERO, r)
         }
 
-        #[cfg(not(feature="deterministic"))]
+        #[cfg(not(feature = "deterministic"))]
         pub fn tgamma(a: $f64x) -> $f64x {
             let (da, db) = gammak(a);
             let y = expk2(da) * db;
@@ -1488,26 +1436,23 @@ if cfg!(feature = "split_kernel") {
                 | (a.is_finite() & a.lt(ZERO) & r.is_nan());
             let r = o.select($f64x::NAN, r);
 
-            let o = ((a.eq($f64x::INFINITY) | a.is_finite())
-                & a.ge($f64x::splat(-f64::MIN)))
+            let o = ((a.eq($f64x::INFINITY) | a.is_finite()) & a.ge($f64x::splat(-f64::MIN)))
                 & (a.eq(ZERO) | a.gt($f64x::splat(200.)) | r.is_nan());
             o.select($f64x::INFINITY.mul_sign(a), r)
         }
 
-        #[cfg(not(feature="deterministic"))]
+        #[cfg(not(feature = "deterministic"))]
         pub fn lgamma(a: $f64x) -> $f64x {
             let (da, db) = gammak(a);
             let y = da + logk2(db.abs());
             let r = y.0 + y.1;
 
-            let o = a.is_infinite()
-                | (a.le(ZERO) & a.is_integer())
-                | (a.is_finite() & r.is_nan());
+            let o = a.is_infinite() | (a.le(ZERO) & a.is_integer()) | (a.is_finite() & r.is_nan());
             o.select($f64x::INFINITY, r)
         }
 
         /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
-        #[cfg(not(feature="deterministic"))]
+        #[cfg(not(feature = "deterministic"))]
         pub fn erf(a: $f64x) -> $f64x {
             let s = a;
 
@@ -1523,7 +1468,8 @@ if cfg!(feature = "split_kernel") {
                 0.680_107_240_139_539_215_7_e-20,
                 0.283_095_452_208_771_766_e-13,
                 -0.584_675_040_426_961_049_3_e-17,
-            ).mul_add(
+            )
+            .mul_add(
                 u,
                 $f64x::select3(
                     o0,
@@ -1532,7 +1478,8 @@ if cfg!(feature = "split_kernel") {
                     -0.150_949_194_617_948_194_e-11,
                     0.607_669_104_881_260_789_8_e-15,
                 ),
-            ).mul_add(
+            )
+            .mul_add(
                 u,
                 $f64x::select3(
                     o0,
@@ -1541,7 +1488,8 @@ if cfg!(feature = "split_kernel") {
                     0.382_785_717_780_717_315_2_e-10,
                     -0.300_751_860_960_489_383_1_e-13,
                 ),
-            ).mul_add(
+            )
+            .mul_add(
                 u,
                 $f64x::select3(
                     o0,
@@ -1550,7 +1498,8 @@ if cfg!(feature = "split_kernel") {
                     -0.613_973_392_155_898_724_1_e-9,
                     0.942_790_626_082_464_606_3_e-12,
                 ),
-            ).mul_add(
+            )
+            .mul_add(
                 u,
                 $f64x::select3(
                     o0,
@@ -1559,7 +1508,8 @@ if cfg!(feature = "split_kernel") {
                     0.698_538_793_460_803_882_4_e-8,
                     -0.210_011_090_826_939_362_9_e-10,
                 ),
-            ).mul_add(
+            )
+            .mul_add(
                 u,
                 $f64x::select3(
                     o0,
@@ -1568,7 +1518,8 @@ if cfg!(feature = "split_kernel") {
                     -0.598_822_451_303_437_147_4_e-7,
                     0.353_463_952_346_122_347_3_e-9,
                 ),
-            ).mul_add(
+            )
+            .mul_add(
                 u,
                 $f64x::select3(
                     o0,
@@ -1577,7 +1528,8 @@ if cfg!(feature = "split_kernel") {
                     0.400_571_695_235_534_664_e-6,
                     -0.466_496_772_828_539_592_6_e-8,
                 ),
-            ).mul_add(
+            )
+            .mul_add(
                 u,
                 $f64x::select3(
                     o0,
@@ -1586,7 +1538,8 @@ if cfg!(feature = "split_kernel") {
                     -0.213_219_010_457_578_44_e-5,
                     0.494_382_328_376_900_053_2_e-7,
                 ),
-            ).mul_add(
+            )
+            .mul_add(
                 u,
                 $f64x::select3(
                     o0,
@@ -1595,7 +1548,8 @@ if cfg!(feature = "split_kernel") {
                     0.909_246_130_404_263_032_5_e-5,
                     -0.427_120_339_476_114_825_4_e-6,
                 ),
-            ).mul_add(
+            )
+            .mul_add(
                 u,
                 $f64x::select3(
                     o0,
@@ -1604,7 +1558,8 @@ if cfg!(feature = "split_kernel") {
                     -0.307_918_808_096_620_545_7_e-4,
                     0.303_406_767_740_491_589_5_e-5,
                 ),
-            ).mul_add(
+            )
+            .mul_add(
                 u,
                 $f64x::select3(
                     o0,
@@ -1613,7 +1568,8 @@ if cfg!(feature = "split_kernel") {
                     0.797_141_344_308_237_076_2_e-4,
                     -0.177_629_528_906_687_113_5_e-4,
                 ),
-            ).mul_add(
+            )
+            .mul_add(
                 u,
                 $f64x::select3(
                     o0,
@@ -1622,7 +1578,8 @@ if cfg!(feature = "split_kernel") {
                     -0.138_785_321_522_544_286_4_e-3,
                     0.852_454_763_055_950_505_e-4,
                 ),
-            ).mul_add(
+            )
+            .mul_add(
                 u,
                 $f64x::select3(
                     o0,
@@ -1631,7 +1588,8 @@ if cfg!(feature = "split_kernel") {
                     0.646_967_802_625_759_096_5_e-4,
                     -0.329_058_294_496_178_439_8_e-3,
                 ),
-            ).mul_add(
+            )
+            .mul_add(
                 u,
                 $f64x::select3(
                     o0,
@@ -1640,7 +1598,8 @@ if cfg!(feature = "split_kernel") {
                     0.499_664_528_037_294_586_e-3,
                     0.969_696_606_878_910_115_7_e-3,
                 ),
-            ).mul_add(
+            )
+            .mul_add(
                 u,
                 $f64x::select3(
                     o0,
@@ -1649,7 +1608,8 @@ if cfg!(feature = "split_kernel") {
                     -0.162_280_248_284_252_053_5_e-2,
                     -0.181_252_762_804_698_613_7_e-2,
                 ),
-            ).mul_add(
+            )
+            .mul_add(
                 u,
                 $f64x::select3(
                     o0,
@@ -1658,7 +1618,8 @@ if cfg!(feature = "split_kernel") {
                     0.161_532_055_704_937_717_1_e-3,
                     -0.472_540_982_812_361_901_7_e-3,
                 ),
-            ).mul_add(
+            )
+            .mul_add(
                 u,
                 $f64x::select3(
                     o0,
@@ -1667,7 +1628,8 @@ if cfg!(feature = "split_kernel") {
                     0.191_526_232_557_487_560_7_e-1,
                     0.209_031_542_792_422_926_6_e-1,
                 ),
-            ).mul_add(
+            )
+            .mul_add(
                 u,
                 $f64x::select3(
                     o0,
@@ -1676,7 +1638,8 @@ if cfg!(feature = "split_kernel") {
                     -0.102_781_829_848_603_345_5,
                     -0.105_204_192_184_277_664_5,
                 ),
-            ).mul_add(
+            )
+            .mul_add(
                 u,
                 $f64x::select3(
                     o0,
@@ -1685,7 +1648,8 @@ if cfg!(feature = "split_kernel") {
                     -0.636_617_281_984_250_382_7,
                     -0.634_535_180_876_656_834_7,
                 ),
-            ).mul_add(
+            )
+            .mul_add(
                 u,
                 $f64x::select3(
                     o0,

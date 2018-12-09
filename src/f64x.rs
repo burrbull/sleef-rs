@@ -1,9 +1,14 @@
+#[cfg(not(feature = "deterministic"))]
 #[macro_use]
 mod u05_impl;
+
 #[macro_use]
 mod u10_impl;
+
+#[cfg(not(feature = "deterministic"))]
 #[macro_use]
 mod u15_impl;
+
 #[macro_use]
 mod u35_impl;
 
@@ -79,6 +84,7 @@ macro_rules! impl_math_f64 {
         const LOG10_2: $f64x = $f64x::splat(3.321_928_094_887_362_347_870_319_429_489_390_175_864_831_393);
 
 
+        #[cfg(not(feature = "deterministic"))]
         pub mod u05 {
             //! Functions with 0.5 ULP error bound
             impl_math_f64_u05!($f64x, $u64x, $m64x, $i64x, $ux, $mx, $ix);
@@ -89,6 +95,7 @@ macro_rules! impl_math_f64 {
             impl_math_f64_u10!($f64x, $u64x, $m64x, $i64x, $ux, $mx, $ix);
         }
 
+        #[cfg(not(feature = "deterministic"))]
         pub mod u15 {
             //! Functions with 1.5 ULP error bound
             impl_math_f64_u15!($f64x, $u64x, $m64x, $i64x, $ux, $mx, $ix);
@@ -98,7 +105,7 @@ macro_rules! impl_math_f64 {
             //! Functions with 3.5 ULP error bound
             impl_math_f64_u35!($f64x, $u64x, $m64x, $i64x, $ux, $mx, $ix);
         }
-        
+
         #[inline]
         fn vgather_vd_p_vi(ptr: &[f64], vi: $ix) -> $f64x {
             let mut ar = [0_f64; $f64x::lanes()];
@@ -143,7 +150,14 @@ macro_rules! impl_math_f64 {
         impl MulSub for $f64x {
             #[inline]
             fn mul_sub(self, y: Self, z: Self) -> Self {
-                self*y - z
+                self.mul_add(y, -z)
+            }
+        }
+
+        impl NegMulAdd for $f64x {
+            #[inline]
+            fn neg_mul_add(self, y: Self, z: Self) -> Self {
+                (-self).mul_add(y, z)
             }
         }
 

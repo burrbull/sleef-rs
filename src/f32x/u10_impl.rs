@@ -409,7 +409,7 @@ macro_rules! impl_math_f32_u10 {
 
             let mut y = x * x;
             y = y * y;
-            x -= vmlanp_vf_vf_vf_vf(d, y, x) * $f32x::splat(-1. / 3.);
+            x -= d.neg_mul_add(y, x) * $f32x::splat(-1. / 3.);
 
             let mut z = x;
 

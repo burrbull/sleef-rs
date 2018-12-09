@@ -84,6 +84,10 @@ pub trait MulSub {
     fn mul_sub(self, y: Self, z: Self) -> Self;
 }
 
+pub trait NegMulAdd {
+    fn neg_mul_add(self, y: Self, z: Self) -> Self;
+}
+
 impl MulAdd for f32 {
     #[inline]
     fn mul_add(self, y: Self, z: Self) -> Self {

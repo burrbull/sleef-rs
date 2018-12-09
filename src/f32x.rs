@@ -95,10 +95,6 @@ macro_rules! impl_math_f32 {
         }
 
         #[inline]
-        fn vmlanp_vf_vf_vf_vf(x: $f32x, y: $f32x, z: $f32x) -> $f32x { z - x * y }
-
-
-        #[inline]
         fn vgather_vf_p_vi2(ptr: &[f32], vi: $i32x) -> $f32x {
             let mut ar = [0_f32; $f32x::lanes()];
             for i in 0..$f32x::lanes() {
@@ -133,6 +129,20 @@ macro_rules! impl_math_f32 {
             #[inline]
             fn roundi(self) -> Self::Int {
                 Self::Int::from_cast(self.round())
+            }
+        }
+
+        impl MulSub for $f32x {
+            #[inline]
+            fn mul_sub(self, y: Self, z: Self) -> Self {
+                self.mul_add(y, -z)
+            }
+        }
+
+        impl NegMulAdd for $f32x {
+            #[inline]
+            fn neg_mul_add(self, y: Self, z: Self) -> Self {
+                (-self).mul_add(y, z)
             }
         }
 

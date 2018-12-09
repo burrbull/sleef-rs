@@ -94,14 +94,6 @@ macro_rules! impl_math_f32 {
             impl_math_f32_u35!($f32x, $u32x, $m32x, $i32x);
         }
 
-        //---------???????
-        //--------- Naive implementation ???????
-
-        #[inline]
-        fn vand_vm_vo32_vm(x: $m32x, y: $u32x) -> $u32x { $u32x::from_bits(x) & y }
-        #[inline]
-        fn vor_vm_vo32_vm(x: $m32x, y: $u32x) -> $u32x {  $u32x::from_bits(x) | y }
-
         #[inline]
         fn vmlanp_vf_vf_vf_vf(x: $f32x, y: $f32x, z: $f32x) -> $f32x { z - x * y }
 
@@ -402,10 +394,10 @@ macro_rules! impl_math_f32 {
         }
         #[inline]
         fn visinf2_vf_vf_vf(d: $f32x, m: $f32x) -> $f32x {
-            $f32x::from_bits(vand_vm_vo32_vm(
-                d.is_infinite(),
-                d.sign_bit() | $u32x::from_bits(m),
-            ))
+            $f32x::from_bits(
+                $u32x::from_bits(d.is_infinite()) &
+                (d.sign_bit() | $u32x::from_bits(m))
+            )
         }
 
         #[inline]
@@ -597,7 +589,7 @@ macro_rules! impl_math_f32 {
             r = d
                 .gt($f32x::splat(1e+38))
                 .select($f32x::INFINITY, r);
-            r = $f32x::from_bits(vor_vm_vo32_vm($f32x::splat(-1.).gt(d), $u32x::from_bits(r)));
+            r = $f32x::from_bits($u32x::from_bits($f32x::splat(-1.).gt(d)) | $u32x::from_bits(r));
             r = d
                 .eq($f32x::splat(-1.))
                 .select($f32x::NEG_INFINITY, r);
@@ -877,10 +869,10 @@ macro_rules! impl_math_f32 {
 
             let o = (q & $i32x::splat(4)).eq($i32x::splat(4));
             x.0 = $f32x::from_bits(
-                vand_vm_vo32_vm(o, $u32x::from_bits(NEG_ZERO)) ^ $u32x::from_bits(x.0),
+                ($u32x::from_bits(o) & $u32x::from_bits(NEG_ZERO)) ^ $u32x::from_bits(x.0),
             );
             x.1 = $f32x::from_bits(
-                vand_vm_vo32_vm(o, $u32x::from_bits(NEG_ZERO)) ^ $u32x::from_bits(x.1),
+                ($u32x::from_bits(o) & $u32x::from_bits(NEG_ZERO)) ^ $u32x::from_bits(x.1),
             );
 
             x
@@ -920,10 +912,10 @@ macro_rules! impl_math_f32 {
 
             let o = ((q + $i32x::splat(2)) & $i32x::splat(4)).eq($i32x::splat(4));
             x.0 = $f32x::from_bits(
-                vand_vm_vo32_vm(o, $u32x::from_bits(NEG_ZERO)) ^ $u32x::from_bits(x.0),
+                ($u32x::from_bits(o) & $u32x::from_bits(NEG_ZERO)) ^ $u32x::from_bits(x.0),
             );
             x.1 = $f32x::from_bits(
-                vand_vm_vo32_vm(o, $u32x::from_bits(NEG_ZERO)) ^ $u32x::from_bits(x.1),
+                ($u32x::from_bits(o) & $u32x::from_bits(NEG_ZERO)) ^ $u32x::from_bits(x.1),
             );
 
             x

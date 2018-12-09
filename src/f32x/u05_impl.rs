@@ -61,12 +61,12 @@ macro_rules! impl_math_f32_u05 {
 
             let o = (q & $i32x::splat(4)).eq($i32x::splat(4));
             rsin = $f32x::from_bits(
-                vand_vm_vo32_vm(o, $u32x::from_bits(NEG_ZERO)) ^ $u32x::from_bits(rsin),
+                ($u32x::from_bits(o) & $u32x::from_bits(NEG_ZERO)) ^ $u32x::from_bits(rsin),
             );
 
             let o = ((q + $i32x::splat(2)) & $i32x::splat(4)).eq($i32x::splat(4));
             rcos = $f32x::from_bits(
-                vand_vm_vo32_vm(o, $u32x::from_bits(NEG_ZERO)) ^ $u32x::from_bits(rcos),
+                ($u32x::from_bits(o) & $u32x::from_bits(NEG_ZERO)) ^ $u32x::from_bits(rcos),
             );
 
             let o = d.abs().gt($f32x::splat(1e+7));
@@ -74,8 +74,8 @@ macro_rules! impl_math_f32_u05 {
             rcos = $f32x::from_bits(!$u32x::from_bits(o) & $u32x::from_bits(rcos));
 
             let o = d.is_infinite();
-            rsin = $f32x::from_bits(vor_vm_vo32_vm(o, $u32x::from_bits(rsin)));
-            rcos = $f32x::from_bits(vor_vm_vo32_vm(o, $u32x::from_bits(rcos)));
+            rsin = $f32x::from_bits($u32x::from_bits(o) | $u32x::from_bits(rsin));
+            rcos = $f32x::from_bits($u32x::from_bits(o) | $u32x::from_bits(rcos));
 
             (rsin, rcos)
         }
@@ -138,7 +138,7 @@ macro_rules! impl_math_f32_u05 {
             r = $f32x::from_bits(
                 !$u32x::from_bits(d.abs().gt(TRIGRANGEMAX4_F)) & $u32x::from_bits(r),
             );
-            $f32x::from_bits(vor_vm_vo32_vm(d.is_infinite(), $u32x::from_bits(r)))
+            $f32x::from_bits($u32x::from_bits(d.is_infinite()) | $u32x::from_bits(r))
         }
 
         pub fn cospif(d: $f32x) -> $f32x {
@@ -146,7 +146,7 @@ macro_rules! impl_math_f32_u05 {
             let r = x.0 + x.1;
 
             let r = d.abs().gt(TRIGRANGEMAX4_F).select(ONE, r);
-            $f32x::from_bits(vor_vm_vo32_vm(d.is_infinite(), $u32x::from_bits(r)))
+            $f32x::from_bits($u32x::from_bits(d.is_infinite()) | $u32x::from_bits(r))
         }
     };
 }

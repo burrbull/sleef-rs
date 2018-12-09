@@ -29,10 +29,10 @@ macro_rules! impl_math_f32_u10 {
                 dfidf = o.select_doubled(x, dfidf);
                 s = dfidf.normalize();
 
-                s.0 = $f32x::from_bits(vor_vm_vo32_vm(
-                    d.is_infinite() | d.is_nan(),
-                    $u32x::from_bits(s.0),
-                ));
+                s.0 = $f32x::from_bits(
+                    $u32x::from_bits(d.is_infinite() | d.is_nan()) |
+                    $u32x::from_bits(s.0)
+                );
             }
 
             let t = s;
@@ -49,9 +49,9 @@ macro_rules! impl_math_f32_u10 {
             u = t.mul_as_f(x);
 
             u = $f32x::from_bits(
-                vand_vm_vo32_vm(
-                    (q & $i32x::splat(1)).eq($i32x::splat(1)),
-                    $u32x::from_bits(NEG_ZERO),
+                (
+                    $u32x::from_bits((q & $i32x::splat(1)).eq($i32x::splat(1))) &
+                    $u32x::from_bits(NEG_ZERO)
                 ) ^ $u32x::from_bits(u),
             );
 
@@ -91,10 +91,10 @@ macro_rules! impl_math_f32_u10 {
                 dfidf = o.select_doubled(x, dfidf);
                 s = dfidf.normalize();
 
-                s.0 = $f32x::from_bits(vor_vm_vo32_vm(
-                    d.is_infinite() | d.is_nan(),
-                    $u32x::from_bits(s.0),
-                ));
+                s.0 = $f32x::from_bits(
+                    $u32x::from_bits(d.is_infinite() | d.is_nan()) |
+                    $u32x::from_bits(s.0)
+                );
             }
 
             let t = s;
@@ -111,9 +111,9 @@ macro_rules! impl_math_f32_u10 {
             let u = t.mul_as_f(x);
 
             $f32x::from_bits(
-                vand_vm_vo32_vm(
-                    (q & $i32x::splat(2)).eq($i32x::splat(0)),
-                    $u32x::from_bits(NEG_ZERO),
+                (
+                    $u32x::from_bits((q & $i32x::splat(2)).eq($i32x::splat(0))) &
+                    $u32x::from_bits(NEG_ZERO)
                 ) ^ $u32x::from_bits(u),
             )
         }
@@ -133,7 +133,7 @@ macro_rules! impl_math_f32_u10 {
                 q = dfii;
                 s = dfidf;
                 let o = d.is_infinite() | d.is_nan();
-                s.0 = $f32x::from_bits(vor_vm_vo32_vm(o, $u32x::from_bits(s.0)));
+                s.0 = $f32x::from_bits($u32x::from_bits(o) | $u32x::from_bits(s.0));
             }
 
             let t = s;
@@ -165,12 +165,12 @@ macro_rules! impl_math_f32_u10 {
 
             let o = (q & $i32x::splat(2)).eq($i32x::splat(2));
             rsin = $f32x::from_bits(
-                vand_vm_vo32_vm(o, $u32x::from_bits(NEG_ZERO)) ^ $u32x::from_bits(rsin),
+                ($u32x::from_bits(o) & $u32x::from_bits(NEG_ZERO)) ^ $u32x::from_bits(rsin),
             );
 
             let o = ((q + $i32x::splat(1)) & $i32x::splat(2)).eq($i32x::splat(2));
             rcos = $f32x::from_bits(
-                vand_vm_vo32_vm(o, $u32x::from_bits(NEG_ZERO)) ^ $u32x::from_bits(rcos),
+                ($u32x::from_bits(o) & $u32x::from_bits(NEG_ZERO)) ^ $u32x::from_bits(rcos),
             );
 
             (rsin, rcos)
@@ -191,13 +191,13 @@ macro_rules! impl_math_f32_u10 {
                 q = dfii;
                 let o = d.is_infinite() | d.is_nan();
                 Doubled::new(
-                    $f32x::from_bits(vor_vm_vo32_vm(o, $u32x::from_bits(dfidf.0))),
-                    $f32x::from_bits(vor_vm_vo32_vm(o, $u32x::from_bits(dfidf.1))),
+                    $f32x::from_bits($u32x::from_bits(o) | $u32x::from_bits(dfidf.0)),
+                    $f32x::from_bits($u32x::from_bits(o) | $u32x::from_bits(dfidf.1)),
                 )
             };
 
             let o = (q & $i32x::splat(1)).eq($i32x::splat(1));
-            let n = vand_vm_vo32_vm(o, $u32x::from_bits(NEG_ZERO));
+            let n = $u32x::from_bits(o) & $u32x::from_bits(NEG_ZERO);
             s.0 = $f32x::from_bits($u32x::from_bits(s.0) ^ n);
             s.1 = $f32x::from_bits($u32x::from_bits(s.1) ^ n);
 
@@ -230,7 +230,7 @@ macro_rules! impl_math_f32_u10 {
             let q =
                 vsel_vi2_vf_vf_vi2_vi2(x.0, ZERO, $i32x::splat(-2), $i32x::splat(0));
             let p = x.0.lt(ZERO);
-            let r = vand_vm_vo32_vm(p, $u32x::from_bits(NEG_ZERO));
+            let r = $u32x::from_bits(p) & $u32x::from_bits(NEG_ZERO);
             x.0 = $f32x::from_bits($u32x::from_bits(x.0) ^ r);
             x.1 = $f32x::from_bits($u32x::from_bits(x.1) ^ r);
 
@@ -281,17 +281,17 @@ macro_rules! impl_math_f32_u10 {
                 r,
             );
             r = y.eq(ZERO).select(
-                $f32x::from_bits(vand_vm_vo32_vm(
-                    x.is_sign_negative(),
-                    $u32x::from_bits($f32x::PI),
-                )),
+                $f32x::from_bits(
+                    $u32x::from_bits(x.is_sign_negative()) &
+                    $u32x::from_bits($f32x::PI)
+                ),
                 r,
             );
 
-            $f32x::from_bits(vor_vm_vo32_vm(
-                x.is_nan() | y.is_nan(),
-                $u32x::from_bits(r.mul_sign(y)),
-            ))
+            $f32x::from_bits(
+                $u32x::from_bits(x.is_nan() | y.is_nan()) |
+                $u32x::from_bits(r.mul_sign(y))
+            )
         }
 
         pub fn asinf(d: $f32x) -> $f32x {
@@ -534,10 +534,10 @@ macro_rules! impl_math_f32_u10 {
                     result,
                 );
 
-                result = $f32x::from_bits(vor_vm_vo32_vm(
-                    x.is_nan() | y.is_nan(),
-                    $u32x::from_bits(result),
-                ));
+                result = $f32x::from_bits(
+                    $u32x::from_bits(x.is_nan() | y.is_nan()) |
+                    $u32x::from_bits(result)
+                );
 
                 (y.eq(ZERO) | x.eq(ONE))
                     .select(ONE, result)
@@ -556,7 +556,7 @@ macro_rules! impl_math_f32_u10 {
             y = (x.abs().gt($f32x::splat(89.)) | y.is_nan())
                 .select($f32x::INFINITY, y);
             y = y.mul_sign(x);
-            $f32x::from_bits(vor_vm_vo32_vm(x.is_nan(), $u32x::from_bits(y)))
+            $f32x::from_bits($u32x::from_bits(x.is_nan()) | $u32x::from_bits(y))
         }
 
         pub fn coshf(x: $f32x) -> $f32x {
@@ -567,7 +567,7 @@ macro_rules! impl_math_f32_u10 {
 
             y = (x.abs().gt($f32x::splat(89.)) | y.is_nan())
                 .select($f32x::INFINITY, y);
-            $f32x::from_bits(vor_vm_vo32_vm(x.is_nan(), $u32x::from_bits(y)))
+            $f32x::from_bits($u32x::from_bits(x.is_nan()) | $u32x::from_bits(y))
         }
 
         pub fn tanhf(x: $f32x) -> $f32x {
@@ -580,7 +580,7 @@ macro_rules! impl_math_f32_u10 {
             y = (x.abs().gt($f32x::splat(8.664_339_742)) | y.is_nan())
                 .select(ONE, y);
             y = y.mul_sign(x);
-            $f32x::from_bits(vor_vm_vo32_vm(x.is_nan(), $u32x::from_bits(y)))
+            $f32x::from_bits($u32x::from_bits(x.is_nan()) | $u32x::from_bits(y))
         }
 
 
@@ -597,7 +597,7 @@ macro_rules! impl_math_f32_u10 {
 
             y = (x.abs().gt(SQRT_FLT_MAX) | y.is_nan())
                 .select($f32x::INFINITY, x).mul_sign(y);
-            y = $f32x::from_bits(vor_vm_vo32_vm(x.is_nan(), $u32x::from_bits(y)));
+            y = $f32x::from_bits($u32x::from_bits(x.is_nan()) | $u32x::from_bits(y));
             x.is_neg_zero().select(NEG_ZERO, y)
         }
 
@@ -615,27 +615,27 @@ macro_rules! impl_math_f32_u10 {
                 $u32x::from_bits(y)
             );
 
-            y = $f32x::from_bits(vor_vm_vo32_vm(x.lt(ONE), $u32x::from_bits(y)));
-            $f32x::from_bits(vor_vm_vo32_vm(x.is_nan(), $u32x::from_bits(y)))
+            y = $f32x::from_bits($u32x::from_bits(x.lt(ONE)) | $u32x::from_bits(y));
+            $f32x::from_bits($u32x::from_bits(x.is_nan()) | $u32x::from_bits(y))
         }
 
         pub fn atanhf(x: $f32x) -> $f32x {
             let mut y = x.abs();
             let d = logk2f(ONE.add_as_doubled(y) / ONE.add_as_doubled(-y));
-            y = $f32x::from_bits(vor_vm_vo32_vm(
-                y.gt(ONE),
+            y = $f32x::from_bits(
+                $u32x::from_bits(y.gt(ONE)) |
                 $u32x::from_bits(y.eq(ONE).select(
                     $f32x::INFINITY,
                     (d.0 + d.1) * HALF,
-                )),
-            ));
+                ))
+            );
 
-            y = $f32x::from_bits(vor_vm_vo32_vm(
-                x.is_infinite() | y.is_nan(),
-                $u32x::from_bits(y),
-            ));
+            y = $f32x::from_bits(
+                $u32x::from_bits(x.is_infinite() | y.is_nan()) |
+                $u32x::from_bits(y)
+            );
             y = y.mul_sign(x);
-            $f32x::from_bits(vor_vm_vo32_vm(x.is_nan(), $u32x::from_bits(y)))
+            $f32x::from_bits($u32x::from_bits(x.is_nan()) | $u32x::from_bits(y))
         }
 
 

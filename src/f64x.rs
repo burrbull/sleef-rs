@@ -78,13 +78,27 @@ macro_rules! impl_math_f64 {
         const L10L: $f64x = $f64x::splat(1.420_502_322_726_609_941_8_e-13);
         const LOG10_2: $f64x = $f64x::splat(3.321_928_094_887_362_347_870_319_429_489_390_175_864_831_393);
 
-        //---------???????
-        //--------- Naive implementation ???????
-        #[inline]
-        fn vand_vm_vo64_vm(x: $m64x, y: $u64x) -> $u64x { $u64x::from_bits(x) & y }
-        #[inline]
-        fn vor_vm_vo64_vm(x: $m64x, y: $u64x) -> $u64x { $u64x::from_bits(x) | y }
 
+        pub mod u05 {
+            //! Functions with 0.5 ULP error bound
+            impl_math_f64_u05!($f64x, $u64x, $m64x, $i64x, $ux, $mx, $ix);
+        }
+
+        pub mod u10 {
+            //! Functions with 1.0 ULP error bound
+            impl_math_f64_u10!($f64x, $u64x, $m64x, $i64x, $ux, $mx, $ix);
+        }
+
+        pub mod u15 {
+            //! Functions with 1.5 ULP error bound
+            impl_math_f64_u15!($f64x, $u64x, $m64x, $i64x, $ux, $mx, $ix);
+        }
+
+        pub mod u35 {
+            //! Functions with 3.5 ULP error bound
+            impl_math_f64_u35!($f64x, $u64x, $m64x, $i64x, $ux, $mx, $ix);
+        }
+        
         #[inline]
         fn vgather_vd_p_vi(ptr: &[f64], vi: $ix) -> $f64x {
             let mut ar = [0_f64; $f64x::lanes()];
@@ -424,10 +438,10 @@ macro_rules! impl_math_f64 {
 
             let o = $m64x::from_cast((q + $ix::splat(2) & $ix::splat(4)).eq($ix::splat(4)));
             x.0 = $f64x::from_bits(
-                vand_vm_vo64_vm(o, $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(x.0),
+                ($u64x::from_bits(o) & $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(x.0),
             );
             x.1 = $f64x::from_bits(
-                vand_vm_vo64_vm(o, $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(x.1),
+                ($u64x::from_bits(o) & $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(x.1),
             );
 
             x
@@ -499,10 +513,10 @@ macro_rules! impl_math_f64 {
         }
         #[inline]
         fn visinf2_vd_vd_vd(d: $f64x, m: $f64x) -> $f64x {
-            $f64x::from_bits(vand_vm_vo64_vm(
-                d.is_infinite(),
-                ($u64x::from_bits(d) & $u64x::from_bits(NEG_ZERO)) | $u64x::from_bits(m),
-            ))
+            $f64x::from_bits(
+                $u64x::from_bits(d.is_infinite()) &
+                (($u64x::from_bits(d) & $u64x::from_bits(NEG_ZERO)) | $u64x::from_bits(m))
+            )
         }
 
         #[inline]
@@ -809,7 +823,7 @@ macro_rules! impl_math_f64 {
             t += vrev21_vi2_vi2(vcast_vi2_i_i(0, 1) & $i64x::from_bits(t.eq(vcast_vi2_i_i(-1, 0))));
             xi2 = $i64x::from_bits(c.select($f64x::from_bits(t), $f64x::from_bits(xi2)));
 
-            xi2 -= $i64x::from_cast(vand_vm_vo64_vm(x.ne(y), $u64x::from_u32((0, 1))));
+            xi2 -= $i64x::from_cast($u64x::from_bits(x.ne(y)) & $u64x::from_u32((0, 1)));
 
             xi2 = $i64x::from_bits(x.ne(y).select(
                 $f64x::from_bits(
@@ -1304,10 +1318,10 @@ macro_rules! impl_math_f64 {
 
             let o = $m64x::from_cast((q & $ix::splat(4)).eq($ix::splat(4)));
             x.0 = $f64x::from_bits(
-                vand_vm_vo64_vm(o, $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(x.0),
+                ($u64x::from_bits(o) & $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(x.0),
             );
             x.1 = $f64x::from_bits(
-                vand_vm_vo64_vm(o, $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(x.1),
+                ($u64x::from_bits(o) & $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(x.1),
             );
 
             x
@@ -1322,26 +1336,6 @@ macro_rules! impl_math_f64 {
             fr = x.abs().gt(D1_52X).select(ZERO, fr);
 
             (fr.copy_sign(x), (x - fr).copy_sign(x))
-        }
-
-        pub mod u05 {
-            //! Functions with 0.5 ULP error bound
-            impl_math_f64_u05!($f64x, $u64x, $m64x, $i64x, $ux, $mx, $ix);
-        }
-
-        pub mod u10 {
-            //! Functions with 1.0 ULP error bound
-            impl_math_f64_u10!($f64x, $u64x, $m64x, $i64x, $ux, $mx, $ix);
-        }
-
-        pub mod u15 {
-            //! Functions with 1.5 ULP error bound
-            impl_math_f64_u15!($f64x, $u64x, $m64x, $i64x, $ux, $mx, $ix);
-        }
-
-        pub mod u35 {
-            //! Functions with 3.5 ULP error bound
-            impl_math_f64_u35!($f64x, $u64x, $m64x, $i64x, $ux, $mx, $ix);
         }
 
     };

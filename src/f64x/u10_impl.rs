@@ -39,10 +39,10 @@ macro_rules! impl_math_f64_u10 {
                 x = ddidd + x;
                 ddidd = $m64x::from_cast(o).select_doubled(x, ddidd);
                 s = ddidd.normalize();
-                s.0 = $f64x::from_bits(vor_vm_vo64_vm(
-                    d.is_infinite() | d.is_nan(),
-                    $u64x::from_bits(s.0),
-                ));
+                s.0 = $f64x::from_bits(
+                    $u64x::from_bits(d.is_infinite() | d.is_nan()) |
+                    $u64x::from_bits(s.0)
+                );
             }
 
             let t = s;
@@ -63,9 +63,9 @@ macro_rules! impl_math_f64_u10 {
             u = t.mul_as_f(x);
 
             u = $f64x::from_bits(
-                vand_vm_vo64_vm(
-                    $m64x::from_cast((ql & $ix::splat(1)).eq($ix::splat(1))),
-                    $u64x::from_bits(NEG_ZERO),
+                (
+                    $u64x::from_bits($m64x::from_cast((ql & $ix::splat(1)).eq($ix::splat(1)))) &
+                    $u64x::from_bits(NEG_ZERO)
                 ) ^ $u64x::from_bits(u),
             );
             d.eq(ZERO).select(d, u)
@@ -116,7 +116,7 @@ macro_rules! impl_math_f64_u10 {
       s = ddidd.normalize();
       ql = $mx::from_cast(g).select(ql, ql2);
       x = g.select_doubled(x, s);
-      x.0 = $f64x::from_bits(vor_vm_vo64_vm((d.is_infinite() | d.is_nan()), $u64x::from_bits(x.0)));
+      x.0 = $f64x::from_bits($u64x::from_bits(d.is_infinite() | d.is_nan()) | $u64x::from_bits(x.0));
     }
   }
 
@@ -135,7 +135,7 @@ macro_rules! impl_math_f64_u10 {
 
   u = t.mul_as_f(x);
 
-  u = $f64x::from_bits(vand_vm_vo64_vm($m64x::from_cast((ql & $ix::splat(1)).eq($ix::splat(1))),
+  u = $f64x::from_bits(($u64x::from_bits($m64x::from_cast((ql & $ix::splat(1)).eq($ix::splat(1)))) &
 						       $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(u));
 
   d.eq(ZERO).select(d, u)
@@ -188,10 +188,10 @@ macro_rules! impl_math_f64_u10 {
                 x = ddidd + x;
                 ddidd = $m64x::from_cast(o).select_doubled(x, ddidd);
                 s = ddidd.normalize();
-                s.0 = $f64x::from_bits(vor_vm_vo64_vm(
-                    d.is_infinite() | d.is_nan(),
-                    $u64x::from_bits(s.0),
-                ));
+                s.0 = $f64x::from_bits(
+                    $u64x::from_bits(d.is_infinite() | d.is_nan()) |
+                    $u64x::from_bits(s.0)
+                );
             }
 
             let t = s;
@@ -212,9 +212,9 @@ macro_rules! impl_math_f64_u10 {
             let u = t.mul_as_f(x);
 
             $f64x::from_bits(
-                vand_vm_vo64_vm(
-                    $m64x::from_cast((ql & $ix::splat(2)).eq($ix::splat(0))),
-                    $u64x::from_bits(NEG_ZERO),
+                (
+                    $u64x::from_bits($m64x::from_cast((ql & $ix::splat(2)).eq($ix::splat(0)))) &
+                    $u64x::from_bits(NEG_ZERO)
                 ) ^ $u64x::from_bits(u),
             )
         }
@@ -267,7 +267,7 @@ macro_rules! impl_math_f64_u10 {
       s = ddidd.normalize();
       ql = $mx::from_cast(g).select(ql, ql2);
       x = g.select_doubled(x, s);
-      x.0 = $f64x::from_bits(vor_vm_vo64_vm((d.is_infinite() | d.is_nan()), $u64x::from_bits(x.0)));
+      x.0 = $f64x::from_bits($u64x::from_bits(d.is_infinite() | d.is_nan()) | $u64x::from_bits(x.0));
     }
   }
 
@@ -286,7 +286,7 @@ macro_rules! impl_math_f64_u10 {
 
   u = t.mul_as_f(x);
 
-  $f64x::from_bits(vand_vm_vo64_vm($m64x::from_cast((ql & $ix::splat(2)).eq($ix::splat(0))), $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(u))
+  $f64x::from_bits(($u64x::from_bits($m64x::from_cast((ql & $ix::splat(2)).eq($ix::splat(0)))) & $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(u))
 
         }
         */
@@ -319,8 +319,8 @@ macro_rules! impl_math_f64_u10 {
                 ql = ddii;
                 s = ddidd;
                 let o = d.is_infinite() | d.is_nan();
-                s.0 = $f64x::from_bits(vor_vm_vo64_vm(o, $u64x::from_bits(s.0)));
-                s.1 = $f64x::from_bits(vor_vm_vo64_vm(o, $u64x::from_bits(s.1)));
+                s.0 = $f64x::from_bits($u64x::from_bits(o) | $u64x::from_bits(s.0));
+                s.1 = $f64x::from_bits($u64x::from_bits(o) | $u64x::from_bits(s.1));
             }
 
             let t = s;
@@ -358,12 +358,12 @@ macro_rules! impl_math_f64_u10 {
 
             let o = $m64x::from_cast((ql & $ix::splat(2)).eq($ix::splat(2)));
             rsin = $f64x::from_bits(
-                vand_vm_vo64_vm(o, $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(rsin),
+                ($u64x::from_bits(o) & $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(rsin),
             );
 
             let o = $m64x::from_cast(((ql + $ix::splat(1)) & $ix::splat(2)).eq($ix::splat(2)));
             rcos = $f64x::from_bits(
-                vand_vm_vo64_vm(o, $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(rcos),
+                ($u64x::from_bits(o) & $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(rcos),
             );
 
             (rsin, rcos)
@@ -404,8 +404,8 @@ macro_rules! impl_math_f64_u10 {
       let (ddidd, ddii) = rempi(d);
       x = ddidd;
       let o = d.is_infinite() | d.is_nan();
-      x.0 = $f64x::from_bits(vor_vm_vo64_vm(o, $u64x::from_bits(x.0)));
-      x.1 = $f64x::from_bits(vor_vm_vo64_vm(o, $u64x::from_bits(x.1)));
+      x.0 = $f64x::from_bits($u64x::from_bits(o) | $u64x::from_bits(x.0));
+      x.1 = $f64x::from_bits($u64x::from_bits(o) | $u64x::from_bits(x.1));
 
       ql = $mx::from_cast(g).select(ql, ddii);
       s = g.select_doubled(s, x);
@@ -444,10 +444,10 @@ macro_rules! impl_math_f64_u10 {
   let mut rcos = o.select(ry, rx);
 
   let o = $m64x::from_cast((ql & $ix::splat(2)).eq($ix::splat(2)));
-  rsin = $f64x::from_bits(vand_vm_vo64_vm(o, $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(r.0));
+  rsin = $f64x::from_bits(($u64x::from_bits(o) & $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(r.0));
 
   let o = $m64x::from_cast(((ql + $ix::splat(1)) & $ix::splat(2)).eq($ix::splat(2)));
-  rcos = $f64x::from_bits(vand_vm_vo64_vm(o, $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(r.1));
+  rcos = $f64x::from_bits(($u64x::from_bits(o) & $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(r.1));
 
   (rsin, rcos)
     }
@@ -485,12 +485,12 @@ macro_rules! impl_math_f64_u10 {
                 ql = ddii;
                 s = ddidd;
                 let o = d.is_infinite() | d.is_nan();
-                s.0 = $f64x::from_bits(vor_vm_vo64_vm(o, $u64x::from_bits(s.0)));
-                s.1 = $f64x::from_bits(vor_vm_vo64_vm(o, $u64x::from_bits(s.1)));
+                s.0 = $f64x::from_bits($u64x::from_bits(o) | $u64x::from_bits(s.0));
+                s.1 = $f64x::from_bits($u64x::from_bits(o) | $u64x::from_bits(s.1));
             }
 
             let o = $m64x::from_cast((ql & $ix::splat(1)).eq($ix::splat(1)));
-            let n = vand_vm_vo64_vm(o, $u64x::from_bits(NEG_ZERO));
+            let n = $u64x::from_bits(o) & $u64x::from_bits(NEG_ZERO);
             s.0 = $f64x::from_bits($u64x::from_bits(s.0) ^ n);
             s.1 = $f64x::from_bits($u64x::from_bits(s.1) ^ n);
 
@@ -584,8 +584,8 @@ macro_rules! impl_math_f64_u10 {
       let (ddidd, ddii) = rempi(d);
       x = ddidd;
       let o = d.is_infinite() | d.is_nan();
-      x.0 = $f64x::from_bits(vor_vm_vo64_vm(o, $u64x::from_bits(x.0)));
-      x.1 = $f64x::from_bits(vor_vm_vo64_vm(o, $u64x::from_bits(x.1)));
+      x.0 = $f64x::from_bits($u64x::from_bits(o) | $u64x::from_bits(x.0));
+      x.1 = $f64x::from_bits($u64x::from_bits(o) | $u64x::from_bits(x.1));
 
       ql = $mx::from_cast(g).select(ql, ddii);
       s = g.select_doubled(s, x);
@@ -593,7 +593,7 @@ macro_rules! impl_math_f64_u10 {
   }
 
   let o = $m64x::from_cast((ql & $ix::splat(1)).eq($ix::splat(1)));
-  vmask n = vand_vm_vo64_vm(o, $u64x::from_bits(NEG_ZERO));
+  vmask n = $u64x::from_bits(o) & $u64x::from_bits(NEG_ZERO);
   s.0 = $f64x::from_bits($u64x::from_bits(s.0) ^ n);
   s.1 = $f64x::from_bits($u64x::from_bits(s.1) ^ n);
 
@@ -654,7 +654,7 @@ if cfg!(feature = "split_kernel") {
         fn atan2k_u1(y: Doubled<$f64x>, mut x: Doubled<$f64x>) -> Doubled<$f64x> {
             let q = vsel_vi_vd_vi(x.0, $ix::splat(-2));
             let p = x.0.lt(ZERO);
-            let b = vand_vm_vo64_vm(p, $u64x::from_bits(NEG_ZERO));
+            let b = $u64x::from_bits(p) & $u64x::from_bits(NEG_ZERO);
             x.0 = $f64x::from_bits(b ^ $u64x::from_bits(x.0));
             x.1 = $f64x::from_bits(b ^ $u64x::from_bits(x.1));
 
@@ -746,17 +746,17 @@ if cfg!(feature = "split_kernel") {
                 r,
             );
             r = y.eq(ZERO).select(
-                $f64x::from_bits(vand_vm_vo64_vm(
-                    x.is_sign_negative(),
-                    $u64x::from_bits($f64x::PI),
+                $f64x::from_bits((
+                    $u64x::from_bits(x.is_sign_negative()) &
+                    $u64x::from_bits($f64x::PI)
                 )),
                 r,
             );
 
-            $f64x::from_bits(vor_vm_vo64_vm(
-                x.is_nan() | y.is_nan(),
-                $u64x::from_bits(r.mul_sign(y)),
-            ))
+            $f64x::from_bits(
+                $u64x::from_bits(x.is_nan() | y.is_nan()) |
+                $u64x::from_bits(r.mul_sign(y))
+            )
         }
 
 
@@ -1037,10 +1037,10 @@ if cfg!(feature = "split_kernel") {
                     result,
                 );
 
-                result = $f64x::from_bits(vor_vm_vo64_vm(
-                    x.is_nan() | y.is_nan(),
-                    $u64x::from_bits(result),
-                ));
+                result = $f64x::from_bits(
+                    $u64x::from_bits(x.is_nan() | y.is_nan()) |
+                    $u64x::from_bits(result)
+                );
 
                 (y.eq(ZERO) | x.eq(ONE)).select(ONE, result)
             } else {
@@ -1058,7 +1058,7 @@ if cfg!(feature = "split_kernel") {
             y = (x.abs().gt($f64x::splat(710.)) | y.is_nan())
                 .select($f64x::INFINITY, y);
             y = y.mul_sign(x);
-            $f64x::from_bits(vor_vm_vo64_vm(x.is_nan(), $u64x::from_bits(y)))
+            $f64x::from_bits($u64x::from_bits(x.is_nan()) | $u64x::from_bits(y))
         }
 
         #[cfg(not(feature="deterministic"))]
@@ -1070,7 +1070,7 @@ if cfg!(feature = "split_kernel") {
 
             y = (x.abs().gt($f64x::splat(710.)) | y.is_nan())
                 .select($f64x::INFINITY, y);
-            $f64x::from_bits(vor_vm_vo64_vm(x.is_nan(), $u64x::from_bits(y)))
+            $f64x::from_bits($u64x::from_bits(x.is_nan()) | $u64x::from_bits(y))
         }
 
         #[cfg(not(feature="deterministic"))]
@@ -1084,7 +1084,7 @@ if cfg!(feature = "split_kernel") {
             y = (x.abs().gt($f64x::splat(18.714_973_875)) | y.is_nan())
                 .select(ONE, y);
             y = y.mul_sign(x);
-            $f64x::from_bits(vor_vm_vo64_vm(x.is_nan(), $u64x::from_bits(y)))
+            $f64x::from_bits($u64x::from_bits(x.is_nan()) | $u64x::from_bits(y))
         }
 
         #[cfg(not(feature="deterministic"))]
@@ -1102,7 +1102,7 @@ if cfg!(feature = "split_kernel") {
             y = (x.abs().gt(SQRT_DBL_MAX) | y.is_nan())
                 .select($f64x::INFINITY.mul_sign(x), y);
 
-            y = $f64x::from_bits(vor_vm_vo64_vm(x.is_nan(), $u64x::from_bits(y)));
+            y = $f64x::from_bits($u64x::from_bits(x.is_nan()) | $u64x::from_bits(y));
             x.is_neg_zero().select(NEG_ZERO, y)
         }
 
@@ -1117,28 +1117,28 @@ if cfg!(feature = "split_kernel") {
                 .select($f64x::INFINITY, y);
             y = $f64x::from_bits(!$u64x::from_bits(x.eq(ONE)) & $u64x::from_bits(y));
 
-            y = $f64x::from_bits(vor_vm_vo64_vm(x.lt(ONE), $u64x::from_bits(y)));
-            $f64x::from_bits(vor_vm_vo64_vm(x.is_nan(), $u64x::from_bits(y)))
+            y = $f64x::from_bits($u64x::from_bits(x.lt(ONE)) | $u64x::from_bits(y));
+            $f64x::from_bits($u64x::from_bits(x.is_nan()) | $u64x::from_bits(y))
         }
 
         #[cfg(not(feature="deterministic"))]
         pub fn atanh(x: $f64x) -> $f64x {
             let mut y = x.abs();
             let d = logk2(ONE.add_as_doubled(y) / ONE.add_as_doubled(-y));
-            y = $f64x::from_bits(vor_vm_vo64_vm(
-                y.gt(ONE),
+            y = $f64x::from_bits(
+                $u64x::from_bits(y.gt(ONE)) |
                 $u64x::from_bits(y.eq(ONE).select(
                     $f64x::INFINITY,
                     (d.0 + d.1) * HALF,
-                )),
-            ));
+                ))
+            );
 
             y = y.mul_sign(x);
-            y = $f64x::from_bits(vor_vm_vo64_vm(
-                x.is_infinite() | y.is_nan(),
-                $u64x::from_bits(y),
-            ));
-            $f64x::from_bits(vor_vm_vo64_vm(x.is_nan(), $u64x::from_bits(y)))
+            y = $f64x::from_bits(
+                $u64x::from_bits(x.is_infinite() | y.is_nan()) |
+                $u64x::from_bits(y)
+            );
+            $f64x::from_bits($u64x::from_bits(x.is_nan()) | $u64x::from_bits(y))
         }
 
         #[cfg(not(feature="deterministic"))]

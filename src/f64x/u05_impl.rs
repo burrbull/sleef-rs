@@ -67,12 +67,12 @@ macro_rules! impl_math_f64_u05 {
 
             let o = $m64x::from_cast((q & $ix::splat(4)).eq($ix::splat(4)));
             rsin = $f64x::from_bits(
-                vand_vm_vo64_vm(o, $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(rsin),
+                ($u64x::from_bits(o) & $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(rsin),
             );
 
             let o = $m64x::from_cast(((q + $ix::splat(2)) & $ix::splat(4)).eq($ix::splat(4)));
             rcos = $f64x::from_bits(
-                vand_vm_vo64_vm(o, $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(rcos),
+                ($u64x::from_bits(o) & $u64x::from_bits(NEG_ZERO)) ^ $u64x::from_bits(rcos),
             );
 
             let o = d.abs().gt(TRIGRANGEMAX3 / $f64x::splat(4.));
@@ -80,8 +80,8 @@ macro_rules! impl_math_f64_u05 {
             rcos = o.select(ONE, rcos);
 
             let o = d.is_infinite();
-            rsin = $f64x::from_bits(vor_vm_vo64_vm(o, $u64x::from_bits(rsin)));
-            rcos = $f64x::from_bits(vor_vm_vo64_vm(o, $u64x::from_bits(rcos)));
+            rsin = $f64x::from_bits($u64x::from_bits(o) | $u64x::from_bits(rsin));
+            rcos = $f64x::from_bits($u64x::from_bits(o) | $u64x::from_bits(rcos));
 
             (rsin, rcos)
         }
@@ -96,7 +96,7 @@ macro_rules! impl_math_f64_u05 {
                 !$u64x::from_bits(d.abs().gt(TRIGRANGEMAX3 / $f64x::splat(4.)))
                     & $u64x::from_bits(r),
             );
-            $f64x::from_bits(vor_vm_vo64_vm(d.is_infinite(), $u64x::from_bits(r)))
+            $f64x::from_bits($u64x::from_bits(d.is_infinite()) | $u64x::from_bits(r))
         }
 
         #[cfg(not(feature = "deterministic"))]
@@ -105,7 +105,7 @@ macro_rules! impl_math_f64_u05 {
             let r = x.0 + x.1;
 
             let r = d.abs().gt(TRIGRANGEMAX3 / $f64x::splat(4.)).select(ONE, r);
-            $f64x::from_bits(vor_vm_vo64_vm(d.is_infinite(), $u64x::from_bits(r)))
+            $f64x::from_bits($u64x::from_bits(d.is_infinite()) | $u64x::from_bits(r))
         }
 
         #[cfg(not(feature = "deterministic"))]

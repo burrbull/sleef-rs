@@ -13,17 +13,18 @@ mod u15_impl;
 mod u35_impl;
 
 macro_rules! impl_math_f64 {
-    ($f64x:ident, $u64x:ident, $m64x:ident, $i64x:ident, $ux:ident, $mx:ident, $ix:ident) => {
+    ($size:expr, $uint:ty, $int:ty, $mask:ty) => {
         use crate::common::*;
         use doubled::*;
 
-        type F64x = $f64x;
-        type U64x = $u64x;
-        type M64x = $m64x;
-        type I64x = $i64x;
-        type Ux = $ux;
-        type Mx = $mx;
-        type Ix = $ix;
+
+        type F64x = packed_simd::Simd<[f64; $size]>;
+        type U64x = packed_simd::Simd<[u64; $size]>;
+        type I64x = packed_simd::Simd<[i64; $size]>;
+        type M64x = packed_simd::Simd<[packed_simd::m64; $size]>;
+        type Ux = packed_simd::Simd<[$uint; $size]>;
+        type Ix = packed_simd::Simd<[$int; $size]>;
+        type Mx = packed_simd::Simd<[$mask; $size]>;
 
         impl BaseType for F64x {
             type Base = f64;

@@ -12,14 +12,14 @@ mod u15_impl;
 mod u35_impl;
 
 macro_rules! impl_math_f32 {
-    ($f32x:ident, $u32x:ident, $m32x:ident, $i32x:ident) => {
+    ($size:expr) => {
         use crate::common::*;
         use doubled::*;
 
-        type F32x = $f32x;
-        type U32x = $u32x;
-        type M32x = $m32x;
-        type I32x = $i32x;
+        type F32x = packed_simd::Simd<[f32; $size]>;
+        type U32x = packed_simd::Simd<[u32; $size]>;
+        type I32x = packed_simd::Simd<[i32; $size]>;
+        type M32x = packed_simd::Simd<[packed_simd::m32; $size]>;
 
         impl BaseType for F32x {
             type Base = f32;

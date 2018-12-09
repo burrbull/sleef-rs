@@ -68,47 +68,45 @@ macro_rules! impl_math_f32_u10 {
   vfloat u, v;
   vfloat2 s, t, x;
 
-  u = vrint_vf_vf(vmul_vf_vf_vf(d, vcast_vf_f(M_1_PI)));
-  q = vrint_vi2_vf(u);
-  v = vmla_vf_vf_vf_vf(u, vcast_vf_f(-PI_A2f), d);
-  s = dfadd2_vf2_vf_vf(v, vmul_vf_vf_vf(u, vcast_vf_f(-PI_B2f)));
-  s = dfadd_vf2_vf2_vf(s, vmul_vf_vf_vf(u, vcast_vf_f(-PI_C2f)));
-  vopmask g = vlt_vo_vf_vf(vabs_vf_vf(d), vcast_vf_f(TRIGRANGEMAX2f));
+  u = (d * F32x::FRAC_1_PI).round();
+  q = u.roundi();
+  v = vmla_vf_vf_vf_vf(u, (-PI_A2f), d);
+  s = v.add_as_doubled(u * (-PI_B2f));
+  s = s.add_checked(u * (-PI_C2f));
+  vopmask g = d.abs().lt(TRIGRANGEMAX2_F);
 
-  if (!LIKELY(vtestallones_i_vo32(g))) {
+  if !g.all() {
     dfi_t dfi = rempif(d);
-    vint2 q2 = vand_vi2_vi2_vi2(dfi.i, vcast_vi2_i(3));
-    q2 = vadd_vi2_vi2_vi2(vadd_vi2_vi2_vi2(q2, q2), vsel_vi2_vo_vi2_vi2(vgt_vo_vf_vf(dfi.df.x, vcast_vf_f(0)), vcast_vi2_i(2), vcast_vi2_i(1)));
-    q2 = vsra_vi2_vi2_i(q2, 2);
-    vopmask o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(dfi.i, vcast_vi2_i(1)), vcast_vi2_i(1));
-    vfloat2 x = vcast_vf2_vf_vf(vmulsign_vf_vf_vf(vcast_vf_f(3.1415927410125732422f*-0.5), dfi.df.x),
-				vmulsign_vf_vf_vf(vcast_vf_f(-8.7422776573475857731e-08f*-0.5), dfi.df.x));
-    x = dfadd2_vf2_vf2_vf2(dfi.df, x);
-    dfi.df = vsel_vf2_vo_vf2_vf2(o, x, dfi.df);
-    t = dfnormalize_vf2_vf2(dfi.df);
+    vint2 q2 = dfi.i & I32x::splat(3);
+    q2 = q2 + q2 + dfi.df.0.gt(vcast_vf_f(0)).select(I32x::splat(2), I32x::splat(1));
+    q2 >>= 2;
+    vopmask o = (dfi.i & I32x::splat(1)).eq(I32x::splat(1));
+    vfloat2 x = vcast_vf2_vf_vf(vcast_vf_f(3.1415927410125732422f*-0.5).mul_sign(dfi.df.0),
+				vcast_vf_f(-8.7422776573475857731e-08f*-0.5).mul_sign(dfi.df.0));
+    x = dfi.df + x;
+    dfi.df = o.select_doubled(x, dfi.df);
+    t = dfi.df.normalize();
 
-    t.x = vreinterpret_vf_vm(vor_vm_vo32_vm(vor_vo_vo_vo(visinf_vo_vf(d), visnan_vo_vf(d)), vreinterpret_vm_vf(t.x)));
+    t.0 = F32x::from_bits(vor_vm_vo32_vm(d.is_infinite() | d.is_nan(), U32x::from_bits(t.0)));
 
-    q = vsel_vi2_vo_vi2_vi2(g, q, q2);
-    s = vsel_vf2_vo_vf2_vf2(g, s, t);
+    q = g.select(q, q2);
+    s = g.select_doubled(s, t);
   }
 
   t = s;
-  s = dfsqu_vf2_vf2(s);
+  s = s.square();
 
-  u = vcast_vf_f(2.6083159809786593541503e-06f);
-  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(-0.0001981069071916863322258f));
-  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(0.00833307858556509017944336f));
+            let mut u = F32x::splat(2.608_315_980_978_659_354_150_3_e-6)
+                .mul_add(s.0, F32x::splat(-0.000_198_106_907_191_686_332_225_8))
+                .mul_add(s.0, F32x::splat(0.008_333_078_585_565_090_179_443_36));
 
-  x = dfadd_vf2_vf_vf2(vcast_vf_f(1), dfmul_vf2_vf2_vf2(dfadd_vf2_vf_vf(vcast_vf_f(-0.166666597127914428710938f), vmul_vf_vf_vf(u, s.x)), s));
+  x = ONE.add_checked(vcast_vf_f(-0.166_666_597_127_914_428_710_938).add_checked_as_doubled(u * s.0) * s);
 
-  u = dfmul_vf_vf2_vf2(t, x);
+  u = t.mul_as_f(x);
 
-  u = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, vcast_vi2_i(1)), vcast_vi2_i(1)), vreinterpret_vm_vf(vcast_vf_f(-0.0))), vreinterpret_vm_vf(u)));
+  u = F32x::from_bits(vand_vm_vo32_vm((q & I32x::splat(1)).eq(I32x::splat(1)), U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(u));
 
-  u = vsel_vf_vo_vf_vf(visnegzero_vo_vf(d), d, u);
-
-  return u;
+  d.is_neg_zero().select(d, u)
 
         }*/
 
@@ -181,47 +179,45 @@ macro_rules! impl_math_f32_u10 {
   vfloat u;
   vfloat2 s, t, x;
 
-  vfloat dq = vmla_vf_vf_vf_vf(vrint_vf_vf(vmla_vf_vf_vf_vf(d, vcast_vf_f(M_1_PI), vcast_vf_f(-0.5f))),
-			       vcast_vf_f(2), vcast_vf_f(1));
-  q = vrint_vi2_vf(dq);
-  s = dfadd2_vf2_vf_vf (d, vmul_vf_vf_vf(dq, vcast_vf_f(-PI_A2f*0.5f)));
-  s = dfadd2_vf2_vf2_vf(s, vmul_vf_vf_vf(dq, vcast_vf_f(-PI_B2f*0.5f)));
-  s = dfadd2_vf2_vf2_vf(s, vmul_vf_vf_vf(dq, vcast_vf_f(-PI_C2f*0.5f)));
-  vopmask g = vlt_vo_vf_vf(vabs_vf_vf(d), vcast_vf_f(TRIGRANGEMAX2f));
+  vfloat dq = vmla_vf_vf_vf_vf((vmla_vf_vf_vf_vf(d, F32x::FRAC_1_PI, vcast_vf_f(-0.5f))).round(),
+			       vcast_vf_f(2), ONE);
+  q = dq.roundi();
+  s = d.add_as_doubled(dq * (-PI_A2f*HALF));
+  s = dfadd2_vf2_vf2_vf(s, dq * (-PI_B2f*HALF));
+  s = dfadd2_vf2_vf2_vf(s, dq * (-PI_C2f*HALF));
+  vopmask g = d.abs().lt(TRIGRANGEMAX2_F);
 
-  if (!LIKELY(vtestallones_i_vo32(g))) {
+  if !g.all() {
     dfi_t dfi = rempif(d);
-    vint2 q2 = vand_vi2_vi2_vi2(dfi.i, vcast_vi2_i(3));
-    q2 = vadd_vi2_vi2_vi2(vadd_vi2_vi2_vi2(q2, q2), vsel_vi2_vo_vi2_vi2(vgt_vo_vf_vf(dfi.df.x, vcast_vf_f(0)), vcast_vi2_i(8), vcast_vi2_i(7)));
-    q2 = vsra_vi2_vi2_i(q2, 1);
-    vopmask o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(dfi.i, vcast_vi2_i(1)), vcast_vi2_i(0));
-    vfloat y = vsel_vf_vo_vf_vf(vgt_vo_vf_vf(dfi.df.x, vcast_vf_f(0)), vcast_vf_f(0), vcast_vf_f(-1));
-    vfloat2 x = vcast_vf2_vf_vf(vmulsign_vf_vf_vf(vcast_vf_f(3.1415927410125732422f*-0.5), y),
-				vmulsign_vf_vf_vf(vcast_vf_f(-8.7422776573475857731e-08f*-0.5), y));
-    x = dfadd2_vf2_vf2_vf2(dfi.df, x);
-    dfi.df = vsel_vf2_vo_vf2_vf2(o, x, dfi.df);
-    t = dfnormalize_vf2_vf2(dfi.df);
+    vint2 q2 = dfi.i & I32x::splat(3);
+    q2 = q2 + q2 + dfi.df.0.gt(vcast_vf_f(0)).select(I32x::splat(8), I32x::splat(7));
+    q2 >>= 1;
+    vopmask o = (dfi.i & I32x::splat(1)).eq(I32x::splat(0));
+    vfloat y = dfi.df.0.gt(vcast_vf_f(0)).select(vcast_vf_f(0), vcast_vf_f(-1));
+    vfloat2 x = vcast_vf2_vf_vf(vcast_vf_f(3.1415927410125732422f*-0.5).mul_sign(y),
+				vcast_vf_f(-8.7422776573475857731e-08f*-0.5).mul_sign(y));
+    x = dfi.df + x;
+    dfi.df = o.select_doubled(x, dfi.df);
+    t = dfi.df.normalize();
 
-    t.x = vreinterpret_vf_vm(vor_vm_vo32_vm(vor_vo_vo_vo(visinf_vo_vf(d), visnan_vo_vf(d)), vreinterpret_vm_vf(t.x)));
+    t.0 = F32x::from_bits(vor_vm_vo32_vm(d.is_infinite() | d.is_nan(), U32x::from_bits(t.0)));
 
-    q = vsel_vi2_vo_vi2_vi2(g, q, q2);
-    s = vsel_vf2_vo_vf2_vf2(g, s, t);
+    q = g.select(q, q2);
+    s = g.select_doubled(s, t);
   }
 
   t = s;
-  s = dfsqu_vf2_vf2(s);
+  s = s.square();
 
-  u = vcast_vf_f(2.6083159809786593541503e-06f);
-  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(-0.0001981069071916863322258f));
-  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(0.00833307858556509017944336f));
+            let u = F32x::splat(2.608_315_980_978_659_354_150_3_e-6)
+                .mul_add(s.0, F32x::splat(-0.000_198_106_907_191_686_332_225_8))
+                .mul_add(s.0, F32x::splat(0.008_333_078_585_565_090_179_443_36));
 
-  x = dfadd_vf2_vf_vf2(vcast_vf_f(1), dfmul_vf2_vf2_vf2(dfadd_vf2_vf_vf(vcast_vf_f(-0.166666597127914428710938f), vmul_vf_vf_vf(u, s.x)), s));
+  x = ONE.add_checked(vcast_vf_f(-0.166_666_597_127_914_428_710_938).add_checked_as_doubled(u * s.0) * s);
 
-  u = dfmul_vf_vf2_vf2(t, x);
+  u = t.mul_as_f(x);
 
-  u = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, vcast_vi2_i(2)), vcast_vi2_i(0)), vreinterpret_vm_vf(vcast_vf_f(-0.0))), vreinterpret_vm_vf(u)));
-
-  return u;
+  F32x::from_bits(vand_vm_vo32_vm((q & I32x::splat(2)).eq(I32x::splat(0)), U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(u))
         }
         */
 
@@ -292,57 +288,56 @@ macro_rules! impl_math_f32_u10 {
   vfloat u, v, rx, ry;
   vfloat2 r, s, t, x;
 
-  u = vrint_vf_vf(vmul_vf_vf_vf(d, vcast_vf_f(2 * M_1_PI)));
-  q = vrint_vi2_vf(u);
+  u = (d * F32x::FRAC_2_PI).round();
+  q = u.roundi();
   v = vmla_vf_vf_vf_vf(u, vcast_vf_f(-PI_A2f*0.5f), d);
-  s = dfadd2_vf2_vf_vf(v, vmul_vf_vf_vf(u, vcast_vf_f(-PI_B2f*0.5f)));
-  s = dfadd_vf2_vf2_vf(s, vmul_vf_vf_vf(u, vcast_vf_f(-PI_C2f*0.5f)));
-  vopmask g = vlt_vo_vf_vf(vabs_vf_vf(d), vcast_vf_f(TRIGRANGEMAX2f));
+  s = v.add_as_doubled(u * vcast_vf_f(-PI_B2f*0.5f));
+  s = s.add_checked(u * vcast_vf_f(-PI_C2f*0.5f));
+  vopmask g = d.abs().lt(TRIGRANGEMAX2_F);
 
-  if (!LIKELY(vtestallones_i_vo32(g))) {
+  if !g.all() {
     dfi_t dfi = rempif(d);
     t = dfi.df;
-    o = vor_vo_vo_vo(visinf_vo_vf(d), visnan_vo_vf(d));
-    t.x = vreinterpret_vf_vm(vor_vm_vo32_vm(o, vreinterpret_vm_vf(t.x)));
-    q = vsel_vi2_vo_vi2_vi2(g, q, dfi.i);
-    s = vsel_vf2_vo_vf2_vf2(g, s, t);
+    o = d.is_infinite() | d.is_nan();
+    t.0 = F32x::from_bits(vor_vm_vo32_vm(o, U32x::from_bits(t.0)));
+    q = g.select(q, dfi.i);
+    s = g.select_doubled(s, t);
   }
 
   t = s;
 
-  s.x = dfsqu_vf_vf2(s);
+  s.0 = dfsqu_vf_vf2(s);
 
-  u = vcast_vf_f(-0.000195169282960705459117889f);
-  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(0.00833215750753879547119141f));
-  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(-0.166666537523269653320312f));
+            let u = F32x::splat(-0.000_195_169_282_960_705_459_117_889)
+                .mul_add(s.0, F32x::splat(0.008_332_157_507_538_795_471_191_41))
+                .mul_add(s.0, F32x::splat(-0.166_666_537_523_269_653_320_312))
+                * (s.0 * t.0);
 
-  u = vmul_vf_vf_vf(u, vmul_vf_vf_vf(s.x, t.x));
+  x = t.add_checked(u);
+  rx = x.0 + x.1;
 
-  x = dfadd_vf2_vf2_vf(t, u);
-  rx = vadd_vf_vf_vf(x.x, x.y);
+  rx = d.is_neg_zero().select(NEG_ZERO, rx);
 
-  rx = vsel_vf_vo_vf_vf(visnegzero_vo_vf(d), vcast_vf_f(-0.0f), rx);
+            let u = F32x::splat(-2.718_118_423_672_422_068_193_55_e-7)
+                .mul_add(s.0, F32x::splat(2.479_904_469_510_074_704_885_48_e-5))
+                .mul_add(s.0, F32x::splat(-0.001_388_887_874_782_085_418_701_17))
+                .mul_add(s.0, F32x::splat(0.041_666_664_183_139_801_025_390_6))
+                .mul_add(s.0, F32x::splat(-0.5));
 
-  u = vcast_vf_f(-2.71811842367242206819355e-07f);
-  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(2.47990446951007470488548e-05f));
-  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(-0.00138888787478208541870117f));
-  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(0.0416666641831398010253906f));
-  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(-0.5));
+  x = ONE.add_checked(s.0.mul_as_doubled(u));
+  ry = x.0 + x.1;
 
-  x = dfadd_vf2_vf_vf2(vcast_vf_f(1), dfmul_vf2_vf_vf(s.x, u));
-  ry = vadd_vf_vf_vf(x.x, x.y);
+  o = (q & I32x::splat(1)).eq(I32x::splat(0));
+  rsin = o.select(rx, ry);
+  rcos = o.select(ry, rx);
 
-  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, vcast_vi2_i(1)), vcast_vi2_i(0));
-  r.x = vsel_vf_vo_vf_vf(o, rx, ry);
-  r.y = vsel_vf_vo_vf_vf(o, ry, rx);
+  o = (q & I32x::splat(2)).eq(I32x::splat(2));
+  rsin = F32x::from_bits(vand_vm_vo32_vm(o, U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(rsin));
 
-  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, vcast_vi2_i(2)), vcast_vi2_i(2));
-  r.x = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(o, vreinterpret_vm_vf(vcast_vf_f(-0.0))), vreinterpret_vm_vf(r.x)));
+  o = ((q + I32x::splat(1)) & I32x::splat(2)).eq(I32x::splat(2));
+  rcos = F32x::from_bits(vand_vm_vo32_vm(o, U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(rcos));
 
-  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(vadd_vi2_vi2_vi2(q, vcast_vi2_i(1)), vcast_vi2_i(2)), vcast_vi2_i(2));
-  r.y = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(o, vreinterpret_vm_vf(vcast_vf_f(-0.0))), vreinterpret_vm_vf(r.y)));
-
-  return r;
+  (rsin, rcos)
         }*/
 
         #[cfg(not(feature = "deterministic"))]
@@ -400,49 +395,47 @@ macro_rules! impl_math_f32_u10 {
   vfloat2 s, t, x;
   vopmask o;
 
-  u = vrint_vf_vf(vmul_vf_vf_vf(d, vcast_vf_f(2 * M_1_PI)));
-  q = vrint_vi2_vf(u);
-  v = vmla_vf_vf_vf_vf(u, vcast_vf_f(-PI_A2f*0.5f), d);
-  s = dfadd2_vf2_vf_vf(v, vmul_vf_vf_vf(u, vcast_vf_f(-PI_B2f*0.5f)));
-  s = dfadd_vf2_vf2_vf(s, vmul_vf_vf_vf(u, vcast_vf_f(-PI_C2f*0.5f)));
-  vopmask g = vlt_vo_vf_vf(vabs_vf_vf(d), vcast_vf_f(TRIGRANGEMAX2f));
+  u = (d * F32x::FRAC_2_PI).round();
+  q = u.roundi();
+  v = vmla_vf_vf_vf_vf(u, (-PI_A2f*HALF), d);
+  s = v.add_as_doubled(u * (-PI_B2f*HALF));
+  s = s.add_checked(u * (-PI_C2f*HALF));
+  vopmask g = d.abs().lt(TRIGRANGEMAX2_F);
 
-  if (!LIKELY(vtestallones_i_vo32(g))) {
+  if !g.all() {
     dfi_t dfi = rempif(d);
     t = dfi.df;
-    o = vor_vo_vo_vo(visinf_vo_vf(d), visnan_vo_vf(d));
-    t.x = vreinterpret_vf_vm(vor_vm_vo32_vm(o, vreinterpret_vm_vf(t.x)));
-    t.y = vreinterpret_vf_vm(vor_vm_vo32_vm(o, vreinterpret_vm_vf(t.y)));
-    q = vsel_vi2_vo_vi2_vi2(g, q, dfi.i);
-    s = vsel_vf2_vo_vf2_vf2(g, s, t);
+    o = d.is_infinite() | d.is_nan();
+    t.0 = F32x::from_bits(vor_vm_vo32_vm(o, U32x::from_bits(t.0)));
+    t.1 = F32x::from_bits(vor_vm_vo32_vm(o, U32x::from_bits(t.1)));
+    q = g.select(q, dfi.i);
+    s = g.select_doubled(s, t);
   }
 
-  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, vcast_vi2_i(1)), vcast_vi2_i(1));
-  vmask n = vand_vm_vo32_vm(o, vreinterpret_vm_vf(vcast_vf_f(-0.0)));
-  s.x = vreinterpret_vf_vm(vxor_vm_vm_vm(vreinterpret_vm_vf(s.x), n));
-  s.y = vreinterpret_vf_vm(vxor_vm_vm_vm(vreinterpret_vm_vf(s.y), n));
+  o = (q & I32x::splat(1)).eq(I32x::splat(1));
+  vmask n = vand_vm_vo32_vm(o, U32x::from_bits(NEG_ZERO));
+  s.0 = F32x::from_bits(U32x::from_bits(s.0) ^ n);
+  s.1 = F32x::from_bits(U32x::from_bits(s.1) ^ n);
 
   t = s;
-  s = dfsqu_vf2_vf2(s);
-  s = dfnormalize_vf2_vf2(s);
+  s = s.square();
+  s = s.normalize();
 
-  u = vcast_vf_f(0.00446636462584137916564941f);
-  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(-8.3920182078145444393158e-05f));
-  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(0.0109639242291450500488281f));
-  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(0.0212360303848981857299805f));
-  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(0.0540687143802642822265625f));
+            let u = F32x::splat(0.004_466_364_625_841_379_165_649_41)
+                .mul_add(s.0, F32x::splat(-8.392_018_207_814_544_439_315_8_e-5))
+                .mul_add(s.0, F32x::splat(0.010_963_924_229_145_050_048_828_1))
+                .mul_add(s.0, F32x::splat(0.021_236_030_384_898_185_729_980_5))
+                .mul_add(s.0, F32x::splat(0.054_068_714_380_264_282_226_562_5));
 
-  x = dfadd_vf2_vf_vf(vcast_vf_f(0.133325666189193725585938f), vmul_vf_vf_vf(u, s.x));
-  x = dfadd_vf2_vf_vf2(vcast_vf_f(1), dfmul_vf2_vf2_vf2(dfadd_vf2_vf_vf2(vcast_vf_f(0.33333361148834228515625f), dfmul_vf2_vf2_vf2(s, x)), s));
-  x = dfmul_vf2_vf2_vf2(t, x);
+  x = vcast_vf_f(0.133_325_666_189_193_725_585_938).add_checked_as_doubled(u * s.0);
+  x = ONE.add_checked(dfadd_vf2_vf_vf2(vcast_vf_f(0.333_333_611_488_342_285_156_25), s * x) * s);
+  x = t * x;
 
-  x = vsel_vf2_vo_vf2_vf2(o, dfrec_vf2_vf2(x), x);
+  x = o.select_doubled(x.recpre(), x);
 
-  u = vadd_vf_vf_vf(x.x, x.y);
+  u = x.0 + x.1;
 
-  u = vsel_vf_vo_vf_vf(visnegzero_vo_vf(d), d, u);
-
-  return u;
+  d.is_neg_zero().select(d, u)
 
         }
 */

@@ -1,9 +1,13 @@
 #[macro_use]
 mod u05_impl;
+
 #[macro_use]
 mod u10_impl;
+
+#[cfg(not(feature = "deterministic"))]
 #[macro_use]
 mod u15_impl;
+
 #[macro_use]
 mod u35_impl;
 
@@ -89,6 +93,7 @@ macro_rules! impl_math_f32 {
             impl_math_f32_u10!();
         }
 
+        #[cfg(not(feature = "deterministic"))]
         pub mod u15 {
             //! Functions with 1.5 ULP error bound
             impl_math_f32_u15!();
@@ -689,7 +694,7 @@ macro_rules! impl_math_f32 {
                 .select(d, (x - fr).copy_sign(d))
         }
 
-        #[cfg(not(feature="deterministic"))]
+        //#[cfg(not(feature="deterministic"))]
         pub fn rintf(d: F32x) -> F32x {
             let mut x = d + HALF;
             let isodd = (I32x::splat(1) & x.trunci()).eq(I32x::splat(1));
@@ -789,13 +794,13 @@ macro_rules! impl_math_f32 {
 
         pub fn expfrexpf(_x: F32x) -> I32x {
             /*
-                                  x = x.abs().lt(F32x::splat(f32::MIN)).select(x * F1_63X, x);
+              x = x.abs().lt(F32x::splat(f32::MIN)).select(x * F1_63X, x);
 
-                                  let mut ret = I32x::from_cast($ix::from_bits(x);
-                                  ret = (vsrl_vi_vi_i(ret, 20) & $ix::splat(0x7ff)) - $ix::splat(0x3fe);
+              let mut ret = I32x::from_cast($ix::from_bits(x);
+              ret = (vsrl_vi_vi_i(ret, 20) & $ix::splat(0x7ff)) - $ix::splat(0x3fe);
 
-                                  (x.eq(ZERO) | x.is_nan() | x.is_infinite()).select($ix::splat(0), ret)
-                                  */
+              (x.eq(ZERO) | x.is_nan() | x.is_infinite()).select($ix::splat(0), ret)
+            */
             I32x::splat(0)
         }
         #[inline]

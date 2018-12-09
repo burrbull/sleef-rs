@@ -323,8 +323,6 @@ macro_rules! impl_math_f64 {
                 & d.abs().lt(D1_53X)
         }
 
-        //
-
         pub fn ldexp(x: F64x, q: Ix) -> F64x {
             vldexp_vd_vd_vi(x, q)
         }
@@ -413,8 +411,6 @@ macro_rules! impl_math_f64 {
             let t = s;
             let s = s * s;
             let s2 = t.mul_as_doubled(t);
-
-            //
 
             let u = o.select_splat(9.944_803_876_268_437_740_902_08_e-16,
                 -2.024_611_207_851_823_992_958_68_e-14,
@@ -706,7 +702,6 @@ macro_rules! impl_math_f64 {
             s.add_checked(x2 * x * t)
         }
 
-        //
         #[inline]
         fn vcast_vi2_i_i(i0: i32, i1: i32) -> I64x {
               const L : usize = I64x::lanes();
@@ -816,7 +811,7 @@ macro_rules! impl_math_f64 {
                 .select(d, (x - fr).copy_sign(d))
         }
 
-        #[cfg(not(feature="deterministic"))]
+        //#[cfg(not(feature="deterministic"))]
         pub fn rint(d: F64x) -> F64x {
             let mut x = d + HALF;
             let mut fr = x

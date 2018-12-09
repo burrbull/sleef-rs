@@ -2,6 +2,7 @@ macro_rules! impl_math_f32_u10 {
     () => {
         use super::*;
 
+        #[cfg(not(feature = "deterministic"))]
         pub fn sinf(d: F32x) -> F32x {
             let mut q: I32x;
             let mut s: Doubled<F32x>;
@@ -58,6 +59,60 @@ macro_rules! impl_math_f32_u10 {
             d.is_neg_zero().select(d, u)
         }
 
+
+        /*
+        #[cfg(feature = "deterministic")]
+        pub fn sinf(mut d: F32x) -> F32x {
+
+  vint2 q;
+  vfloat u, v;
+  vfloat2 s, t, x;
+
+  u = vrint_vf_vf(vmul_vf_vf_vf(d, vcast_vf_f(M_1_PI)));
+  q = vrint_vi2_vf(u);
+  v = vmla_vf_vf_vf_vf(u, vcast_vf_f(-PI_A2f), d);
+  s = dfadd2_vf2_vf_vf(v, vmul_vf_vf_vf(u, vcast_vf_f(-PI_B2f)));
+  s = dfadd_vf2_vf2_vf(s, vmul_vf_vf_vf(u, vcast_vf_f(-PI_C2f)));
+  vopmask g = vlt_vo_vf_vf(vabs_vf_vf(d), vcast_vf_f(TRIGRANGEMAX2f));
+
+  if (!LIKELY(vtestallones_i_vo32(g))) {
+    dfi_t dfi = rempif(d);
+    vint2 q2 = vand_vi2_vi2_vi2(dfi.i, vcast_vi2_i(3));
+    q2 = vadd_vi2_vi2_vi2(vadd_vi2_vi2_vi2(q2, q2), vsel_vi2_vo_vi2_vi2(vgt_vo_vf_vf(dfi.df.x, vcast_vf_f(0)), vcast_vi2_i(2), vcast_vi2_i(1)));
+    q2 = vsra_vi2_vi2_i(q2, 2);
+    vopmask o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(dfi.i, vcast_vi2_i(1)), vcast_vi2_i(1));
+    vfloat2 x = vcast_vf2_vf_vf(vmulsign_vf_vf_vf(vcast_vf_f(3.1415927410125732422f*-0.5), dfi.df.x),
+				vmulsign_vf_vf_vf(vcast_vf_f(-8.7422776573475857731e-08f*-0.5), dfi.df.x));
+    x = dfadd2_vf2_vf2_vf2(dfi.df, x);
+    dfi.df = vsel_vf2_vo_vf2_vf2(o, x, dfi.df);
+    t = dfnormalize_vf2_vf2(dfi.df);
+
+    t.x = vreinterpret_vf_vm(vor_vm_vo32_vm(vor_vo_vo_vo(visinf_vo_vf(d), visnan_vo_vf(d)), vreinterpret_vm_vf(t.x)));
+
+    q = vsel_vi2_vo_vi2_vi2(g, q, q2);
+    s = vsel_vf2_vo_vf2_vf2(g, s, t);
+  }
+
+  t = s;
+  s = dfsqu_vf2_vf2(s);
+
+  u = vcast_vf_f(2.6083159809786593541503e-06f);
+  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(-0.0001981069071916863322258f));
+  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(0.00833307858556509017944336f));
+
+  x = dfadd_vf2_vf_vf2(vcast_vf_f(1), dfmul_vf2_vf2_vf2(dfadd_vf2_vf_vf(vcast_vf_f(-0.166666597127914428710938f), vmul_vf_vf_vf(u, s.x)), s));
+
+  u = dfmul_vf_vf2_vf2(t, x);
+
+  u = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, vcast_vi2_i(1)), vcast_vi2_i(1)), vreinterpret_vm_vf(vcast_vf_f(-0.0))), vreinterpret_vm_vf(u)));
+
+  u = vsel_vf_vo_vf_vf(visnegzero_vo_vf(d), d, u);
+
+  return u;
+
+        }*/
+
+        #[cfg(not(feature = "deterministic"))]
         pub fn cosf(d: F32x) -> F32x {
             let mut q: I32x;
             let mut s: Doubled<F32x>;
@@ -118,6 +173,59 @@ macro_rules! impl_math_f32_u10 {
             )
         }
 
+        /*
+        #[cfg(feature = "deterministic")]
+        pub fn cosf(mut d: F32x) -> F32x {
+
+  vint2 q;
+  vfloat u;
+  vfloat2 s, t, x;
+
+  vfloat dq = vmla_vf_vf_vf_vf(vrint_vf_vf(vmla_vf_vf_vf_vf(d, vcast_vf_f(M_1_PI), vcast_vf_f(-0.5f))),
+			       vcast_vf_f(2), vcast_vf_f(1));
+  q = vrint_vi2_vf(dq);
+  s = dfadd2_vf2_vf_vf (d, vmul_vf_vf_vf(dq, vcast_vf_f(-PI_A2f*0.5f)));
+  s = dfadd2_vf2_vf2_vf(s, vmul_vf_vf_vf(dq, vcast_vf_f(-PI_B2f*0.5f)));
+  s = dfadd2_vf2_vf2_vf(s, vmul_vf_vf_vf(dq, vcast_vf_f(-PI_C2f*0.5f)));
+  vopmask g = vlt_vo_vf_vf(vabs_vf_vf(d), vcast_vf_f(TRIGRANGEMAX2f));
+
+  if (!LIKELY(vtestallones_i_vo32(g))) {
+    dfi_t dfi = rempif(d);
+    vint2 q2 = vand_vi2_vi2_vi2(dfi.i, vcast_vi2_i(3));
+    q2 = vadd_vi2_vi2_vi2(vadd_vi2_vi2_vi2(q2, q2), vsel_vi2_vo_vi2_vi2(vgt_vo_vf_vf(dfi.df.x, vcast_vf_f(0)), vcast_vi2_i(8), vcast_vi2_i(7)));
+    q2 = vsra_vi2_vi2_i(q2, 1);
+    vopmask o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(dfi.i, vcast_vi2_i(1)), vcast_vi2_i(0));
+    vfloat y = vsel_vf_vo_vf_vf(vgt_vo_vf_vf(dfi.df.x, vcast_vf_f(0)), vcast_vf_f(0), vcast_vf_f(-1));
+    vfloat2 x = vcast_vf2_vf_vf(vmulsign_vf_vf_vf(vcast_vf_f(3.1415927410125732422f*-0.5), y),
+				vmulsign_vf_vf_vf(vcast_vf_f(-8.7422776573475857731e-08f*-0.5), y));
+    x = dfadd2_vf2_vf2_vf2(dfi.df, x);
+    dfi.df = vsel_vf2_vo_vf2_vf2(o, x, dfi.df);
+    t = dfnormalize_vf2_vf2(dfi.df);
+
+    t.x = vreinterpret_vf_vm(vor_vm_vo32_vm(vor_vo_vo_vo(visinf_vo_vf(d), visnan_vo_vf(d)), vreinterpret_vm_vf(t.x)));
+
+    q = vsel_vi2_vo_vi2_vi2(g, q, q2);
+    s = vsel_vf2_vo_vf2_vf2(g, s, t);
+  }
+
+  t = s;
+  s = dfsqu_vf2_vf2(s);
+
+  u = vcast_vf_f(2.6083159809786593541503e-06f);
+  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(-0.0001981069071916863322258f));
+  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(0.00833307858556509017944336f));
+
+  x = dfadd_vf2_vf_vf2(vcast_vf_f(1), dfmul_vf2_vf2_vf2(dfadd_vf2_vf_vf(vcast_vf_f(-0.166666597127914428710938f), vmul_vf_vf_vf(u, s.x)), s));
+
+  u = dfmul_vf_vf2_vf2(t, x);
+
+  u = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, vcast_vi2_i(2)), vcast_vi2_i(0)), vreinterpret_vm_vf(vcast_vf_f(-0.0))), vreinterpret_vm_vf(u)));
+
+  return u;
+        }
+        */
+
+        #[cfg(not(feature = "deterministic"))]
         pub fn sincosf(d: F32x) -> (F32x, F32x) {
             let q: I32x;
             let mut s: Doubled<F32x>;
@@ -175,8 +283,69 @@ macro_rules! impl_math_f32_u10 {
 
             (rsin, rcos)
         }
+/*
+        #[cfg(feature = "deterministic")]
+        pub fn sincosf(d: F32x) -> (F32x, F32x) {
 
+  vint2 q;
+  vopmask o;
+  vfloat u, v, rx, ry;
+  vfloat2 r, s, t, x;
 
+  u = vrint_vf_vf(vmul_vf_vf_vf(d, vcast_vf_f(2 * M_1_PI)));
+  q = vrint_vi2_vf(u);
+  v = vmla_vf_vf_vf_vf(u, vcast_vf_f(-PI_A2f*0.5f), d);
+  s = dfadd2_vf2_vf_vf(v, vmul_vf_vf_vf(u, vcast_vf_f(-PI_B2f*0.5f)));
+  s = dfadd_vf2_vf2_vf(s, vmul_vf_vf_vf(u, vcast_vf_f(-PI_C2f*0.5f)));
+  vopmask g = vlt_vo_vf_vf(vabs_vf_vf(d), vcast_vf_f(TRIGRANGEMAX2f));
+
+  if (!LIKELY(vtestallones_i_vo32(g))) {
+    dfi_t dfi = rempif(d);
+    t = dfi.df;
+    o = vor_vo_vo_vo(visinf_vo_vf(d), visnan_vo_vf(d));
+    t.x = vreinterpret_vf_vm(vor_vm_vo32_vm(o, vreinterpret_vm_vf(t.x)));
+    q = vsel_vi2_vo_vi2_vi2(g, q, dfi.i);
+    s = vsel_vf2_vo_vf2_vf2(g, s, t);
+  }
+
+  t = s;
+
+  s.x = dfsqu_vf_vf2(s);
+
+  u = vcast_vf_f(-0.000195169282960705459117889f);
+  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(0.00833215750753879547119141f));
+  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(-0.166666537523269653320312f));
+
+  u = vmul_vf_vf_vf(u, vmul_vf_vf_vf(s.x, t.x));
+
+  x = dfadd_vf2_vf2_vf(t, u);
+  rx = vadd_vf_vf_vf(x.x, x.y);
+
+  rx = vsel_vf_vo_vf_vf(visnegzero_vo_vf(d), vcast_vf_f(-0.0f), rx);
+
+  u = vcast_vf_f(-2.71811842367242206819355e-07f);
+  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(2.47990446951007470488548e-05f));
+  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(-0.00138888787478208541870117f));
+  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(0.0416666641831398010253906f));
+  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(-0.5));
+
+  x = dfadd_vf2_vf_vf2(vcast_vf_f(1), dfmul_vf2_vf_vf(s.x, u));
+  ry = vadd_vf_vf_vf(x.x, x.y);
+
+  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, vcast_vi2_i(1)), vcast_vi2_i(0));
+  r.x = vsel_vf_vo_vf_vf(o, rx, ry);
+  r.y = vsel_vf_vo_vf_vf(o, ry, rx);
+
+  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, vcast_vi2_i(2)), vcast_vi2_i(2));
+  r.x = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(o, vreinterpret_vm_vf(vcast_vf_f(-0.0))), vreinterpret_vm_vf(r.x)));
+
+  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(vadd_vi2_vi2_vi2(q, vcast_vi2_i(1)), vcast_vi2_i(2)), vcast_vi2_i(2));
+  r.y = vreinterpret_vf_vm(vxor_vm_vm_vm(vand_vm_vo32_vm(o, vreinterpret_vm_vf(vcast_vf_f(-0.0))), vreinterpret_vm_vf(r.y)));
+
+  return r;
+        }*/
+
+        #[cfg(not(feature = "deterministic"))]
         pub fn tanf(d: F32x) -> F32x {
             let q: I32x;
 
@@ -222,9 +391,61 @@ macro_rules! impl_math_f32_u10 {
 
             d.is_neg_zero().select(d, u)
         }
+/*
+        #[cfg(feature = "deterministic")]
+        pub fn tanf(d: F32x) -> F32x {
 
+  vint2 q;
+  vfloat u, v;
+  vfloat2 s, t, x;
+  vopmask o;
 
-        //
+  u = vrint_vf_vf(vmul_vf_vf_vf(d, vcast_vf_f(2 * M_1_PI)));
+  q = vrint_vi2_vf(u);
+  v = vmla_vf_vf_vf_vf(u, vcast_vf_f(-PI_A2f*0.5f), d);
+  s = dfadd2_vf2_vf_vf(v, vmul_vf_vf_vf(u, vcast_vf_f(-PI_B2f*0.5f)));
+  s = dfadd_vf2_vf2_vf(s, vmul_vf_vf_vf(u, vcast_vf_f(-PI_C2f*0.5f)));
+  vopmask g = vlt_vo_vf_vf(vabs_vf_vf(d), vcast_vf_f(TRIGRANGEMAX2f));
+
+  if (!LIKELY(vtestallones_i_vo32(g))) {
+    dfi_t dfi = rempif(d);
+    t = dfi.df;
+    o = vor_vo_vo_vo(visinf_vo_vf(d), visnan_vo_vf(d));
+    t.x = vreinterpret_vf_vm(vor_vm_vo32_vm(o, vreinterpret_vm_vf(t.x)));
+    t.y = vreinterpret_vf_vm(vor_vm_vo32_vm(o, vreinterpret_vm_vf(t.y)));
+    q = vsel_vi2_vo_vi2_vi2(g, q, dfi.i);
+    s = vsel_vf2_vo_vf2_vf2(g, s, t);
+  }
+
+  o = veq_vo_vi2_vi2(vand_vi2_vi2_vi2(q, vcast_vi2_i(1)), vcast_vi2_i(1));
+  vmask n = vand_vm_vo32_vm(o, vreinterpret_vm_vf(vcast_vf_f(-0.0)));
+  s.x = vreinterpret_vf_vm(vxor_vm_vm_vm(vreinterpret_vm_vf(s.x), n));
+  s.y = vreinterpret_vf_vm(vxor_vm_vm_vm(vreinterpret_vm_vf(s.y), n));
+
+  t = s;
+  s = dfsqu_vf2_vf2(s);
+  s = dfnormalize_vf2_vf2(s);
+
+  u = vcast_vf_f(0.00446636462584137916564941f);
+  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(-8.3920182078145444393158e-05f));
+  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(0.0109639242291450500488281f));
+  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(0.0212360303848981857299805f));
+  u = vmla_vf_vf_vf_vf(u, s.x, vcast_vf_f(0.0540687143802642822265625f));
+
+  x = dfadd_vf2_vf_vf(vcast_vf_f(0.133325666189193725585938f), vmul_vf_vf_vf(u, s.x));
+  x = dfadd_vf2_vf_vf2(vcast_vf_f(1), dfmul_vf2_vf2_vf2(dfadd_vf2_vf_vf2(vcast_vf_f(0.33333361148834228515625f), dfmul_vf2_vf2_vf2(s, x)), s));
+  x = dfmul_vf2_vf2_vf2(t, x);
+
+  x = vsel_vf2_vo_vf2_vf2(o, dfrec_vf2_vf2(x), x);
+
+  u = vadd_vf_vf_vf(x.x, x.y);
+
+  u = vsel_vf_vo_vf_vf(visnegzero_vo_vf(d), d, u);
+
+  return u;
+
+        }
+*/
         #[inline]
         fn atan2kf_u1(y: Doubled<F32x>, mut x: Doubled<F32x>) -> Doubled<F32x> {
             let q =
@@ -349,7 +570,7 @@ macro_rules! impl_math_f32_u10 {
             r.mul_sign(d)
         }
 
-
+        #[cfg(not(feature = "deterministic"))]
         pub fn expf(d: F32x) -> F32x {
             let q = (d * R_LN2_F).roundi();
 
@@ -376,6 +597,7 @@ macro_rules! impl_math_f32_u10 {
                 .select(F32x::INFINITY, u)
         }
 
+        #[cfg(not(feature = "deterministic"))]
         pub fn cbrtf(mut d: F32x) -> F32x {
             let mut q2 = Doubled::from((1., 0.));
 
@@ -440,7 +662,7 @@ macro_rules! impl_math_f32_u10 {
             z
         }
 
-
+        #[cfg(not(feature = "deterministic"))]
         pub fn logf(mut d: F32x) -> F32x {
             let m: F32x;
 
@@ -488,7 +710,7 @@ macro_rules! impl_math_f32_u10 {
             }*/
         }
 
-
+        #[cfg(not(feature = "deterministic"))]
         pub fn powf(x: F32x, y: F32x) -> F32x {
             if true {
                 let yisint = y.trunc().eq(y) | y.abs().gt(F1_24X);
@@ -546,7 +768,7 @@ macro_rules! impl_math_f32_u10 {
             }
         }
 
-
+        #[cfg(not(feature = "deterministic"))]
         pub fn sinhf(x: F32x) -> F32x {
             let mut y = x.abs();
             let d = expk2f(Doubled::new(y, ZERO));
@@ -559,6 +781,7 @@ macro_rules! impl_math_f32_u10 {
             F32x::from_bits(U32x::from_bits(x.is_nan()) | U32x::from_bits(y))
         }
 
+        #[cfg(not(feature = "deterministic"))]
         pub fn coshf(x: F32x) -> F32x {
             let mut y = x.abs();
             let d = expk2f(Doubled::new(y, ZERO));
@@ -570,6 +793,7 @@ macro_rules! impl_math_f32_u10 {
             F32x::from_bits(U32x::from_bits(x.is_nan()) | U32x::from_bits(y))
         }
 
+        #[cfg(not(feature = "deterministic"))]
         pub fn tanhf(x: F32x) -> F32x {
             let mut y = x.abs();
             let d = expk2f(Doubled::new(y, ZERO));
@@ -583,7 +807,7 @@ macro_rules! impl_math_f32_u10 {
             F32x::from_bits(U32x::from_bits(x.is_nan()) | U32x::from_bits(y))
         }
 
-
+        #[cfg(not(feature = "deterministic"))]
         pub fn asinhf(x: F32x) -> F32x {
             let mut y = x.abs();
             let o = y.gt(ONE);
@@ -601,6 +825,7 @@ macro_rules! impl_math_f32_u10 {
             x.is_neg_zero().select(NEG_ZERO, y)
         }
 
+        #[cfg(not(feature = "deterministic"))]
         pub fn acoshf(x: F32x) -> F32x {
             let d = logk2f(
                 x.add_as_doubled(ONE).sqrt() * x.add_as_doubled(F32x::splat(-1.)).sqrt() + x,
@@ -619,6 +844,7 @@ macro_rules! impl_math_f32_u10 {
             F32x::from_bits(U32x::from_bits(x.is_nan()) | U32x::from_bits(y))
         }
 
+        #[cfg(not(feature = "deterministic"))]
         pub fn atanhf(x: F32x) -> F32x {
             let mut y = x.abs();
             let d = logk2f(ONE.add_as_doubled(y) / ONE.add_as_doubled(-y));
@@ -638,7 +864,7 @@ macro_rules! impl_math_f32_u10 {
             F32x::from_bits(U32x::from_bits(x.is_nan()) | U32x::from_bits(y))
         }
 
-
+        #[cfg(not(feature = "deterministic"))]
         pub fn exp10f(d: F32x) -> F32x {
             let mut u = (d * LOG10_2_F).round();
             let q = u.roundi();
@@ -670,6 +896,7 @@ macro_rules! impl_math_f32_u10 {
             )
         }
 
+        #[cfg(not(feature = "deterministic"))]
         pub fn expm1f(a: F32x) -> F32x {
             let d = expk2f(Doubled::new(a, ZERO)) + F32x::splat(-1.);
             let mut x = d.0 + d.1;
@@ -682,6 +909,7 @@ macro_rules! impl_math_f32_u10 {
             a.is_neg_zero().select(NEG_ZERO, x)
         }
 
+        #[cfg(not(feature = "deterministic"))]
         pub fn log10f(mut d: F32x) -> F32x {
             let m: F32x;
 
@@ -727,6 +955,7 @@ macro_rules! impl_math_f32_u10 {
             }*/
         }
 
+        #[cfg(not(feature = "deterministic"))]
         pub fn log2f(mut d: F32x) -> F32x {
             let m: F32x;
 
@@ -771,8 +1000,7 @@ macro_rules! impl_math_f32_u10 {
             }*/
         }
 
-
-
+        #[cfg(not(feature = "deterministic"))]
         pub fn tgammaf(a: F32x) -> F32x {
             let (da, db) = gammafk(a);
             let y = expk2f(da) * db;
@@ -789,6 +1017,7 @@ macro_rules! impl_math_f32_u10 {
             o.select(F32x::INFINITY, a).mul_sign(r)
         }
 
+        #[cfg(not(feature = "deterministic"))]
         pub fn lgammaf(a: F32x) -> F32x {
             let (da, db) = gammafk(a);
             let y = da + logk2f(db.abs());
@@ -801,6 +1030,7 @@ macro_rules! impl_math_f32_u10 {
         }
 
         /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
+        #[cfg(not(feature = "deterministic"))]
         pub fn erff(a: F32x) -> F32x {
             let s = a;
 

@@ -69,7 +69,7 @@ macro_rules! impl_math_f64_u10 {
         }
 
         #[cfg(feature = "deterministic")]
-        pub fn sin(mut d: F64x) -> F64x {
+        pub fn sin(d: F64x) -> F64x {
             let mut s;
             let mut ql;
 
@@ -94,11 +94,11 @@ macro_rules! impl_math_f64_u10 {
 
                 ql = Mx::from_cast(g).select(ql, dql.roundi());
                 x = g.select_doubled(x, s);
-                g = d.abs().lt(TRIGRANGEMAX);
+                let g = d.abs().lt(TRIGRANGEMAX);
 
                 if !g.all() {
                     let (mut ddidd, ddii) = rempi(d);
-                    let ql2 = ddii & Ix::splat(3);
+                    let mut ql2 = ddii & Ix::splat(3);
                     ql2 = ql2 + ql2 + Mx::from_cast(ddidd.0.gt(ZERO)).select(Ix::splat(2), Ix::splat(1));
                     ql2 >>= 2;
                     let o = (ddii & Ix::splat(1)).eq(Ix::splat(1));
@@ -214,7 +214,7 @@ macro_rules! impl_math_f64_u10 {
         }
 
         #[cfg(feature = "deterministic")]
-        pub fn cos(mut d: F64x) -> F64x {
+        pub fn cos(d: F64x) -> F64x {
             let g = d.abs().lt(TRIGRANGEMAX2);
             let mut dql = d.mul_add(F64x::FRAC_1_PI, F64x::splat(-0.5)).round();
             dql = F64x::splat(2.).mul_add(dql, ONE);
@@ -239,7 +239,7 @@ macro_rules! impl_math_f64_u10 {
 
                 ql = Mx::from_cast(g).select(ql, ql2);
                 x = g.select_doubled(x, s);
-                g = d.abs().lt(TRIGRANGEMAX);
+                let g = d.abs().lt(TRIGRANGEMAX);
 
                 if !g.all() {
                     let (mut ddidd, ddii) = rempi(d);
@@ -266,7 +266,7 @@ macro_rules! impl_math_f64_u10 {
             let t = x;
             let s = x.square();
 
-            let u = F64x::splat(2.720_524_161_385_295_679_179_83_e-15)
+            let mut u = F64x::splat(2.720_524_161_385_295_679_179_83_e-15)
                 .mul_add(s.0, F64x::splat(-7.642_925_941_139_544_719_002_3_e-13))
                 .mul_add(s.0, F64x::splat(1.605_893_701_172_778_962_116_23_e-10))
                 .mul_add(s.0, F64x::splat(-2.505_210_681_484_312_335_936_8_e-8))
@@ -387,7 +387,7 @@ macro_rules! impl_math_f64_u10 {
 
                 ql = Mx::from_cast(g).select(ql, dql.roundi());
                 s = g.select_doubled(s, x);
-                g = d.abs().lt(TRIGRANGEMAX);
+                let g = d.abs().lt(TRIGRANGEMAX);
 
                 if !g.all() {
                     let (ddidd, ddii) = rempi(d);
@@ -562,7 +562,7 @@ macro_rules! impl_math_f64_u10 {
 
                 ql = Mx::from_cast(g).select(ql, dql.roundi());
                 s = g.select_doubled(s, x);
-                g = d.abs().lt(TRIGRANGEMAX);
+                let g = d.abs().lt(TRIGRANGEMAX);
 
                 if !g.all() {
                     let (ddidd, ddii) = rempi(d);

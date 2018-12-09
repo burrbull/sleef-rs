@@ -94,7 +94,7 @@ macro_rules! impl_math_f64_u35 {
 
                 ql = Mx::from_cast(g).select(ql, dql.roundi());
                 d = g.select(d, u);
-                g = r.abs().lt(TRIGRANGEMAX);
+                let g = r.abs().lt(TRIGRANGEMAX);
 
                 if !g.all() {
                     let (mut ddidd, ddii) = rempi(d);
@@ -102,7 +102,7 @@ macro_rules! impl_math_f64_u35 {
                     ql2 = ql2 + ql2 + Mx::from_cast(ddidd.0.gt(ZERO)).select(Ix::splat(2), Ix::splat(1));
                     ql2 >>= 2;
                     let o = (ddii & Ix::splat(1)).eq(Ix::splat(1));
-                    let x = Doubled::new(
+                    let mut x = Doubled::new(
                         F64x::splat(-3.141592653589793116 * 0.5).mul_sign(ddidd.0),
                         F64x::splat(-1.2246467991473532072e-16 * 0.5).mul_sign(ddidd.0),
                     );
@@ -235,7 +235,7 @@ macro_rules! impl_math_f64_u35 {
 
                 ql = Mx::from_cast(g).select(ql, ql2);
                 d = g.select(d, u);
-                g = r.abs().lt(TRIGRANGEMAX);
+                let g = r.abs().lt(TRIGRANGEMAX);
 
                 if !g.all() {
                     let (mut ddidd, ddii) = rempi(d);
@@ -376,11 +376,11 @@ macro_rules! impl_math_f64_u35 {
 
                 ql = Mx::from_cast(g).select(ql, dql.roundi());
                 s = g.select(s, u);
-                g = d.abs().lt(TRIGRANGEMAX);
+                let g = d.abs().lt(TRIGRANGEMAX);
 
                 if !g.all() {
                     let (ddidd, ddii) = rempi(d);
-                    let u = ddidd.0 + ddidd.1;
+                    let mut u = ddidd.0 + ddidd.1;
                     u = F64x::from_bits(
                         U64x::from_bits(d.is_infinite() | d.is_nan()) | U64x::from_bits(u),
                     );
@@ -597,12 +597,12 @@ macro_rules! impl_math_f64_u35 {
 
                 ql = Mx::from_cast(g).select(ql, dql.roundi());
                 s = g.select(s, u);
-                g = d.abs().lt(F64x::splat(1e+7));
+                let g = d.abs().lt(F64x::splat(1e+7));
 
                 if !g.all() {
                     let (ddidd, ddii) = rempi(d);
                     let ql2 = ddii;
-                    let u = ddidd.0 + ddidd.1;
+                    let mut u = ddidd.0 + ddidd.1;
                     u = F64x::from_bits(
                         U64x::from_bits(d.is_infinite() | d.is_nan()) | U64x::from_bits(u),
                     );
@@ -619,7 +619,7 @@ macro_rules! impl_math_f64_u35 {
             let o = M64x::from_cast((ql & Ix::splat(1)).eq(Ix::splat(1)));
             x = F64x::from_bits((U64x::from_bits(o) & U64x::from_bits(NEG_ZERO)) ^ U64x::from_bits(x));
 
-            let u = if cfg!(feature = "split_kernel") {
+            let mut u = if cfg!(feature = "split_kernel") {
                 let s2 = s * s;
 
                 let u = F64x::splat(-4.311_845_854_673_247_507_241_75_e-5)

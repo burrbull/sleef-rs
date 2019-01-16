@@ -1,4 +1,5 @@
 #![deny(warnings)]
+#![allow(dead_code)] // temporary
 #![no_std]
 #![allow(clippy::many_single_char_names)]
 #![allow(clippy::mistyped_literal_suffixes)]

@@ -92,6 +92,31 @@ macro_rules! impl_math_f64 {
         const L10L: F64x = F64x::splat(1.420_502_322_726_609_941_8_e-13);
         const LOG10_2: F64x = F64x::splat(3.321_928_094_887_362_347_870_319_429_489_390_175_864_831_393);
 
+        /// Approximate equality with X ULP of tolerance
+        #[doc(hidden)]
+        #[inline]
+        pub fn _eq(a: F64x, b: F64x, ulp: f64) -> Result<(), u64> {
+            if a.is_nan().any() && b.is_nan().any() {
+                Ok(())
+            } else {
+                let mut err = 0_i64;
+                let ai = I64x::from_bits(a);
+                let bi = I64x::from_bits(b);
+
+                for i in 0..$size {
+                    let e = (ai.extract(i)).wrapping_sub(bi.extract(i)).abs();
+                    if e > err {
+                        err = e;
+                    }
+                }
+
+                if err as f64 <= ulp {
+                    Ok(())
+                } else {
+                    Err(err as u64)
+                }
+            }
+        }
 
         #[cfg(not(feature = "deterministic"))]
         pub mod u05 {

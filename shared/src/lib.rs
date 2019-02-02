@@ -8,18 +8,13 @@ macro_rules! f32x_vec {
     (
         $size:expr,
         $namef32x:ident,
-        $filef32x:literal
         $namef32f32x:ident,
-        $filef32f32x:literal
         $namef32f32f32x:ident,
-        $filef32f32f32x:literal
         $namef32i32x:ident,
-        $filef32i16x:literal
     ) => {
         lazy_static! {
             pub static ref $namef32x: Vec<Simd<[f32; $size]>> = {
-                let bytes = include_bytes!($filef32x);
-
+                let bytes = include_bytes!(concat!("../../bin/input/f32x", stringify!($size)));
                 bytes
                     .chunks_exact(4*$size)
                     .map(|chunk| {
@@ -35,8 +30,7 @@ macro_rules! f32x_vec {
                     .collect()
             };
             pub static ref $namef32f32x: Vec<(Simd<[f32; $size]>,Simd<[f32; $size]>)> = {
-                let bytes = include_bytes!($filef32f32x);
-
+                let bytes = include_bytes!(concat!("../../bin/input/f32f32x", stringify!($size)));
                 bytes
                     .chunks_exact(8*$size)
                     .map(|chunk| {
@@ -63,8 +57,7 @@ macro_rules! f32x_vec {
             };
             
             pub static ref $namef32f32f32x: Vec<(Simd<[f32; $size]>,Simd<[f32; $size]>,Simd<[f32; $size]>)> = {
-                let bytes = include_bytes!($filef32f32f32x);
-
+                let bytes = include_bytes!(concat!("../../bin/input/f32f32f32x", stringify!($size)));
                 bytes
                     .chunks_exact(12*$size)
                     .map(|chunk| {
@@ -98,8 +91,7 @@ macro_rules! f32x_vec {
                     .collect()
             };
             pub static ref $namef32i32x: Vec<(Simd<[f32; $size]>,Simd<[i32; $size]>)> = {
-                let bytes = include_bytes!($filef32i16x);
-
+                let bytes = include_bytes!(concat!("../../bin/input/f32i16x", stringify!($size)));
                 bytes
                     .chunks_exact(6*$size)
                     .map(|chunk| {
@@ -130,63 +122,43 @@ macro_rules! f32x_vec {
 f32x_vec!(
     2,
     F32X2,
-    "../../bin/input/f32x2"
     F32F32X2,
-    "../../bin/input/f32f32x2"
     F32F32F32X2,
-    "../../bin/input/f32f32f32x2"
     F32I32X2,
-    "../../bin/input/f32i16x2"
 );
 f32x_vec!(
     4,
     F32X4,
-    "../../bin/input/f32x4"
     F32F32X4,
-    "../../bin/input/f32f32x4"
     F32F32F32X4,
-    "../../bin/input/f32f32f32x4"
     F32I32X4,
-    "../../bin/input/f32i16x4"
 );
 f32x_vec!(
     8,
     F32X8,
-    "../../bin/input/f32x8"
     F32F32X8,
-    "../../bin/input/f32f32x8"
     F32F32F32X8,
-    "../../bin/input/f32f32f32x8"
     F32I32X8,
-    "../../bin/input/f32i16x8"
 );
 f32x_vec!(
     16,
     F32X16,
-    "../../bin/input/f32x16"
     F32F32X16,
-    "../../bin/input/f32f32x16"
     F32F32F32X16,
-    "../../bin/input/f32f32f32x16"
     F32I32X16,
-    "../../bin/input/f32i16x16"
 );
 
 macro_rules! f64x_vec {
     (
         $size:expr,
         $namef64x:ident,
-        $filef64x:literal
         $namef64f64x:ident,
-        $filef64f64x:literal
         $namef64f64f64x:ident,
-        $filef64f64f64x:literal
         $namef64i32x:ident,
-        $filef64i16x:literal
     ) => {
         lazy_static! {
             pub static ref $namef64x: Vec<Simd<[f64; $size]>> = {
-                let bytes = include_bytes!($filef64x);
+                let bytes = include_bytes!(concat!("../../bin/input/f64x", stringify!($size)));
 
                 bytes
                     .chunks_exact(8*$size)
@@ -203,7 +175,7 @@ macro_rules! f64x_vec {
                     .collect()
             };
             pub static ref $namef64f64x: Vec<(Simd<[f64; $size]>,Simd<[f64; $size]>)> = {
-                let bytes = include_bytes!($filef64f64x);
+                let bytes = include_bytes!(concat!("../../bin/input/f64f64x", stringify!($size)));
 
                 bytes
                     .chunks_exact(16*$size)
@@ -230,7 +202,7 @@ macro_rules! f64x_vec {
                     .collect()
             };
             pub static ref $namef64f64f64x: Vec<(Simd<[f64; $size]>,Simd<[f64; $size]>,Simd<[f64; $size]>)> = {
-                let bytes = include_bytes!($filef64f64f64x);
+                let bytes = include_bytes!(concat!("../../bin/input/f64f64f64x", stringify!($size)));
 
                 bytes
                     .chunks_exact(16*$size)
@@ -265,7 +237,7 @@ macro_rules! f64x_vec {
                     .collect()
             };
             pub static ref $namef64i32x: Vec<(Simd<[f64; $size]>,Simd<[i32; $size]>)> = {
-                let bytes = include_bytes!($filef64i16x);
+                let bytes = include_bytes!(concat!("../../bin/input/f64i16x", stringify!($size)));
 
                 bytes
                     .chunks_exact(10*$size)
@@ -298,37 +270,25 @@ macro_rules! f64x_vec {
 f64x_vec!(
     2,
     F64X2,
-    "../../bin/input/f64x2"
     F64F64X2,
-    "../../bin/input/f64f64x2"
     F64F64F64X2,
-    "../../bin/input/f64f64f64x2"
     F64I64X2,
-    "../../bin/input/f64i16x2"
 );
 
 f64x_vec!(
     4,
     F64X4,
-    "../../bin/input/f64x4"
     F64F64X4,
-    "../../bin/input/f64f64x4"
     F64F64F64X4,
-    "../../bin/input/f64f64f64x4"
     F64I64X4,
-    "../../bin/input/f64i16x4"
 );
 
 f64x_vec!(
     8,
     F64X8,
-    "../../bin/input/f64x8"
     F64F64X8,
-    "../../bin/input/f64f64x8"
     F64F64F64X8,
-    "../../bin/input/f64f64f64x8"
     F64I64X8,
-    "../../bin/input/f64i16x8"
 );
 
 lazy_static! {
@@ -470,6 +430,50 @@ lazy_static! {
             })
             .collect()
     };
+}
+
+#[macro_export]
+macro_rules! f32x {
+    ($lib:expr, $($fun:ident, $mod:ident, $size:ident, $ulp:literal),+) => {
+        $(
+            #[test]
+            fn $fun() {
+                let expected = include_bytes!(concat!("../bin/output/", $lib, ".", stringify!($mod), ".", stringify!($fun)))
+                    .chunks_exact(4*$size)
+                    .map(|chunk| {
+                        let vec: Vec<f32> = chunk.chunks_exact($size)
+                            .map(|ch| {
+                                let mut buf = [0; 4];
+                                buf.copy_from_slice(ch);
+                                f32::from_bits(u32::from_le_bytes(buf))
+                            })
+                            .collect();
+                        Simd::<[f32; $size]>::from_slice_unaligned(&vec[..])
+                    })
+                    .collect::<Vec<_>>();
+
+                for (input, expected) in $crate::F32.iter().zip(&expected) {
+                    if let Ok(output) = panic::catch_unwind(|| sleef::$mod::$fun(*input)) {
+                        if let Err(error) = sleef::$mod::_eq(output, *expected, $ulp) {
+                            panic!(
+                                "INPUT: {:#x}, OUTPUT: {:#x}, EXPECTED: {:#x}, ERROR: {}",
+                                input.to_bits(),
+                                output.to_bits(),
+                                expected.to_bits(),
+                                error
+                            );
+                        }
+                    } else {
+                        panic!(
+                            "INPUT: {:#x}, OUTPUT: PANIC!, EXPECTED: {:#x}",
+                            input.to_bits(),
+                            expected.to_bits()
+                        );
+                    }
+                }
+            }
+        )+
+    }
 }
 
 #[macro_export]

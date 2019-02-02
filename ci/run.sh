@@ -15,10 +15,10 @@ main() {
     #cargo run -p newlib-generator
 
     # run unit tests
-    cargo test --lib --features checked --target $TARGET --release
+    cargo test --lib --target $TARGET --release
 
     # run generated tests
-    cargo test --tests --features checked --target $TARGET --release
+    cargo test --tests --target $TARGET --release
 }
 
 main

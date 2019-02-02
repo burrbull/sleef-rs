@@ -87,15 +87,17 @@ macro_rules! impl_math_f32 {
         #[doc(hidden)]
         #[inline]
         pub fn _eq(a: F32x, b: F32x, ulp: f32) -> Result<(), u32> {
-            if a.is_nan().any() && b.is_nan().any() {
+            if a.is_nan().all() && b.is_nan().all() {
                 Ok(())
             } else {
                 let mut err = 0_i32;
-                let ai = I32x::from_bits(a);
-                let bi = I32x::from_bits(b);
-
                 for i in 0..$size {
-                    let e = (ai.extract(i)).wrapping_sub(bi.extract(i)).abs();
+                    let x = a.extract(i);
+                    let y = b.extract(i);
+                    if x.is_nan() && y.is_nan() {
+                        continue;
+                    }
+                    let e = (x as i32).wrapping_sub(y as i32).abs();
                     if e > err {
                         err = e;
                     }

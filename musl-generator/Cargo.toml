@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Jorge Aparicio <jorge@japaric.io>"]
 
 [dependencies]
+packed_simd = "0.3.2"
 lazy_static = "1.0.2"
 shared = { path = "../shared" }
-libm = { path = ".." }
+sleef = { path = ".." }

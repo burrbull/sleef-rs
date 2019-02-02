@@ -5,7 +5,7 @@ set -ex
 
 run() {
     echo "Building docker container for TARGET=${TARGET} RUSTFLAGS=${RUSTFLAGS}"
-    docker build -t packed_simd -f ci/docker/${TARGET}/Dockerfile ci/
+    docker build -t sleef-rs -f ci/docker/${TARGET}/Dockerfile ci/
     mkdir -p target
     target=$(echo "${TARGET}" | sed 's/-emulated//')
     echo "Running docker"
@@ -24,7 +24,7 @@ run() {
       --volume `pwd`/target:/checkout/target \
       --workdir /checkout \
       --privileged \
-      packed_simd \
+      sleef-rs \
       bash \
       -c 'PATH=$PATH:/rust/bin exec ci/run.sh'
 }

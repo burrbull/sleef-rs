@@ -9,10 +9,21 @@ git = "https://github.com/burrbull/doubled-rs"
 features = ["packed_simd"]
 
 [dependencies.packed_simd]
-#version = "0.3"
-git = "https://github.com/rust-lang-nursery/packed_simd"
+version = "0.3.2"
 features = ["into_bits"]
 
 [features]
 default = []
 deterministic = []
+
+[workspace]
+members = [
+#  "cb",
+  "input-generator",
+  "musl-generator",
+#  "newlib-generator",
+  "shared",
+]
+
+[dev-dependencies]
+shared = { path = "shared" }

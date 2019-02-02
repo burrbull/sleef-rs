@@ -83,6 +83,34 @@ macro_rules! impl_math_f32 {
         const R_LN2_F: F32x = F32x::splat(1.442_695_040_888_963_407_359_924_681_001_892_137_426_645_954_152_985_934_135_449_406_931);
         const LOG10_2_F: F32x = F32x::splat(3.321_928_094_887_362_347_870_319_429_489_390_175_864_831_393);
 
+        /// Approximate equality with X ULP of tolerance
+        #[doc(hidden)]
+        #[inline]
+        pub fn _eq(a: F32x, b: F32x, ulp: f32) -> Result<(), u32> {
+            if a.is_nan().all() && b.is_nan().all() {
+                Ok(())
+            } else {
+                let mut err = 0_i32;
+                for i in 0..$size {
+                    let x = a.extract(i);
+                    let y = b.extract(i);
+                    if x.is_nan() && y.is_nan() {
+                        continue;
+                    }
+                    let e = (x as i32).wrapping_sub(y as i32).abs();
+                    if e > err {
+                        err = e;
+                    }
+                }
+
+                if err as f32 <= ulp {
+                    Ok(())
+                } else {
+                    Err(err as u32)
+                }
+            }
+        }
+
         pub mod u05 {
             //! Functions with 0.5 ULP error bound
             impl_math_f32_u05!();

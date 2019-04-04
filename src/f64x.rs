@@ -121,7 +121,7 @@ macro_rules! impl_math_f64 {
             for i in 0..F64x::lanes() {
                 ar[i] = ptr[vi.extract(i) as usize];
             }
-            F64x::from_slice_aligned(&ar)
+            F64x::from_slice_unaligned(&ar)
         }
 
         #[inline]
@@ -129,11 +129,11 @@ macro_rules! impl_math_f64 {
             const L : usize = I64x::lanes()*2;
             let i2 = Simd::<[i32;L]>::from_bits(i);
             let mut r = [0_i32;L];
-            i2.write_to_slice_aligned(&mut r);
+            i2.write_to_slice_unaligned(&mut r);
             for i in 0..L/2 {
                 r.swap(i*2, i*2+1);
             }
-            I64x::from_bits(Simd::<[i32;L]>::from_slice_aligned(&r))
+            I64x::from_bits(Simd::<[i32;L]>::from_slice_unaligned(&r))
         }
 
         impl Round for F64x {
@@ -711,7 +711,7 @@ macro_rules! impl_math_f64 {
                 a[2*j] = i0;
                 a[2*j+1] = i1;
           }
-          I64x::from_bits(Simd::<[i32; L*2]>::from_slice_aligned(&a))
+          I64x::from_bits(Simd::<[i32; L*2]>::from_slice_unaligned(&a))
         }
 
         #[inline]
@@ -722,7 +722,7 @@ macro_rules! impl_math_f64 {
                 a[2*j] = i0;
                 a[2*j+1] = i1;
           }
-          I64x::from_bits(Simd::<[u32; L*2]>::from_slice_aligned(&a))
+          I64x::from_bits(Simd::<[u32; L*2]>::from_slice_unaligned(&a))
         }
 
         #[cfg(not(feature="deterministic"))]

@@ -107,6 +107,17 @@ macro_rules! impl_math_f32_u10 {
             d.is_neg_zero().select(d, u)
         }
 
+        #[test]
+        fn test_sinf() {
+            test_libm_f_f(
+                sinf,
+                if cfg!(feature="std") { f32::sin } else { libm::sinf },
+                f32::MIN,
+                f32::MAX,
+                1.
+            );
+        }
+
         #[cfg(not(feature = "deterministic"))]
         pub fn cosf(d: F32x) -> F32x {
             let mut q: I32x;
@@ -212,6 +223,17 @@ macro_rules! impl_math_f32_u10 {
                     & U32x::from_bits(NEG_ZERO))
                     ^ U32x::from_bits(u),
             )
+        }
+
+        #[test]
+        fn test_cosf() {
+            test_libm_f_f(
+                cosf,
+                if cfg!(feature="std") { f32::cos } else { libm::cosf },
+                f32::MIN,
+                f32::MAX,
+                1.
+            );
         }
 
         #[cfg(not(feature = "deterministic"))]
@@ -331,6 +353,17 @@ macro_rules! impl_math_f32_u10 {
             (rsin, rcos)
         }
 
+        #[test]
+        fn test_sincosf() {
+            test_libm_f_ff(
+                sincosf,
+                if cfg!(feature="std") { f32::sin_cos } else { libm::sincosf },
+                f32::MIN,
+                f32::MAX,
+                1.
+            );
+        }
+
         #[cfg(not(feature = "deterministic"))]
         pub fn tanf(d: F32x) -> F32x {
             let q: I32x;
@@ -426,6 +459,17 @@ macro_rules! impl_math_f32_u10 {
             d.is_neg_zero().select(d, u)
         }
 
+        #[test]
+        fn test_tanf() {
+            test_libm_f_f(
+                tanf,
+                if cfg!(feature="std") { f32::tan } else { libm::tanf },
+                f32::MIN,
+                f32::MAX,
+                1.
+            );
+        }
+
         #[inline]
         fn atan2kf_u1(y: Doubled<F32x>, mut x: Doubled<F32x>) -> Doubled<F32x> {
             let q = vsel_vi2_vf_vf_vi2_vi2(x.0, ZERO, I32x::splat(-2), I32x::splat(0));
@@ -488,6 +532,17 @@ macro_rules! impl_math_f32_u10 {
             )
         }
 
+        #[test]
+        fn test_atan2f() {
+            test_libm_ff_f(
+                atan2f,
+                if cfg!(feature="std") { f32::atan2 } else { libm::atan2f },
+                f32::MIN,
+                f32::MAX,
+                1.
+            );
+        }
+
         pub fn asinf(d: F32x) -> F32x {
             let o = d.abs().lt(HALF);
             let x2 = o.select(d * d, (ONE - d.abs()) * HALF);
@@ -510,6 +565,17 @@ macro_rules! impl_math_f32_u10 {
 
             let r = o.select(u + x.0, (y.0 + y.1) * F32x::splat(2.));
             r.mul_sign(d)
+        }
+
+        #[test]
+        fn test_asinf() {
+            test_libm_f_f(
+                asinf,
+                if cfg!(feature="std") { f32::asin } else { libm::asinf },
+                -1.,
+                1.,
+                1.
+            );
         }
 
         pub fn acosf(d: F32x) -> F32x {
@@ -547,6 +613,17 @@ macro_rules! impl_math_f32_u10 {
             y.0 + y.1
         }
 
+        #[test]
+        fn test_acosf() {
+            test_libm_f_f(
+                acosf,
+                if cfg!(feature="std") { f32::acos } else { libm::acosf },
+                -1.,
+                1.,
+                1.
+            );
+        }
+
         pub fn atanf(d: F32x) -> F32x {
             let d2 = atan2kf_u1(Doubled::new(d.abs(), ZERO), Doubled::from((1., 0.)));
             let mut r = d2.0 + d2.1;
@@ -554,6 +631,17 @@ macro_rules! impl_math_f32_u10 {
                 .is_infinite()
                 .select(F32x::splat(1.570_796_326_794_896_557_998_982), r);
             r.mul_sign(d)
+        }
+
+        #[test]
+        fn test_atanf() {
+            test_libm_f_f(
+                atanf,
+                if cfg!(feature="std") { f32::atan } else { libm::atanf },
+                f32::MIN,
+                f32::MAX,
+                1.
+            );
         }
 
         #[cfg(not(feature = "deterministic"))]
@@ -576,6 +664,17 @@ macro_rules! impl_math_f32_u10 {
 
             u = F32x::from_bits(!U32x::from_bits(d.lt(F32x::splat(-104.))) & U32x::from_bits(u));
             F32x::splat(100.).lt(d).select(F32x::INFINITY, u)
+        }
+
+        #[test]
+        fn test_expf() {
+            test_libm_f_f(
+                expf,
+                if cfg!(feature="std") { f32::exp } else { libm::expf },
+                -80.,
+                80.,
+                1.
+            );
         }
 
         #[cfg(not(feature = "deterministic"))]
@@ -646,6 +745,17 @@ macro_rules! impl_math_f32_u10 {
             z
         }
 
+        #[test]
+        fn test_cbrtf() {
+            test_libm_f_f(
+                cbrtf,
+                if cfg!(feature="std") { f32::cbrt } else { libm::cbrtf },
+                f32::MIN,
+                f32::MAX,
+                1.
+            );
+        }
+
         #[cfg(not(feature = "deterministic"))]
         pub fn logf(mut d: F32x) -> F32x {
             let m: F32x;
@@ -690,6 +800,17 @@ macro_rules! impl_math_f32_u10 {
                     0,
                 )
             }*/
+        }
+
+        #[test]
+        fn test_logf() {
+            test_libm_f_f(
+                logf,
+                if cfg!(feature="std") { f32::ln } else { libm::logf },
+                0.,
+                f32::MAX,
+                1.
+            );
         }
 
         #[cfg(not(feature = "deterministic"))]
@@ -742,6 +863,17 @@ macro_rules! impl_math_f32_u10 {
             }
         }
 
+        #[test]
+        fn test_powf() {
+            test_libm_ff_f(
+                powf,
+                if cfg!(feature="std") { f32::powf } else { libm::powf },
+                f32::MIN,
+                f32::MAX,
+                1.
+            );
+        }
+
         #[cfg(not(feature = "deterministic"))]
         pub fn sinhf(x: F32x) -> F32x {
             let mut y = x.abs();
@@ -752,6 +884,17 @@ macro_rules! impl_math_f32_u10 {
             y = (x.abs().gt(F32x::splat(89.)) | y.is_nan()).select(F32x::INFINITY, y);
             y = y.mul_sign(x);
             F32x::from_bits(U32x::from_bits(x.is_nan()) | U32x::from_bits(y))
+        }
+
+        #[test]
+        fn test_sinhf() {
+            test_libm_f_f(
+                sinhf,
+                if cfg!(feature="std") { f32::sinh } else { libm::sinhf },
+                f32::MIN,
+                f32::MAX,
+                1.
+            );
         }
 
         #[cfg(not(feature = "deterministic"))]
@@ -765,6 +908,17 @@ macro_rules! impl_math_f32_u10 {
             F32x::from_bits(U32x::from_bits(x.is_nan()) | U32x::from_bits(y))
         }
 
+        #[test]
+        fn test_coshf() {
+            test_libm_f_f(
+                coshf,
+                if cfg!(feature="std") { f32::cosh } else { libm::coshf },
+                f32::MIN,
+                f32::MAX,
+                1.
+            );
+        }
+
         #[cfg(not(feature = "deterministic"))]
         pub fn tanhf(x: F32x) -> F32x {
             let mut y = x.abs();
@@ -776,6 +930,17 @@ macro_rules! impl_math_f32_u10 {
             y = (x.abs().gt(F32x::splat(8.664_339_742)) | y.is_nan()).select(ONE, y);
             y = y.mul_sign(x);
             F32x::from_bits(U32x::from_bits(x.is_nan()) | U32x::from_bits(y))
+        }
+
+        #[test]
+        fn test_tanhf() {
+            test_libm_f_f(
+                tanhf,
+                if cfg!(feature="std") { f32::tanh } else { libm::tanhf },
+                f32::MIN,
+                f32::MAX,
+                1.
+            );
         }
 
         #[cfg(not(feature = "deterministic"))]
@@ -797,6 +962,17 @@ macro_rules! impl_math_f32_u10 {
             x.is_neg_zero().select(NEG_ZERO, y)
         }
 
+        #[test]
+        fn test_asinhf() {
+            test_libm_f_f(
+                asinhf,
+                if cfg!(feature="std") { f32::asinh } else { libm::asinhf },
+                f32::MIN,
+                f32::MAX,
+                1.
+            );
+        }
+
         #[cfg(not(feature = "deterministic"))]
         pub fn acoshf(x: F32x) -> F32x {
             let d = logk2f(
@@ -812,6 +988,17 @@ macro_rules! impl_math_f32_u10 {
             F32x::from_bits(U32x::from_bits(x.is_nan()) | U32x::from_bits(y))
         }
 
+        #[test]
+        fn test_acoshf() {
+            test_libm_f_f(
+                acoshf,
+                if cfg!(feature="std") { f32::acosh } else { libm::acoshf },
+                f32::MIN,
+                f32::MAX,
+                1.
+            );
+        }
+
         #[cfg(not(feature = "deterministic"))]
         pub fn atanhf(x: F32x) -> F32x {
             let mut y = x.abs();
@@ -824,6 +1011,17 @@ macro_rules! impl_math_f32_u10 {
             y = F32x::from_bits(U32x::from_bits(x.is_infinite() | y.is_nan()) | U32x::from_bits(y));
             y = y.mul_sign(x);
             F32x::from_bits(U32x::from_bits(x.is_nan()) | U32x::from_bits(y))
+        }
+
+        #[test]
+        fn test_atanhf() {
+            test_libm_f_f(
+                atanhf,
+                if cfg!(feature="std") { f32::atanh } else { libm::atanhf },
+                f32::MIN,
+                f32::MAX,
+                1.
+            );
         }
 
         #[cfg(not(feature = "deterministic"))]

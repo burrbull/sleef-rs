@@ -104,6 +104,17 @@ macro_rules! impl_math_f32_u05 {
             d.eq(ZERO).select(d, x)
         }
 
+        #[test]
+        fn test_sqrtf() {
+            test_libm_f_f(
+                sqrtf,
+                if cfg!(feature="std") { f32::sqrt } else { libm::sqrtf },
+                f32::MIN,
+                f32::MAX,
+                0.5
+            );
+        }
+
         #[cfg(not(feature = "deterministic"))]
         pub fn hypotf(x: F32x, y: F32x) -> F32x {
             let x = x.abs();
@@ -126,8 +137,19 @@ macro_rules! impl_math_f32_u05 {
             (x.eq(F32x::INFINITY) | y.eq(F32x::INFINITY)).select(F32x::INFINITY, ret)
         }
 
+        #[test]
+        fn test_hypotf() {
+            test_libm_ff_f(
+                hypotf,
+                if cfg!(feature="std") { f32::hypot } else { libm::hypotf },
+                f32::MIN,
+                f32::MAX,
+                0.5
+            );
+        }
+
         #[cfg(not(feature = "deterministic"))]
-        pub fn xsinpif(d: F32x) -> F32x {
+        pub fn sinpif(d: F32x) -> F32x {
             let x = sinpifk(d);
             let mut r = x.0 + x.1;
 

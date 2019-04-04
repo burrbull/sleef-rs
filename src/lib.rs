@@ -1,6 +1,6 @@
 #![deny(warnings)]
 #![allow(dead_code)] // temporary
-#![no_std]
+#![cfg_attr(not(feature="std"), no_std)]
 #![allow(clippy::many_single_char_names)]
 #![allow(clippy::mistyped_literal_suffixes)]
 #![allow(clippy::excessive_precision)]
@@ -74,3 +74,11 @@ pub mod f64x8 {
     // AVX5122
     impl_math_f64!(8, u32, i32, m32);
 }
+
+#[cfg(test)]
+#[cfg(feature="fasttest")]
+const TEST_REPEAT: usize = 1_000;
+
+#[cfg(test)]
+#[cfg(not(feature="fasttest"))]
+const TEST_REPEAT: usize = 100_000;

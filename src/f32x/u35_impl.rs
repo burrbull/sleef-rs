@@ -120,6 +120,17 @@ macro_rules! impl_math_f32_u35 {
             r.is_neg_zero().select(r, u)
         }
 
+        #[test]
+        fn test_sinf() {
+            test_libm_f_f(
+                sinf,
+                if cfg!(feature="std") { f32::sin } else { libm::sinf },
+                f32::MIN,
+                f32::MAX,
+                3.5
+            );
+        }
+
         #[cfg(not(feature = "deterministic"))]
         pub fn cosf(mut d: F32x) -> F32x {
             let mut q: I32x;
@@ -240,6 +251,17 @@ macro_rules! impl_math_f32_u35 {
             s * (u * d) + d
         }
 
+        #[test]
+        fn test_cosf() {
+            test_libm_f_f(
+                cosf,
+                if cfg!(feature="std") { f32::cos } else { libm::cosf },
+                f32::MIN,
+                f32::MAX,
+                3.5
+            );
+        }
+
         #[cfg(not(feature = "deterministic"))]
         pub fn tanf(d: F32x) -> F32x {
             let q: I32x;
@@ -338,6 +360,17 @@ macro_rules! impl_math_f32_u35 {
             u = s.mul_add(u * x, x);
 
             o.select(u.recpre(), u)
+        }
+
+        #[test]
+        fn test_tanf() {
+            test_libm_f_f(
+                tanf,
+                if cfg!(feature="std") { f32::tan } else { libm::tanf },
+                f32::MIN,
+                f32::MAX,
+                3.5
+            );
         }
 
         #[cfg(not(feature = "deterministic"))]
@@ -472,6 +505,17 @@ macro_rules! impl_math_f32_u35 {
             (rsin, rcos)
         }
 
+        #[test]
+        fn test_sincosf() {
+            test_libm_f_ff(
+                sincosf,
+                if cfg!(feature="std") { f32::sin_cos } else { libm::sincosf },
+                f32::MIN,
+                f32::MAX,
+                3.5
+            );
+        }
+
         #[cfg(not(feature = "deterministic"))]
         pub fn sincospif(d: F32x) -> (F32x, F32x) {
             let u = d * F32x::splat(4.);
@@ -568,6 +612,17 @@ macro_rules! impl_math_f32_u35 {
             }
 
             t
+        }
+
+        #[test]
+        fn test_atanf() {
+            test_libm_f_f(
+                atanf,
+                if cfg!(feature="std") { f32::atan } else { libm::atanf },
+                f32::MIN,
+                f32::MAX,
+                3.5
+            );
         }
 
         #[cfg(not(feature = "deterministic"))]

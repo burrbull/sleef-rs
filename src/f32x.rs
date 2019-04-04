@@ -104,13 +104,102 @@ macro_rules! impl_math_f32 {
             impl_math_f32_u35!();
         }
 
+        #[cfg(test)]
+        fn test_libm_f_f(fun_fx: fn(F32x) -> F32x, fun_f: fn(f32) -> f32, mn: f32, mx: f32, ulp: f32) {
+            use rand::Rng;
+            let mut rng = rand::thread_rng();
+            for _ in 0..crate::TEST_REPEAT {
+                let mut in_f = [0_f32; $size];
+                for v in in_f.iter_mut() {
+                    *v = rng.gen_range(mn, mx);
+                }
+                let in_fx = F32x::from_slice_unaligned(&in_f);
+                let out_fx = fun_fx(in_fx);
+                for i in 0..$size {
+                    let input = in_f[i];
+                    let expected = fun_f(input);
+                    let output = out_fx.extract(i);
+                    if expected.is_nan() && output.is_nan() {
+                        continue;
+                    }
+                    let diff = (expected.to_bits() as i32).wrapping_sub(output.to_bits() as i32) as f32;
+                    #[cfg(not(feature="std"))]
+                    assert!(libm::fabsf(diff) <= 1.+ulp); // WARN!!!
+                    #[cfg(feature="std")]
+                    assert!(diff.abs() <= 1.+ulp, format!("Position: {}, Input: {}, Output: {}, Expected: {}", i, input, output, expected));
+                }
+            }
+        }
+
+        #[cfg(test)]
+        fn test_libm_f_ff(fun_fx: fn(F32x) -> (F32x, F32x), fun_f: fn(f32) -> (f32, f32), mn: f32, mx: f32, ulp: f32) {
+            use rand::Rng;
+            let mut rng = rand::thread_rng();
+            for _ in 0..crate::TEST_REPEAT {
+                let mut in_f = [0_f32; $size];
+                for v in in_f.iter_mut() {
+                    *v = rng.gen_range(mn, mx);
+                }
+                let in_fx = F32x::from_slice_unaligned(&in_f);
+                let (out_fx1, out_fx2) = fun_fx(in_fx);
+                for i in 0..$size {
+                    let input = in_f[i];
+                    let (expected1, expected2) = fun_f(input);
+                    let output1 = out_fx1.extract(i);
+                    let output2 = out_fx2.extract(i);
+                    if (expected1.is_nan() && output1.is_nan()) || (expected2.is_nan() && output2.is_nan()) {
+                        continue;
+                    }
+                    let diff1 = (expected1.to_bits() as i32).wrapping_sub(output1.to_bits() as i32) as f32;
+                    let diff2 = (expected2.to_bits() as i32).wrapping_sub(output2.to_bits() as i32) as f32;
+                    #[cfg(not(feature="std"))]
+                    assert!(libm::fabsf(diff1) <= 1.+ulp &&libm::fabsf(diff2) <= 1.+ulp); // WARN!!!
+                    #[cfg(feature="std")]
+                    assert!(diff1.abs() <= 1.+ulp && diff2.abs() <= 1.+ulp, format!("Position: {}, Input: {}, Output: ({}, {}), Expected: ({}, {})", i, input, output1, output2, expected1, expected2));
+                }
+            }
+        }
+
+        #[cfg(test)]
+        fn test_libm_ff_f(fun_fx: fn(F32x, F32x) -> (F32x), fun_f: fn(f32, f32) -> f32, mn: f32, mx: f32, ulp: f32) {
+            use rand::Rng;
+            let mut rng = rand::thread_rng();
+            for _ in 0..crate::TEST_REPEAT {
+                let mut in_f1 = [0_f32; $size];
+                let mut in_f2 = [0_f32; $size];
+                for v in in_f1.iter_mut() {
+                    *v = rng.gen_range(mn, mx);
+                }
+                for v in in_f2.iter_mut() {
+                    *v = rng.gen_range(mn, mx);
+                }
+                let in_fx1 = F32x::from_slice_unaligned(&in_f1);
+                let in_fx2 = F32x::from_slice_unaligned(&in_f2);
+                let out_fx = fun_fx(in_fx1, in_fx2);
+                for i in 0..$size {
+                    let input1 = in_f1[i];
+                    let input2 = in_f2[i];
+                    let expected = fun_f(input1, input2);
+                    let output = out_fx.extract(i);
+                    if expected.is_nan() && output.is_nan() {
+                        continue;
+                    }
+                    let diff = (expected.to_bits() as i32).wrapping_sub(output.to_bits() as i32) as f32;
+                    #[cfg(not(feature="std"))]
+                    assert!(libm::fabsf(diff) <= 1.+ulp); // WARN!!!
+                    #[cfg(feature="std")]
+                    assert!(diff.abs() <= 1.+ulp, format!("Position: {}, Input: ({}, {}), Output: {}, Expected: {}", i, input1, input2, output, expected));
+                }
+            }
+        }
+
         #[inline]
         fn vgather_vf_p_vi2(ptr: &[f32], vi: I32x) -> F32x {
             let mut ar = [0_f32; F32x::lanes()];
             for i in 0..F32x::lanes() {
                 ar[i] = ptr[vi.extract(i) as usize];
             }
-            F32x::from_slice_aligned(&ar)
+            F32x::from_slice_unaligned(&ar)
         }
 
 

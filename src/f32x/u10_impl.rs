@@ -763,7 +763,7 @@ macro_rules! impl_math_f32_u10 {
             let mut s = /*if !cfg!(feature = "enable_avx512f")
                 && !cfg!(feature = "enable_avx512fnofma")*/
             {
-                let o = d.lt(F32x::splat(f32::MIN));
+                let o = d.lt(F32x::splat(f32::MIN_POSITIVE));
                 d = o.select(d * (F1_32X * F1_32X), d);
                 let mut e = vilogb2k_vi2_vf(d * F32x::splat(1. / 0.75));
                 m = vldexp3_vf_vf_vi2(d, -e);
@@ -993,7 +993,7 @@ macro_rules! impl_math_f32_u10 {
             test_libm_f_f(
                 acoshf,
                 if cfg!(feature="std") { f32::acosh } else { libm::acoshf },
-                f32::MIN,
+                1.,
                 f32::MAX,
                 1.
             );
@@ -1072,7 +1072,7 @@ macro_rules! impl_math_f32_u10 {
 
             let mut s =
                 /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
-                    let o = d.lt(F32x::splat(f32::MIN));
+                    let o = d.lt(F32x::splat(f32::MIN_POSITIVE));
                     d = o.select(d * (F1_32X * F1_32X), d);
                     let mut e = vilogb2k_vi2_vf(d * F32x::splat(1. / 0.75));
                     m = vldexp3_vf_vf_vi2(d, -e);
@@ -1117,7 +1117,7 @@ macro_rules! impl_math_f32_u10 {
 
             let ef =
                 /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
-                    let o = d.lt(F32x::splat(f32::MIN));
+                    let o = d.lt(F32x::splat(f32::MIN_POSITIVE));
                     d = o.select(d * (F1_32X * F1_32X), d);
                     let mut e = vilogb2k_vi2_vf(d * F32x::splat(1. / 0.75));
                     m = vldexp3_vf_vf_vi2(d, -e);
@@ -1168,7 +1168,7 @@ macro_rules! impl_math_f32_u10 {
             let r = o.select(F32x::NAN, r);
 
             let o = (a.eq(F32x::INFINITY) | a.is_finite())
-                & a.ge(F32x::splat(-f32::MIN))
+                & a.ge(F32x::splat(-f32::MIN_POSITIVE))
                 & (a.eq(ZERO) | a.gt(F32x::splat(36.)) | r.is_nan());
             o.select(F32x::INFINITY, a).mul_sign(r)
         }

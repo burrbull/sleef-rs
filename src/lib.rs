@@ -1,6 +1,6 @@
 #![deny(warnings)]
 #![allow(dead_code)] // temporary
-#![cfg_attr(not(feature="std"), no_std)]
+#![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::many_single_char_names)]
 #![allow(clippy::mistyped_literal_suffixes)]
 #![allow(clippy::excessive_precision)]
@@ -76,9 +76,9 @@ pub mod f64x8 {
 }
 
 #[cfg(test)]
-#[cfg(feature="fasttest")]
+#[cfg(feature = "fasttest")]
 const TEST_REPEAT: usize = 1_000;
 
 #[cfg(test)]
-#[cfg(not(feature="fasttest"))]
+#[cfg(not(feature = "fasttest"))]
 const TEST_REPEAT: usize = 100_000;

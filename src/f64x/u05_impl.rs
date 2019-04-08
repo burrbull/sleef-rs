@@ -141,7 +141,7 @@ macro_rules! impl_math_f64_u05 {
             let max = x.max(y);
             let d = max;
 
-            let o = max.lt(F64x::splat(f64::MIN));
+            let o = max.lt(F64x::splat(f64::MIN_POSITIVE));
             let n = o.select(n * D1_54X, n);
             let d = o.select(d * D1_54X, d);
 

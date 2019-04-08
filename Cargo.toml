@@ -20,4 +20,5 @@ fasttest = []
 
 [dev-dependencies]
 rand = "0.6"
-libm = "0.1.2"
+#libm = "0.1.2"
+libm = {path = "/home/burrbull/MyProjects/rust/libm"}

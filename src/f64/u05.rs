@@ -150,7 +150,7 @@ pub fn hypot(mut x: f64, mut y: f64) -> f64 {
     let max = fmaxk(x, y);
     let mut d = max;
 
-    if max < f64::MIN {
+    if max < f64::MIN_POSITIVE {
         n *= D1_54;
         d *= D1_54;
     }

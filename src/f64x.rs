@@ -115,6 +115,96 @@ macro_rules! impl_math_f64 {
             impl_math_f64_u35!();
         }
 
+        #[cfg(test)]
+        fn test_libm_f_f(fun_fx: fn(F64x) -> F64x, fun_f: fn(f64) -> f64, mn: f64, mx: f64, ulp: f64) {
+            use rand::Rng;
+            let mut rng = rand::thread_rng();
+            for _ in 0..crate::TEST_REPEAT {
+                let mut in_f = [0_f64; $size];
+                for v in in_f.iter_mut() {
+                    *v = rng.gen_range(mn, mx);
+                }
+                let in_fx = F64x::from_slice_unaligned(&in_f);
+                let out_fx = fun_fx(in_fx);
+                for i in 0..$size {
+                    let input = in_f[i];
+                    let expected = fun_f(input);
+                    let output = out_fx.extract(i);
+                    if expected.is_nan() && output.is_nan() {
+                        continue;
+                    }
+                    let diff = (expected.to_bits() as i64).wrapping_sub(output.to_bits() as i64) as f64;
+                    #[cfg(not(feature="std"))]
+                    assert!(libm::fabsf(diff) <= 1.+ulp); // WARN!!!
+                    #[cfg(feature="std")]
+                    assert!(diff.abs() <= 1.+ulp, format!("Position: {}, Input: {}, Output: {}, Expected: {}", i, input, output, expected));
+                }
+            }
+        }
+
+        #[cfg(test)]
+        fn test_libm_f_ff(fun_fx: fn(F64x) -> (F64x, F64x), fun_f: fn(f64) -> (f64, f64), mn: f64, mx: f64, ulp: f64) {
+            use rand::Rng;
+            let mut rng = rand::thread_rng();
+            for _ in 0..crate::TEST_REPEAT {
+                let mut in_f = [0_f64; $size];
+                for v in in_f.iter_mut() {
+                    *v = rng.gen_range(mn, mx);
+                }
+                let in_fx = F64x::from_slice_unaligned(&in_f);
+                let (out_fx1, out_fx2) = fun_fx(in_fx);
+                for i in 0..$size {
+                    let input = in_f[i];
+                    let (expected1, expected2) = fun_f(input);
+                    let output1 = out_fx1.extract(i);
+                    let output2 = out_fx2.extract(i);
+                    if (expected1.is_nan() && output1.is_nan()) || (expected2.is_nan() && output2.is_nan()) {
+                        continue;
+                    }
+                    let diff1 = (expected1.to_bits() as i64).wrapping_sub(output1.to_bits() as i64) as f64;
+                    let diff2 = (expected2.to_bits() as i64).wrapping_sub(output2.to_bits() as i64) as f64;
+                    #[cfg(not(feature="std"))]
+                    assert!(libm::fabsf(diff1) <= 1.+ulp &&libm::fabsf(diff2) <= 1.+ulp); // WARN!!!
+                    #[cfg(feature="std")]
+                    assert!(diff1.abs() <= 1.+ulp && diff2.abs() <= 1.+ulp, format!("Position: {}, Input: {}, Output: ({}, {}), Expected: ({}, {})", i, input, output1, output2, expected1, expected2));
+                }
+            }
+        }
+
+        #[cfg(test)]
+        fn test_libm_ff_f(fun_fx: fn(F64x, F64x) -> (F64x), fun_f: fn(f64, f64) -> f64, mn: f64, mx: f64, ulp: f64) {
+            use rand::Rng;
+            let mut rng = rand::thread_rng();
+            for _ in 0..crate::TEST_REPEAT {
+                let mut in_f1 = [0_f64; $size];
+                let mut in_f2 = [0_f64; $size];
+                for v in in_f1.iter_mut() {
+                    *v = rng.gen_range(mn, mx);
+                }
+                for v in in_f2.iter_mut() {
+                    *v = rng.gen_range(mn, mx);
+                }
+                let in_fx1 = F64x::from_slice_unaligned(&in_f1);
+                let in_fx2 = F64x::from_slice_unaligned(&in_f2);
+                let out_fx = fun_fx(in_fx1, in_fx2);
+                for i in 0..$size {
+                    let input1 = in_f1[i];
+                    let input2 = in_f2[i];
+                    let expected = fun_f(input1, input2);
+                    let output = out_fx.extract(i);
+                    if expected.is_nan() && output.is_nan() {
+                        continue;
+                    }
+                    let diff = (expected.to_bits() as i64).wrapping_sub(output.to_bits() as i64) as f64;
+                    #[cfg(not(feature="std"))]
+                    assert!(libm::fabsf(diff) <= 1.+ulp); // WARN!!!
+                    #[cfg(feature="std")]
+                    assert!(diff.abs() <= 1.+ulp, format!("Position: {}, Input: ({}, {}), Output: {}, Expected: {}", i, input1, input2, output, expected));
+                }
+            }
+        }
+
+
         #[inline]
         fn vgather_vd_p_vi(ptr: &[f64], vi: Ix) -> F64x {
             let mut ar = [0_f64; F64x::lanes()];
@@ -153,6 +243,13 @@ macro_rules! impl_math_f64 {
             #[inline]
             fn roundi(self) -> Self::Int {
                 Self::Int::from_cast(self.round())
+            }
+        }
+
+        impl MulAdd for F64x {
+            #[inline]
+            fn mul_add(self, y: Self, z: Self) -> Self {
+                self.mul_add(y, z)
             }
         }
 
@@ -197,6 +294,12 @@ macro_rules! impl_math_f64 {
             }
             fn select4(o0: Self::Mask, o1: Self::Mask, o2: Self::Mask, d0: f64, d1: f64, d2: f64, d3: f64) -> Self {
                 o0.select(Self::splat(d0), o1.select(Self::splat(d1), o2.select_splat(d2, d3)))
+            }
+        }
+
+        impl Poly for F64x {
+            fn c2v(c: Self::Base) -> Self {
+                F64x::splat(c)
             }
         }
 
@@ -570,7 +673,7 @@ macro_rules! impl_math_f64 {
 
             let mut s =
                 /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
-                    let o = d.lt(F64x::splat(f64::MIN));
+                    let o = d.lt(F64x::splat(f64::MIN_POSITIVE));
                     d = o.select(d * (D1_32X * D1_32X), d);
                     let mut e = vilogb2k_vi_vd(d * F64x::splat(1. / 0.75));
                     m = vldexp3_vd_vd_vi(d, -e);
@@ -870,7 +973,7 @@ macro_rules! impl_math_f64 {
         pub fn frfrexp(x: F64x) -> F64x {
             let x = x
                 .abs()
-                .lt(F64x::splat(f64::MIN))
+                .lt(F64x::splat(f64::MIN_POSITIVE))
                 .select(x * D1_63X, x);
 
             let mut xm = U64x::from_bits(x);
@@ -888,7 +991,7 @@ macro_rules! impl_math_f64 {
         pub fn expfrexp(x: F64x) -> Ix {
             let x = x
                 .abs()
-                .lt(F64x::splat(f64::MIN))
+                .lt(F64x::splat(f64::MIN_POSITIVE))
                 .select(x * D1_63X, x);
 
             let mut ret = Ix::from_cast(U64x::from_bits(x));
@@ -976,7 +1079,7 @@ macro_rules! impl_math_f64 {
             let nu = x.abs();
             let de = y.abs();
             let s = ONE;
-            let o = de.lt(F64x::splat(f64::MIN));
+            let o = de.lt(F64x::splat(f64::MIN_POSITIVE));
             let nu = o.select(nu * D1_54X, nu);
             let de = o.select(de * D1_54X, de);
             let s = o.select(s * (ONE / D1_54X), s);

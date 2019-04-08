@@ -39,7 +39,7 @@ pub fn sqrtf(mut d: f32) -> f32 {
 /// Evaluate sin( π***a*** ) and cos( π***a*** ) for given ***a*** simultaneously
 ///
 /// Evaluates the sine and cosine functions of π***a*** at a time, and store the two values in a tuple.
-/// The error bound of the returned value are `max(0.506 ULP, f32::MIN)` if [-1e+7, 1e+7].
+/// The error bound of the returned value are `max(0.506 ULP, f32::MIN_POSITIVE)` if [-1e+7, 1e+7].
 /// If ***a*** is a finite value out of this range, an arbitrary value within [-1, 1] is returned.
 /// If ***a*** is a NaN or infinity, a NaN is returned.
 pub fn sincospif(d: f32) -> (f32, f32) {
@@ -120,7 +120,7 @@ pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
     let max = super::fmaxfk(x, y);
     let mut d = max;
 
-    if max < f32::MIN {
+    if max < f32::MIN_POSITIVE {
         n *= F1_24;
         d *= F1_24;
     }
@@ -144,7 +144,7 @@ pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
 /// Evaluate sin( π***a*** ) for given ***a***
 ///
 /// This function evaluates the sine function of π***a***.
-/// The error bound of the returned value is `max(0.506 ULP, f32::MIN)`
+/// The error bound of the returned value is `max(0.506 ULP, f32::MIN_POSITIVE)`
 /// if [-1e+7, 1e+7] for the single-precision function.
 /// If ***a*** is a finite value out of this range, an arbitrary value within [-1, 1] is returned.
 /// If ***a*** is a NaN or infinity, a NaN is returned.
@@ -165,7 +165,7 @@ pub fn sinpif(d: f32) -> f32 {
 /// Evaluate cos( π***a*** ) for given ***a***
 ///
 /// This function evaluates the cosine function of π***a***.
-/// The error bound of the returned value is `max(0.506 ULP, f32::MIN)`
+/// The error bound of the returned value is `max(0.506 ULP, f32::MIN_POSITIVE)`
 /// if [-1e+7, 1e+7] for the single-precision function.
 /// If ***a*** is a finite value out of this range, an arbitrary value within [-1, 1] is returned.
 /// If ***a*** is a NaN or infinity, a NaN is returned.

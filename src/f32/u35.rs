@@ -42,7 +42,7 @@ pub fn atan2f(y: f32, x: f32) -> f32 {
 /// These functions return the natural logarithm of ***a***.
 /// The error bound of the returned value is 3.5 ULP.
 pub fn logf(mut d: f32) -> f32 {
-    let o = d < f32::MIN;
+    let o = d < f32::MIN_POSITIVE;
     if o {
         d *= F1_32 * F1_32;
     }
@@ -591,4 +591,86 @@ pub fn cbrtf(mut d: f32) -> f32 {
 
     let y = d * x * x;
     (y - (2. / 3.) * y * (y * x - 1.)) * q
+}
+
+pub fn exp2f(d: f32) -> f32 {
+    let q = rintfk(d);
+
+    let s = d - q;
+
+    let mut u = 0.153_592_089_2_e-3
+        .mul_add(s, 0.133_926_270_1_e-2)
+        .mul_add(s, 0.961_838_476_4_e-2)
+        .mul_add(s, 0.555_034_726_9_e-1)
+        .mul_add(s, 0.240_226_447_6)
+        .mul_add(s, 0.693_147_182_5)
+        .mul_add(s, 0.1_e+1);
+
+    u = ldexp2kf(u, q as i32);
+
+    if d < -150. {
+        0.
+    } else if d >= 128. {
+        f32::INFINITY
+    } else {
+        u
+    }
+}
+
+pub fn exp10f(d: f32) -> f32 {
+    let q = rintfk(d * LOG10_2_F);
+
+    let mut s = q.mul_add(-L10U_F, d);
+    s = q.mul_add(-L10L_F, s);
+
+    let mut u = 0.206_400_498_7
+        .mul_add(s, 0.541_787_743_6)
+        .mul_add(s, 0.117_128_682_1_e+1)
+        .mul_add(s, 0.203_465_604_8_e+1)
+        .mul_add(s, 0.265_094_876_3_e+1)
+        .mul_add(s, 0.230_258_512_5_e+1)
+        .mul_add(s, 0.1_e+1);
+
+    u = ldexp2kf(u, q as i32);
+
+    if d < -50. {
+        0.
+    } else if d > 38.531_839_419_103_623_894_138_7 {
+        f32::INFINITY // log10(FLT_MAX)
+    } else {
+        u
+    }
+}
+
+pub fn log2f(mut d: f32) -> f32 {
+    let o = d < f32::MIN_POSITIVE;
+    if o {
+        d *= F1_32 * F1_32;
+    }
+
+    let mut e = ilogb2kf(d * (1. / 0.75));
+    let m = ldexp3kf(d, -e);
+
+    if o {
+        e -= 64;
+    }
+
+    let x = (m - 1.) / (m + 1.);
+    let x2 = x * x;
+
+    let t = 0.437_408_834_7
+        .mul_add(x2, 0.576_484_382_2)
+        .mul_add(x2, 0.961_802_423);
+
+    let r = (x2 * x).mul_add(t, x.mul_add(0.288_539_004_3_e+1, e as f32));
+
+    if d == 0. {
+        f32::NEG_INFINITY
+    } else if (d < 0.) || d.is_nan() {
+        f32::NAN
+    } else if d.is_infinite() {
+        f32::INFINITY
+    } else {
+        r
+    }
 }

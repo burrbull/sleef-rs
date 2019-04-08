@@ -108,10 +108,14 @@ macro_rules! impl_math_f32_u05 {
         fn test_sqrtf() {
             test_libm_f_f(
                 sqrtf,
-                if cfg!(feature="std") { f32::sqrt } else { libm::sqrtf },
+                if cfg!(feature = "std") {
+                    f32::sqrt
+                } else {
+                    libm::sqrtf
+                },
                 f32::MIN,
                 f32::MAX,
-                0.5
+                0.5,
             );
         }
 
@@ -124,7 +128,7 @@ macro_rules! impl_math_f32_u05 {
             let max = x.max(y);
             let d = max;
 
-            let o = max.lt(F32x::splat(f32::MIN));
+            let o = max.lt(F32x::splat(f32::MIN_POSITIVE));
             let n = o.select(n * F1_24X, n);
             let d = o.select(d * F1_24X, d);
 
@@ -141,10 +145,14 @@ macro_rules! impl_math_f32_u05 {
         fn test_hypotf() {
             test_libm_ff_f(
                 hypotf,
-                if cfg!(feature="std") { f32::hypot } else { libm::hypotf },
+                if cfg!(feature = "std") {
+                    f32::hypot
+                } else {
+                    libm::hypotf
+                },
                 f32::MIN,
                 f32::MAX,
-                0.5
+                0.5,
             );
         }
 

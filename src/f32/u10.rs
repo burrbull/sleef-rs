@@ -287,7 +287,7 @@ fn atan2kf_u1(mut y: Doubled<f32>, mut x: Doubled<f32>) -> Doubled<f32> {
 /// This function evaluates the arc tangent function of (***y*** / ***x***).
 /// The quadrant of the result is determined according to the signs
 /// of ***x*** and ***y***.
-/// The error bound of the returned values is `max(1.0 ULP, f32::MIN)`.
+/// The error bound of the returned values is `max(1.0 ULP, f32::MIN_POSITIVE)`.
 pub fn atan2f(mut y: f32, mut x: f32) -> f32 {
     if fabsfk(x) < 2.938_737_278_354_183_094_7_e-39 {
         y *= F1_24;
@@ -415,7 +415,7 @@ pub fn atanf(d: f32) -> f32 {
 /// This function returns the natural logarithm of ***a***.
 /// The error bound of the returned value is 1.0 ULP.
 pub fn logf(mut d: f32) -> f32 {
-    let o = d < f32::MIN;
+    let o = d < f32::MIN_POSITIVE;
     if o {
         d *= F1_32 * F1_32;
     }
@@ -519,7 +519,7 @@ pub fn tgammaf(a: f32) -> f32 {
         r
     };
     if ((a == f32::INFINITY) || a.is_finite())
-        && (a >= -f32::MIN)
+        && (a >= -f32::MIN_POSITIVE)
         && ((a == 0.) || (a > 36.) || r.is_nan())
     {
         mulsignf(f32::INFINITY, a)
@@ -912,7 +912,7 @@ pub fn expm1f(a: f32) -> f32 {
 /// This function returns the base-10 logarithm of ***a***.
 /// The error bound of the returned value is 1.0 ULP.
 pub fn log10f(mut d: f32) -> f32 {
-    let o = d < f32::MIN;
+    let o = d < f32::MIN_POSITIVE;
     if o {
         d *= F1_32 * F1_32;
     }
@@ -952,7 +952,7 @@ pub fn log10f(mut d: f32) -> f32 {
 /// This function returns the base-2 logarithm of ***a***.
 /// The error bound of the returned value is 1.0 ULP.
 pub fn log2f(mut d: f32) -> f32 {
-    let o = d < f32::MIN;
+    let o = d < f32::MIN_POSITIVE;
     if o {
         d *= F1_32 * F1_32;
     }
@@ -992,7 +992,7 @@ pub fn log2f(mut d: f32) -> f32 {
 pub fn log1pf(d: f32) -> f32 {
     let mut dp1 = d + 1.;
 
-    let o = dp1 < f32::MIN;
+    let o = dp1 < f32::MIN_POSITIVE;
     if o {
         dp1 *= F1_32 * F1_32;
     }

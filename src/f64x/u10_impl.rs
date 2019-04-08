@@ -924,7 +924,7 @@ macro_rules! impl_math_f64_u10 {
             let m: F64x;
             let mut s =
                         /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
-                            let o = d.lt(F64x::splat(f64::MIN));
+                            let o = d.lt(F64x::splat(f64::MIN_POSITIVE));
                             d = o.select(d * (D1_32X * D1_32X), d);
                             let mut e = vilogb2k_vi_vd(d * F64x::splat(1. / 0.75));
                             m = vldexp3_vd_vd_vi(d, -e);
@@ -1283,7 +1283,7 @@ macro_rules! impl_math_f64_u10 {
             let mut s = /*if !cfg!(feature = "enable_avx512f")
                         && !cfg!(feature = "enable_avx512fnofma")*/
                     {
-                        let o = d.lt(F64x::splat(f64::MIN));
+                        let o = d.lt(F64x::splat(f64::MIN_POSITIVE));
                         d = o.select(d * (D1_32X * D1_32X), d);
                         let mut e = vilogb2k_vi_vd(d * F64x::splat(1. / 0.75));
                         m = vldexp3_vd_vd_vi(d, -e);
@@ -1336,7 +1336,7 @@ macro_rules! impl_math_f64_u10 {
             let m: F64x;
             let ef =
             /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
-                let o = d.lt(F64x::splat(f64::MIN));
+                let o = d.lt(F64x::splat(f64::MIN_POSITIVE));
                 d = o.select(d * (D1_32X * D1_32X), d);
                 let mut e = vilogb2k_vi_vd(d * F64x::splat(1. / 0.75));
                 m = vldexp3_vd_vd_vi(d, -e);
@@ -1388,7 +1388,7 @@ macro_rules! impl_math_f64_u10 {
 
             let mut s =
             /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
-                let o = dp1.lt(F64x::splat(f64::MIN));
+                let o = dp1.lt(F64x::splat(f64::MIN_POSITIVE));
                 dp1 = o.select(dp1 * (D1_32X * D1_32X), dp1);
                 let mut e = vilogb2k_vi_vd(dp1 * F64x::splat(1. / 0.75));
                 let t = vldexp3_vd_vd_vi(ONE, -e);
@@ -1436,7 +1436,7 @@ macro_rules! impl_math_f64_u10 {
                 | (a.is_finite() & a.lt(ZERO) & r.is_nan());
             let r = o.select(F64x::NAN, r);
 
-            let o = ((a.eq(F64x::INFINITY) | a.is_finite()) & a.ge(F64x::splat(-f64::MIN)))
+            let o = ((a.eq(F64x::INFINITY) | a.is_finite()) & a.ge(F64x::splat(-f64::MIN_POSITIVE)))
                 & (a.eq(ZERO) | a.gt(F64x::splat(200.)) | r.is_nan());
             o.select(F64x::INFINITY.mul_sign(a), r)
         }

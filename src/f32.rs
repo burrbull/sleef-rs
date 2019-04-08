@@ -44,10 +44,28 @@ pub fn df(h: f32, l: f32) -> Doubled<f32> {
     Doubled::new(h, l)
 }
 
+pub mod fast;
 pub mod u05;
 pub mod u10;
 pub mod u15;
 pub mod u35;
+
+impl BaseType for f32 {
+    type Base = Self;
+}
+
+impl MulAdd for f32 {
+    #[inline]
+    fn mul_add(self, y: Self, z: Self) -> Self {
+        self * y + z
+    }
+}
+
+impl Poly for f32 {
+    fn c2v(c: Self::Base) -> Self {
+        c
+    }
+}
 
 #[inline]
 pub fn xisintf(x: f32) -> bool {
@@ -290,7 +308,7 @@ fn expm1kf(d: f32) -> f32 {
 
 #[inline]
 fn logkf(mut d: f32) -> Doubled<f32> {
-    let o = d < f32::MIN;
+    let o = d < f32::MIN_POSITIVE;
     if o {
         d *= F1_32 * F1_32;
     }
@@ -888,7 +906,7 @@ pub fn nextafterf(x: f32, y: f32) -> f32 {
 
 /// Fractional component of an FP number
 pub fn frfrexpf(mut x: f32) -> f32 {
-    if fabsfk(x) < f32::MIN {
+    if fabsfk(x) < f32::MIN_POSITIVE {
         x *= F1_30;
     }
 
@@ -907,7 +925,7 @@ pub fn frfrexpf(mut x: f32) -> f32 {
 
 /// Exponent of an FP number
 pub fn expfrexpf(mut x: f32) -> i32 {
-    let mut ret = if fabsfk(x) < f32::MIN {
+    let mut ret = if fabsfk(x) < f32::MIN_POSITIVE {
         x *= F1_30;
         -30
     } else {
@@ -927,7 +945,7 @@ pub fn expfrexpf(mut x: f32) -> i32 {
 pub fn fmodf(x: f32, y: f32) -> f32 {
     let mut nu = fabsfk(x);
     let mut de = fabsfk(y);
-    let s = if de < f32::MIN {
+    let s = if de < f32::MIN_POSITIVE {
         nu *= F1_25;
         de *= F1_25;
         1. / F1_25
@@ -967,7 +985,7 @@ pub fn fmodf(x: f32, y: f32) -> f32 {
 ///
 /// This function compute (***x*** × ***y*** + ***z***) without rounding, and then return the rounded value of the result.
 /// This function may return infinity with a correct sign if the absolute value of the correct return value is greater than 1e+33.
-/// The error bounds of the returned value is max(0.500_01 ULP, f32::MIN).
+/// The error bounds of the returned value is max(0.500_01 ULP, f32::MIN_POSITIVE).
 pub fn fmaf(mut x: f32, mut y: f32, mut z: f32) -> f32 {
     const C0: f32 = F1_25;
     const C1: f32 = C0 * C0;
@@ -1006,3 +1024,53 @@ pub fn xsqrtf(d: f32) -> f32 {
     SQRTF(d)
 }
 */
+
+#[inline]
+fn logk3f(mut d: f32) -> f32 {
+    let o = d < f32::MIN_POSITIVE;
+    if o {
+        d *= F1_32 * F1_32;
+    }
+
+    let mut e = ilogb2kf(d * (1. / 0.75));
+    let m = ldexp3kf(d, -e);
+
+    if o {
+        e -= 64;
+    }
+
+    let x = (m - 1.) / (m + 1.);
+    let x2 = x * x;
+
+    let t = 0.239_282_846_450_805_664_062_5
+        .mul_add(x2, 0.285_182_118_415_832_519_531_25)
+        .mul_add(x2, 0.400_005_877_017_974_853_515_625)
+        .mul_add(x2, 0.666_666_686_534_881_591_796_875)
+        .mul_add(x2, 2.);
+
+    x.mul_add(t, 0.693_147_180_559_945_286_226_764 * (e as f32))
+}
+
+#[inline]
+fn expk3f(d: f32) -> f32 {
+    let q = rintfk(d * R_LN2_F);
+
+    let mut s = q.mul_add(-L2U_F, d);
+    s = q.mul_add(-L2L_F, s);
+
+    let mut u = 0.000_198_527_617_612_853_646_278_381
+        .mul_add(s, 0.001_393_043_552_525_341_510_772_71)
+        .mul_add(s, 0.008_333_360_776_305_198_669_433_59)
+        .mul_add(s, 0.041_666_485_369_205_474_853_515_6)
+        .mul_add(s, 0.166_666_671_633_720_397_949_219)
+        .mul_add(s, 0.5);
+
+    u = (s * s).mul_add(u, s + 1.);
+    u = ldexpkf(u, q as i32);
+
+    if d < -104. {
+        0.
+    } else {
+        u
+    }
+}

@@ -35,16 +35,13 @@ macro_rules! impl_math_f32_u35 {
                 dfidf = o.select_doubled(x, dfidf);
                 d = dfidf.0 + dfidf.1;
 
-                d = F32x::from_bits(
-                    U32x::from_bits(r.is_infinite() | r.is_nan()) | U32x::from_bits(d),
-                );
+                d = F32x::from_bits(U32x::from_bits(r.is_infinite() | r.is_nan()) | U32x::from_bits(d));
             }
 
             let s = d * d;
 
             d = F32x::from_bits(
-                (U32x::from_bits((q & I32x::splat(1)).eq(I32x::splat(1)))
-                    & U32x::from_bits(NEG_ZERO))
+                (U32x::from_bits((q & I32x::splat(1)).eq(I32x::splat(1))) & U32x::from_bits(NEG_ZERO))
                     ^ U32x::from_bits(d),
             );
 
@@ -93,9 +90,7 @@ macro_rules! impl_math_f32_u35 {
                     dfidf = o.select_doubled(x, dfidf);
                     u = dfidf.0 + dfidf.1;
 
-                    u = F32x::from_bits(
-                        U32x::from_bits(r.is_infinite() | r.is_nan()) | U32x::from_bits(u),
-                    );
+                    u = F32x::from_bits(U32x::from_bits(r.is_infinite() | r.is_nan()) | U32x::from_bits(u));
 
                     q = g.select(q, q2);
                     d = g.select(d, u);
@@ -105,8 +100,7 @@ macro_rules! impl_math_f32_u35 {
             let s = d * d;
 
             d = F32x::from_bits(
-                (U32x::from_bits((q & I32x::splat(1)).eq(I32x::splat(1)))
-                    & U32x::from_bits(NEG_ZERO))
+                (U32x::from_bits((q & I32x::splat(1)).eq(I32x::splat(1))) & U32x::from_bits(NEG_ZERO))
                     ^ U32x::from_bits(d),
             );
 
@@ -124,10 +118,14 @@ macro_rules! impl_math_f32_u35 {
         fn test_sinf() {
             test_libm_f_f(
                 sinf,
-                if cfg!(feature="std") { f32::sin } else { libm::sinf },
+                if cfg!(feature = "std") {
+                    f32::sin
+                } else {
+                    libm::sinf
+                },
                 f32::MIN,
                 f32::MAX,
-                3.5
+                3.5,
             );
         }
 
@@ -168,16 +166,13 @@ macro_rules! impl_math_f32_u35 {
                 dfidf = o.select_doubled(x, dfidf);
                 d = dfidf.0 + dfidf.1;
 
-                d = F32x::from_bits(
-                    U32x::from_bits(r.is_infinite() | r.is_nan()) | U32x::from_bits(d),
-                );
+                d = F32x::from_bits(U32x::from_bits(r.is_infinite() | r.is_nan()) | U32x::from_bits(d));
             }
 
             let s = d * d;
 
             d = F32x::from_bits(
-                (U32x::from_bits((q & I32x::splat(2)).eq(I32x::splat(0)))
-                    & U32x::from_bits(NEG_ZERO))
+                (U32x::from_bits((q & I32x::splat(2)).eq(I32x::splat(0))) & U32x::from_bits(NEG_ZERO))
                     ^ U32x::from_bits(d),
             );
 
@@ -226,9 +221,7 @@ macro_rules! impl_math_f32_u35 {
                     dfidf = o.select_doubled(x, dfidf);
                     u = dfidf.0 + dfidf.1;
 
-                    u = F32x::from_bits(
-                        U32x::from_bits(r.is_infinite() | r.is_nan()) | U32x::from_bits(u),
-                    );
+                    u = F32x::from_bits(U32x::from_bits(r.is_infinite() | r.is_nan()) | U32x::from_bits(u));
 
                     q = g.select(q, q2);
                     d = g.select(d, u);
@@ -238,8 +231,7 @@ macro_rules! impl_math_f32_u35 {
             let s = d * d;
 
             d = F32x::from_bits(
-                (U32x::from_bits((q & I32x::splat(2)).eq(I32x::splat(0)))
-                    & U32x::from_bits(NEG_ZERO))
+                (U32x::from_bits((q & I32x::splat(2)).eq(I32x::splat(0))) & U32x::from_bits(NEG_ZERO))
                     ^ U32x::from_bits(d),
             );
 
@@ -255,10 +247,14 @@ macro_rules! impl_math_f32_u35 {
         fn test_cosf() {
             test_libm_f_f(
                 cosf,
-                if cfg!(feature="std") { f32::cos } else { libm::cosf },
+                if cfg!(feature = "std") {
+                    f32::cos
+                } else {
+                    libm::cosf
+                },
                 f32::MIN,
                 f32::MAX,
-                3.5
+                3.5,
             );
         }
 
@@ -285,18 +281,14 @@ macro_rules! impl_math_f32_u35 {
                 let (dfidf, dfii) = rempif(d);
                 q = dfii;
                 x = dfidf.0 + dfidf.1;
-                x = F32x::from_bits(
-                    U32x::from_bits(d.is_infinite() | d.is_nan()) | U32x::from_bits(x),
-                );
+                x = F32x::from_bits(U32x::from_bits(d.is_infinite() | d.is_nan()) | U32x::from_bits(x));
                 x = d.is_neg_zero().select(d, x);
             }
 
             let s = x * x;
 
             let o = (q & I32x::splat(1)).eq(I32x::splat(1));
-            x = F32x::from_bits(
-                (U32x::from_bits(o) & U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(x),
-            );
+            x = F32x::from_bits((U32x::from_bits(o) & U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(x));
 
             let mut u = F32x::splat(0.009_272_458_031_773_567_199_707_03)
                 .mul_add(s, F32x::splat(0.003_319_849_958_643_317_222_595_21))
@@ -334,9 +326,7 @@ macro_rules! impl_math_f32_u35 {
                 if !g.all() {
                     let (dfidf, dfii) = rempif(d);
                     u = dfidf.0 + dfidf.1;
-                    u = F32x::from_bits(
-                        U32x::from_bits(d.is_infinite() | d.is_nan()) | U32x::from_bits(u),
-                    );
+                    u = F32x::from_bits(U32x::from_bits(d.is_infinite() | d.is_nan()) | U32x::from_bits(u));
                     u = d.is_neg_zero().select(d, u);
                     q = g.select(q, dfii);
                     x = g.select(x, u);
@@ -346,9 +336,7 @@ macro_rules! impl_math_f32_u35 {
             let s = x * x;
 
             let o = (q & I32x::splat(1)).eq(I32x::splat(1));
-            x = F32x::from_bits(
-                (U32x::from_bits(o) & U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(x),
-            );
+            x = F32x::from_bits((U32x::from_bits(o) & U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(x));
 
             let mut u = F32x::splat(0.009_272_458_031_773_567_199_707_03)
                 .mul_add(s, F32x::splat(0.003_319_849_958_643_317_222_595_21))
@@ -366,10 +354,14 @@ macro_rules! impl_math_f32_u35 {
         fn test_tanf() {
             test_libm_f_f(
                 tanf,
-                if cfg!(feature="std") { f32::tan } else { libm::tanf },
+                if cfg!(feature = "std") {
+                    f32::tan
+                } else {
+                    libm::tanf
+                },
                 f32::MIN,
                 f32::MAX,
-                3.5
+                3.5,
             );
         }
 
@@ -395,9 +387,7 @@ macro_rules! impl_math_f32_u35 {
                 let (dfidf, dfii) = rempif(d);
                 q = dfii;
                 s = dfidf.0 + dfidf.1;
-                s = F32x::from_bits(
-                    U32x::from_bits(d.is_infinite() | d.is_nan()) | U32x::from_bits(s),
-                );
+                s = F32x::from_bits(U32x::from_bits(d.is_infinite() | d.is_nan()) | U32x::from_bits(s));
             }
 
             let t = s;
@@ -424,14 +414,12 @@ macro_rules! impl_math_f32_u35 {
             let mut rcos = o.select(ry, rx);
 
             let o = (q & I32x::splat(2)).eq(I32x::splat(2));
-            rsin = F32x::from_bits(
-                (U32x::from_bits(o) & U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(rsin),
-            );
+            rsin =
+                F32x::from_bits((U32x::from_bits(o) & U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(rsin));
 
             let o = ((q + I32x::splat(1)) & I32x::splat(2)).eq(I32x::splat(2));
-            rcos = F32x::from_bits(
-                (U32x::from_bits(o) & U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(rcos),
-            );
+            rcos =
+                F32x::from_bits((U32x::from_bits(o) & U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(rcos));
 
             (rsin, rcos)
         }
@@ -460,9 +448,7 @@ macro_rules! impl_math_f32_u35 {
                 if !g.all() {
                     let (dfidf, dfii) = rempif(d);
                     let mut t = dfidf.0 + dfidf.1;
-                    t = F32x::from_bits(
-                        U32x::from_bits(d.is_infinite() | d.is_nan()) | U32x::from_bits(t),
-                    );
+                    t = F32x::from_bits(U32x::from_bits(d.is_infinite() | d.is_nan()) | U32x::from_bits(t));
 
                     q = g.select(q, dfii);
                     s = g.select(s, t);
@@ -493,14 +479,12 @@ macro_rules! impl_math_f32_u35 {
             let mut rcos = o.select(ry, rx);
 
             let o = (q & I32x::splat(2)).eq(I32x::splat(2));
-            rsin = F32x::from_bits(
-                (U32x::from_bits(o) & U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(rsin),
-            );
+            rsin =
+                F32x::from_bits((U32x::from_bits(o) & U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(rsin));
 
             let o = ((q + I32x::splat(1)) & I32x::splat(2)).eq(I32x::splat(2));
-            rcos = F32x::from_bits(
-                (U32x::from_bits(o) & U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(rcos),
-            );
+            rcos =
+                F32x::from_bits((U32x::from_bits(o) & U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(rcos));
 
             (rsin, rcos)
         }
@@ -509,10 +493,14 @@ macro_rules! impl_math_f32_u35 {
         fn test_sincosf() {
             test_libm_f_ff(
                 sincosf,
-                if cfg!(feature="std") { f32::sin_cos } else { libm::sincosf },
+                if cfg!(feature = "std") {
+                    f32::sin_cos
+                } else {
+                    libm::sincosf
+                },
                 f32::MIN,
                 f32::MAX,
-                3.5
+                3.5,
             );
         }
 
@@ -520,8 +508,7 @@ macro_rules! impl_math_f32_u35 {
         pub fn sincospif(d: F32x) -> (F32x, F32x) {
             let u = d * F32x::splat(4.);
             let q = u.trunci();
-            let q = (q + (I32x::from_bits(U32x::from_bits(q) >> 31) ^ I32x::splat(1)))
-                & I32x::splat(!1);
+            let q = (q + (I32x::from_bits(U32x::from_bits(q) >> 31) ^ I32x::splat(1))) & I32x::splat(!1);
             let s = u - F32x::from_cast(q);
 
             let t = s;
@@ -553,14 +540,12 @@ macro_rules! impl_math_f32_u35 {
             let mut rcos = o.select(ry, rx);
 
             let o = (q & I32x::splat(4)).eq(I32x::splat(4));
-            rsin = F32x::from_bits(
-                (U32x::from_bits(o) & U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(rsin),
-            );
+            rsin =
+                F32x::from_bits((U32x::from_bits(o) & U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(rsin));
 
             let o = ((q + I32x::splat(2)) & I32x::splat(4)).eq(I32x::splat(4));
-            rcos = F32x::from_bits(
-                (U32x::from_bits(o) & U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(rcos),
-            );
+            rcos =
+                F32x::from_bits((U32x::from_bits(o) & U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(rcos));
 
             let o = d.abs().gt(F32x::splat(1e+7));
             rsin = F32x::from_bits(!U32x::from_bits(o) & U32x::from_bits(rsin));
@@ -599,8 +584,7 @@ macro_rules! impl_math_f32_u35 {
                 .select(F32x::FRAC_PI_2 - t, t);
 
             t = F32x::from_bits(
-                (U32x::from_bits((q & I32x::splat(2)).eq(I32x::splat(2)))
-                    & U32x::from_bits(NEG_ZERO))
+                (U32x::from_bits((q & I32x::splat(2)).eq(I32x::splat(2))) & U32x::from_bits(NEG_ZERO))
                     ^ U32x::from_bits(t),
             );
 
@@ -618,10 +602,14 @@ macro_rules! impl_math_f32_u35 {
         fn test_atanf() {
             test_libm_f_f(
                 atanf,
-                if cfg!(feature="std") { f32::atan } else { libm::atanf },
+                if cfg!(feature = "std") {
+                    f32::atan
+                } else {
+                    libm::atanf
+                },
                 f32::MIN,
                 f32::MAX,
-                3.5
+                3.5,
             );
         }
 
@@ -644,9 +632,7 @@ macro_rules! impl_math_f32_u35 {
                 r,
             );
 
-            F32x::from_bits(
-                U32x::from_bits(x.is_nan() | y.is_nan()) | U32x::from_bits(r.mul_sign(y)),
-            )
+            F32x::from_bits(U32x::from_bits(x.is_nan() | y.is_nan()) | U32x::from_bits(r.mul_sign(y)))
         }
 
         #[cfg(not(feature = "deterministic"))]
@@ -664,6 +650,21 @@ macro_rules! impl_math_f32_u35 {
 
             let r = o.select(u, u.mul_add(F32x::splat(-2.), F32x::FRAC_PI_2));
             r.mul_sign(d)
+        }
+
+        #[test]
+        fn test_asinf() {
+            test_libm_f_f(
+                asinf,
+                if cfg!(feature = "std") {
+                    f32::asin
+                } else {
+                    libm::asinf
+                },
+                f32::MIN,
+                f32::MAX,
+                3.5,
+            );
         }
 
         #[cfg(not(feature = "deterministic"))]
@@ -694,13 +695,28 @@ macro_rules! impl_math_f32_u35 {
             )
         }
 
+        #[test]
+        fn test_acosf() {
+            test_libm_f_f(
+                acosf,
+                if cfg!(feature = "std") {
+                    f32::acos
+                } else {
+                    libm::acosf
+                },
+                f32::MIN,
+                f32::MAX,
+                3.5,
+            );
+        }
+
         #[cfg(not(feature = "deterministic"))]
         pub fn logf(mut d: F32x) -> F32x {
             let m: F32x;
 
             let ef = /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/
             {
-                let o = d.lt(F32x::splat(f32::MIN));
+                let o = d.lt(F32x::splat(f32::MIN_POSITIVE));
                 d = o.select(d * (F1_32X * F1_32X), d);
                 let mut e = vilogb2k_vi2_vf(d * F32x::splat(1. / 0.75));
                 m = vldexp3_vf_vf_vi2(d, -e);
@@ -713,7 +729,7 @@ macro_rules! impl_math_f32_u35 {
                 e
             }*/;
 
-            let mut x = (F32x::splat(-1.) + m) / (ONE + m);
+            let mut x = (m - ONE) / (ONE + m);
             let x2 = x * x;
 
             let t = F32x::splat(0.239_282_846_450_805_664_062_5)
@@ -730,6 +746,21 @@ macro_rules! impl_math_f32_u35 {
             /*} else {
                 vfixup_vf_vf_vf_vi2_i(x, d, I32x::splat(5 << (5 * 4)), 0)
             }*/
+        }
+
+        #[test]
+        fn test_logf() {
+            test_libm_f_f(
+                logf,
+                if cfg!(feature = "std") {
+                    f32::ln
+                } else {
+                    libm::logf
+                },
+                0.,
+                f32::MAX,
+                3.5,
+            );
         }
 
         /*#[cfg(any(feature = "enable_neon32", feature = "enable_neon32vfpv4"))]
@@ -765,12 +796,27 @@ macro_rules! impl_math_f32_u35 {
             d.eq(F32x::INFINITY).select(F32x::INFINITY, q)
         }*/
         #[cfg(all(
-            not(feature = "enable_neon32"),
-            not(feature = "enable_neon32vfpv4"),
-        //    not(feature = "enable_vecext")
-        ))]
+                    not(feature = "enable_neon32"),
+                    not(feature = "enable_neon32vfpv4"),
+                //    not(feature = "enable_vecext")
+                ))]
         pub fn sqrtf(d: F32x) -> F32x {
             d.sqrt()
+        }
+
+        #[test]
+        fn test_sqrtf() {
+            test_libm_f_f(
+                sqrtf,
+                if cfg!(feature = "std") {
+                    f32::sqrt
+                } else {
+                    libm::sqrtf
+                },
+                0.,
+                f32::MAX,
+                3.5,
+            );
         }
 
         #[cfg(not(feature = "deterministic"))]
@@ -818,6 +864,21 @@ macro_rules! impl_math_f32_u35 {
             y
         }
 
+        #[test]
+        fn test_cbrtf() {
+            test_libm_f_f(
+                cbrtf,
+                if cfg!(feature = "std") {
+                    f32::cbrt
+                } else {
+                    libm::cbrtf
+                },
+                f32::MIN,
+                f32::MAX,
+                3.5,
+            );
+        }
+
         #[cfg(not(feature = "deterministic"))]
         pub fn sinhf(x: F32x) -> F32x {
             let e = expm1fk(x.abs());
@@ -829,6 +890,21 @@ macro_rules! impl_math_f32_u35 {
             F32x::from_bits(U32x::from_bits(x.is_nan()) | U32x::from_bits(y))
         }
 
+        #[test]
+        fn test_sinhf() {
+            test_libm_f_f(
+                sinhf,
+                if cfg!(feature = "std") {
+                    f32::sinh
+                } else {
+                    libm::sinhf
+                },
+                f32::MIN,
+                f32::MAX,
+                3.5,
+            );
+        }
+
         #[cfg(not(feature = "deterministic"))]
         pub fn coshf(x: F32x) -> F32x {
             let e = u10::expf(x.abs());
@@ -836,6 +912,21 @@ macro_rules! impl_math_f32_u35 {
 
             y = (x.abs().gt(F32x::splat(88.)) | y.is_nan()).select(F32x::INFINITY, y);
             F32x::from_bits(U32x::from_bits(x.is_nan()) | U32x::from_bits(y))
+        }
+
+        #[test]
+        fn test_coshf() {
+            test_libm_f_f(
+                coshf,
+                if cfg!(feature = "std") {
+                    f32::cosh
+                } else {
+                    libm::coshf
+                },
+                f32::MIN,
+                f32::MAX,
+                3.5,
+            );
         }
 
         #[cfg(not(feature = "deterministic"))]
@@ -846,6 +937,21 @@ macro_rules! impl_math_f32_u35 {
             y = (x.abs().gt(F32x::splat(8.664_339_742)) | y.is_nan()).select(ONE, y);
             y = y.mul_sign(x);
             F32x::from_bits(U32x::from_bits(x.is_nan()) | U32x::from_bits(y))
+        }
+
+        #[test]
+        fn test_tanhf() {
+            test_libm_f_f(
+                tanhf,
+                if cfg!(feature = "std") {
+                    f32::tanh
+                } else {
+                    libm::tanhf
+                },
+                f32::MIN,
+                f32::MAX,
+                3.5,
+            );
         }
 
         #[cfg(not(feature = "deterministic"))]
@@ -860,6 +966,100 @@ macro_rules! impl_math_f32_u35 {
             ret = min.eq(ZERO).select(max, ret);
             ret = (x.is_nan() | y.is_nan()).select(F32x::NAN, ret);
             (x.eq(F32x::INFINITY) | y.eq(F32x::INFINITY)).select(F32x::INFINITY, ret)
+        }
+
+        #[test]
+        fn test_hypotf() {
+            test_libm_ff_f(
+                hypotf,
+                if cfg!(feature = "std") {
+                    f32::hypot
+                } else {
+                    libm::hypotf
+                },
+                f32::MIN,
+                f32::MAX,
+                3.5,
+            );
+        }
+
+        pub fn exp2f(d: F32x) -> F32x {
+            let mut u = d.round();
+            let q = u.roundi();
+
+            let s = d - u;
+
+            u = F32x::splat(0.153_592_089_2_e-3)
+                .mul_add(s, F32x::splat(0.133_926_270_1_e-2))
+                .mul_add(s, F32x::splat(0.961_838_476_4_e-2))
+                .mul_add(s, F32x::splat(0.555_034_726_9_e-1))
+                .mul_add(s, F32x::splat(0.240_226_447_6))
+                .mul_add(s, F32x::splat(0.693_147_182_5))
+                .mul_add(s, F32x::splat(0.1_e+1));
+
+            u = vldexp2_vf_vf_vi2(u, q);
+
+            u = d.ge(F32x::splat(128.)).select(F32x::INFINITY, u);
+            F32x::from_bits(!U32x::from_bits(d.lt(F32x::splat(-150.))) & U32x::from_bits(u))
+        }
+
+        pub fn exp10f(d: F32x) -> F32x {
+            let mut u = (d * LOG10_2_F).round();
+            let q = u.roundi();
+
+            let mut s = u.mul_add(-L10U_F, d);
+            s = u.mul_add(-L10L_F, s);
+
+            u = F32x::splat(0.206_400_498_7)
+                .mul_add(s, F32x::splat(0.541_787_743_6))
+                .mul_add(s, F32x::splat(0.117_128_682_1_e+1))
+                .mul_add(s, F32x::splat(0.203_465_604_8_e+1))
+                .mul_add(s, F32x::splat(0.265_094_876_3_e+1))
+                .mul_add(s, F32x::splat(0.230_258_512_5_e+1))
+                .mul_add(s, F32x::splat(0.1_e+1));
+
+            u = vldexp2_vf_vf_vi2(u, q);
+
+            u = d
+                .gt(F32x::splat(38.531_839_419_103_623_894_138_7))
+                .select(F32x::INFINITY, u);
+            F32x::from_bits(!U32x::from_bits(d.lt(F32x::splat(-50.))) & U32x::from_bits(u))
+        }
+
+        pub fn log2f(mut d: F32x) -> F32x {
+            let (m, e) = //if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")
+            {
+                let o = d.lt(F32x::splat(f32::MIN_POSITIVE));
+                d = o.select(d * (F1_32X * F1_32X), d);
+                let e = vilogb2k_vi2_vf(d * F32x::splat(1./0.75));
+                (vldexp3_vf_vf_vi2(d, -e), o.select(e - I32x::splat(64), e))
+            /*} else {
+                let e = vgetexp_vf_vf(d * F32x::splat(1./0.75));
+                (vgetmant_vf_vf(d), e.eq(F32x::INFINITY).select(F32x::splat(128.), e))
+            */};
+
+            let x = (m - ONE) / (m + ONE);
+            let x2 = x * x;
+
+            let t = F32x::splat(0.437_455_028_3)
+                .mul_add(x2, F32x::splat(0.576_479_017_7))
+                .mul_add(x2, F32x::splat(0.961_801_290_512));
+
+            let r = //if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")
+            {
+                let mut r = (x2 * x).mul_add(t, x.mul_add(F32x::splat(2.885_390_043_258_666_992_2), F32x::from_cast(e)));
+
+                r = d.eq(F32x::INFINITY).select(F32x::INFINITY, r);
+                r = (d.lt(ZERO) | d.is_nan()).select(F32x::NAN, r);
+                d.eq(ZERO).select(F32x::NEG_INFINITY, r)
+            /*} else {
+                let r = (x2 * x).mul_add(t, x.mul_add(F32x::splat(2.885_390_043_258_666_992_2), e));
+
+                vfixup_vf_vf_vf_vi2_i(r, d, vcast_vi2_i((4 << (2*4)) | (3 << (4*4)) | (5 << (5*4)) | (2 << (6*4))), 0)
+            */
+            };
+
+            r
         }
 
     };

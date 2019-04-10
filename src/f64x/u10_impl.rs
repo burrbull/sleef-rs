@@ -151,6 +151,17 @@ macro_rules! impl_math_f64_u10 {
             d.eq(ZERO).select(d, u)
         }
 
+        #[test]
+        fn test_sin() {
+            test_libm_f_f(
+                sin,
+                if cfg!(feature="std") { f64::sin } else { libm::sin },
+                f64::MIN,
+                f64::MAX,
+                1.
+            );
+        }
+
         #[cfg(not(feature = "deterministic"))]
         pub fn cos(d: F64x) -> F64x {
             let mut s;
@@ -301,6 +312,17 @@ macro_rules! impl_math_f64_u10 {
                     & U64x::from_bits(NEG_ZERO))
                     ^ U64x::from_bits(u),
             )
+        }
+
+        #[test]
+        fn test_cos() {
+            test_libm_f_f(
+                cos,
+                if cfg!(feature="std") { f64::cos } else { libm::cos },
+                f64::MIN,
+                f64::MAX,
+                1.
+            );
         }
 
         #[cfg(not(feature = "deterministic"))]
@@ -462,6 +484,17 @@ macro_rules! impl_math_f64_u10 {
             (rsin, rcos)
         }
 
+        #[test]
+        fn test_sincos() {
+            test_libm_f_ff(
+                sincos,
+                if cfg!(feature="std") { f64::sin_cos } else { libm::sincos },
+                f64::MIN,
+                f64::MAX,
+                1.
+            );
+        }
+
         #[cfg(not(feature = "deterministic"))]
         pub fn tan(d: F64x) -> F64x {
             let mut s;
@@ -593,6 +626,17 @@ macro_rules! impl_math_f64_u10 {
             d.eq(ZERO).select(d, u)
         }
 
+        #[test]
+        fn test_tan() {
+            test_libm_f_f(
+                tan,
+                if cfg!(feature="std") { f64::tan } else { libm::tan },
+                f64::MIN,
+                f64::MAX,
+                1.
+            );
+        }
+
         #[inline]
         fn atan2k_u1(y: Doubled<F64x>, mut x: Doubled<F64x>) -> Doubled<F64x> {
             let q = vsel_vi_vd_vi(x.0, Ix::splat(-2));
@@ -670,6 +714,17 @@ macro_rules! impl_math_f64_u10 {
             F64x::from_bits(U64x::from_bits(x.is_nan() | y.is_nan()) | U64x::from_bits(r.mul_sign(y)))
         }
 
+        #[test]
+        fn test_atan2() {
+            test_libm_ff_f(
+                atan2,
+                if cfg!(feature="std") { f64::atan2 } else { libm::atan2 },
+                f64::MIN,
+                f64::MAX,
+                1.
+            );
+        }
+
         pub fn asin(d: F64x) -> F64x {
             let o = d.abs().lt(HALF);
             let x2 = o.select(d * d, (ONE - d.abs()) * HALF);
@@ -705,6 +760,17 @@ macro_rules! impl_math_f64_u10 {
 
             let r = o.select(u + x.0, (y.0 + y.1) * F64x::splat(2.));
             r.mul_sign(d)
+        }
+
+        #[test]
+        fn test_asin() {
+            test_libm_f_f(
+                asin,
+                if cfg!(feature="std") { f64::asin } else { libm::asin },
+                -1.,
+                1.,
+                1.
+            );
         }
 
         pub fn acos(d: F64x) -> F64x {
@@ -750,6 +816,17 @@ macro_rules! impl_math_f64_u10 {
             y.0 + y.1
         }
 
+        #[test]
+        fn test_acos() {
+            test_libm_f_f(
+                acos,
+                if cfg!(feature="std") { f64::acos } else { libm::acos },
+                -1.,
+                1.,
+                1.
+            );
+        }
+
         pub fn atan(d: F64x) -> F64x {
             let d2 = atan2k_u1(Doubled::new(d.abs(), ZERO), Doubled::from((1., 0.)));
             let mut r = d2.0 + d2.1;
@@ -757,6 +834,17 @@ macro_rules! impl_math_f64_u10 {
                 .is_infinite()
                 .select(F64x::splat(1.570_796_326_794_896_557_998_982), r);
             r.mul_sign(d)
+        }
+
+        #[test]
+        fn test_atan() {
+            test_libm_f_f(
+                atan,
+                if cfg!(feature="std") { f64::atan } else { libm::atan },
+                f64::MIN,
+                f64::MAX,
+                1.
+            );
         }
 
         pub fn exp(d: F64x) -> F64x {
@@ -833,24 +921,38 @@ macro_rules! impl_math_f64_u10 {
             F64x::from_bits(!U64x::from_bits(d.lt(F64x::splat(-1000.))) & U64x::from_bits(u))
         }
 
+        #[test]
+        fn test_exp() {
+            test_libm_f_f(
+                exp,
+                if cfg!(feature="std") { f64::exp } else { libm::exp },
+                -1000.,
+                710.,
+                1.
+            );
+        }
+
         #[cfg(not(feature = "deterministic"))]
         pub fn log(mut d: F64x) -> F64x {
             let m: F64x;
             let mut s =
-                        /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
-                            let o = d.lt(F64x::splat(f64::MIN_POSITIVE));
-                            d = o.select(d * (D1_32X * D1_32X), d);
-                            let mut e = vilogb2k_vi_vd(d * F64x::splat(1. / 0.75));
-                            m = vldexp3_vd_vd_vi(d, -e);
-                            e = Mx::from_cast(o).select(e - Ix::splat(64), e);
-                            Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17))
-                                * F64x::from_cast(e)
-                        }/* else {
-                            let mut e = vgetexp_vd_vd(d * F64x::splat(1. / 0.75));
-                            e = e.eq(F64x::INFINITY).select(F64x::splat(1024.), e);
-                            m = vgetmant_vd_vd(d);
-                            Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17)) * e
-                        }*/;
+                /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
+                    let o = d.lt(F64x::splat(f64::MIN_POSITIVE));
+                    d = o.select(d * (D1_32X * D1_32X), d);
+dbg!(d);
+                    let mut e = vilogb2k_vi_vd(d * F64x::splat(1. / 0.75));
+dbg!(e);
+                    m = vldexp3_vd_vd_vi(d, -e);
+dbg!(m);
+                    e = Mx::from_cast(o).select(e - Ix::splat(64), e);
+                    Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17))
+                        * F64x::from_cast(e)
+                }/* else {
+                    let mut e = vgetexp_vd_vd(d * F64x::splat(1. / 0.75));
+                    e = e.eq(F64x::INFINITY).select(F64x::splat(1024.), e);
+                    m = vgetmant_vd_vd(d);
+                    Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17)) * e
+                }*/;
 
             let x = F64x::splat(-1.).add_as_doubled(m) / ONE.add_as_doubled(m);
             let x2 = x.0 * x.0;
@@ -880,6 +982,17 @@ macro_rules! impl_math_f64_u10 {
                     0,
                 )
             }*/
+        }
+
+        #[test]
+        fn test_log() {
+            test_libm_f_f(
+                log,
+                if cfg!(feature="std") { f64::ln } else { libm::log },
+                0.,
+                f64::MAX,
+                1.
+            );
         }
 
         #[cfg(not(feature = "deterministic"))]
@@ -927,6 +1040,17 @@ macro_rules! impl_math_f64_u10 {
             }
         }
 
+        #[test]
+        fn test_pow() {
+            test_libm_ff_f(
+                pow,
+                if cfg!(feature="std") { f64::powf } else { libm::pow },
+                f64::MIN,
+                f64::MAX,
+                1.
+            );
+        }
+
         #[cfg(not(feature = "deterministic"))]
         pub fn sinh(x: F64x) -> F64x {
             let mut y = x.abs();
@@ -937,6 +1061,17 @@ macro_rules! impl_math_f64_u10 {
             y = (x.abs().gt(F64x::splat(710.)) | y.is_nan()).select(F64x::INFINITY, y);
             y = y.mul_sign(x);
             F64x::from_bits(U64x::from_bits(x.is_nan()) | U64x::from_bits(y))
+        }
+
+        #[test]
+        fn test_sinh() {
+            test_libm_f_f(
+                sinh,
+                if cfg!(feature="std") { f64::sinh } else { libm::sinh },
+                -710.,
+                710.,
+                1.
+            );
         }
 
         #[cfg(not(feature = "deterministic"))]
@@ -950,6 +1085,17 @@ macro_rules! impl_math_f64_u10 {
             F64x::from_bits(U64x::from_bits(x.is_nan()) | U64x::from_bits(y))
         }
 
+        #[test]
+        fn test_cosh() {
+            test_libm_f_f(
+                cosh,
+                if cfg!(feature="std") { f64::cosh } else { libm::cosh },
+                -710.,
+                710.,
+                1.
+            );
+        }
+
         #[cfg(not(feature = "deterministic"))]
         pub fn tanh(x: F64x) -> F64x {
             let mut y = x.abs();
@@ -961,6 +1107,17 @@ macro_rules! impl_math_f64_u10 {
             y = (x.abs().gt(F64x::splat(18.714_973_875)) | y.is_nan()).select(ONE, y);
             y = y.mul_sign(x);
             F64x::from_bits(U64x::from_bits(x.is_nan()) | U64x::from_bits(y))
+        }
+
+        #[test]
+        fn test_tanh() {
+            test_libm_f_f(
+                tanh,
+                if cfg!(feature="std") { f64::tanh } else { libm::tanh },
+                -19.,
+                19.,
+                1.
+            );
         }
 
         #[cfg(not(feature = "deterministic"))]
@@ -981,6 +1138,17 @@ macro_rules! impl_math_f64_u10 {
             x.is_neg_zero().select(NEG_ZERO, y)
         }
 
+        #[test]
+        fn test_asinh() {
+            test_libm_f_f(
+                asinh,
+                if cfg!(feature="std") { f64::asinh } else { libm::asinh },
+                -1.35_e+154,
+                1.35_e+154,
+                1.
+            );
+        }
+
         #[cfg(not(feature = "deterministic"))]
         pub fn acosh(x: F64x) -> F64x {
             let d = logk2(x.add_as_doubled(ONE).sqrt() * x.add_as_doubled(F64x::splat(-1.)).sqrt() + x);
@@ -991,6 +1159,17 @@ macro_rules! impl_math_f64_u10 {
 
             y = F64x::from_bits(U64x::from_bits(x.lt(ONE)) | U64x::from_bits(y));
             F64x::from_bits(U64x::from_bits(x.is_nan()) | U64x::from_bits(y))
+        }
+
+        #[test]
+        fn test_acosh() {
+            test_libm_f_f(
+                acosh,
+                if cfg!(feature="std") { f64::acosh } else { libm::acosh },
+                -1.35_e+154,
+                1.35_e+154,
+                1.
+            );
         }
 
         #[cfg(not(feature = "deterministic"))]
@@ -1005,6 +1184,17 @@ macro_rules! impl_math_f64_u10 {
             y = y.mul_sign(x);
             y = F64x::from_bits(U64x::from_bits(x.is_infinite() | y.is_nan()) | U64x::from_bits(y));
             F64x::from_bits(U64x::from_bits(x.is_nan()) | U64x::from_bits(y))
+        }
+
+        #[test]
+        fn test_atanh() {
+            test_libm_f_f(
+                atanh,
+                if cfg!(feature="std") { f64::atanh } else { libm::atanh },
+                f64::MIN,
+                f64::MAX,
+                1.
+            );
         }
 
         #[cfg(not(feature = "deterministic"))]
@@ -1075,6 +1265,17 @@ macro_rules! impl_math_f64_u10 {
             }*/
         }
 
+        #[test]
+        fn test_cbrt() {
+            test_libm_f_f(
+                cbrt,
+                if cfg!(feature="std") { f64::cbrt } else { libm::cbrt },
+                f64::MIN,
+                f64::MAX,
+                1.
+            );
+        }
+
         pub fn exp2(d: F64x) -> F64x {
             let mut u = d.round();
             let q = u.roundi();
@@ -1108,6 +1309,17 @@ macro_rules! impl_math_f64_u10 {
 
             u = d.ge(F64x::splat(1024.)).select(F64x::INFINITY, u);
             F64x::from_bits(!U64x::from_bits(d.lt(F64x::splat(-2000.))) & U64x::from_bits(u))
+        }
+
+        #[test]
+        fn test_exp2() {
+            test_libm_f_f(
+                exp2,
+                if cfg!(feature="std") { f64::exp2 } else { libm::exp2 },
+                -2000.,
+                1024.,
+                1.
+            );
         }
 
         pub fn exp10(d: F64x) -> F64x {
@@ -1146,6 +1358,7 @@ macro_rules! impl_math_f64_u10 {
         #[cfg(not(feature = "deterministic"))]
         pub fn expm1(a: F64x) -> F64x {
             let d = expk2(Doubled::new(a, ZERO)) + F64x::splat(-1.);
+            dbg!(d);
             let mut x = d.0 + d.1;
             x = a
                 .gt(F64x::splat(709.782_712_893_383_996_732_223))
@@ -1154,6 +1367,17 @@ macro_rules! impl_math_f64_u10 {
                 .lt(F64x::splat(-36.736_800_569_677_101_399_113_302_437))
                 .select(F64x::splat(-1.), x);
             a.is_neg_zero().select(NEG_ZERO, x)
+        }
+
+        #[test]
+        fn test_expm1() {
+            test_libm_f_f(
+                expm1,
+                if cfg!(feature="std") { f64::exp_m1 } else { libm::expm1 },
+                -37.,
+                710.,
+                1.
+            );
         }
 
         #[cfg(not(feature = "deterministic"))]

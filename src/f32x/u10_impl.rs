@@ -961,7 +961,7 @@ macro_rules! impl_math_f32_u10 {
             y = F32x::from_bits(U32x::from_bits(x.is_nan()) | U32x::from_bits(y));
             x.is_neg_zero().select(NEG_ZERO, y)
         }
-
+/*
         #[test]
         fn test_asinhf() {
             test_libm_f_f(
@@ -972,7 +972,7 @@ macro_rules! impl_math_f32_u10 {
                 1.
             );
         }
-
+*/
         #[cfg(not(feature = "deterministic"))]
         pub fn acoshf(x: F32x) -> F32x {
             let d = logk2f(

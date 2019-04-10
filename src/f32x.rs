@@ -110,7 +110,7 @@ macro_rules! impl_math_f32 {
         }
 
         pub mod fast {
-            //! Fast functions with 350 ULP error bound
+            //! Fast functions with 3500 ULP error bound
             impl_math_f32_fast!();
         }
 
@@ -451,6 +451,7 @@ macro_rules! impl_math_f32 {
         fn vpow2i_vf_vi2(q: I32x) -> F32x {
             F32x::from_bits(U32x::from_bits((q + I32x::splat(0x7f)) << 23))
         }
+
         #[inline]
         fn vldexp_vf_vf_vi2(mut x: F32x, mut q: I32x) -> F32x {
             let mut m = q >> 31;

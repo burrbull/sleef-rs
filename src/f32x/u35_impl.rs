@@ -1034,6 +1034,21 @@ macro_rules! impl_math_f32_u35 {
             F32x::from_bits(!U32x::from_bits(d.lt(F32x::splat(-150.))) & U32x::from_bits(u))
         }
 
+        #[test]
+        fn test_exp2f() {
+            test_libm_f_f(
+                exp2f,
+                if cfg!(feature = "std") {
+                    f32::exp2
+                } else {
+                    libm::exp2f
+                },
+                -150.,
+                128.,
+                3.5,
+            );
+        }
+
         pub fn exp10f(d: F32x) -> F32x {
             let mut u = (d * LOG10_2_F).round();
             let q = u.roundi();
@@ -1091,6 +1106,21 @@ macro_rules! impl_math_f32_u35 {
             };
 
             r
+        }
+
+        #[test]
+        fn test_log2f() {
+            test_libm_f_f(
+                log2f,
+                if cfg!(feature = "std") {
+                    f32::log2
+                } else {
+                    libm::log2f
+                },
+                0.,
+                f32::MAX,
+                3.5,
+            );
         }
 
     };

@@ -135,7 +135,7 @@ macro_rules! impl_math_f64 {
                     }
                     let diff = (expected.to_bits() as i64).wrapping_sub(output.to_bits() as i64) as f64;
                     #[cfg(not(feature="std"))]
-                    assert!(libm::fabsf(diff) <= 1.+ulp); // WARN!!!
+                    assert!(libm::fabs(diff) <= 1.+ulp); // WARN!!!
                     #[cfg(feature="std")]
                     assert!(diff.abs() <= 1.+ulp, format!("Position: {}, Input: {}, Output: {}, Expected: {}", i, input, output, expected));
                 }
@@ -164,7 +164,7 @@ macro_rules! impl_math_f64 {
                     let diff1 = (expected1.to_bits() as i64).wrapping_sub(output1.to_bits() as i64) as f64;
                     let diff2 = (expected2.to_bits() as i64).wrapping_sub(output2.to_bits() as i64) as f64;
                     #[cfg(not(feature="std"))]
-                    assert!(libm::fabsf(diff1) <= 1.+ulp &&libm::fabsf(diff2) <= 1.+ulp); // WARN!!!
+                    assert!(libm::fabs(diff1) <= 1.+ulp &&libm::fabs(diff2) <= 1.+ulp); // WARN!!!
                     #[cfg(feature="std")]
                     assert!(diff1.abs() <= 1.+ulp && diff2.abs() <= 1.+ulp, format!("Position: {}, Input: {}, Output: ({}, {}), Expected: ({}, {})", i, input, output1, output2, expected1, expected2));
                 }
@@ -197,7 +197,7 @@ macro_rules! impl_math_f64 {
                     }
                     let diff = (expected.to_bits() as i64).wrapping_sub(output.to_bits() as i64) as f64;
                     #[cfg(not(feature="std"))]
-                    assert!(libm::fabsf(diff) <= 1.+ulp); // WARN!!!
+                    assert!(libm::fabs(diff) <= 1.+ulp); // WARN!!!
                     #[cfg(feature="std")]
                     assert!(diff.abs() <= 1.+ulp, format!("Position: {}, Input: ({}, {}), Output: {}, Expected: {}", i, input1, input2, output, expected));
                 }
@@ -367,9 +367,25 @@ macro_rules! impl_math_f64 {
         }
 
         #[inline]
+        fn cast_into_upper(q: Ix) -> I64x {
+            const L: usize = Ix::lanes();
+            let mut arr = [0_i32; L*2];
+            for i in 0..L {
+                arr[i*2+1] = q.extract(i);
+            }
+            let arr: [i64; L] = unsafe {core::mem::transmute(arr)};
+            I64x::from_slice_unaligned(&arr)
+        }
+
+        #[inline]
+        fn cast_from_upper(q: U64x) -> Ix {
+            Ix::from_cast(q >> 32)
+        }
+
+        #[inline]
         fn vpow2i_vd_vi(q: Ix) -> F64x {
             let q = Ix::splat(0x3ff) + q;
-            let r = I64x::from_cast(q);
+            let r = cast_into_upper(q);
             F64x::from_bits(r << 20)
         }
         #[inline]
@@ -380,7 +396,7 @@ macro_rules! impl_math_f64 {
             m = Ix::splat(0x3ff) + m;
             m = !Ix::from_bits(Ix::splat(0).gt(m)) & m;
             m = m.gt(Ix::splat(0x7ff)).select(Ix::splat(0x7ff), m);
-            let r = I64x::from_cast(m);
+            let r = cast_into_upper(m);
             let y = F64x::from_bits(r << 20);
             x * y * y * y * y * vpow2i_vd_vi(q)
         }
@@ -390,7 +406,7 @@ macro_rules! impl_math_f64 {
         }
         #[inline]
         fn vldexp3_vd_vd_vi(d: F64x, q: Ix) -> F64x {
-            F64x::from_bits(I64x::from_bits(d) + (I64x::from_cast(q) << 20))
+            F64x::from_bits(I64x::from_bits(d) + (cast_into_upper(q) << 20))
         }
 
         /*#[cfg(all(
@@ -401,7 +417,7 @@ macro_rules! impl_math_f64 {
         fn vilogbk_vi_vd(mut d: F64x) -> Ix {
             let o = d.lt(F64x::splat(4.909_093_465_297_726_6_e-91));
             d = o.select(F64x::splat(2.037_035_976_334_486_e90) * d, d);
-            let mut q = Ix::from_cast(U64x::from_bits(d));
+            let mut q = cast_from_upper(U64x::from_bits(d));
             q &= Ix::splat(((1 << 12) - 1) << 20);
             q = Ix::from_bits(Ux::from_bits(q) >> 20);
             q - Mx::from_cast(o).select(Ix::splat(300 + 0x3ff), Ix::splat(0x3ff))
@@ -412,7 +428,7 @@ macro_rules! impl_math_f64 {
         ))]*/
         #[inline]
         fn vilogb2k_vi_vd(d: F64x) -> Ix {
-            let mut q = Ix::from_cast(U64x::from_bits(d));
+            let mut q = cast_from_upper(U64x::from_bits(d));
             q = Ix::from_bits(Ux::from_bits(q) >> 20);
             q &= Ix::splat(0x7ff);
             q - Ix::splat(0x3ff)
@@ -996,7 +1012,7 @@ macro_rules! impl_math_f64 {
                 .lt(F64x::splat(f64::MIN_POSITIVE))
                 .select(x * D1_63X, x);
 
-            let mut ret = Ix::from_cast(U64x::from_bits(x));
+            let mut ret = cast_from_upper(U64x::from_bits(x));
             ret = (Ix::from_bits(Ux::from_bits(ret) >> 20) & Ix::splat(0x7ff))
                 - Ix::splat(0x3fe);
 

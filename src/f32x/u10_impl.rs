@@ -671,8 +671,8 @@ macro_rules! impl_math_f32_u10 {
             test_libm_f_f(
                 expf,
                 if cfg!(feature="std") { f32::exp } else { libm::expf },
-                -80.,
-                80.,
+                -104.,
+                100.,
                 1.
             );
         }
@@ -891,8 +891,8 @@ macro_rules! impl_math_f32_u10 {
             test_libm_f_f(
                 sinhf,
                 if cfg!(feature="std") { f32::sinh } else { libm::sinhf },
-                f32::MIN,
-                f32::MAX,
+                -89.,
+                89.,
                 1.
             );
         }
@@ -913,8 +913,8 @@ macro_rules! impl_math_f32_u10 {
             test_libm_f_f(
                 coshf,
                 if cfg!(feature="std") { f32::cosh } else { libm::coshf },
-                f32::MIN,
-                f32::MAX,
+                -89.,
+                89.,
                 1.
             );
         }
@@ -937,8 +937,8 @@ macro_rules! impl_math_f32_u10 {
             test_libm_f_f(
                 tanhf,
                 if cfg!(feature="std") { f32::tanh } else { libm::tanhf },
-                f32::MIN,
-                f32::MAX,
+                -8.7,
+                8.7,
                 1.
             );
         }
@@ -961,18 +961,18 @@ macro_rules! impl_math_f32_u10 {
             y = F32x::from_bits(U32x::from_bits(x.is_nan()) | U32x::from_bits(y));
             x.is_neg_zero().select(NEG_ZERO, y)
         }
-/*
+
         #[test]
         fn test_asinhf() {
             test_libm_f_f(
                 asinhf,
                 if cfg!(feature="std") { f32::asinh } else { libm::asinhf },
-                f32::MIN,
-                f32::MAX,
+                -18.5_e18,
+                18.5_e18,
                 1.
             );
         }
-*/
+
         #[cfg(not(feature = "deterministic"))]
         pub fn acoshf(x: F32x) -> F32x {
             let d = logk2f(
@@ -994,7 +994,7 @@ macro_rules! impl_math_f32_u10 {
                 acoshf,
                 if cfg!(feature="std") { f32::acosh } else { libm::acoshf },
                 1.,
-                f32::MAX,
+                18.5_e18,
                 1.
             );
         }
@@ -1154,6 +1154,17 @@ macro_rules! impl_math_f32_u10 {
                     0,
                 )
             }*/
+        }
+
+        #[test]
+        fn test_log2f() {
+            test_libm_f_f(
+                log2f,
+                if cfg!(feature="std") { f32::log2 } else { libm::log2f },
+                0.,
+                f32::MAX,
+                1.
+            );
         }
 
         #[cfg(not(feature = "deterministic"))]

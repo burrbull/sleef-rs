@@ -139,7 +139,7 @@ macro_rules! impl_math_f32 {
                     assert!(
                         diff.abs() <= 1. + ulp,
                         format!(
-                            "Position: {}, Input: {}, Output: {}, Expected: {}",
+                            "Position: {}, Input: {:e}, Output: {}, Expected: {}",
                             i, input, output, expected
                         )
                     );
@@ -181,7 +181,7 @@ macro_rules! impl_math_f32 {
                     assert!(
                         diff1.abs() <= 1. + ulp && diff2.abs() <= 1. + ulp,
                         format!(
-                            "Position: {}, Input: {}, Output: ({}, {}), Expected: ({}, {})",
+                            "Position: {}, Input: {:e}, Output: ({}, {}), Expected: ({}, {})",
                             i, input, output1, output2, expected1, expected2
                         )
                     );
@@ -226,7 +226,7 @@ macro_rules! impl_math_f32 {
                     assert!(
                         diff.abs() <= 1. + ulp,
                         format!(
-                            "Position: {}, Input: ({}, {}), Output: {}, Expected: {}",
+                            "Position: {}, Input: ({:e}, {:e}), Output: {}, Expected: {}",
                             i, input1, input2, output, expected
                         )
                     );

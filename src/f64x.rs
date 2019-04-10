@@ -137,7 +137,7 @@ macro_rules! impl_math_f64 {
                     #[cfg(not(feature="std"))]
                     assert!(libm::fabs(diff) <= 1.+ulp); // WARN!!!
                     #[cfg(feature="std")]
-                    assert!(diff.abs() <= 1.+ulp, format!("Position: {}, Input: {}, Output: {}, Expected: {}", i, input, output, expected));
+                    assert!(diff.abs() <= 1.+ulp, format!("Position: {}, Input: {:e}, Output: {}, Expected: {}", i, input, output, expected));
                 }
             }
         }
@@ -166,7 +166,7 @@ macro_rules! impl_math_f64 {
                     #[cfg(not(feature="std"))]
                     assert!(libm::fabs(diff1) <= 1.+ulp &&libm::fabs(diff2) <= 1.+ulp); // WARN!!!
                     #[cfg(feature="std")]
-                    assert!(diff1.abs() <= 1.+ulp && diff2.abs() <= 1.+ulp, format!("Position: {}, Input: {}, Output: ({}, {}), Expected: ({}, {})", i, input, output1, output2, expected1, expected2));
+                    assert!(diff1.abs() <= 1.+ulp && diff2.abs() <= 1.+ulp, format!("Position: {}, Input: {:e}, Output: ({}, {}), Expected: ({}, {})", i, input, output1, output2, expected1, expected2));
                 }
             }
         }
@@ -199,7 +199,7 @@ macro_rules! impl_math_f64 {
                     #[cfg(not(feature="std"))]
                     assert!(libm::fabs(diff) <= 1.+ulp); // WARN!!!
                     #[cfg(feature="std")]
-                    assert!(diff.abs() <= 1.+ulp, format!("Position: {}, Input: ({}, {}), Output: {}, Expected: {}", i, input1, input2, output, expected));
+                    assert!(diff.abs() <= 1.+ulp, format!("Position: {}, Input: ({:e}, {:e}), Output: {}, Expected: {}", i, input1, input2, output, expected));
                 }
             }
         }

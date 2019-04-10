@@ -50,6 +50,95 @@ pub mod u10;
 pub mod u15;
 pub mod u35;
 
+#[cfg(test)]
+fn test_libm_f_f(fun_fx: fn(f32) -> f32, fun_f: fn(f32) -> f32, mn: f32, mx: f32, ulp: f32) {
+    use rand::Rng;
+    let mut rng = rand::thread_rng();
+    for _ in 0..crate::TEST_REPEAT {
+        let input = rng.gen_range(mn, mx);
+        let expected = fun_f(input);
+        let output = fun_fx(input);
+        if expected.is_nan() && output.is_nan() {
+            continue;
+        }
+        let diff = (expected.to_bits() as i32).wrapping_sub(output.to_bits() as i32) as f32;
+        #[cfg(not(feature = "std"))]
+        assert!(libm::fabsf(diff) <= 1. + ulp); // WARN!!!
+        #[cfg(feature = "std")]
+        assert!(
+            diff.abs() <= 1. + ulp,
+            format!(
+                "Input: {:e}, Output: {}, Expected: {}",
+                input, output, expected
+            )
+        );
+    }
+}
+
+#[cfg(test)]
+fn test_libm_f_ff(
+    fun_fx: fn(f32) -> (f32, f32),
+    fun_f: fn(f32) -> (f32, f32),
+    mn: f32,
+    mx: f32,
+    ulp: f32,
+) {
+    use rand::Rng;
+    let mut rng = rand::thread_rng();
+    for _ in 0..crate::TEST_REPEAT {
+        let input = rng.gen_range(mn, mx);
+        let (expected1, expected2) = fun_f(input);
+        let (output1, output2) = fun_fx(input);
+        if (expected1.is_nan() && output1.is_nan()) || (expected2.is_nan() && output2.is_nan()) {
+            continue;
+        }
+        let diff1 = (expected1.to_bits() as i32).wrapping_sub(output1.to_bits() as i32) as f32;
+        let diff2 = (expected2.to_bits() as i32).wrapping_sub(output2.to_bits() as i32) as f32;
+        #[cfg(not(feature = "std"))]
+        assert!(libm::fabsf(diff1) <= 1. + ulp && libm::fabsf(diff2) <= 1. + ulp); // WARN!!!
+        #[cfg(feature = "std")]
+        assert!(
+            diff1.abs() <= 1. + ulp && diff2.abs() <= 1. + ulp,
+            format!(
+                "Input: {:e}, Output: ({}, {}), Expected: ({}, {})",
+                input, output1, output2, expected1, expected2
+            )
+        );
+    }
+}
+
+#[cfg(test)]
+fn test_libm_ff_f(
+    fun_fx: fn(f32, f32) -> (f32),
+    fun_f: fn(f32, f32) -> f32,
+    mn: f32,
+    mx: f32,
+    ulp: f32,
+) {
+    use rand::Rng;
+    let mut rng = rand::thread_rng();
+    for _ in 0..crate::TEST_REPEAT {
+        let input1 = rng.gen_range(mn, mx);
+        let input2 = rng.gen_range(mn, mx);
+        let expected = fun_f(input1, input2);
+        let output = fun_fx(input1, input2);
+        if expected.is_nan() && output.is_nan() {
+            continue;
+        }
+        let diff = (expected.to_bits() as i32).wrapping_sub(output.to_bits() as i32) as f32;
+        #[cfg(not(feature = "std"))]
+        assert!(libm::fabsf(diff) <= 1. + ulp); // WARN!!!
+        #[cfg(feature = "std")]
+        assert!(
+            diff.abs() <= 1. + ulp,
+            format!(
+                "Input: ({:e}, {:e}), Output: {}, Expected: {}",
+                input1, input2, output, expected
+            )
+        );
+    }
+}
+
 impl BaseType for f32 {
     type Base = Self;
 }

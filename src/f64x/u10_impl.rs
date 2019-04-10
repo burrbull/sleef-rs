@@ -939,11 +939,8 @@ macro_rules! impl_math_f64_u10 {
                 /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
                     let o = d.lt(F64x::splat(f64::MIN_POSITIVE));
                     d = o.select(d * (D1_32X * D1_32X), d);
-dbg!(d);
                     let mut e = vilogb2k_vi_vd(d * F64x::splat(1. / 0.75));
-dbg!(e);
                     m = vldexp3_vd_vd_vi(d, -e);
-dbg!(m);
                     e = Mx::from_cast(o).select(e - Ix::splat(64), e);
                     Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17))
                         * F64x::from_cast(e)
@@ -1358,7 +1355,6 @@ dbg!(m);
         #[cfg(not(feature = "deterministic"))]
         pub fn expm1(a: F64x) -> F64x {
             let d = expk2(Doubled::new(a, ZERO)) + F64x::splat(-1.);
-            dbg!(d);
             let mut x = d.0 + d.1;
             x = a
                 .gt(F64x::splat(709.782_712_893_383_996_732_223))
@@ -1438,6 +1434,17 @@ dbg!(m);
             }*/
         }
 
+        #[test]
+        fn test_log10() {
+            test_libm_f_f(
+                log10,
+                if cfg!(feature="std") { f64::log10 } else { libm::log10 },
+                0.,
+                f64::MAX,
+                1.
+            );
+        }
+
         #[cfg(not(feature = "deterministic"))]
         pub fn log2(mut d: F64x) -> F64x {
             let m: F64x;
@@ -1488,6 +1495,17 @@ dbg!(m);
                     0,
                 )
             }*/
+        }
+
+        #[test]
+        fn test_log2() {
+            test_libm_f_f(
+                log2,
+                if cfg!(feature="std") { f64::log2 } else { libm::log2 },
+                0.,
+                f64::MAX,
+                1.
+            );
         }
 
         #[cfg(not(feature = "deterministic"))]

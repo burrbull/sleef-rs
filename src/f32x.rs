@@ -236,11 +236,13 @@ macro_rules! impl_math_f32 {
 
         #[inline]
         fn vgather_vf_p_vi2(ptr: &[f32], vi: I32x) -> F32x {
-            let mut ar = [0_f32; F32x::lanes()];
-            for i in 0..F32x::lanes() {
+            const L: usize = F32x::lanes();
+            let mut ar: [f32; L] = unsafe{core::mem::uninitialized()};
+            for i in 0..L {
                 ar[i] = ptr[vi.extract(i) as usize];
             }
-            F32x::from_slice_unaligned(&ar)
+            let r: F32x = unsafe{core::mem::transmute(ar)};
+            r
         }
 
         impl SqrtAsDoubled for F32x {

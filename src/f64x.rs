@@ -207,11 +207,13 @@ macro_rules! impl_math_f64 {
 
         #[inline]
         fn vgather_vd_p_vi(ptr: &[f64], vi: Ix) -> F64x {
-            let mut ar = [0_f64; F64x::lanes()];
-            for i in 0..F64x::lanes() {
+            const L: usize = F64x::lanes();
+            let mut ar: [f64; L] = unsafe{core::mem::uninitialized()};
+            for i in 0..L {
                 ar[i] = ptr[vi.extract(i) as usize];
             }
-            F64x::from_slice_unaligned(&ar)
+            let r: F64x = unsafe{core::mem::transmute(ar)};
+            r
         }
 
         #[inline]
@@ -369,17 +371,18 @@ macro_rules! impl_math_f64 {
         #[inline]
         fn cast_into_upper(q: Ix) -> I64x {
             const L: usize = Ix::lanes();
-            let mut arr = [0_i32; L*2];
+            let mut a: [<Ix as BaseType>::Base; L*2] = unsafe {core::mem::uninitialized()};
             for i in 0..L {
-                arr[i*2+1] = q.extract(i);
+                a[i*2] = 0;
+                a[i*2+1] = q.extract(i);
             }
-            let arr: [i64; L] = unsafe {core::mem::transmute(arr)};
-            I64x::from_slice_unaligned(&arr)
+            let r: I64x = unsafe {core::mem::transmute(a)};
+            r
         }
 
         #[inline]
         fn cast_from_upper(q: U64x) -> Ix {
-            Ix::from_cast(q >> 32)
+            Ix::from_cast(q >> 32) // TODO: optimize
         }
 
         #[inline]
@@ -825,25 +828,13 @@ macro_rules! impl_math_f64 {
         }
 
         #[inline]
-        fn vcast_vi2_i_i(i0: i32, i1: i32) -> I64x {
-              const L : usize = I64x::lanes();
-              let mut a = [0_i32;L*2];
-              for j in 0..L {
-                a[2*j] = i0;
-                a[2*j+1] = i1;
-          }
-          I64x::from_bits(Simd::<[i32; L*2]>::from_slice_unaligned(&a))
+        const fn splat2i(i0: i32, i1: i32) -> I64x {
+            I64x::splat(((i1 as i64) << 32) + (i0 as i64))
         }
 
         #[inline]
-        fn vcast_vi2_u_u(i0: u32, i1: u32) -> I64x {
-              const L : usize = I64x::lanes();
-              let mut a = [0_u32;L*2];
-              for j in 0..L {
-                a[2*j] = i0;
-                a[2*j+1] = i1;
-          }
-          I64x::from_bits(Simd::<[u32; L*2]>::from_slice_unaligned(&a))
+        const fn splat2u(i0: u32, i1: u32) -> I64x {
+            I64x::splat((((i1 as u64) << 32) + (i0 as u64)) as i64)
         }
 
         #[cfg(not(feature="deterministic"))]
@@ -958,8 +949,8 @@ macro_rules! impl_math_f64 {
             let mut xi2 = I64x::from_bits(x);
             let c = x.is_sign_negative() ^ y.ge(x);
 
-            let mut t = (xi2 ^ vcast_vi2_u_u(0x_7fff_ffff, 0x_ffff_ffff)) + vcast_vi2_i_i(0, 1);
-            t += vrev21_vi2_vi2(vcast_vi2_i_i(0, 1) & I64x::from_bits(t.eq(vcast_vi2_i_i(-1, 0))));
+            let mut t = (xi2 ^ splat2u(0x_7fff_ffff, 0x_ffff_ffff)) + splat2i(0, 1);
+            t += vrev21_vi2_vi2(splat2i(0, 1) & I64x::from_bits(t.eq(splat2i(-1, 0))));
             xi2 = I64x::from_bits(c.select(F64x::from_bits(t), F64x::from_bits(xi2)));
 
             xi2 -= I64x::from_cast(U64x::from_bits(x.ne(y)) & U64x::from_u32((0, 1)));
@@ -967,14 +958,14 @@ macro_rules! impl_math_f64 {
             xi2 = I64x::from_bits(x.ne(y).select(
                 F64x::from_bits(
                     xi2 + vrev21_vi2_vi2(
-                        vcast_vi2_i_i(0, -1) & I64x::from_bits(xi2.eq(vcast_vi2_i_i(0, -1))),
+                        splat2i(0, -1) & I64x::from_bits(xi2.eq(splat2i(0, -1))),
                     ),
                 ),
                 F64x::from_bits(xi2),
             ));
 
-            let mut t = (xi2 ^ vcast_vi2_u_u(0x_7fff_ffff, 0x_ffff_ffff)) + vcast_vi2_i_i(0, 1);
-            t += vrev21_vi2_vi2(vcast_vi2_i_i(0, 1) & I64x::from_bits(t.eq(vcast_vi2_i_i(-1, 0))));
+            let mut t = (xi2 ^ splat2u(0x_7fff_ffff, 0x_ffff_ffff)) + splat2i(0, 1);
+            t += vrev21_vi2_vi2(splat2i(0, 1) & I64x::from_bits(t.eq(splat2i(-1, 0))));
             xi2 = I64x::from_bits(c.select(F64x::from_bits(t), F64x::from_bits(xi2)));
 
             let mut ret = F64x::from_bits(xi2);
@@ -1069,7 +1060,7 @@ macro_rules! impl_math_f64 {
         #[inline]
         fn vtoward0(x: F64x) -> F64x {
             // returns nextafter(x, 0)
-            let t = F64x::from_bits(U64x::from_bits(x) + U64x::from_bits(vcast_vi2_i_i(-1, -1)));
+            let t = F64x::from_bits(U64x::from_bits(x) + U64x::from_bits(splat2i(-1, -1)));
             x.eq(ZERO).select(ZERO, t)
         }
 

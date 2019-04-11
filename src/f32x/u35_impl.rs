@@ -1101,7 +1101,7 @@ macro_rules! impl_math_f32_u35 {
             /*} else {
                 let r = (x2 * x).mul_add(t, x.mul_add(F32x::splat(2.885_390_043_258_666_992_2), e));
 
-                vfixup_vf_vf_vf_vi2_i(r, d, vcast_vi2_i((4 << (2*4)) | (3 << (4*4)) | (5 << (5*4)) | (2 << (6*4))), 0)
+                vfixup_vf_vf_vf_vi2_i(r, d, I32::splat((4 << (2*4)) | (3 << (4*4)) | (5 << (5*4)) | (2 << (6*4))), 0)
             */
             };
 

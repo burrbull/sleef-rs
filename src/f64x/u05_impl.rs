@@ -116,7 +116,7 @@ macro_rules! impl_math_f64_u05 {
             let q = o.select(F64x::splat(1.157_920_892_373_162_e+77 * 0.5), q);
 
             let mut x = F64x::from_bits(
-                vcast_vi2_i_i(0x_5fe6_ec86, 0)
+                splat2i(0x_5fe6_ec86, 0)
                     - I64x::from_bits(U64x::from_bits(d + F64x::splat(1e-320)) >> 1),
             );
 

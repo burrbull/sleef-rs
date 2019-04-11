@@ -1006,7 +1006,7 @@ macro_rules! impl_math_f64_u35 {
             r = (d.lt(ZERO) | d.is_nan()).select(F64x::NAN, r);
             r = d.eq(ZERO).select(F64x::NEG_INFINITY, r);
             /* } else {
-                r = vfixup_vd_vd_vd_vi2_i(r, d, vcast_vi2_i((4 << (2*4)) | (3 << (4*4)) | (5 << (5*4)) | (2 << (6*4))), 0);
+                r = vfixup_vd_vd_vd_vi2_i(r, d, I32::splat((4 << (2*4)) | (3 << (4*4)) | (5 << (5*4)) | (2 << (6*4))), 0);
             }*/
 
             r

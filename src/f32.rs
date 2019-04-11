@@ -40,7 +40,7 @@ const R_LN2_F: f32 =
 const LOG10_2_F: f32 = 3.321_928_094_887_362_347_870_319_429_489_390_175_864_831_393;
 
 #[inline]
-pub fn df(h: f32, l: f32) -> Doubled<f32> {
+pub const fn df(h: f32, l: f32) -> Doubled<f32> {
     Doubled::new(h, l)
 }
 

@@ -66,7 +66,7 @@ const PI_B2: f64 = 1.224_646_799_147_353_207_2_e-16;
 const TRIGRANGEMAX2: f64 = 15.;
 
 #[inline]
-pub fn dd(h: f64, l: f64) -> Doubled<f64> {
+pub const fn dd(h: f64, l: f64) -> Doubled<f64> {
     Doubled::new(h, l)
 }
 

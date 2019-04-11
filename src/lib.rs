@@ -1,5 +1,4 @@
 #![deny(warnings)]
-#![allow(dead_code)] // temporary
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::many_single_char_names)]
 #![allow(clippy::mistyped_literal_suffixes)]
@@ -7,7 +6,7 @@
 #![allow(clippy::approx_constant)]
 #![allow(clippy::cast_lossless)]
 #![allow(clippy::float_cmp)]
-#![allow(clippy::cyclomatic_complexity)]
+#![allow(clippy::cognitive_complexity)]
 
 mod common;
 mod tables;
@@ -82,3 +81,57 @@ const TEST_REPEAT: usize = 1_000;
 #[cfg(test)]
 #[cfg(not(feature = "fasttest"))]
 const TEST_REPEAT: usize = 100_000;
+
+pub trait AssociatedInt {
+    type Int;
+}
+
+pub trait Sleef: Sized + AssociatedInt {
+    fn sin(self) -> Self;
+    fn cos(self) -> Self;
+    fn sin_cos(self) -> (Self, Self);
+    fn tan(self) -> Self;
+    fn asin(self) -> Self;
+    fn acos(self) -> Self;
+    fn atan(self) -> Self;
+    fn atan2(self, other: Self) -> Self;
+    fn ln(self) -> Self;
+    fn cbrt(self) -> Self;
+    fn exp(self) -> Self;
+    fn pow(self, other: Self) -> Self;
+    fn sinh(self) -> Self;
+    fn cosh(self) -> Self;
+    fn tanh(self) -> Self;
+    fn asinh(self) -> Self;
+    fn acosh(self) -> Self;
+    fn atanh(self) -> Self;
+    fn exp2(self) -> Self;
+    fn exp10(self) -> Self;
+    fn exp_m1(self) -> Self;
+    fn log10(self) -> Self;
+    fn log2(self) -> Self;
+    fn log_1p(self) -> Self;
+    fn ldexp(self, other: Self::Int) -> Self;
+    fn ilogb(self) -> Self::Int;
+    fn fma(self, y: Self, z: Self) -> Self;
+    fn sqrt(self) -> Self;
+    fn abs(self) -> Self;
+    fn copy_sign(self, other: Self) -> Self;
+    fn max(self, other: Self) -> Self;
+    fn min(self, other: Self) -> Self;
+    fn fdim(self, other: Self) -> Self;
+    fn truncate(self) -> Self;
+    fn round(self) -> Self;
+    fn next_after(self, other: Self) -> Self;
+    fn frfrexp(self) -> Self;
+    fn expfrexp(self) -> Self::Int;
+    fn fmod(self, other: Self) -> Self;
+    fn modf(self) -> (Self, Self);
+    fn sin_cos_pi(self) -> (Self, Self);
+    fn sin_pi(self) -> Self;
+    fn cos_pi(self) -> Self;
+    fn hypot(self, other: Self) -> Self;
+    fn lgamma(self) -> Self;
+    fn erf(self) -> Self;
+    fn erfc(self) -> Self;
+}

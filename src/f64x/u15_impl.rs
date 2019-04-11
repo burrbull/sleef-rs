@@ -3,7 +3,7 @@ macro_rules! impl_math_f64_u15 {
         use super::*;
 
         /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
-        pub fn xerfc(a: F64x) -> F64x {
+        pub fn erfc(a: F64x) -> F64x {
             let s = a;
             let a = a.abs();
             let o0 = a.lt(ONE);

@@ -1,7 +1,4 @@
-#![allow(dead_code)]
-use core::f64;
 use core::f64::consts::{FRAC_1_PI, FRAC_2_PI, FRAC_PI_2, FRAC_PI_4, PI};
-use core::isize;
 
 use crate::common::*;
 use doubled::*;
@@ -164,6 +161,201 @@ fn test_libm_ff_f(
     }
 }
 
+impl crate::AssociatedInt for f64 {
+    type Int = i32;
+}
+
+impl crate::Sleef for f64 {
+    #[inline]
+    fn sin(self) -> Self {
+        u35::sin(self)
+    }
+    #[inline]
+    fn cos(self) -> Self {
+        u35::cos(self)
+    }
+    #[inline]
+    fn sin_cos(self) -> (Self, Self) {
+        u35::sincos(self)
+    }
+    #[inline]
+    fn tan(self) -> Self {
+        u35::tan(self)
+    }
+    #[inline]
+    fn asin(self) -> Self {
+        u35::asin(self)
+    }
+    #[inline]
+    fn acos(self) -> Self {
+        u35::acos(self)
+    }
+    #[inline]
+    fn atan(self) -> Self {
+        u35::atan(self)
+    }
+    #[inline]
+    fn atan2(self, other: Self) -> Self {
+        u35::atan2(self, other)
+    }
+    #[inline]
+    fn ln(self) -> Self {
+        u35::log(self)
+    }
+    #[inline]
+    fn cbrt(self) -> Self {
+        u35::cbrt(self)
+    }
+    #[inline]
+    fn exp(self) -> Self {
+        u10::exp(self)
+    }
+    #[inline]
+    fn pow(self, other: Self) -> Self {
+        u10::pow(self, other)
+    }
+    #[inline]
+    fn sinh(self) -> Self {
+        u10::sinh(self)
+    }
+    #[inline]
+    fn cosh(self) -> Self {
+        u10::cosh(self)
+    }
+    #[inline]
+    fn tanh(self) -> Self {
+        u10::tanh(self)
+    }
+    #[inline]
+    fn asinh(self) -> Self {
+        u10::asinh(self)
+    }
+    #[inline]
+    fn acosh(self) -> Self {
+        u10::acosh(self)
+    }
+    #[inline]
+    fn atanh(self) -> Self {
+        u10::atanh(self)
+    }
+    #[inline]
+    fn exp2(self) -> Self {
+        u10::exp2(self)
+    }
+    #[inline]
+    fn exp10(self) -> Self {
+        u10::exp10(self)
+    }
+    #[inline]
+    fn exp_m1(self) -> Self {
+        u10::expm1(self)
+    }
+    #[inline]
+    fn log10(self) -> Self {
+        u10::log10(self)
+    }
+    #[inline]
+    fn log2(self) -> Self {
+        u10::log2(self)
+    }
+    #[inline]
+    fn log_1p(self) -> Self {
+        u10::log1p(self)
+    }
+    #[inline]
+    fn ldexp(self, other: Self::Int) -> Self {
+        ldexp(self, other)
+    }
+    #[inline]
+    fn ilogb(self) -> Self::Int {
+        ilogb(self)
+    }
+    #[inline]
+    fn fma(self, y: Self, z: Self) -> Self {
+        fma(self, y, z)
+    }
+    #[inline]
+    fn sqrt(self) -> Self {
+        u35::sqrt(self)
+    }
+    #[inline]
+    fn abs(self) -> Self {
+        fabs(self)
+    }
+    #[inline]
+    fn copy_sign(self, other: Self) -> Self {
+        copysign(self, other)
+    }
+    #[inline]
+    fn max(self, other: Self) -> Self {
+        fmax(self, other)
+    }
+    #[inline]
+    fn min(self, other: Self) -> Self {
+        fmin(self, other)
+    }
+    #[inline]
+    fn fdim(self, other: Self) -> Self {
+        fdim(self, other)
+    }
+    #[inline]
+    fn truncate(self) -> Self {
+        trunc(self)
+    }
+    #[inline]
+    fn round(self) -> Self {
+        rint(self)
+    }
+    #[inline]
+    fn next_after(self, other: Self) -> Self {
+        nextafter(self, other)
+    }
+    #[inline]
+    fn frfrexp(self) -> Self {
+        frfrexp(self)
+    }
+    #[inline]
+    fn expfrexp(self) -> Self::Int {
+        expfrexp(self)
+    }
+    #[inline]
+    fn fmod(self, other: Self) -> Self {
+        fmod(self, other)
+    }
+    #[inline]
+    fn modf(self) -> (Self, Self) {
+        modf(self)
+    }
+    #[inline]
+    fn sin_cos_pi(self) -> (Self, Self) {
+        u35::sincospi(self)
+    }
+    #[inline]
+    fn sin_pi(self) -> Self {
+        u05::sinpi(self)
+    }
+    #[inline]
+    fn cos_pi(self) -> Self {
+        u05::cospi(self)
+    }
+    #[inline]
+    fn hypot(self, other: Self) -> Self {
+        u35::hypot(self, other)
+    }
+    #[inline]
+    fn lgamma(self) -> Self {
+        u10::lgamma(self)
+    }
+    #[inline]
+    fn erf(self) -> Self {
+        u10::erf(self)
+    }
+    #[inline]
+    fn erfc(self) -> Self {
+        u15::erfc(self)
+    }
+}
+
 impl BaseType for f64 {
     type Base = Self;
 }
@@ -252,12 +444,12 @@ fn fmaxk(x: f64, y: f64) -> f64 {
 }
 
 #[inline]
-fn pow2i(q: isize) -> f64 {
+fn pow2i(q: i32) -> f64 {
     f64::from_bits(((q + 0x3ff) as u64) << 52)
 }
 
 #[inline]
-fn ldexpk(x: f64, mut q: isize) -> f64 {
+fn ldexpk(x: f64, mut q: i32) -> f64 {
     let mut m = q >> 31;
     m = (((m + q) >> 9) - m) << 7;
     q -= m << 2;
@@ -271,30 +463,30 @@ fn ldexpk(x: f64, mut q: isize) -> f64 {
 }
 
 #[inline]
-fn ldexp2k(d: f64, e: isize) -> f64 {
+fn ldexp2k(d: f64, e: i32) -> f64 {
     // faster than ldexpk, short reach
     d * pow2i(e >> 1) * pow2i(e - (e >> 1))
 }
 
 #[inline]
-fn ldexp3k(d: f64, e: isize) -> f64 {
+fn ldexp3k(d: f64, e: i32) -> f64 {
     // very fast, no denormal
     f64::from_bits(d.to_bits() + ((e as u64) << 52))
 }
 
 #[inline]
-fn ilogbk(mut d: f64) -> isize {
+fn ilogbk(mut d: f64) -> i32 {
     let m = d < 4.909_093_465_297_726_6E-91;
     d = if m { 2.037_035_976_334_486E90 * d } else { d };
     let q = (d.to_bits() >> 52) & 0x7ff;
-    (if m { q - (300 + 0x03ff) } else { q - 0x03ff }) as isize
+    (if m { q - (300 + 0x03ff) } else { q - 0x03ff }) as i32
 }
 
 // ilogb2k is similar to ilogbk, but the argument has to be a
 // normalized FP value.
 #[inline]
-fn ilogb2k(d: f64) -> isize {
-    (((d.to_bits() >> 52) & 0x7ff) - 0x3ff) as isize
+fn ilogb2k(d: f64) -> i32 {
+    (((d.to_bits() >> 52) & 0x7ff) - 0x3ff) as i32
 }
 
 #[inline]
@@ -626,7 +818,7 @@ fn expm1k(d: f64) -> f64 {
 
     u = s2.mul_add(0.5, s2 * s * u) + s;
 
-    let q = q as isize;
+    let q = q as i32;
     if q != 0 {
         ldexp2k(u + 1., q) - 1.
     } else {
@@ -721,14 +913,14 @@ fn expk(d: Doubled<f64>) -> f64 {
     if d.0 < -1000. {
         0.
     } else {
-        ldexpk(t.0 + t.1, q as isize)
+        ldexpk(t.0 + t.1, q as i32)
     }
 }
 
 #[inline]
 fn expk2(d: Doubled<f64>) -> Doubled<f64> {
     let qf = rintk((d.0 + d.1) * R_LN2);
-    let q = qf as isize;
+    let q = qf as i32;
 
     let s = d + qf * (-L2U) + qf * (-L2L);
 
@@ -1142,7 +1334,7 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
     (clc, clln / clld)
 }
 
-pub fn ldexp(x: f64, mut exp: isize) -> f64 {
+pub fn ldexp(x: f64, mut exp: i32) -> f64 {
     if exp > 2100 {
         exp = 2100;
     }
@@ -1163,90 +1355,18 @@ pub fn ldexp(x: f64, mut exp: isize) -> f64 {
     x * pow2i(e1) * p * p * p * p
 }
 
-pub fn ilogb(d: f64) -> isize {
+pub fn ilogb(d: f64) -> i32 {
     let mut e = ilogbk(fabsk(d));
-    e = if d == 0. { SLEEF_FP_ILOGB0 as isize } else { e };
+    e = if d == 0. { SLEEF_FP_ILOGB0 as i32 } else { e };
     e = if d.is_nan() {
-        SLEEF_FP_ILOGBNAN as isize
+        SLEEF_FP_ILOGBNAN as i32
     } else {
         e
     };
     if d.is_infinite() {
-        isize::MAX
+        i32::MAX
     } else {
         e
-    }
-}
-
-pub fn tanh(x: f64) -> f64 {
-    let mut y = fabsk(x);
-    let mut d = expk2(dd(y, 0.));
-    let e = d.recpre();
-    d = d.sub_checked(e) / d.add_checked(e);
-    y = d.0 + d.1;
-
-    y = if fabsk(x) > 18.714_973_875 { 1. } else { y };
-    y = if y.is_nan() { 1. } else { y };
-    y = mulsign(y, x);
-    if x.is_nan() {
-        f64::NAN
-    } else {
-        y
-    }
-}
-
-pub fn log10(mut d: f64) -> f64 {
-    let o = d < f64::MIN_POSITIVE;
-    if o {
-        d *= D1_32 * D1_32;
-    }
-
-    let mut e = ilogb2k(d * (1. / 0.75));
-    let m = ldexp3k(d, -e);
-
-    if o {
-        e -= 64;
-    }
-
-    let x = (-1.).add_as_doubled(m) / (1.).add_as_doubled(m);
-    let x2 = x.0 * x.0;
-
-    let x4 = x2 * x2;
-    let x8 = x4 * x4;
-
-    let t = f64::poly7(
-        x2,
-        x4,
-        x8,
-        0.665_372_581_957_675_846_e-1,
-        0.662_572_278_282_083_371_2_e-1,
-        0.789_810_521_431_394_407_8_e-1,
-        0.965_095_503_571_527_513_2_e-1,
-        0.124_084_140_972_144_499_3,
-        0.173_717_792_745_460_508_6,
-        0.289_529_654_602_197_261_7,
-    );
-
-    let s = (dd(
-        0.301_029_995_663_981_198_02,
-        -2.803_728_127_785_170_339_e-18,
-    ) * (e as f64))
-        .add_checked(
-            x * dd(
-                0.868_588_963_806_503_633_34,
-                1.143_005_969_409_638_931_1_e-17,
-            ),
-        )
-        .add_checked(x2 * x.0 * t);
-
-    if d.is_infinite() {
-        f64::INFINITY
-    } else if (d < 0.) || d.is_nan() {
-        f64::NAN
-    } else if d == 0. {
-        f64::NEG_INFINITY
-    } else {
-        s.0 + s.1
     }
 }
 
@@ -1490,15 +1610,15 @@ pub fn fmod(x: f64, y: f64) -> f64 {
     }
 }
 
-pub fn modf(x: f64) -> Doubled<f64> {
+pub fn modf(x: f64) -> (f64, f64) {
     let mut fr = x - D1_31 * ((x * (1. / D1_31)) as i32 as f64);
     fr -= fr as i32 as f64;
     fr = if fabsk(x) >= D1_52 { 0. } else { fr };
-    Doubled::new(copysignk(fr, x), copysignk(x - fr, x))
+    (copysignk(fr, x), copysignk(x - fr, x))
 }
 
 /*
-pub fn xsqrt(d: f64) -> f64 {
+pub fn sqrt(d: f64) -> f64 {
     SQRT(d)
 }
 */

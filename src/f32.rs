@@ -1,12 +1,6 @@
-#![allow(dead_code)]
-#![allow(unused_imports)]
-
 use crate::common::*;
 use core::f32::consts::{FRAC_1_PI, FRAC_2_PI, FRAC_PI_2, FRAC_PI_4, PI};
 use doubled::*;
-
-use core::f32;
-use core::i32;
 
 const F1_32: f32 = (1u64 << 32) as f32;
 const F1_30: f32 = (1u32 << 30) as f32;
@@ -136,6 +130,201 @@ fn test_libm_ff_f(
                 input1, input2, output, expected
             )
         );
+    }
+}
+
+impl crate::AssociatedInt for f32 {
+    type Int = i32;
+}
+
+impl crate::Sleef for f32 {
+    #[inline]
+    fn sin(self) -> Self {
+        u35::sinf(self)
+    }
+    #[inline]
+    fn cos(self) -> Self {
+        u35::cosf(self)
+    }
+    #[inline]
+    fn sin_cos(self) -> (Self, Self) {
+        u35::sincosf(self)
+    }
+    #[inline]
+    fn tan(self) -> Self {
+        u35::tanf(self)
+    }
+    #[inline]
+    fn asin(self) -> Self {
+        u35::asinf(self)
+    }
+    #[inline]
+    fn acos(self) -> Self {
+        u35::acosf(self)
+    }
+    #[inline]
+    fn atan(self) -> Self {
+        u35::atanf(self)
+    }
+    #[inline]
+    fn atan2(self, other: Self) -> Self {
+        u35::atan2f(self, other)
+    }
+    #[inline]
+    fn ln(self) -> Self {
+        u35::logf(self)
+    }
+    #[inline]
+    fn cbrt(self) -> Self {
+        u35::cbrtf(self)
+    }
+    #[inline]
+    fn exp(self) -> Self {
+        u10::expf(self)
+    }
+    #[inline]
+    fn pow(self, other: Self) -> Self {
+        u10::powf(self, other)
+    }
+    #[inline]
+    fn sinh(self) -> Self {
+        u10::sinhf(self)
+    }
+    #[inline]
+    fn cosh(self) -> Self {
+        u10::coshf(self)
+    }
+    #[inline]
+    fn tanh(self) -> Self {
+        u10::tanhf(self)
+    }
+    #[inline]
+    fn asinh(self) -> Self {
+        u10::asinhf(self)
+    }
+    #[inline]
+    fn acosh(self) -> Self {
+        u10::acoshf(self)
+    }
+    #[inline]
+    fn atanh(self) -> Self {
+        u10::atanhf(self)
+    }
+    #[inline]
+    fn exp2(self) -> Self {
+        u10::exp2f(self)
+    }
+    #[inline]
+    fn exp10(self) -> Self {
+        u10::exp10f(self)
+    }
+    #[inline]
+    fn exp_m1(self) -> Self {
+        u10::expm1f(self)
+    }
+    #[inline]
+    fn log10(self) -> Self {
+        u10::log10f(self)
+    }
+    #[inline]
+    fn log2(self) -> Self {
+        u10::log2f(self)
+    }
+    #[inline]
+    fn log_1p(self) -> Self {
+        u10::log1pf(self)
+    }
+    #[inline]
+    fn ldexp(self, other: Self::Int) -> Self {
+        ldexpf(self, other)
+    }
+    #[inline]
+    fn ilogb(self) -> Self::Int {
+        ilogbf(self)
+    }
+    #[inline]
+    fn fma(self, y: Self, z: Self) -> Self {
+        fmaf(self, y, z)
+    }
+    #[inline]
+    fn sqrt(self) -> Self {
+        u35::sqrtf(self)
+    }
+    #[inline]
+    fn abs(self) -> Self {
+        fabsf(self)
+    }
+    #[inline]
+    fn copy_sign(self, other: Self) -> Self {
+        copysignf(self, other)
+    }
+    #[inline]
+    fn max(self, other: Self) -> Self {
+        fmaxf(self, other)
+    }
+    #[inline]
+    fn min(self, other: Self) -> Self {
+        fminf(self, other)
+    }
+    #[inline]
+    fn fdim(self, other: Self) -> Self {
+        fdimf(self, other)
+    }
+    #[inline]
+    fn truncate(self) -> Self {
+        truncf(self)
+    }
+    #[inline]
+    fn round(self) -> Self {
+        rintf(self)
+    }
+    #[inline]
+    fn next_after(self, other: Self) -> Self {
+        nextafterf(self, other)
+    }
+    #[inline]
+    fn frfrexp(self) -> Self {
+        frfrexpf(self)
+    }
+    #[inline]
+    fn expfrexp(self) -> Self::Int {
+        expfrexpf(self)
+    }
+    #[inline]
+    fn fmod(self, other: Self) -> Self {
+        fmodf(self, other)
+    }
+    #[inline]
+    fn modf(self) -> (Self, Self) {
+        modff(self)
+    }
+    #[inline]
+    fn sin_cos_pi(self) -> (Self, Self) {
+        u35::sincospif(self)
+    }
+    #[inline]
+    fn sin_pi(self) -> Self {
+        u05::sinpif(self)
+    }
+    #[inline]
+    fn cos_pi(self) -> Self {
+        u05::cospif(self)
+    }
+    #[inline]
+    fn hypot(self, other: Self) -> Self {
+        u35::hypotf(self, other)
+    }
+    #[inline]
+    fn lgamma(self) -> Self {
+        u10::lgammaf(self)
+    }
+    #[inline]
+    fn erf(self) -> Self {
+        u10::erff(self)
+    }
+    #[inline]
+    fn erfc(self) -> Self {
+        u15::erfcf(self)
     }
 }
 
@@ -949,10 +1138,10 @@ pub fn rintf(d: f32) -> f32 {
 }
 
 /// Integral and fractional value of FP number
-pub fn modff(x: f32) -> Doubled<f32> {
+pub fn modff(x: f32) -> (f32, f32) {
     let mut fr = x - (x as i32 as f32);
     fr = if fabsfk(x) > F1_23 { 0. } else { fr };
-    Doubled::new(copysignfk(fr, x), copysignfk(x - fr, x))
+    (copysignfk(fr, x), copysignfk(x - fr, x))
 }
 
 /// Multiply by integral power of 2
@@ -1124,7 +1313,7 @@ pub fn fmaf(mut x: f32, mut y: f32, mut z: f32) -> f32 {
 }
 
 /*
-pub fn xsqrtf(d: f32) -> f32 {
+pub fn sqrtf(d: f32) -> f32 {
     SQRTF(d)
 }
 */

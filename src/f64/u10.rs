@@ -871,7 +871,7 @@ pub fn erf(a: f64) -> f64 {
 
 pub fn exp(d: f64) -> f64 {
     let qf = rintk(d * R_LN2);
-    let q = qf as isize;
+    let q = qf as i32;
 
     let s = qf.mul_add(-L2U, d);
     let s = qf.mul_add(-L2L, s);
@@ -1052,7 +1052,7 @@ pub fn atanh(x: f64) -> f64 {
 }
 
 pub fn exp2(d: f64) -> f64 {
-    let q = rintk(d) as isize;
+    let q = rintk(d) as i32;
 
     let s = d - (q as f64);
 
@@ -1092,7 +1092,7 @@ pub fn exp2(d: f64) -> f64 {
 }
 
 pub fn exp10(d: f64) -> f64 {
-    let q = rintk(d * LOG10_2) as isize;
+    let q = rintk(d * LOG10_2) as i32;
     let qf = q as f64;
     let s = qf.mul_add(-L10U, d);
     let s = qf.mul_add(-L10L, s);
@@ -1230,6 +1230,78 @@ pub fn log1p(d: f64) -> f64 {
         f64::NAN
     } else if d > 1e+307 {
         f64::INFINITY
+    } else {
+        s.0 + s.1
+    }
+}
+
+pub fn tanh(x: f64) -> f64 {
+    let mut y = fabsk(x);
+    let mut d = expk2(dd(y, 0.));
+    let e = d.recpre();
+    d = d.sub_checked(e) / d.add_checked(e);
+    y = d.0 + d.1;
+
+    y = if fabsk(x) > 18.714_973_875 { 1. } else { y };
+    y = if y.is_nan() { 1. } else { y };
+    y = mulsign(y, x);
+    if x.is_nan() {
+        f64::NAN
+    } else {
+        y
+    }
+}
+
+pub fn log10(mut d: f64) -> f64 {
+    let o = d < f64::MIN_POSITIVE;
+    if o {
+        d *= D1_32 * D1_32;
+    }
+
+    let mut e = ilogb2k(d * (1. / 0.75));
+    let m = ldexp3k(d, -e);
+
+    if o {
+        e -= 64;
+    }
+
+    let x = (-1.).add_as_doubled(m) / (1.).add_as_doubled(m);
+    let x2 = x.0 * x.0;
+
+    let x4 = x2 * x2;
+    let x8 = x4 * x4;
+
+    let t = f64::poly7(
+        x2,
+        x4,
+        x8,
+        0.665_372_581_957_675_846_e-1,
+        0.662_572_278_282_083_371_2_e-1,
+        0.789_810_521_431_394_407_8_e-1,
+        0.965_095_503_571_527_513_2_e-1,
+        0.124_084_140_972_144_499_3,
+        0.173_717_792_745_460_508_6,
+        0.289_529_654_602_197_261_7,
+    );
+
+    let s = (dd(
+        0.301_029_995_663_981_198_02,
+        -2.803_728_127_785_170_339_e-18,
+    ) * (e as f64))
+        .add_checked(
+            x * dd(
+                0.868_588_963_806_503_633_34,
+                1.143_005_969_409_638_931_1_e-17,
+            ),
+        )
+        .add_checked(x2 * x.0 * t);
+
+    if d.is_infinite() {
+        f64::INFINITY
+    } else if (d < 0.) || d.is_nan() {
+        f64::NAN
+    } else if d == 0. {
+        f64::NEG_INFINITY
     } else {
         s.0 + s.1
     }

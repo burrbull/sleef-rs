@@ -64,9 +64,7 @@ impl Sqrt for Doubled<f64> {
     }
 }
 
-pub trait Round {
-    type Int;
-
+pub trait Round: crate::AssociatedInt {
     fn trunc(self) -> Self;
 
     fn trunci(self) -> Self::Int;
@@ -134,6 +132,7 @@ pub trait SelectSeveral<T>: MaskType {
     fn select4(o0: Self::Mask, o1: Self::Mask, o2: Self::Mask, d0: T, d1: T, d2: T, d3: T) -> Self;
 }
 
+#[allow(clippy::too_many_arguments)]
 pub trait Poly: BaseType + MulAdd
 where
     Self: Sized + Copy,

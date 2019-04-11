@@ -743,8 +743,8 @@ macro_rules! impl_math_f32_u35 {
             {
                 let o = d.lt(F32x::splat(f32::MIN_POSITIVE));
                 d = o.select(d * (F1_32X * F1_32X), d);
-                let mut e = vilogb2k_vi2_vf(d * F32x::splat(1. / 0.75));
-                m = vldexp3_vf_vf_vi2(d, -e);
+                let mut e = ilogb2kf(d * F32x::splat(1. / 0.75));
+                m = ldexp3kf(d, -e);
                 e = o.select(e - I32x::splat(64), e);
                 F32x::from_cast(e)
             }/* else {
@@ -850,8 +850,8 @@ macro_rules! impl_math_f32_u35 {
             /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
                 let s = d;
             }*/
-            let e = vilogbk_vi2_vf(d.abs()) + I32x::splat(1);
-            d = vldexp2_vf_vf_vi2(d, -e);
+            let e = ilogbkf(d.abs()) + I32x::splat(1);
+            d = ldexp2kf(d, -e);
 
             let t = F32x::from_cast(e) + F32x::splat(6144.);
             let qu = (t * F32x::splat(1. / 3.)).trunci();
@@ -863,7 +863,7 @@ macro_rules! impl_math_f32_u35 {
             q = re
                 .eq(I32x::splat(2))
                 .select(F32x::splat(1.587_401_051_968_199_474_751_705_6), q);
-            q = vldexp2_vf_vf_vi2(q, qu - I32x::splat(2048));
+            q = ldexp2kf(q, qu - I32x::splat(2048));
 
             q = q.mul_sign(d);
             d = d.abs();
@@ -1017,7 +1017,7 @@ macro_rules! impl_math_f32_u35 {
                 .mul_add(s, F32x::splat(0.693_147_182_5))
                 .mul_add(s, F32x::splat(0.1_e+1));
 
-            u = vldexp2_vf_vf_vi2(u, q);
+            u = ldexp2kf(u, q);
 
             u = d.ge(F32x::splat(128.)).select(F32x::INFINITY, u);
             F32x::from_bits(!U32x::from_bits(d.lt(F32x::splat(-150.))) & U32x::from_bits(u))
@@ -1053,7 +1053,7 @@ macro_rules! impl_math_f32_u35 {
                 .mul_add(s, F32x::splat(0.230_258_512_5_e+1))
                 .mul_add(s, F32x::splat(0.1_e+1));
 
-            u = vldexp2_vf_vf_vi2(u, q);
+            u = ldexp2kf(u, q);
 
             u = d
                 .gt(F32x::splat(38.531_839_419_103_623_894_138_7))
@@ -1066,8 +1066,8 @@ macro_rules! impl_math_f32_u35 {
             {
                 let o = d.lt(F32x::splat(f32::MIN_POSITIVE));
                 d = o.select(d * (F1_32X * F1_32X), d);
-                let e = vilogb2k_vi2_vf(d * F32x::splat(1./0.75));
-                (vldexp3_vf_vf_vi2(d, -e), o.select(e - I32x::splat(64), e))
+                let e = ilogb2kf(d * F32x::splat(1./0.75));
+                (ldexp3kf(d, -e), o.select(e - I32x::splat(64), e))
             /*} else {
                 let e = vgetexp_vf_vf(d * F32x::splat(1./0.75));
                 (vgetmant_vf_vf(d), e.eq(F32x::INFINITY).select(F32x::splat(128.), e))
@@ -1080,7 +1080,7 @@ macro_rules! impl_math_f32_u35 {
                 .mul_add(x2, F32x::splat(0.576_479_017_7))
                 .mul_add(x2, F32x::splat(0.961_801_290_512));
 
-            let r = //if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")
+            //if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")
             {
                 let mut r = (x2 * x).mul_add(t, x.mul_add(F32x::splat(2.885_390_043_258_666_992_2), F32x::from_cast(e)));
 
@@ -1092,9 +1092,7 @@ macro_rules! impl_math_f32_u35 {
 
                 vfixup_vf_vf_vf_vi2_i(r, d, I32::splat((4 << (2*4)) | (3 << (4*4)) | (5 << (5*4)) | (2 << (6*4))), 0)
             */
-            };
-
-            r
+            }
         }
 
         #[test]

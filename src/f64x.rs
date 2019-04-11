@@ -52,6 +52,201 @@ macro_rules! impl_math_f64 {
             type Mask = M64x;
         }
 
+        impl crate::AssociatedInt for F64x {
+            type Int = Ix;
+        }
+
+        impl crate::Sleef for F64x {
+            #[inline]
+            fn sin(self) -> Self {
+                u35::sin(self)
+            }
+            #[inline]
+            fn cos(self) -> Self {
+                u35::cos(self)
+            }
+            #[inline]
+            fn sin_cos(self) -> (Self, Self) {
+                u35::sincos(self)
+            }
+            #[inline]
+            fn tan(self) -> Self {
+                u35::tan(self)
+            }
+            #[inline]
+            fn asin(self) -> Self {
+                u35::asin(self)
+            }
+            #[inline]
+            fn acos(self) -> Self {
+                u35::acos(self)
+            }
+            #[inline]
+            fn atan(self) -> Self {
+                u35::atan(self)
+            }
+            #[inline]
+            fn atan2(self, other: Self) -> Self {
+                u35::atan2(self, other)
+            }
+            #[inline]
+            fn ln(self) -> Self {
+                u35::log(self)
+            }
+            #[inline]
+            fn cbrt(self) -> Self {
+                u35::cbrt(self)
+            }
+            #[inline]
+            fn exp(self) -> Self {
+                u10::exp(self)
+            }
+            #[inline]
+            fn pow(self, other: Self) -> Self {
+                u10::pow(self, other)
+            }
+            #[inline]
+            fn sinh(self) -> Self {
+                u10::sinh(self)
+            }
+            #[inline]
+            fn cosh(self) -> Self {
+                u10::cosh(self)
+            }
+            #[inline]
+            fn tanh(self) -> Self {
+                u10::tanh(self)
+            }
+            #[inline]
+            fn asinh(self) -> Self {
+                u10::asinh(self)
+            }
+            #[inline]
+            fn acosh(self) -> Self {
+                u10::acosh(self)
+            }
+            #[inline]
+            fn atanh(self) -> Self {
+                u10::atanh(self)
+            }
+            #[inline]
+            fn exp2(self) -> Self {
+                u10::exp2(self)
+            }
+            #[inline]
+            fn exp10(self) -> Self {
+                u10::exp10(self)
+            }
+            #[inline]
+            fn exp_m1(self) -> Self {
+                u10::expm1(self)
+            }
+            #[inline]
+            fn log10(self) -> Self {
+                u10::log10(self)
+            }
+            #[inline]
+            fn log2(self) -> Self {
+                u10::log2(self)
+            }
+            #[inline]
+            fn log_1p(self) -> Self {
+                u10::log1p(self)
+            }
+            #[inline]
+            fn ldexp(self, other: Self::Int) -> Self {
+                ldexp(self, other)
+            }
+            #[inline]
+            fn ilogb(self) -> Self::Int {
+                ilogb(self)
+            }
+            #[inline]
+            fn fma(self, y: Self, z: Self) -> Self {
+                fma(self, y, z)
+            }
+            #[inline]
+            fn sqrt(self) -> Self {
+                sqrt(self)
+            }
+            #[inline]
+            fn abs(self) -> Self {
+                fabs(self)
+            }
+            #[inline]
+            fn copy_sign(self, other: Self) -> Self {
+                copysign(self, other)
+            }
+            #[inline]
+            fn max(self, other: Self) -> Self {
+                fmax(self, other)
+            }
+            #[inline]
+            fn min(self, other: Self) -> Self {
+                fmin(self, other)
+            }
+            #[inline]
+            fn fdim(self, other: Self) -> Self {
+                fdim(self, other)
+            }
+            #[inline]
+            fn truncate(self) -> Self {
+                trunc(self)
+            }
+            #[inline]
+            fn round(self) -> Self {
+                rint(self)
+            }
+            #[inline]
+            fn next_after(self, other: Self) -> Self {
+                nextafter(self, other)
+            }
+            #[inline]
+            fn frfrexp(self) -> Self {
+                frfrexp(self)
+            }
+            #[inline]
+            fn expfrexp(self) -> Self::Int {
+                expfrexp(self)
+            }
+            #[inline]
+            fn fmod(self, other: Self) -> Self {
+                fmod(self, other)
+            }
+            #[inline]
+            fn modf(self) -> (Self, Self) {
+                modf(self)
+            }
+            #[inline]
+            fn sin_cos_pi(self) -> (Self, Self) {
+                u35::sincospi(self)
+            }
+            #[inline]
+            fn sin_pi(self) -> Self {
+                u05::sinpi(self)
+            }
+            #[inline]
+            fn cos_pi(self) -> Self {
+                u05::cospi(self)
+            }
+            #[inline]
+            fn hypot(self, other: Self) -> Self {
+                u35::hypot(self, other)
+            }
+            #[inline]
+            fn lgamma(self) -> Self {
+                u10::lgamma(self)
+            }
+            #[inline]
+            fn erf(self) -> Self {
+                u10::erf(self)
+            }
+            #[inline]
+            fn erfc(self) -> Self {
+                u15::erfc(self)
+            }
+        }
+
         const ZERO: F64x = F64x::splat(0.);
         const NEG_ZERO: F64x = F64x::splat(-0.);
         const ONE: F64x = F64x::splat(1.);
@@ -77,8 +272,8 @@ macro_rules! impl_math_f64 {
         const PI_B2: F64x = F64x::splat(1.224_646_799_147_353_207_2_e-16);
         const TRIGRANGEMAX2: F64x = F64x::splat(15.);
 
-        const SLEEF_FP_ILOGB0: F64x = F64x::splat(-2_147_483_648 as f64);
-        const SLEEF_FP_ILOGBNAN: F64x = F64x::splat(2_147_483_647 as f64);
+        const SLEEF_FP_ILOGB0: F64x = F64x::splat(-2_147_483_648.);
+        const SLEEF_FP_ILOGBNAN: F64x = F64x::splat(2_147_483_647.);
         const SQRT_DBL_MAX: F64x = F64x::splat(1.340_780_792_994_259_635_5_e+154);
         const M_2_PI_H: F64x = F64x::splat(0.636_619_772_367_581_382_43);
         const M_2_PI_L: F64x = F64x::splat(-3.935_735_335_036_497_176_4_e-17);
@@ -208,8 +403,7 @@ macro_rules! impl_math_f64 {
             for i in 0..L {
                 ar[i] = ptr[vi.extract(i) as usize];
             }
-            let r: F64x = unsafe{core::mem::transmute(ar)};
-            r
+            unsafe{core::mem::transmute(ar)}
         }
 
         #[inline]
@@ -225,7 +419,6 @@ macro_rules! impl_math_f64 {
         }
 
         impl Round for F64x {
-            type Int = Ix;
             #[inline]
             fn trunc(self) -> Self {
                 Self::from_cast(self.trunci())
@@ -372,8 +565,7 @@ macro_rules! impl_math_f64 {
                 a[i*2] = 0;
                 a[i*2+1] = q.extract(i);
             }
-            let r: I64x = unsafe {core::mem::transmute(a)};
-            r
+            unsafe {core::mem::transmute(a)}
         }
 
         #[inline]
@@ -382,13 +574,13 @@ macro_rules! impl_math_f64 {
         }
 
         #[inline]
-        fn vpow2i_vd_vi(q: Ix) -> F64x {
+        fn pow2i(q: Ix) -> F64x {
             let q = Ix::splat(0x3ff) + q;
             let r = cast_into_upper(q);
             F64x::from_bits(r << 20)
         }
         #[inline]
-        fn vldexp_vd_vd_vi(x: F64x, q: Ix) -> F64x {
+        fn ldexpk(x: F64x, q: Ix) -> F64x {
             let mut m = q >> 31;
             m = (((m + q) >> 9) - m) << 7;
             let q = q - (m << 2);
@@ -397,14 +589,14 @@ macro_rules! impl_math_f64 {
             m = m.gt(Ix::splat(0x7ff)).select(Ix::splat(0x7ff), m);
             let r = cast_into_upper(m);
             let y = F64x::from_bits(r << 20);
-            x * y * y * y * y * vpow2i_vd_vi(q)
+            x * y * y * y * y * pow2i(q)
         }
         #[inline]
-        fn vldexp2_vd_vd_vi(d: F64x, e: Ix) -> F64x {
-            d * vpow2i_vd_vi(e >> 1) * vpow2i_vd_vi(e - (e >> 1))
+        fn ldexp2k(d: F64x, e: Ix) -> F64x {
+            d * pow2i(e >> 1) * pow2i(e - (e >> 1))
         }
         #[inline]
-        fn vldexp3_vd_vd_vi(d: F64x, q: Ix) -> F64x {
+        fn ldexp3k(d: F64x, q: Ix) -> F64x {
             F64x::from_bits(I64x::from_bits(d) + (cast_into_upper(q) << 20))
         }
 
@@ -413,7 +605,7 @@ macro_rules! impl_math_f64 {
             not(feature = "enable_avx512fnofma")
         ))]*/
         #[inline]
-        fn vilogbk_vi_vd(mut d: F64x) -> Ix {
+        fn ilogbk(mut d: F64x) -> Ix {
             let o = d.lt(F64x::splat(4.909_093_465_297_726_6_e-91));
             d = o.select(F64x::splat(2.037_035_976_334_486_e90) * d, d);
             let mut q = cast_from_upper(U64x::from_bits(d));
@@ -426,7 +618,7 @@ macro_rules! impl_math_f64 {
             not(feature = "enable_avx512fnofma")
         ))]*/
         #[inline]
-        fn vilogb2k_vi_vd(d: F64x) -> Ix {
+        fn ilogb2k(d: F64x) -> Ix {
             let mut q = cast_from_upper(U64x::from_bits(d));
             q = Ix::from_bits(Ux::from_bits(q) >> 20);
             q &= Ix::splat(0x7ff);
@@ -443,11 +635,11 @@ macro_rules! impl_math_f64 {
         }
 
         pub fn ldexp(x: F64x, q: Ix) -> F64x {
-            vldexp_vd_vd_vi(x, q)
+            ldexpk(x, q)
         }
 
         pub fn ilogb(d: F64x) -> Ix {
-            let mut e = F64x::from_cast(vilogbk_vi_vd(d.abs()));
+            let mut e = F64x::from_cast(ilogbk(d.abs()));
             e = d
                 .eq(ZERO)
                 .select(SLEEF_FP_ILOGB0, e);
@@ -484,14 +676,14 @@ macro_rules! impl_math_f64 {
         }
         #[inline]
         fn rempi(mut a: F64x) -> (Doubled<F64x>, Ix) {
-            let mut ex = vilogb2k_vi_vd(a);
+            let mut ex = ilogb2k(a);
             /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
                 ex = !(ex >> 31) & ex;
                 ex = ex & Ix::splat(1023);
             }*/
             ex -= Ix::splat(55);
             let mut q = Ix::from_bits(ex.gt(Ix::splat(700 - 55))) & Ix::splat(-64);
-            a = vldexp3_vd_vd_vi(a, q);
+            a = ldexp3k(a, q);
             ex = !(ex >> 31) & ex;
             ex <<= 2;
             let mut x = a.mul_as_doubled(vgather_vd_p_vi(&crate::tables::REMPITABDP, ex));
@@ -662,7 +854,7 @@ macro_rules! impl_math_f64 {
 
             M64x::from_cast(q.eq(Ix::splat(0))).select(
                 u,
-                vldexp2_vd_vd_vi(u + ONE, q) - ONE,
+                ldexp2k(u + ONE, q) - ONE,
             )
         }
         #[inline]
@@ -673,8 +865,8 @@ macro_rules! impl_math_f64 {
                 /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
                     let o = d.lt(F64x::splat(f64::MIN_POSITIVE));
                     d = o.select(d * (D1_32X * D1_32X), d);
-                    let mut e = vilogb2k_vi_vd(d * F64x::splat(1. / 0.75));
-                    m = vldexp3_vd_vd_vi(d, -e);
+                    let mut e = ilogb2k(d * F64x::splat(1. / 0.75));
+                    m = ldexp3k(d, -e);
                     e = Mx::from_cast(o).select(e - Ix::splat(64), e);
                     Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17))
                         * F64x::from_cast(e)
@@ -743,7 +935,7 @@ macro_rules! impl_math_f64 {
             t = t.add_checked(s.square() * u);
 
             u = t.0 + t.1;
-            u = vldexp2_vd_vd_vi(u, q);
+            u = ldexp2k(u, q);
 
             F64x::from_bits(
                 !U64x::from_bits(d.0.lt(F64x::splat(-1000.))) &
@@ -780,8 +972,8 @@ macro_rules! impl_math_f64 {
             t = ONE.add_checked(t * s);
             t = t.add_checked(s4 * u);
 
-            t.0 = vldexp2_vd_vd_vi(t.0, q);
-            t.1 = vldexp2_vd_vd_vi(t.1, q);
+            t.0 = ldexp2k(t.0, q);
+            t.1 = ldexp2k(t.1, q);
 
             t.0 = F64x::from_bits(
                 !U64x::from_bits(d.0.lt(F64x::splat(-1000.))) &
@@ -796,9 +988,9 @@ macro_rules! impl_math_f64 {
 
         #[inline]
         fn logk2(d: Doubled<F64x>) -> Doubled<F64x> {
-            let e = vilogbk_vi_vd(d.0 * F64x::splat(1. / 0.75));
+            let e = ilogbk(d.0 * F64x::splat(1. / 0.75));
 
-            let m = Doubled::new(vldexp2_vd_vd_vi(d.0, -e), vldexp2_vd_vd_vi(d.1, -e));
+            let m = Doubled::new(ldexp2k(d.0, -e), ldexp2k(d.1, -e));
 
             let x = (m + F64x::splat(-1.)) / (m + ONE);
             let x2 = x.square();

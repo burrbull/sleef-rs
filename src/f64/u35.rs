@@ -652,7 +652,7 @@ pub fn exp2(d: f64) -> f64 {
         .mul_add(s, 0.693_147_180_559_945_286_2)
         .mul_add(s, 0.1_e+1);
 
-    u = ldexp2k(u, q as isize);
+    u = ldexp2k(u, q as i32);
 
     if d < -2000. {
         0.
@@ -682,7 +682,7 @@ pub fn exp10(d: f64) -> f64 {
         .mul_add(s, 0.230_258_509_299_404_590_1_e+1)
         .mul_add(s, 0.1_e+1);
 
-    u = ldexp2k(u, q as isize);
+    u = ldexp2k(u, q as i32);
 
     if d < -350. {
         0.

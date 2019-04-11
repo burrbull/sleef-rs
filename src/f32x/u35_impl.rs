@@ -530,7 +530,6 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn sincospif(d: F32x) -> (F32x, F32x) {
             let u = d * F32x::splat(4.);
             let q = u.trunci();
@@ -584,7 +583,6 @@ macro_rules! impl_math_f32_u35 {
             (rsin, rcos)
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn atanf(d: F32x) -> F32x {
             let q = vsel_vi2_vf_vi2(d, I32x::splat(2));
             let s = d.abs();
@@ -644,7 +642,6 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn atan2f(y: F32x, x: F32x) -> F32x {
             let mut r = atan2kf(y.abs(), x);
 
@@ -666,7 +663,6 @@ macro_rules! impl_math_f32_u35 {
             F32x::from_bits(U32x::from_bits(x.is_nan() | y.is_nan()) | U32x::from_bits(r.mul_sign(y)))
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn asinf(d: F32x) -> F32x {
             let o = d.abs().lt(HALF);
             let x2 = o.select(d * d, (ONE - d.abs()) * HALF);
@@ -698,7 +694,6 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn acosf(d: F32x) -> F32x {
             let o = d.abs().lt(HALF);
             let x2 = o.select(d * d, (ONE - d.abs()) * HALF);
@@ -741,7 +736,6 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn logf(mut d: F32x) -> F32x {
             let m: F32x;
 
@@ -850,7 +844,6 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn cbrtf(mut d: F32x) -> F32x {
             let mut q = ONE;
 
@@ -910,7 +903,6 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn sinhf(x: F32x) -> F32x {
             let e = expm1fk(x.abs());
             let mut y = (e + F32x::splat(2.)) / (e + ONE);
@@ -936,7 +928,6 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn coshf(x: F32x) -> F32x {
             let e = u10::expf(x.abs());
             let mut y = HALF.mul_add(e, HALF / e);
@@ -960,7 +951,6 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn tanhf(x: F32x) -> F32x {
             let d = expm1fk(F32x::splat(2.) * x.abs());
             let mut y = d / (F32x::splat(2.) + d);
@@ -985,7 +975,6 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn hypotf(x: F32x, y: F32x) -> F32x {
             let x = x.abs();
             let y = y.abs();

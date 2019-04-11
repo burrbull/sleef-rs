@@ -305,7 +305,7 @@ macro_rules! impl_math_f64_u10 {
                 F64x::splat(-0.166_666_666_666_666_657_414_808).add_checked_as_doubled(u * s.0) * s,
             );
 
-            u = t.mul_as_f(x);
+            let u = t.mul_as_f(x);
 
             F64x::from_bits(
                 (U64x::from_bits(M64x::from_cast((ql & Ix::splat(2)).eq(Ix::splat(0))))
@@ -932,7 +932,6 @@ macro_rules! impl_math_f64_u10 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn log(mut d: F64x) -> F64x {
             let m: F64x;
             let mut s =
@@ -992,7 +991,6 @@ macro_rules! impl_math_f64_u10 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn pow(x: F64x, y: F64x) -> F64x {
             if true {
                 let yisint = y.is_integer();
@@ -1048,7 +1046,6 @@ macro_rules! impl_math_f64_u10 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn sinh(x: F64x) -> F64x {
             let mut y = x.abs();
             let mut d = expk2(Doubled::new(y, ZERO));
@@ -1071,7 +1068,6 @@ macro_rules! impl_math_f64_u10 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn cosh(x: F64x) -> F64x {
             let mut y = x.abs();
             let mut d = expk2(Doubled::new(y, ZERO));
@@ -1093,7 +1089,6 @@ macro_rules! impl_math_f64_u10 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn tanh(x: F64x) -> F64x {
             let mut y = x.abs();
             let mut d = expk2(Doubled::new(y, ZERO));
@@ -1117,7 +1112,6 @@ macro_rules! impl_math_f64_u10 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn asinh(x: F64x) -> F64x {
             let mut y = x.abs();
             let o = y.gt(ONE);
@@ -1146,7 +1140,6 @@ macro_rules! impl_math_f64_u10 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn acosh(x: F64x) -> F64x {
             let d = logk2(x.add_as_doubled(ONE).sqrt() * x.add_as_doubled(F64x::splat(-1.)).sqrt() + x);
             let mut y = d.0 + d.1;
@@ -1169,7 +1162,6 @@ macro_rules! impl_math_f64_u10 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn atanh(x: F64x) -> F64x {
             let mut y = x.abs();
             let d = logk2(ONE.add_as_doubled(y) / ONE.add_as_doubled(-y));
@@ -1194,7 +1186,6 @@ macro_rules! impl_math_f64_u10 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn cbrt(mut d: F64x) -> F64x {
             let mut q2 = Doubled::from((1., 0.));
 
@@ -1352,7 +1343,6 @@ macro_rules! impl_math_f64_u10 {
             F64x::from_bits(!U64x::from_bits(d.lt(F64x::splat(-350.))) & U64x::from_bits(u))
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn expm1(a: F64x) -> F64x {
             let d = expk2(Doubled::new(a, ZERO)) + F64x::splat(-1.);
             let mut x = d.0 + d.1;
@@ -1376,7 +1366,6 @@ macro_rules! impl_math_f64_u10 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn log10(mut d: F64x) -> F64x {
             let m: F64x;
 
@@ -1445,7 +1434,6 @@ macro_rules! impl_math_f64_u10 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn log2(mut d: F64x) -> F64x {
             let m: F64x;
             let ef =
@@ -1508,7 +1496,6 @@ macro_rules! impl_math_f64_u10 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn log1p(d: F64x) -> F64x {
             let m: F64x;
 
@@ -1557,7 +1544,6 @@ macro_rules! impl_math_f64_u10 {
             d.is_neg_zero().select(NEG_ZERO, r)
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn tgamma(a: F64x) -> F64x {
             let (da, db) = gammak(a);
             let y = expk2(da) * db;
@@ -1572,7 +1558,6 @@ macro_rules! impl_math_f64_u10 {
             o.select(F64x::INFINITY.mul_sign(a), r)
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn lgamma(a: F64x) -> F64x {
             let (da, db) = gammak(a);
             let y = da + logk2(db.abs());
@@ -1583,7 +1568,6 @@ macro_rules! impl_math_f64_u10 {
         }
 
         /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
-        #[cfg(not(feature = "deterministic"))]
         pub fn erf(a: F64x) -> F64x {
             let s = a;
 

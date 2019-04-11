@@ -434,7 +434,6 @@ macro_rules! impl_math_f64_u35 {
             (rsin, rcos)
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn sincospi(d: F64x) -> (F64x, F64x) {
             let u = d * F64x::splat(4.);
             let mut q = u.trunci();
@@ -585,7 +584,7 @@ macro_rules! impl_math_f64_u35 {
                 }
             }
 
-            x = x * F64x::splat(0.5);
+            let x = s * F64x::splat(0.5);
             let s = x * x;
 
             let s2 = s * s;
@@ -604,7 +603,7 @@ macro_rules! impl_math_f64_u35 {
             u = s.mul_add(u * x, x);
 
             let y = u.mul_add(u, -ONE);
-            x = u * F64x::splat(-2.);
+            let x = u * F64x::splat(-2.);
 
             let o = M64x::from_cast((ql & Ix::splat(1)).eq(Ix::splat(1)));
             u = o.select(-y, x) / o.select(x, y);
@@ -751,7 +750,6 @@ macro_rules! impl_math_f64_u35 {
             t
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn log(mut d: F64x) -> F64x {
             let m: F64x;
 
@@ -800,7 +798,6 @@ macro_rules! impl_math_f64_u35 {
             }*/
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn sinh(x: F64x) -> F64x {
             let e = expm1k(x.abs());
 
@@ -812,7 +809,6 @@ macro_rules! impl_math_f64_u35 {
             F64x::from_bits(U64x::from_bits(x.is_nan()) | U64x::from_bits(y))
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn cosh(x: F64x) -> F64x {
             let e = u10::exp(x.abs());
             let mut y = HALF.mul_add(e, HALF / e);
@@ -821,7 +817,6 @@ macro_rules! impl_math_f64_u35 {
             F64x::from_bits(U64x::from_bits(x.is_nan()) | U64x::from_bits(y))
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn tanh(x: F64x) -> F64x {
             let d = expm1k(F64x::splat(2.) * x.abs());
             let mut y = d / (F64x::splat(2.) + d);
@@ -831,7 +826,6 @@ macro_rules! impl_math_f64_u35 {
             F64x::from_bits(U64x::from_bits(x.is_nan()) | U64x::from_bits(y))
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn cbrt(mut d: F64x) -> F64x {
             let mut q = ONE;
             /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
@@ -877,12 +871,10 @@ macro_rules! impl_math_f64_u35 {
             y
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn sqrt(d: F64x) -> F64x {
             return u05::sqrt(d);
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn hypot(x: F64x, y: F64x) -> F64x {
             let x = x.abs();
             let y = y.abs();

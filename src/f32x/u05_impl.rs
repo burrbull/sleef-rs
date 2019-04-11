@@ -2,7 +2,6 @@ macro_rules! impl_math_f32_u05 {
     () => {
         use super::*;
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn sincospif(d: F32x) -> (F32x, F32x) {
             let u = d * F32x::splat(4.);
             let q = u.trunci();
@@ -119,7 +118,6 @@ macro_rules! impl_math_f32_u05 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn hypotf(x: F32x, y: F32x) -> F32x {
             let x = x.abs();
             let y = y.abs();
@@ -156,7 +154,6 @@ macro_rules! impl_math_f32_u05 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn sinpif(d: F32x) -> F32x {
             let x = sinpifk(d);
             let mut r = x.0 + x.1;
@@ -166,7 +163,6 @@ macro_rules! impl_math_f32_u05 {
             F32x::from_bits(U32x::from_bits(d.is_infinite()) | U32x::from_bits(r))
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn cospif(d: F32x) -> F32x {
             let x = cospifk(d);
             let r = x.0 + x.1;

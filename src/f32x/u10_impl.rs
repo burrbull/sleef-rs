@@ -644,7 +644,6 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn expf(d: F32x) -> F32x {
             let q = (d * R_LN2_F).roundi();
 
@@ -677,7 +676,6 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn cbrtf(mut d: F32x) -> F32x {
             let mut q2 = Doubled::from((1., 0.));
 
@@ -756,7 +754,6 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn logf(mut d: F32x) -> F32x {
             let m: F32x;
 
@@ -813,7 +810,6 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn powf(x: F32x, y: F32x) -> F32x {
             if true {
                 let yisint = y.trunc().eq(y) | y.abs().gt(F1_24X);
@@ -874,7 +870,6 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn sinhf(x: F32x) -> F32x {
             let mut y = x.abs();
             let d = expk2f(Doubled::new(y, ZERO));
@@ -897,7 +892,6 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn coshf(x: F32x) -> F32x {
             let mut y = x.abs();
             let d = expk2f(Doubled::new(y, ZERO));
@@ -919,7 +913,6 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn tanhf(x: F32x) -> F32x {
             let mut y = x.abs();
             let d = expk2f(Doubled::new(y, ZERO));
@@ -943,7 +936,6 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn asinhf(x: F32x) -> F32x {
             let mut y = x.abs();
             let o = y.gt(ONE);
@@ -973,7 +965,6 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn acoshf(x: F32x) -> F32x {
             let d = logk2f(
                 x.add_as_doubled(ONE).sqrt() * x.add_as_doubled(F32x::splat(-1.)).sqrt() + x,
@@ -999,7 +990,6 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn atanhf(x: F32x) -> F32x {
             let mut y = x.abs();
             let d = logk2f(ONE.add_as_doubled(y) / ONE.add_as_doubled(-y));
@@ -1024,7 +1014,6 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn exp10f(d: F32x) -> F32x {
             let mut u = (d * LOG10_2_F).round();
             let q = u.roundi();
@@ -1053,7 +1042,6 @@ macro_rules! impl_math_f32_u10 {
             F32x::from_bits(!U32x::from_bits(d.lt(F32x::splat(-50.))) & U32x::from_bits(u))
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn expm1f(a: F32x) -> F32x {
             let d = expk2f(Doubled::new(a, ZERO)) + F32x::splat(-1.);
             let mut x = d.0 + d.1;
@@ -1066,7 +1054,6 @@ macro_rules! impl_math_f32_u10 {
             a.is_neg_zero().select(NEG_ZERO, x)
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn log10f(mut d: F32x) -> F32x {
             let m: F32x;
 
@@ -1111,7 +1098,6 @@ macro_rules! impl_math_f32_u10 {
             }*/
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn log2f(mut d: F32x) -> F32x {
             let m: F32x;
 
@@ -1167,7 +1153,6 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn tgammaf(a: F32x) -> F32x {
             let (da, db) = gammafk(a);
             let y = expk2f(da) * db;
@@ -1184,7 +1169,6 @@ macro_rules! impl_math_f32_u10 {
             o.select(F32x::INFINITY, a).mul_sign(r)
         }
 
-        #[cfg(not(feature = "deterministic"))]
         pub fn lgammaf(a: F32x) -> F32x {
             let (da, db) = gammafk(a);
             let y = da + logk2f(db.abs());
@@ -1196,7 +1180,6 @@ macro_rules! impl_math_f32_u10 {
         }
 
         /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
-        #[cfg(not(feature = "deterministic"))]
         pub fn erff(a: F32x) -> F32x {
             let s = a;
 

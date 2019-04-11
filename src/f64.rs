@@ -88,7 +88,7 @@ fn test_libm_f_f(fun_fx: fn(f64) -> f64, fun_f: fn(f64) -> f64, mn: f64, mx: f64
         }
         let diff = (expected.to_bits() as i64).wrapping_sub(output.to_bits() as i64) as f64;
         #[cfg(not(feature = "std"))]
-        assert!(libm::fabsf(diff) <= 1. + ulp); // WARN!!!
+        assert!(libm::fabs(diff) <= 1. + ulp); // WARN!!!
         #[cfg(feature = "std")]
         assert!(
             diff.abs() <= 1. + ulp,
@@ -120,7 +120,7 @@ fn test_libm_f_ff(
         let diff1 = (expected1.to_bits() as i64).wrapping_sub(output1.to_bits() as i64) as f64;
         let diff2 = (expected2.to_bits() as i64).wrapping_sub(output2.to_bits() as i64) as f64;
         #[cfg(not(feature = "std"))]
-        assert!(libm::fabsf(diff1) <= 1. + ulp && libm::fabsf(diff2) <= 1. + ulp); // WARN!!!
+        assert!(libm::fabs(diff1) <= 1. + ulp && libm::fabs(diff2) <= 1. + ulp); // WARN!!!
         #[cfg(feature = "std")]
         assert!(
             diff1.abs() <= 1. + ulp && diff2.abs() <= 1. + ulp,
@@ -152,7 +152,7 @@ fn test_libm_ff_f(
         }
         let diff = (expected.to_bits() as i64).wrapping_sub(output.to_bits() as i64) as f64;
         #[cfg(not(feature = "std"))]
-        assert!(libm::fabsf(diff) <= 1. + ulp); // WARN!!!
+        assert!(libm::fabs(diff) <= 1. + ulp); // WARN!!!
         #[cfg(feature = "std")]
         assert!(
             diff.abs() <= 1. + ulp,

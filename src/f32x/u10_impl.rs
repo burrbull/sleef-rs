@@ -886,8 +886,8 @@ macro_rules! impl_math_f32_u10 {
             test_libm_f_f(
                 sinhf,
                 if cfg!(feature="std") { f32::sinh } else { libm::sinhf },
-                -89.,
-                89.,
+                -88.,
+                88.,
                 1.
             );
         }
@@ -907,8 +907,8 @@ macro_rules! impl_math_f32_u10 {
             test_libm_f_f(
                 coshf,
                 if cfg!(feature="std") { f32::cosh } else { libm::coshf },
-                -89.,
-                89.,
+                -88.,
+                88.,
                 1.
             );
         }

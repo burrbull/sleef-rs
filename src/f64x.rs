@@ -1016,12 +1016,17 @@ macro_rules! impl_math_f64 {
 
         #[inline]
         const fn splat2i(i0: i32, i1: i32) -> I64x {
-            I64x::splat(((i1 as i64) << 32) + (i0 as i64))
+            I64x::splat(((i0 as i64) << 32) + (i1 as i64))
         }
 
         #[inline]
-        const fn splat2u(i0: u32, i1: u32) -> I64x {
-            I64x::splat((((i1 as u64) << 32) + (i0 as u64)) as i64)
+        const fn splat2u(u0: u32, u1: u32) -> I64x {
+            I64x::splat((((u0 as u64) << 32) + (u1 as u64)) as i64)
+        }
+
+        #[inline]
+        const fn splat2uu(u0: u32, u1: u32) -> U64x {
+            U64x::splat(((u0 as u64) << 32) + (u1 as u64))
         }
 
         #[inline]
@@ -1130,7 +1135,7 @@ macro_rules! impl_math_f64 {
             t += vrev21_vi2_vi2(splat2i(0, 1) & I64x::from_bits(t.eq(splat2i(-1, 0))));
             xi2 = I64x::from_bits(c.select(F64x::from_bits(t), F64x::from_bits(xi2)));
 
-            xi2 -= I64x::from_cast(U64x::from_bits(x.ne(y)) & U64x::from_u32((0, 1)));
+            xi2 -= I64x::from_cast(U64x::from_bits(x.ne(y)) & splat2uu(0, 1));
 
             xi2 = I64x::from_bits(x.ne(y).select(
                 F64x::from_bits(
@@ -1162,8 +1167,8 @@ macro_rules! impl_math_f64 {
                 .select(x * D1_63X, x);
 
             let mut xm = U64x::from_bits(x);
-            xm &= U64x::from_u32((!0x_7ff0_0000, !0));
-            xm |= U64x::from_u32((0x_3fe0_0000, 0));
+            xm &= splat2uu(!0x_7ff0_0000, !0);
+            xm |= splat2uu(0x_3fe0_0000, 0);
 
             let ret = F64x::from_bits(xm);
 
@@ -1270,7 +1275,7 @@ macro_rules! impl_math_f64 {
                 let q =
                     ((de + de).gt(r.0) & r.0.ge(de)).select(ONE, vtoward0(r.0) * rde);
                 let q = F64x::from_bits(
-                    U64x::from_bits(vptrunc(q)) & U64x::from_u32((0x_ffff_ffff, 0x_ffff_fffe)),
+                    U64x::from_bits(vptrunc(q)) & splat2uu(0x_ffff_ffff, 0x_ffff_fffe),
                 );
                 r = (r + q.mul_as_doubled(-de)).normalize();
                 if r.0.lt(de).all() {

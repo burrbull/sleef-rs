@@ -1062,8 +1062,8 @@ macro_rules! impl_math_f64_u10 {
             test_libm_f_f(
                 sinh,
                 if cfg!(feature="std") { f64::sinh } else { libm::sinh },
-                -710.,
-                710.,
+                -709.,
+                709.,
                 1.
             );
         }
@@ -1083,8 +1083,8 @@ macro_rules! impl_math_f64_u10 {
             test_libm_f_f(
                 cosh,
                 if cfg!(feature="std") { f64::cosh } else { libm::cosh },
-                -710.,
-                710.,
+                -709.,
+                709.,
                 1.
             );
         }

@@ -79,6 +79,17 @@ pub fn sinf(d: f32) -> f32 {
     }
 }
 
+#[test]
+fn test_sinf() {
+    test_libm_f_f(
+        sinf,
+        if cfg!(feature="std") { f32::sin } else { libm::sinf },
+        f32::MIN,
+        f32::MAX,
+        1.
+    );
+}
+
 /// Cosine function
 ///
 /// This function evaluates the cosine function of a value in ***a***.
@@ -192,6 +203,17 @@ pub fn sincosf(d: f32) -> (f32, f32) {
     }
 
     (rsin, rcos)
+}
+
+#[test]
+fn test_sincosf() {
+    test_libm_f_ff(
+        sincosf,
+        if cfg!(feature="std") { f32::sin_cos } else { libm::sincosf },
+        f32::MIN,
+        f32::MAX,
+        1.
+    );
 }
 
 /// Tangent function
@@ -705,6 +727,17 @@ pub fn powf(x: f32, y: f32) -> f32 {
     } else {
         result
     }
+}
+
+#[test]
+fn test_powf() {
+    test_libm_ff_f(
+        powf,
+        if cfg!(feature="std") { f32::powf } else { libm::powf },
+        f32::MIN,
+        f32::MAX,
+        1.
+    );
 }
 
 /// Hyperbolic sine function

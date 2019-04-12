@@ -273,6 +273,17 @@ pub fn sin(d: f64) -> f64 {
     }
 }
 
+#[test]
+fn test_sin() {
+    test_libm_f_f(
+        sin,
+        if cfg!(feature="std") { f64::sin } else { libm::sin },
+        f64::MIN,
+        f64::MAX,
+        1.
+    );
+}
+
 pub fn cos(d: f64) -> f64 {
     let mut s: Doubled<f64>;
     let ql: isize;
@@ -419,6 +430,17 @@ pub fn sincos(d: f64) -> (f64, f64) {
     }
 
     (rsin, rcos)
+}
+
+#[test]
+fn test_sincos() {
+    test_libm_f_ff(
+        sincos,
+        if cfg!(feature="std") { f64::sin_cos } else { libm::sincos },
+        f64::MIN,
+        f64::MAX,
+        1.
+    );
 }
 
 pub fn tan(d: f64) -> f64 {
@@ -958,6 +980,17 @@ pub fn pow(x: f64, y: f64) -> f64 {
     } else {
         result
     }
+}
+
+#[test]
+fn test_pow() {
+    test_libm_ff_f(
+        pow,
+        if cfg!(feature="std") { f64::powf } else { libm::pow },
+        f64::MIN,
+        f64::MAX,
+        1.
+    );
 }
 
 pub fn sinh(x: f64) -> f64 {

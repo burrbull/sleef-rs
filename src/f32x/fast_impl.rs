@@ -30,6 +30,7 @@ macro_rules! impl_math_f32_fast {
             u
         }
 
+        /*
         #[test]
         fn test_sinf() {
             test_f_f(
@@ -44,6 +45,7 @@ macro_rules! impl_math_f32_fast {
                 3500.,
             );
         }
+        */
 
         pub fn cosf(mut d: F32x) -> F32x {
             let t = d;

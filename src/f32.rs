@@ -34,7 +34,7 @@ const R_LN2_F: f32 =
 const LOG10_2_F: f32 = 3.321_928_094_887_362_347_870_319_429_489_390_175_864_831_393;
 
 #[inline]
-pub const fn df(h: f32, l: f32) -> Doubled<f32> {
+const fn df(h: f32, l: f32) -> Doubled<f32> {
     Doubled::new(h, l)
 }
 
@@ -57,13 +57,16 @@ fn test_f_f(fun_fx: fn(f32) -> f32, fun_f: fn(f32) -> f32, mn: f32, mx: f32, ulp
         }
         let diff = (expected.to_bits() as i32).wrapping_sub(output.to_bits() as i32) as f32;
         #[cfg(not(feature = "std"))]
-        assert!(libm::fabsf(diff) <= 1. + ulp); // WARN!!!
+        assert!(libm::fabsf(diff) <= ulp);
         #[cfg(feature = "std")]
         assert!(
-            diff.abs() <= 1. + ulp,
+            diff.abs() <= ulp,
             format!(
-                "Input: {:e}, Output: {}, Expected: {}",
-                input, output, expected
+                "Input: {:e}, Output: {}, Expected: {}, ULP: {}",
+                input,
+                output,
+                expected,
+                diff.abs()
             )
         );
     }
@@ -89,13 +92,19 @@ fn test_f_ff(
         let diff1 = (expected1.to_bits() as i32).wrapping_sub(output1.to_bits() as i32) as f32;
         let diff2 = (expected2.to_bits() as i32).wrapping_sub(output2.to_bits() as i32) as f32;
         #[cfg(not(feature = "std"))]
-        assert!(libm::fabsf(diff1) <= 1. + ulp && libm::fabsf(diff2) <= 1. + ulp); // WARN!!!
+        assert!(libm::fabsf(diff1) <= ulp && libm::fabsf(diff2) <= ulp);
         #[cfg(feature = "std")]
         assert!(
-            diff1.abs() <= 1. + ulp && diff2.abs() <= 1. + ulp,
+            diff1.abs() <= ulp && diff2.abs() <= ulp,
             format!(
-                "Input: {:e}, Output: ({}, {}), Expected: ({}, {})",
-                input, output1, output2, expected1, expected2
+                "Input: {:e}, Output: ({}, {}), Expected: ({}, {}), ULP: ({}, {})",
+                input,
+                output1,
+                output2,
+                expected1,
+                expected2,
+                diff1.abs(),
+                diff2.abs(),
             )
         );
     }
@@ -121,23 +130,24 @@ fn test_ff_f(
         }
         let diff = (expected.to_bits() as i32).wrapping_sub(output.to_bits() as i32) as f32;
         #[cfg(not(feature = "std"))]
-        assert!(libm::fabsf(diff) <= 1. + ulp); // WARN!!!
+        assert!(libm::fabsf(diff) <= ulp);
         #[cfg(feature = "std")]
         assert!(
-            diff.abs() <= 1. + ulp,
+            diff.abs() <= ulp,
             format!(
-                "Input: ({:e}, {:e}), Output: {}, Expected: {}",
-                input1, input2, output, expected
+                "Input: ({:e}, {:e}), Output: {}, Expected: {}, ULP: {}",
+                input1,
+                input2,
+                output,
+                expected,
+                diff.abs()
             )
         );
     }
 }
 
-impl crate::AssociatedInt for f32 {
-    type Int = i32;
-}
-
 impl crate::Sleef for f32 {
+    type Int = i32;
     #[inline]
     fn sin(self) -> Self {
         u35::sinf(self)

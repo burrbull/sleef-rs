@@ -63,7 +63,7 @@ const PI_B2: f64 = 1.224_646_799_147_353_207_2_e-16;
 const TRIGRANGEMAX2: f64 = 15.;
 
 #[inline]
-pub const fn dd(h: f64, l: f64) -> Doubled<f64> {
+const fn dd(h: f64, l: f64) -> Doubled<f64> {
     Doubled::new(h, l)
 }
 
@@ -85,13 +85,16 @@ fn test_f_f(fun_fx: fn(f64) -> f64, fun_f: fn(f64) -> f64, mn: f64, mx: f64, ulp
         }
         let diff = (expected.to_bits() as i64).wrapping_sub(output.to_bits() as i64) as f64;
         #[cfg(not(feature = "std"))]
-        assert!(libm::fabs(diff) <= 1. + ulp); // WARN!!!
+        assert!(libm::fabs(diff) <= ulp);
         #[cfg(feature = "std")]
         assert!(
-            diff.abs() <= 1. + ulp,
+            diff.abs() <= ulp,
             format!(
-                "Input: {:e}, Output: {}, Expected: {}",
-                input, output, expected
+                "Input: {:e}, Output: {}, Expected: {}, ULP: {}",
+                input,
+                output,
+                expected,
+                diff.abs()
             )
         );
     }
@@ -117,13 +120,19 @@ fn test_f_ff(
         let diff1 = (expected1.to_bits() as i64).wrapping_sub(output1.to_bits() as i64) as f64;
         let diff2 = (expected2.to_bits() as i64).wrapping_sub(output2.to_bits() as i64) as f64;
         #[cfg(not(feature = "std"))]
-        assert!(libm::fabs(diff1) <= 1. + ulp && libm::fabs(diff2) <= 1. + ulp); // WARN!!!
+        assert!(libm::fabs(diff1) <= ulp && libm::fabs(diff2) <= ulp);
         #[cfg(feature = "std")]
         assert!(
-            diff1.abs() <= 1. + ulp && diff2.abs() <= 1. + ulp,
+            diff1.abs() <= ulp && diff2.abs() <= ulp,
             format!(
-                "Input: {:e}, Output: ({}, {}), Expected: ({}, {})",
-                input, output1, output2, expected1, expected2
+                "Input: {:e}, Output: ({}, {}), Expected: ({}, {}), Expected: ({}, {})",
+                input,
+                output1,
+                output2,
+                expected1,
+                expected2,
+                diff1.abs(),
+                diff2.abs()
             )
         );
     }
@@ -149,23 +158,24 @@ fn test_ff_f(
         }
         let diff = (expected.to_bits() as i64).wrapping_sub(output.to_bits() as i64) as f64;
         #[cfg(not(feature = "std"))]
-        assert!(libm::fabs(diff) <= 1. + ulp); // WARN!!!
+        assert!(libm::fabs(diff) <= ulp);
         #[cfg(feature = "std")]
         assert!(
-            diff.abs() <= 1. + ulp,
+            diff.abs() <= ulp,
             format!(
-                "Input: ({:e}, {:e}), Output: {}, Expected: {}",
-                input1, input2, output, expected
+                "Input: ({:e}, {:e}), Output: {}, Expected: {}, ULP: {}",
+                input1,
+                input2,
+                output,
+                expected,
+                diff.abs()
             )
         );
     }
 }
 
-impl crate::AssociatedInt for f64 {
-    type Int = i32;
-}
-
 impl crate::Sleef for f64 {
+    type Int = i32;
     #[inline]
     fn sin(self) -> Self {
         u35::sin(self)

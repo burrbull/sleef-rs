@@ -64,7 +64,8 @@ impl Sqrt for Doubled<f64> {
     }
 }
 
-pub trait Round: crate::AssociatedInt {
+pub trait Round {
+    type Int;
     fn trunc(self) -> Self;
 
     fn trunci(self) -> Self::Int;

@@ -11,7 +11,9 @@
 mod common;
 mod tables;
 
+/// Math functions for `f32`
 pub mod f32;
+/// Math functions for `f64`
 pub mod f64;
 
 #[macro_use]
@@ -19,12 +21,14 @@ mod f32x;
 #[macro_use]
 mod f64x;
 
+/// Math functions for `f32x2`
 pub mod f32x2 {
     use packed_simd::*;
 
     impl_math_f32!(2);
 }
 
+/// Math functions for `f32x4`
 pub mod f32x4 {
     use packed_simd::*;
 
@@ -35,6 +39,7 @@ pub mod f32x4 {
     impl_math_f32!(4);
 }
 
+/// Math functions for `f32x8`
 pub mod f32x8 {
     use packed_simd::*;
     // AVX2
@@ -43,12 +48,14 @@ pub mod f32x8 {
     //impl_math_f32!(f32x8, u32x8, m32x8, i32x8s);
 }
 
+/// Math functions for `f32x16`
 pub mod f32x16 {
     use packed_simd::*;
     // AVX512
     impl_math_f32!(16);
 }
 
+/// Math functions for `f64x2`
 pub mod f64x2 {
     use packed_simd::*;
 
@@ -58,6 +65,7 @@ pub mod f64x2 {
     impl_math_f64!(2, u32, i32, m32);
 }
 
+/// Math functions for `f64x4`
 pub mod f64x4 {
     use packed_simd::*;
 
@@ -67,6 +75,7 @@ pub mod f64x4 {
     //impl_mathf32!(f64x4, u64x4, m64x4, i64x4s, u32x4, m32x4, i32x4);
 }
 
+/// Math functions for `f64x8`
 pub mod f64x8 {
     use packed_simd::*;
 
@@ -82,11 +91,8 @@ const TEST_REPEAT: usize = 1_000;
 #[cfg(not(feature = "fasttest"))]
 const TEST_REPEAT: usize = 100_000;
 
-pub trait AssociatedInt {
+pub trait Sleef: Sized {
     type Int;
-}
-
-pub trait Sleef: Sized + AssociatedInt {
     fn sin(self) -> Self;
     fn cos(self) -> Self;
     fn sin_cos(self) -> (Self, Self);

@@ -277,10 +277,14 @@ pub fn sin(d: f64) -> f64 {
 fn test_sin() {
     test_f_f(
         sin,
-        if cfg!(feature="std") { f64::sin } else { libm::sin },
+        if cfg!(feature = "std") {
+            f64::sin
+        } else {
+            libm::sin
+        },
         f64::MIN,
         f64::MAX,
-        1.
+        1.,
     );
 }
 
@@ -436,10 +440,14 @@ pub fn sincos(d: f64) -> (f64, f64) {
 fn test_sincos() {
     test_f_ff(
         sincos,
-        if cfg!(feature="std") { f64::sin_cos } else { libm::sincos },
+        if cfg!(feature = "std") {
+            f64::sin_cos
+        } else {
+            libm::sincos
+        },
         f64::MIN,
         f64::MAX,
-        1.
+        1.,
     );
 }
 
@@ -986,10 +994,14 @@ pub fn pow(x: f64, y: f64) -> f64 {
 fn test_pow() {
     test_ff_f(
         pow,
-        if cfg!(feature="std") { f64::powf } else { libm::pow },
+        if cfg!(feature = "std") {
+            f64::powf
+        } else {
+            libm::pow
+        },
         f64::MIN,
         f64::MAX,
-        1.
+        1.,
     );
 }
 

@@ -663,6 +663,17 @@ macro_rules! impl_math_f32_u35 {
             F32x::from_bits(U32x::from_bits(x.is_nan() | y.is_nan()) | U32x::from_bits(r.mul_sign(y)))
         }
 
+        #[test]
+        fn test_atan2f() {
+            test_ff_f(
+                atan2f,
+                if cfg!(feature="std") { f32::atan2 } else { libm::atan2f },
+                f32::MIN,
+                f32::MAX,
+                3.5
+            );
+        }
+
         pub fn asinf(d: F32x) -> F32x {
             let o = d.abs().lt(HALF);
             let x2 = o.select(d * d, (ONE - d.abs()) * HALF);
@@ -688,8 +699,8 @@ macro_rules! impl_math_f32_u35 {
                 } else {
                     libm::asinf
                 },
-                f32::MIN,
-                f32::MAX,
+                -1.,
+                1.,
                 3.5,
             );
         }
@@ -730,8 +741,8 @@ macro_rules! impl_math_f32_u35 {
                 } else {
                     libm::acosf
                 },
-                f32::MIN,
-                f32::MAX,
+                -1.,
+                1.,
                 3.5,
             );
         }
@@ -922,8 +933,8 @@ macro_rules! impl_math_f32_u35 {
                 } else {
                     libm::sinhf
                 },
-                f32::MIN,
-                f32::MAX,
+                -88.,
+                88.,
                 3.5,
             );
         }
@@ -945,8 +956,8 @@ macro_rules! impl_math_f32_u35 {
                 } else {
                     libm::coshf
                 },
-                f32::MIN,
-                f32::MAX,
+                -88.,
+                88.,
                 3.5,
             );
         }
@@ -969,8 +980,8 @@ macro_rules! impl_math_f32_u35 {
                 } else {
                     libm::tanhf
                 },
-                f32::MIN,
-                f32::MAX,
+                -8.7,
+                8.7,
                 3.5,
             );
         }

@@ -29,22 +29,22 @@ macro_rules! impl_math_f32_fast {
 
             u
         }
-        /*
-                #[test]
-                fn test_sinf() {
-                    test_libm_f_f(
-                        sinf,
-                        if cfg!(feature = "std") {
-                            f32::sin
-                        } else {
-                            libm::sinf
-                        },
-                        -30.,
-                        30.,
-                        3500.,
-                    );
-                }
-        */
+
+        #[test]
+        fn test_sinf() {
+            test_f_f(
+                sinf,
+                if cfg!(feature = "std") {
+                    f32::sin
+                } else {
+                    libm::sinf
+                },
+                -30.,
+                30.,
+                3500.,
+            );
+        }
+
         pub fn cosf(mut d: F32x) -> F32x {
             let t = d;
 
@@ -72,22 +72,22 @@ macro_rules! impl_math_f32_fast {
 
             u
         }
-        /*
-                #[test]
-                fn test_cosf() {
-                    test_libm_f_f(
-                        cosf,
-                        if cfg!(feature = "std") {
-                            f32::cos
-                        } else {
-                            libm::cosf
-                        },
-                        -30.,
-                        30.,
-                        3500.,
-                    );
-                }
-        */
+
+        /*#[test]
+        fn test_cosf() {
+            test_f_f(
+                cosf,
+                if cfg!(feature = "std") {
+                    f32::cos
+                } else {
+                    libm::cosf
+                },
+                -30.,
+                30.,
+                3500.,
+            );
+        }*/
+
         pub fn powf(x: F32x, y: F32x) -> F32x {
             let mut result = expk3f(logk3f(x.abs()) * y);
             let yisint = y.trunc().eq(y) | y.abs().gt(F1_24X);
@@ -100,9 +100,9 @@ macro_rules! impl_math_f32_fast {
             y.eq(ZERO).select(ONE, result)
         }
 
-        #[test]
+        /*#[test]
         fn test_powf() {
-            test_libm_ff_f(
+            test_ff_f(
                 powf,
                 if cfg!(feature = "std") {
                     f32::powf
@@ -113,6 +113,6 @@ macro_rules! impl_math_f32_fast {
                 f32::MAX,
                 3500.,
             );
-        }
+        }*/
     };
 }

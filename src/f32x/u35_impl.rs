@@ -116,7 +116,7 @@ macro_rules! impl_math_f32_u35 {
 
         #[test]
         fn test_sinf() {
-            test_libm_f_f(
+            test_f_f(
                 sinf,
                 if cfg!(feature = "std") {
                     f32::sin
@@ -245,7 +245,7 @@ macro_rules! impl_math_f32_u35 {
 
         #[test]
         fn test_cosf() {
-            test_libm_f_f(
+            test_f_f(
                 cosf,
                 if cfg!(feature = "std") {
                     f32::cos
@@ -378,7 +378,7 @@ macro_rules! impl_math_f32_u35 {
 
         #[test]
         fn test_tanf() {
-            test_libm_f_f(
+            test_f_f(
                 tanf,
                 if cfg!(feature = "std") {
                     f32::tan
@@ -517,7 +517,7 @@ macro_rules! impl_math_f32_u35 {
 
         #[test]
         fn test_sincosf() {
-            test_libm_f_ff(
+            test_f_ff(
                 sincosf,
                 if cfg!(feature = "std") {
                     f32::sin_cos
@@ -629,7 +629,7 @@ macro_rules! impl_math_f32_u35 {
 
         #[test]
         fn test_atanf() {
-            test_libm_f_f(
+            test_f_f(
                 atanf,
                 if cfg!(feature = "std") {
                     f32::atan
@@ -681,7 +681,7 @@ macro_rules! impl_math_f32_u35 {
 
         #[test]
         fn test_asinf() {
-            test_libm_f_f(
+            test_f_f(
                 asinf,
                 if cfg!(feature = "std") {
                     f32::asin
@@ -723,7 +723,7 @@ macro_rules! impl_math_f32_u35 {
 
         #[test]
         fn test_acosf() {
-            test_libm_f_f(
+            test_f_f(
                 acosf,
                 if cfg!(feature = "std") {
                     f32::acos
@@ -775,7 +775,7 @@ macro_rules! impl_math_f32_u35 {
 
         #[test]
         fn test_logf() {
-            test_libm_f_f(
+            test_f_f(
                 logf,
                 if cfg!(feature = "std") {
                     f32::ln
@@ -831,7 +831,7 @@ macro_rules! impl_math_f32_u35 {
 
         #[test]
         fn test_sqrtf() {
-            test_libm_f_f(
+            test_f_f(
                 sqrtf,
                 if cfg!(feature = "std") {
                     f32::sqrt
@@ -890,7 +890,7 @@ macro_rules! impl_math_f32_u35 {
 
         #[test]
         fn test_cbrtf() {
-            test_libm_f_f(
+            test_f_f(
                 cbrtf,
                 if cfg!(feature = "std") {
                     f32::cbrt
@@ -915,7 +915,7 @@ macro_rules! impl_math_f32_u35 {
 
         #[test]
         fn test_sinhf() {
-            test_libm_f_f(
+            test_f_f(
                 sinhf,
                 if cfg!(feature = "std") {
                     f32::sinh
@@ -938,7 +938,7 @@ macro_rules! impl_math_f32_u35 {
 
         #[test]
         fn test_coshf() {
-            test_libm_f_f(
+            test_f_f(
                 coshf,
                 if cfg!(feature = "std") {
                     f32::cosh
@@ -962,7 +962,7 @@ macro_rules! impl_math_f32_u35 {
 
         #[test]
         fn test_tanhf() {
-            test_libm_f_f(
+            test_f_f(
                 tanhf,
                 if cfg!(feature = "std") {
                     f32::tanh
@@ -990,7 +990,7 @@ macro_rules! impl_math_f32_u35 {
 
         #[test]
         fn test_hypotf() {
-            test_libm_ff_f(
+            test_ff_f(
                 hypotf,
                 if cfg!(feature = "std") {
                     f32::hypot
@@ -1025,7 +1025,7 @@ macro_rules! impl_math_f32_u35 {
 
         #[test]
         fn test_exp2f() {
-            test_libm_f_f(
+            test_f_f(
                 exp2f,
                 if cfg!(feature = "std") {
                     f32::exp2
@@ -1097,7 +1097,7 @@ macro_rules! impl_math_f32_u35 {
 
         #[test]
         fn test_log2f() {
-            test_libm_f_f(
+            test_f_f(
                 log2f,
                 if cfg!(feature = "std") {
                     f32::log2

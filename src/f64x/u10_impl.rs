@@ -153,7 +153,7 @@ macro_rules! impl_math_f64_u10 {
 
         #[test]
         fn test_sin() {
-            test_libm_f_f(
+            test_f_f(
                 sin,
                 if cfg!(feature="std") { f64::sin } else { libm::sin },
                 f64::MIN,
@@ -316,7 +316,7 @@ macro_rules! impl_math_f64_u10 {
 
         #[test]
         fn test_cos() {
-            test_libm_f_f(
+            test_f_f(
                 cos,
                 if cfg!(feature="std") { f64::cos } else { libm::cos },
                 f64::MIN,
@@ -486,7 +486,7 @@ macro_rules! impl_math_f64_u10 {
 
         #[test]
         fn test_sincos() {
-            test_libm_f_ff(
+            test_f_ff(
                 sincos,
                 if cfg!(feature="std") { f64::sin_cos } else { libm::sincos },
                 f64::MIN,
@@ -628,7 +628,7 @@ macro_rules! impl_math_f64_u10 {
 
         #[test]
         fn test_tan() {
-            test_libm_f_f(
+            test_f_f(
                 tan,
                 if cfg!(feature="std") { f64::tan } else { libm::tan },
                 f64::MIN,
@@ -716,7 +716,7 @@ macro_rules! impl_math_f64_u10 {
 
         #[test]
         fn test_atan2() {
-            test_libm_ff_f(
+            test_ff_f(
                 atan2,
                 if cfg!(feature="std") { f64::atan2 } else { libm::atan2 },
                 f64::MIN,
@@ -764,7 +764,7 @@ macro_rules! impl_math_f64_u10 {
 
         #[test]
         fn test_asin() {
-            test_libm_f_f(
+            test_f_f(
                 asin,
                 if cfg!(feature="std") { f64::asin } else { libm::asin },
                 -1.,
@@ -818,7 +818,7 @@ macro_rules! impl_math_f64_u10 {
 
         #[test]
         fn test_acos() {
-            test_libm_f_f(
+            test_f_f(
                 acos,
                 if cfg!(feature="std") { f64::acos } else { libm::acos },
                 -1.,
@@ -838,7 +838,7 @@ macro_rules! impl_math_f64_u10 {
 
         #[test]
         fn test_atan() {
-            test_libm_f_f(
+            test_f_f(
                 atan,
                 if cfg!(feature="std") { f64::atan } else { libm::atan },
                 f64::MIN,
@@ -923,7 +923,7 @@ macro_rules! impl_math_f64_u10 {
 
         #[test]
         fn test_exp() {
-            test_libm_f_f(
+            test_f_f(
                 exp,
                 if cfg!(feature="std") { f64::exp } else { libm::exp },
                 -1000.,
@@ -982,7 +982,7 @@ macro_rules! impl_math_f64_u10 {
 
         #[test]
         fn test_log() {
-            test_libm_f_f(
+            test_f_f(
                 log,
                 if cfg!(feature="std") { f64::ln } else { libm::log },
                 0.,
@@ -994,7 +994,7 @@ macro_rules! impl_math_f64_u10 {
         pub fn pow(x: F64x, y: F64x) -> F64x {
             if true {
                 let yisint = y.is_integer();
-                let yisodd = visodd_vo_vd(y) & yisint;
+                let yisodd = y.is_odd() & yisint;
 
                 let d = logk(x.abs()) * y;
                 let mut result = expk(d);
@@ -1037,7 +1037,7 @@ macro_rules! impl_math_f64_u10 {
 
         #[test]
         fn test_pow() {
-            test_libm_ff_f(
+            test_ff_f(
                 pow,
                 if cfg!(feature="std") { f64::powf } else { libm::pow },
                 f64::MIN,
@@ -1059,7 +1059,7 @@ macro_rules! impl_math_f64_u10 {
 
         #[test]
         fn test_sinh() {
-            test_libm_f_f(
+            test_f_f(
                 sinh,
                 if cfg!(feature="std") { f64::sinh } else { libm::sinh },
                 -709.,
@@ -1080,7 +1080,7 @@ macro_rules! impl_math_f64_u10 {
 
         #[test]
         fn test_cosh() {
-            test_libm_f_f(
+            test_f_f(
                 cosh,
                 if cfg!(feature="std") { f64::cosh } else { libm::cosh },
                 -709.,
@@ -1103,7 +1103,7 @@ macro_rules! impl_math_f64_u10 {
 
         #[test]
         fn test_tanh() {
-            test_libm_f_f(
+            test_f_f(
                 tanh,
                 if cfg!(feature="std") { f64::tanh } else { libm::tanh },
                 -19.,
@@ -1131,7 +1131,7 @@ macro_rules! impl_math_f64_u10 {
 
         #[test]
         fn test_asinh() {
-            test_libm_f_f(
+            test_f_f(
                 asinh,
                 if cfg!(feature="std") { f64::asinh } else { libm::asinh },
                 -1.35_e+154,
@@ -1153,7 +1153,7 @@ macro_rules! impl_math_f64_u10 {
 
         #[test]
         fn test_acosh() {
-            test_libm_f_f(
+            test_f_f(
                 acosh,
                 if cfg!(feature="std") { f64::acosh } else { libm::acosh },
                 -1.35_e+154,
@@ -1177,7 +1177,7 @@ macro_rules! impl_math_f64_u10 {
 
         #[test]
         fn test_atanh() {
-            test_libm_f_f(
+            test_f_f(
                 atanh,
                 if cfg!(feature="std") { f64::atanh } else { libm::atanh },
                 f64::MIN,
@@ -1255,7 +1255,7 @@ macro_rules! impl_math_f64_u10 {
 
         #[test]
         fn test_cbrt() {
-            test_libm_f_f(
+            test_f_f(
                 cbrt,
                 if cfg!(feature="std") { f64::cbrt } else { libm::cbrt },
                 f64::MIN,
@@ -1301,7 +1301,7 @@ macro_rules! impl_math_f64_u10 {
 
         #[test]
         fn test_exp2() {
-            test_libm_f_f(
+            test_f_f(
                 exp2,
                 if cfg!(feature="std") { f64::exp2 } else { libm::exp2 },
                 -2000.,
@@ -1357,7 +1357,7 @@ macro_rules! impl_math_f64_u10 {
 
         #[test]
         fn test_expm1() {
-            test_libm_f_f(
+            test_f_f(
                 expm1,
                 if cfg!(feature="std") { f64::exp_m1 } else { libm::expm1 },
                 -37.,
@@ -1425,7 +1425,7 @@ macro_rules! impl_math_f64_u10 {
 
         #[test]
         fn test_log10() {
-            test_libm_f_f(
+            test_f_f(
                 log10,
                 if cfg!(feature="std") { f64::log10 } else { libm::log10 },
                 0.,
@@ -1487,7 +1487,7 @@ macro_rules! impl_math_f64_u10 {
 
         #[test]
         fn test_log2() {
-            test_libm_f_f(
+            test_f_f(
                 log2,
                 if cfg!(feature="std") { f64::log2 } else { libm::log2 },
                 0.,

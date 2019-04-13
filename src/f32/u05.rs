@@ -68,7 +68,7 @@ pub fn sincospif(d: f32) -> (f32, f32) {
         );
 
     x *= t;
-    let mut rsin = if xisnegzerof(d) { -0. } else { x.0 + x.1 };
+    let mut rsin = if d.is_neg_zero() { -0. } else { x.0 + x.1 };
 
     let u = (-0.243_061_180_1_e-7_f32)
         .mul_add(s, 0.359_057_708_e-5)
@@ -155,7 +155,7 @@ pub fn sinpif(d: f32) -> f32 {
         f32::NAN
     } else if fabsfk(d) > TRIGRANGEMAX4_F {
         0.
-    } else if xisnegzerof(d) {
+    } else if d.is_neg_zero() {
         -0.
     } else {
         x.0 + x.1

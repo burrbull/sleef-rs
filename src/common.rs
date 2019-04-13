@@ -111,7 +111,11 @@ pub trait IsInt: MaskType {
     fn is_integer(self) -> Self::Mask;
 }
 
-pub trait NegZero: MaskType + BitsType {
+pub trait IsOdd: MaskType {
+    fn is_odd(self) -> Self::Mask;
+}
+
+pub trait IsNegZero: MaskType {
     fn is_neg_zero(self) -> Self::Mask;
 }
 

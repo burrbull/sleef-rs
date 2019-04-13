@@ -308,7 +308,7 @@ macro_rules! impl_math_f32 {
         }
 
         #[cfg(test)]
-        fn test_libm_f_f(fun_fx: fn(F32x) -> F32x, fun_f: fn(f32) -> f32, mn: f32, mx: f32, ulp: f32) {
+        fn test_f_f(fun_fx: fn(F32x) -> F32x, fun_f: fn(f32) -> f32, mn: f32, mx: f32, ulp: f32) {
             use rand::Rng;
             let mut rng = rand::thread_rng();
             for _ in 0..crate::TEST_REPEAT {
@@ -341,7 +341,7 @@ macro_rules! impl_math_f32 {
         }
 
         #[cfg(test)]
-        fn test_libm_f_ff(
+        fn test_f_ff(
             fun_fx: fn(F32x) -> (F32x, F32x),
             fun_f: fn(f32) -> (f32, f32),
             mn: f32,
@@ -383,7 +383,7 @@ macro_rules! impl_math_f32 {
         }
 
         #[cfg(test)]
-        fn test_libm_ff_f(
+        fn test_ff_f(
             fun_fx: fn(F32x, F32x) -> (F32x),
             fun_f: fn(f32, f32) -> f32,
             mn: f32,
@@ -595,10 +595,10 @@ macro_rules! impl_math_f32 {
             }
         }
 
-        impl NegZero for F32x {
+        impl IsNegZero for F32x where Self: BitsType {
             #[inline]
             fn is_neg_zero(self) -> Self::Mask {
-                Self::Bits::from_bits(self).eq(Self::Bits::from_bits(NEG_ZERO))
+                <Self as BitsType>::Bits::from_bits(self).eq(<Self as BitsType>::Bits::from_bits(NEG_ZERO))
             }
         }
 
@@ -631,8 +631,6 @@ macro_rules! impl_math_f32 {
             q &= I32x::splat(0xff);
             q - I32x::splat(0x7f)
         }
-
-        //
 
         pub fn ilogbf(d: F32x) -> I32x {
             let mut e = ilogbkf(d.abs());
@@ -1053,22 +1051,23 @@ macro_rules! impl_math_f32 {
             */
             I32x::splat(0)
         }
-        #[inline]
-        fn vtoward0f(x: F32x) -> F32x {
-            let t = F32x::from_bits(I32x::from_bits(x) - I32x::splat(1));
-            x.eq(ZERO).select(ZERO, t)
-        }
-        #[inline]
-        fn vptruncf(x: F32x) -> F32x {
-            if cfg!(feature = "full_fp_rounding") {
-                x.trunc()
-            } else {
-                let fr = x - F32x::from_cast(x.trunci());
-                x.abs().ge(F1_23X).select(x, x - fr)
-            }
-        }
 
         pub fn fmodf(x: F32x, y: F32x) -> F32x {
+            #[inline]
+            fn toward0(x: F32x) -> F32x {
+                let t = F32x::from_bits(I32x::from_bits(x) - I32x::splat(1));
+                x.eq(ZERO).select(ZERO, t)
+            }
+            #[inline]
+            fn trunc_positive(x: F32x) -> F32x {
+                if cfg!(feature = "full_fp_rounding") {
+                    x.trunc()
+                } else {
+                    let fr = x - F32x::from_cast(x.trunci());
+                    x.abs().ge(F1_23X).select(x, x - fr)
+                }
+            }
+
             let nu = x.abs();
             let de = y.abs();
             let s = ONE;
@@ -1076,17 +1075,17 @@ macro_rules! impl_math_f32 {
             let nu = o.select(nu * F1_25X, nu);
             let de = o.select(de * F1_25X, de);
             let s = o.select(s * (ONE / F1_25X), s);
-            let rde = vtoward0f(de.recpre());
+            let rde = toward0(de.recpre());
             #[cfg(any(feature = "enable_neon32", feature = "enable_neon32vfpv4"))]
             {
-                let rde = vtoward0f(rde);
+                let rde = toward0(rde);
             }
             let mut r = Doubled::new(nu, ZERO);
 
             for _ in 0..8 {
                 // ceil(log2(FLT_MAX) / 22)+1
-                let q = ((de + de).gt(r.0) & r.0.ge(de)).select(ONE, vtoward0f(r.0) * rde);
-                r = (r + vptruncf(q).mul_as_doubled(-de)).normalize();
+                let q = ((de + de).gt(r.0) & r.0.ge(de)).select(ONE, toward0(r.0) * rde);
+                r = (r + trunc_positive(q).mul_as_doubled(-de)).normalize();
                 if r.0.lt(de).all() {
                     break;
                 }

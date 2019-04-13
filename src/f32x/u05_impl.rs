@@ -105,7 +105,7 @@ macro_rules! impl_math_f32_u05 {
 
         #[test]
         fn test_sqrtf() {
-            test_libm_f_f(
+            test_f_f(
                 sqrtf,
                 if cfg!(feature = "std") {
                     f32::sqrt
@@ -141,7 +141,7 @@ macro_rules! impl_math_f32_u05 {
 
         #[test]
         fn test_hypotf() {
-            test_libm_ff_f(
+            test_ff_f(
                 hypotf,
                 if cfg!(feature = "std") {
                     f32::hypot

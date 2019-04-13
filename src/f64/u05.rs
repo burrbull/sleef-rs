@@ -31,7 +31,7 @@ pub fn sincospi(d: f64) -> (f64, f64) {
         );
 
     x *= t;
-    let mut rsin = if xisnegzero(d) { -0. } else { x.0 + x.1 };
+    let mut rsin = if d.is_neg_zero() { -0. } else { x.0 + x.1 };
 
     //
 
@@ -85,7 +85,7 @@ pub fn sinpi(d: f64) -> f64 {
         f64::NAN
     } else if fabsk(d) > TRIGRANGEMAX3 / 4. {
         0.
-    } else if xisnegzero(d) {
+    } else if d.is_neg_zero() {
         -0.
     } else {
         x.0 + x.1

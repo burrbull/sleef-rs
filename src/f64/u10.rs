@@ -264,7 +264,7 @@ pub fn sin(d: f64) -> f64 {
 
     let u = t.mul_as_f(x);
 
-    if xisnegzero(d) {
+    if d.is_neg_zero() {
         d
     } else if (ql & 1) != 0 {
         -u
@@ -275,7 +275,7 @@ pub fn sin(d: f64) -> f64 {
 
 #[test]
 fn test_sin() {
-    test_libm_f_f(
+    test_f_f(
         sin,
         if cfg!(feature="std") { f64::sin } else { libm::sin },
         f64::MIN,
@@ -406,7 +406,7 @@ pub fn sincos(d: f64) -> (f64, f64) {
         * t.0;
 
     let x = t.add_checked(u);
-    let mut rsin = if xisnegzero(d) { -0. } else { x.0 + x.1 };
+    let mut rsin = if d.is_neg_zero() { -0. } else { x.0 + x.1 };
 
     let u = (-1.136_153_502_390_974_295_315_23_e-11_f64)
         .mul_add(s.0, 2.087_574_712_070_400_554_793_66_e-9)
@@ -434,7 +434,7 @@ pub fn sincos(d: f64) -> (f64, f64) {
 
 #[test]
 fn test_sincos() {
-    test_libm_f_ff(
+    test_f_ff(
         sincos,
         if cfg!(feature="std") { f64::sin_cos } else { libm::sincos },
         f64::MIN,
@@ -510,7 +510,7 @@ pub fn tan(d: f64) -> f64 {
 
     x = x / y;
 
-    if xisnegzero(d) {
+    if d.is_neg_zero() {
         d
     } else {
         x.0 + x.1
@@ -628,7 +628,7 @@ pub fn tgamma(a: f64) -> f64 {
     let y = expk2(da) * db;
     let r = y.0 + y.1;
     let r = if (a == f64::NEG_INFINITY)
-        || ((a < 0.) && xisint(a))
+        || ((a < 0.) && a.is_integer())
         || (a.is_finite() && (a < 0.) && r.is_nan())
     {
         f64::NAN
@@ -649,7 +649,7 @@ pub fn lgamma(a: f64) -> f64 {
     let (da, db) = gammak(a);
     let y = da + logk2(db.abs());
     let r = y.0 + y.1;
-    if a.is_infinite() || ((a <= 0.) && xisint(a)) || (a.is_finite() && r.is_nan()) {
+    if a.is_infinite() || ((a <= 0.) && a.is_integer()) || (a.is_finite() && r.is_nan()) {
         f64::INFINITY
     } else {
         r
@@ -932,8 +932,8 @@ pub fn exp(d: f64) -> f64 {
 }
 
 pub fn pow(x: f64, y: f64) -> f64 {
-    let yisint = xisint(y);
-    let yisodd = yisint && xisodd(y);
+    let yisint = y.is_integer();
+    let yisodd = yisint && y.is_odd();
 
     let d = logk(fabsk(x)) * y;
     let mut result = if d.0 > 709.782_711_149_557_429_092_172_174_26 {
@@ -984,7 +984,7 @@ pub fn pow(x: f64, y: f64) -> f64 {
 
 #[test]
 fn test_pow() {
-    test_libm_ff_f(
+    test_ff_f(
         pow,
         if cfg!(feature="std") { f64::powf } else { libm::pow },
         f64::MIN,
@@ -1040,7 +1040,7 @@ pub fn asinh(x: f64) -> f64 {
         y
     };
     y = if x.is_nan() { f64::NAN } else { y };
-    if xisnegzero(x) {
+    if x.is_neg_zero() {
         -0.
     } else {
         y
@@ -1154,7 +1154,7 @@ pub fn exp10(d: f64) -> f64 {
 
 pub fn expm1(a: f64) -> f64 {
     let d = expk2(dd(a, 0.)) + (-1.0);
-    if xisnegzero(a) {
+    if a.is_neg_zero() {
         -0.
     } else if a > 709.782_712_893_383_996_732_223 {
         f64::INFINITY // log(DBL_MAX)
@@ -1255,13 +1255,13 @@ pub fn log1p(d: f64) -> f64 {
         .add_checked(x.scale(2.))
         .add_checked(x2 * x.0 * t);
 
-    if xisnegzero(d) {
-        -0.0
+    if d.is_neg_zero() {
+        -0.
     } else if d == -1. {
         f64::NEG_INFINITY
     } else if (d < -1.) || d.is_nan() {
         f64::NAN
-    } else if d > 1e+307 {
+    } else if d > 1_e307 {
         f64::INFINITY
     } else {
         s.0 + s.1

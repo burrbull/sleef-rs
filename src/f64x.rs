@@ -307,7 +307,7 @@ macro_rules! impl_math_f64 {
         }
 
         #[cfg(test)]
-        fn test_libm_f_f(fun_fx: fn(F64x) -> F64x, fun_f: fn(f64) -> f64, mn: f64, mx: f64, ulp: f64) {
+        fn test_f_f(fun_fx: fn(F64x) -> F64x, fun_f: fn(f64) -> f64, mn: f64, mx: f64, ulp: f64) {
             use rand::Rng;
             let mut rng = rand::thread_rng();
             for _ in 0..crate::TEST_REPEAT {
@@ -334,7 +334,7 @@ macro_rules! impl_math_f64 {
         }
 
         #[cfg(test)]
-        fn test_libm_f_ff(fun_fx: fn(F64x) -> (F64x, F64x), fun_f: fn(f64) -> (f64, f64), mn: f64, mx: f64, ulp: f64) {
+        fn test_f_ff(fun_fx: fn(F64x) -> (F64x, F64x), fun_f: fn(f64) -> (f64, f64), mn: f64, mx: f64, ulp: f64) {
             use rand::Rng;
             let mut rng = rand::thread_rng();
             for _ in 0..crate::TEST_REPEAT {
@@ -363,7 +363,7 @@ macro_rules! impl_math_f64 {
         }
 
         #[cfg(test)]
-        fn test_libm_ff_f(fun_fx: fn(F64x, F64x) -> (F64x), fun_f: fn(f64, f64) -> f64, mn: f64, mx: f64, ulp: f64) {
+        fn test_ff_f(fun_fx: fn(F64x, F64x) -> (F64x), fun_f: fn(f64, f64) -> f64, mn: f64, mx: f64, ulp: f64) {
             use rand::Rng;
             let mut rng = rand::thread_rng();
             for _ in 0..crate::TEST_REPEAT {
@@ -541,10 +541,10 @@ macro_rules! impl_math_f64 {
             }
         }
 
-        impl NegZero for F64x {
+        impl IsNegZero for F64x where Self: BitsType {
             #[inline]
             fn is_neg_zero(self) -> Self::Mask {
-                Self::Bits::from_bits(self).eq(Self::Bits::from_bits(NEG_ZERO))
+                <Self as BitsType>::Bits::from_bits(self).eq(<Self as BitsType>::Bits::from_bits(NEG_ZERO))
             }
         }
 
@@ -625,13 +625,15 @@ macro_rules! impl_math_f64 {
             q - Ix::splat(0x3ff)
         }
 
-        #[inline]
-        fn visodd_vo_vd(d: F64x) -> M64x {
-            let mut x = (d * (ONE / D1_31X)).trunc();
-            x = (-D1_31X).mul_add(x, d);
+        impl IsOdd for F64x {
+            #[inline]
+            fn is_odd(self) -> Self::Mask {
+                let mut x = (self * (ONE / D1_31X)).trunc();
+                x = (-D1_31X).mul_add(x, self);
 
-            M64x::from_cast((x.trunci() & Ix::splat(1)).eq(Ix::splat(1)))
-                & d.abs().lt(D1_53X)
+                M64x::from_cast((x.trunci() & Ix::splat(1)).eq(Ix::splat(1)))
+                    & self.abs().lt(D1_53X)
+            }
         }
 
         pub fn ldexp(x: F64x, q: Ix) -> F64x {
@@ -1234,32 +1236,32 @@ macro_rules! impl_math_f64 {
             u05::sqrt(d)
         }*/
 
-        #[inline]
-        fn vtoward0(x: F64x) -> F64x {
-            // returns nextafter(x, 0)
-            let t = F64x::from_bits(U64x::from_bits(x) + U64x::from_bits(splat2i(-1, -1)));
-            x.eq(ZERO).select(ZERO, t)
-        }
-
-        #[cfg(feature = "full_fp_rounding")]
-        #[inline]
-        fn vptrunc(x: F64x) -> F64x {
-            // round to integer toward 0, positive argument only
-            x.trunc()
-        }
-        #[cfg(not(feature = "full_fp_rounding"))]
-        #[inline]
-        fn vptrunc(x: F64x) -> F64x {
-            let mut fr = (-D1_31X).mul_add(
-                F64x::from_cast((x * (ONE / D1_31X)).trunci()),
-                x,
-            );
-            fr -= F64x::from_cast(fr.trunci());
-            x.abs().ge(D1_52X).select(x, x - fr)
-        }
-
         /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
         pub fn fmod(x: F64x, y: F64x) -> F64x {
+            #[inline]
+            fn toward0(x: F64x) -> F64x {
+                // returns nextafter(x, 0)
+                let t = F64x::from_bits(U64x::from_bits(x) + U64x::from_bits(splat2i(-1, -1)));
+                x.eq(ZERO).select(ZERO, t)
+            }
+
+            #[cfg(feature = "full_fp_rounding")]
+            #[inline]
+            fn trunc_positive(x: F64x) -> F64x {
+                // round to integer toward 0, positive argument only
+                x.trunc()
+            }
+            #[cfg(not(feature = "full_fp_rounding"))]
+            #[inline]
+            fn trunc_positive(x: F64x) -> F64x {
+                let mut fr = (-D1_31X).mul_add(
+                    F64x::from_cast((x * (ONE / D1_31X)).trunci()),
+                    x,
+                );
+                fr -= F64x::from_cast(fr.trunci());
+                x.abs().ge(D1_52X).select(x, x - fr)
+            }
+
             let nu = x.abs();
             let de = y.abs();
             let s = ONE;
@@ -1267,15 +1269,15 @@ macro_rules! impl_math_f64 {
             let nu = o.select(nu * D1_54X, nu);
             let de = o.select(de * D1_54X, de);
             let s = o.select(s * (ONE / D1_54X), s);
-            let rde = vtoward0(de.recpre());
+            let rde = toward0(de.recpre());
             let mut r = Doubled::new(nu, ZERO);
 
             for _ in 0..21 {
                 // ceil(log2(DBL_MAX) / 51) + 1
                 let q =
-                    ((de + de).gt(r.0) & r.0.ge(de)).select(ONE, vtoward0(r.0) * rde);
+                    ((de + de).gt(r.0) & r.0.ge(de)).select(ONE, toward0(r.0) * rde);
                 let q = F64x::from_bits(
-                    U64x::from_bits(vptrunc(q)) & splat2uu(0x_ffff_ffff, 0x_ffff_fffe),
+                    U64x::from_bits(trunc_positive(q)) & splat2uu(0x_ffff_ffff, 0x_ffff_fffe),
                 );
                 r = (r + q.mul_as_doubled(-de)).normalize();
                 if r.0.lt(de).all() {

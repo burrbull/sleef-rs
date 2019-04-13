@@ -109,7 +109,7 @@ macro_rules! impl_math_f32_u10 {
 
         #[test]
         fn test_sinf() {
-            test_libm_f_f(
+            test_f_f(
                 sinf,
                 if cfg!(feature="std") { f32::sin } else { libm::sinf },
                 f32::MIN,
@@ -227,7 +227,7 @@ macro_rules! impl_math_f32_u10 {
 
         #[test]
         fn test_cosf() {
-            test_libm_f_f(
+            test_f_f(
                 cosf,
                 if cfg!(feature="std") { f32::cos } else { libm::cosf },
                 f32::MIN,
@@ -355,7 +355,7 @@ macro_rules! impl_math_f32_u10 {
 
         #[test]
         fn test_sincosf() {
-            test_libm_f_ff(
+            test_f_ff(
                 sincosf,
                 if cfg!(feature="std") { f32::sin_cos } else { libm::sincosf },
                 f32::MIN,
@@ -461,7 +461,7 @@ macro_rules! impl_math_f32_u10 {
 
         #[test]
         fn test_tanf() {
-            test_libm_f_f(
+            test_f_f(
                 tanf,
                 if cfg!(feature="std") { f32::tan } else { libm::tanf },
                 f32::MIN,
@@ -534,7 +534,7 @@ macro_rules! impl_math_f32_u10 {
 
         #[test]
         fn test_atan2f() {
-            test_libm_ff_f(
+            test_ff_f(
                 atan2f,
                 if cfg!(feature="std") { f32::atan2 } else { libm::atan2f },
                 f32::MIN,
@@ -569,7 +569,7 @@ macro_rules! impl_math_f32_u10 {
 
         #[test]
         fn test_asinf() {
-            test_libm_f_f(
+            test_f_f(
                 asinf,
                 if cfg!(feature="std") { f32::asin } else { libm::asinf },
                 -1.,
@@ -615,7 +615,7 @@ macro_rules! impl_math_f32_u10 {
 
         #[test]
         fn test_acosf() {
-            test_libm_f_f(
+            test_f_f(
                 acosf,
                 if cfg!(feature="std") { f32::acos } else { libm::acosf },
                 -1.,
@@ -635,7 +635,7 @@ macro_rules! impl_math_f32_u10 {
 
         #[test]
         fn test_atanf() {
-            test_libm_f_f(
+            test_f_f(
                 atanf,
                 if cfg!(feature="std") { f32::atan } else { libm::atanf },
                 f32::MIN,
@@ -667,7 +667,7 @@ macro_rules! impl_math_f32_u10 {
 
         #[test]
         fn test_expf() {
-            test_libm_f_f(
+            test_f_f(
                 expf,
                 if cfg!(feature="std") { f32::exp } else { libm::expf },
                 -104.,
@@ -745,7 +745,7 @@ macro_rules! impl_math_f32_u10 {
 
         #[test]
         fn test_cbrtf() {
-            test_libm_f_f(
+            test_f_f(
                 cbrtf,
                 if cfg!(feature="std") { f32::cbrt } else { libm::cbrtf },
                 f32::MIN,
@@ -801,7 +801,7 @@ macro_rules! impl_math_f32_u10 {
 
         #[test]
         fn test_logf() {
-            test_libm_f_f(
+            test_f_f(
                 logf,
                 if cfg!(feature="std") { f32::ln } else { libm::logf },
                 0.,
@@ -861,7 +861,7 @@ macro_rules! impl_math_f32_u10 {
 
         #[test]
         fn test_powf() {
-            test_libm_ff_f(
+            test_ff_f(
                 powf,
                 if cfg!(feature="std") { f32::powf } else { libm::powf },
                 f32::MIN,
@@ -883,7 +883,7 @@ macro_rules! impl_math_f32_u10 {
 
         #[test]
         fn test_sinhf() {
-            test_libm_f_f(
+            test_f_f(
                 sinhf,
                 if cfg!(feature="std") { f32::sinh } else { libm::sinhf },
                 -88.,
@@ -904,7 +904,7 @@ macro_rules! impl_math_f32_u10 {
 
         #[test]
         fn test_coshf() {
-            test_libm_f_f(
+            test_f_f(
                 coshf,
                 if cfg!(feature="std") { f32::cosh } else { libm::coshf },
                 -88.,
@@ -927,7 +927,7 @@ macro_rules! impl_math_f32_u10 {
 
         #[test]
         fn test_tanhf() {
-            test_libm_f_f(
+            test_f_f(
                 tanhf,
                 if cfg!(feature="std") { f32::tanh } else { libm::tanhf },
                 -8.7,
@@ -956,7 +956,7 @@ macro_rules! impl_math_f32_u10 {
 
         #[test]
         fn test_asinhf() {
-            test_libm_f_f(
+            test_f_f(
                 asinhf,
                 if cfg!(feature="std") { f32::asinh } else { libm::asinhf },
                 -18.5_e18,
@@ -981,7 +981,7 @@ macro_rules! impl_math_f32_u10 {
 
         #[test]
         fn test_acoshf() {
-            test_libm_f_f(
+            test_f_f(
                 acoshf,
                 if cfg!(feature="std") { f32::acosh } else { libm::acoshf },
                 1.,
@@ -1005,7 +1005,7 @@ macro_rules! impl_math_f32_u10 {
 
         #[test]
         fn test_atanhf() {
-            test_libm_f_f(
+            test_f_f(
                 atanhf,
                 if cfg!(feature="std") { f32::atanh } else { libm::atanhf },
                 f32::MIN,
@@ -1144,7 +1144,7 @@ macro_rules! impl_math_f32_u10 {
 
         #[test]
         fn test_log2f() {
-            test_libm_f_f(
+            test_f_f(
                 log2f,
                 if cfg!(feature="std") { f32::log2 } else { libm::log2f },
                 0.,

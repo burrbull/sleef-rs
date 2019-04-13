@@ -45,7 +45,7 @@ pub mod u15;
 pub mod u35;
 
 #[cfg(test)]
-fn test_libm_f_f(fun_fx: fn(f32) -> f32, fun_f: fn(f32) -> f32, mn: f32, mx: f32, ulp: f32) {
+fn test_f_f(fun_fx: fn(f32) -> f32, fun_f: fn(f32) -> f32, mn: f32, mx: f32, ulp: f32) {
     use rand::Rng;
     let mut rng = rand::thread_rng();
     for _ in 0..crate::TEST_REPEAT {
@@ -70,7 +70,7 @@ fn test_libm_f_f(fun_fx: fn(f32) -> f32, fun_f: fn(f32) -> f32, mn: f32, mx: f32
 }
 
 #[cfg(test)]
-fn test_libm_f_ff(
+fn test_f_ff(
     fun_fx: fn(f32) -> (f32, f32),
     fun_f: fn(f32) -> (f32, f32),
     mn: f32,
@@ -102,7 +102,7 @@ fn test_libm_f_ff(
 }
 
 #[cfg(test)]
-fn test_libm_ff_f(
+fn test_ff_f(
     fun_fx: fn(f32, f32) -> (f32),
     fun_f: fn(f32, f32) -> f32,
     mn: f32,
@@ -332,6 +332,10 @@ impl BaseType for f32 {
     type Base = Self;
 }
 
+impl MaskType for f32 {
+    type Mask = bool;
+}
+
 impl MulAdd for f32 {
     #[inline]
     fn mul_add(self, y: Self, z: Self) -> Self {
@@ -345,14 +349,18 @@ impl Poly for f32 {
     }
 }
 
-#[inline]
-pub fn xisintf(x: f32) -> bool {
-    x == (x as i32 as f32)
+impl IsInt for f32 {
+    #[inline]
+    fn is_integer(self) -> Self::Mask {
+        self == (self as i32 as f32)
+    }
 }
 
-#[inline]
-pub fn xisnegzerof(x: f32) -> bool {
-    x.to_bits() == (-0f32).to_bits()
+impl IsNegZero for f32 {
+    #[inline]
+    fn is_neg_zero(self) -> Self::Mask {
+        self.to_bits() == (-0f32).to_bits()
+    }
 }
 
 #[inline]
@@ -450,7 +458,7 @@ fn ldexp2kf(d: f32, e: i32) -> f32 {
 #[inline]
 fn ldexp3kf(d: f32, e: i32) -> f32 {
     // very fast, no denormal
-    f32::from_bits(d.to_bits() + (e << 23) as u32)
+    f32::from_bits(((d.to_bits() as i32) + (e << 23)) as u32)
 }
 
 fn rempisubf(x: f32) -> (f32, i32) {
@@ -674,24 +682,6 @@ fn logk2f(d: Doubled<f32>) -> Doubled<f32> {
     (df(0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9) * (e as f32))
         .add_checked(x.scale(2.))
         .add_checked(x2 * x * t)
-}
-
-#[inline]
-fn toward0f(d: f32) -> f32 {
-    if d == 0. {
-        0.
-    } else {
-        f32::from_bits(d.to_bits() - 1)
-    }
-}
-
-#[inline]
-fn ptruncf(x: f32) -> f32 {
-    if fabsfk(x) >= F1_23 {
-        x
-    } else {
-        (x - (x - (x as i32 as f32)))
-    }
 }
 
 #[inline]
@@ -1236,6 +1226,24 @@ pub fn expfrexpf(mut x: f32) -> i32 {
 
 /// FP remainder
 pub fn fmodf(x: f32, y: f32) -> f32 {
+    #[inline]
+    fn toward0(d: f32) -> f32 {
+        if d == 0. {
+            0.
+        } else {
+            f32::from_bits(d.to_bits() - 1)
+        }
+    }
+
+    #[inline]
+    fn trunc_positive(x: f32) -> f32 {
+        if fabsfk(x) >= F1_23 {
+            x
+        } else {
+            (x - (x - (x as i32 as f32)))
+        }
+    }
+
     let mut nu = fabsfk(x);
     let mut de = fabsfk(y);
     let s = if de < f32::MIN_POSITIVE {
@@ -1247,16 +1255,16 @@ pub fn fmodf(x: f32, y: f32) -> f32 {
     };
 
     let mut r = df(nu, 0.);
-    let rde = toward0f(1. / de);
+    let rde = toward0(1. / de);
 
     for _ in 0..8 {
         // ceil(log2(FLT_MAX) / 22)+1
         let q = if (de + de > r.0) && (r.0 >= de) {
             1.
         } else {
-            (toward0f(r.0) * rde)
+            (toward0(r.0) * rde)
         };
-        r = (r + ptruncf(q).mul_as_doubled(-de)).normalize();
+        r = (r + trunc_positive(q).mul_as_doubled(-de)).normalize();
         if r.0 < de {
             break;
         }

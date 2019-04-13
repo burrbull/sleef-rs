@@ -285,7 +285,7 @@ pub fn sinf(mut d: f32) -> f32 {
         .mul_add(s, 0.008_333_078_585_565_090_179_443_36)
         .mul_add(s, -0.166_666_597_127_914_428_710_938);
 
-    if xisnegzerof(t) {
+    if t.is_neg_zero() {
         -0.
     } else {
         s.mul_add(u * d, d)
@@ -390,7 +390,7 @@ pub fn sincosf(d: f32) -> (f32, f32) {
         .mul_add(s, -0.166_666_537_523_269_653_320_312);
     u = u * s * t;
 
-    let mut rsin = if xisnegzerof(d) { -0. } else { t + u };
+    let mut rsin = if d.is_neg_zero() { -0. } else { t + u };
 
     u = (-2.718_118_423_672_422_068_193_55_e-7_f32)
         .mul_add(s, 2.479_904_469_510_074_704_885_48_e-5)

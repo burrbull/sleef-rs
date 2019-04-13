@@ -73,7 +73,7 @@ pub mod u15;
 pub mod u35;
 
 #[cfg(test)]
-fn test_libm_f_f(fun_fx: fn(f64) -> f64, fun_f: fn(f64) -> f64, mn: f64, mx: f64, ulp: f64) {
+fn test_f_f(fun_fx: fn(f64) -> f64, fun_f: fn(f64) -> f64, mn: f64, mx: f64, ulp: f64) {
     use rand::Rng;
     let mut rng = rand::thread_rng();
     for _ in 0..crate::TEST_REPEAT {
@@ -98,7 +98,7 @@ fn test_libm_f_f(fun_fx: fn(f64) -> f64, fun_f: fn(f64) -> f64, mn: f64, mx: f64
 }
 
 #[cfg(test)]
-fn test_libm_f_ff(
+fn test_f_ff(
     fun_fx: fn(f64) -> (f64, f64),
     fun_f: fn(f64) -> (f64, f64),
     mn: f64,
@@ -130,7 +130,7 @@ fn test_libm_f_ff(
 }
 
 #[cfg(test)]
-fn test_libm_ff_f(
+fn test_ff_f(
     fun_fx: fn(f64, f64) -> (f64),
     fun_f: fn(f64, f64) -> f64,
     mn: f64,
@@ -360,6 +360,10 @@ impl BaseType for f64 {
     type Base = Self;
 }
 
+impl MaskType for f64 {
+    type Mask = bool;
+}
+
 impl MulAdd for f64 {
     #[inline]
     fn mul_add(self, y: Self, z: Self) -> Self {
@@ -373,21 +377,27 @@ impl Poly for f64 {
     }
 }
 
-#[inline]
-pub fn xisnegzero(x: f64) -> bool {
-    x.to_bits() == (-0_f64).to_bits()
+impl IsNegZero for f64 {
+    #[inline]
+    fn is_neg_zero(self) -> Self::Mask {
+        self.to_bits() == (-0_f64).to_bits()
+    }
 }
 
-#[inline]
-pub fn xisint(d: f64) -> bool {
-    let x = d - D1_31 * ((d * (1. / D1_31)) as i64 as f64);
-    (x == x as i64 as f64) || (fabsk(d) >= D1_53)
+impl IsInt for f64 {
+    #[inline]
+    fn is_integer(self) -> Self::Mask {
+        let x = self - D1_31 * ((self * (1. / D1_31)) as i64 as f64);
+        (x == x as i64 as f64) || (fabsk(self) >= D1_53)
+    }
 }
 
-#[inline]
-pub fn xisodd(d: f64) -> bool {
-    let x = d - D1_31 * ((d * (1. / D1_31)) as i64 as f64);
-    ((1 & (x as i64)) != 0) && (fabsk(d) < D1_53)
+impl IsOdd for f64 {
+    #[inline]
+    fn is_odd(self) -> Self::Mask {
+        let x = self - D1_31 * ((self * (1. / D1_31)) as i64 as f64);
+        ((1 & (x as i64)) != 0) && (fabsk(self) < D1_53)
+    }
 }
 
 #[inline]
@@ -471,7 +481,7 @@ fn ldexp2k(d: f64, e: i32) -> f64 {
 #[inline]
 fn ldexp3k(d: f64, e: i32) -> f64 {
     // very fast, no denormal
-    f64::from_bits(d.to_bits() + ((e as u64) << 52))
+    f64::from_bits(((d.to_bits() as i64) + ((e as i64) << 52)) as u64)
 }
 
 #[inline]
@@ -982,30 +992,6 @@ fn logk2(d: Doubled<f64>) -> Doubled<f64> {
     ) * (e as f64))
         .add_checked(x.scale(2.))
         .add_checked(x2 * x * t)
-}
-
-#[inline]
-fn toward0(d: f64) -> f64 {
-    if d == 0. {
-        0.
-    } else {
-        f64::from_bits(d.to_bits() - 1)
-    }
-}
-
-#[inline]
-fn removelsb(d: f64) -> f64 {
-    f64::from_bits(d.to_bits() & 0x_ffff_ffff_ffff_fffe)
-}
-
-#[inline]
-fn ptrunc(x: f64) -> f64 {
-    let fr = (-D1_31).mul_add((x * (1. / D1_31)) as i32 as f64, x);
-    if fabsk(x) >= D1_52 {
-        x
-    } else {
-        x - (fr - (fr as i32 as f64))
-    }
 }
 
 fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
@@ -1574,6 +1560,30 @@ pub fn expfrexp(mut x: f64) -> i32 {
 }
 
 pub fn fmod(x: f64, y: f64) -> f64 {
+    #[inline]
+    fn toward0(d: f64) -> f64 {
+        if d == 0. {
+            0.
+        } else {
+            f64::from_bits(d.to_bits() - 1)
+        }
+    }
+
+    #[inline]
+    fn removelsb(d: f64) -> f64 {
+        f64::from_bits(d.to_bits() & 0x_ffff_ffff_ffff_fffe)
+    }
+
+    #[inline]
+    fn trunc_positive(x: f64) -> f64 {
+        let fr = (-D1_31).mul_add((x * (1. / D1_31)) as i32 as f64, x);
+        if fabsk(x) >= D1_52 {
+            x
+        } else {
+            x - (fr - (fr as i32 as f64))
+        }
+    }
+
     let mut nu = fabsk(x);
     let mut de = fabsk(y);
     let s = if de < f64::MIN_POSITIVE {
@@ -1593,7 +1603,7 @@ pub fn fmod(x: f64, y: f64) -> f64 {
         } else {
             toward0(r.0) * rde
         };
-        r = (r + removelsb(ptrunc(q)).mul_as_doubled(-de)).normalize();
+        r = (r + removelsb(trunc_positive(q)).mul_as_doubled(-de)).normalize();
         if r.0 < de {
             break;
         }

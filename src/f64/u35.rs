@@ -344,7 +344,7 @@ pub fn sin(mut d: f64) -> f64 {
     )
     .mul_add(s, -0.166_666_666_666_666_657_414_808);
 
-    if xisnegzero(t) {
+    if t.is_neg_zero() {
         t
     } else {
         s.mul_add(u * d, d)
@@ -466,7 +466,7 @@ pub fn sincos(d: f64) -> (f64, f64) {
         * s
         * t;
 
-    let mut rsin = if xisnegzero(d) { -0. } else { t + u };
+    let mut rsin = if d.is_neg_zero() { -0. } else { t + u };
 
     let u = (-1.136_153_502_390_974_295_315_23_e-11_f64)
         .mul_add(s, 2.087_574_712_070_400_554_793_66_e-9)

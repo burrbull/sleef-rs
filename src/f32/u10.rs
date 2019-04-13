@@ -72,7 +72,7 @@ pub fn sinf(d: f32) -> f32 {
     if (q & 1) != 0 {
         u = -u;
     }
-    if xisnegzerof(d) {
+    if d.is_neg_zero() {
         d
     } else {
         u
@@ -81,7 +81,7 @@ pub fn sinf(d: f32) -> f32 {
 
 #[test]
 fn test_sinf() {
-    test_libm_f_f(
+    test_f_f(
         sinf,
         if cfg!(feature="std") { f32::sin } else { libm::sinf },
         f32::MIN,
@@ -181,7 +181,7 @@ pub fn sincosf(d: f32) -> (f32, f32) {
         * t.0;
 
     let mut x = t.add_checked(u);
-    let mut rsin = if xisnegzerof(d) { -0. } else { x.0 + x.1 };
+    let mut rsin = if d.is_neg_zero() { -0. } else { x.0 + x.1 };
 
     let u = (-2.718_118_423_672_422_068_193_55_e-7_f32)
         .mul_add(s.0, 2.479_904_469_510_074_704_885_48_e-5)
@@ -207,7 +207,7 @@ pub fn sincosf(d: f32) -> (f32, f32) {
 
 #[test]
 fn test_sincosf() {
-    test_libm_f_ff(
+    test_f_ff(
         sincosf,
         if cfg!(feature="std") { f32::sin_cos } else { libm::sincosf },
         f32::MIN,
@@ -259,7 +259,7 @@ pub fn tanf(d: f32) -> f32 {
         x = x.recpre();
     }
 
-    if xisnegzerof(d) {
+    if d.is_neg_zero() {
         -0.
     } else {
         x.0 + x.1
@@ -533,7 +533,7 @@ pub fn tgammaf(a: f32) -> f32 {
     let (da, db) = gammafk(a);
     let y = expk2f(da) * db;
     let mut r = y.0 + y.1;
-    r = if ((a == f32::NEG_INFINITY) || ((a < 0.) && xisintf(a)))
+    r = if ((a == f32::NEG_INFINITY) || ((a < 0.) && a.is_integer()))
         || (a.is_finite() && (a < 0.) && r.is_nan())
     {
         f32::NAN
@@ -559,7 +559,7 @@ pub fn lgammaf(a: f32) -> f32 {
     let (da, db) = gammafk(a);
     let y = da + logk2f(db.abs());
     let r = y.0 + y.1;
-    if a.is_infinite() || (a <= 0. && xisintf(a)) || (a.is_finite() && r.is_nan()) {
+    if a.is_infinite() || (a <= 0. && a.is_integer()) || (a.is_finite() && r.is_nan()) {
         f32::INFINITY
     } else {
         r
@@ -731,7 +731,7 @@ pub fn powf(x: f32, y: f32) -> f32 {
 
 #[test]
 fn test_powf() {
-    test_libm_ff_f(
+    test_ff_f(
         powf,
         if cfg!(feature="std") { f32::powf } else { libm::powf },
         f32::MIN,
@@ -833,7 +833,7 @@ pub fn asinhf(x: f32) -> f32 {
         y
     };
     y = if x.is_nan() { f32::NAN } else { y };
-    if xisnegzerof(x) {
+    if x.is_neg_zero() {
         -0.
     } else {
         y
@@ -929,7 +929,7 @@ pub fn exp10f(d: f32) -> f32 {
 /// The error bound of the returned value is 1.0 ULP.
 pub fn expm1f(a: f32) -> f32 {
     let d = expk2f(df(a, 0.)) + (-1.);
-    if xisnegzerof(a) {
+    if a.is_neg_zero() {
         -0.
     } else if a < -16.635_532_333_438_687_426_013_570 {
         -1.
@@ -1050,7 +1050,7 @@ pub fn log1pf(d: f32) -> f32 {
         .add_checked(x.scale(2.))
         .add_checked(x2 * x.0 * t);
 
-    if xisnegzerof(d) {
+    if d.is_neg_zero() {
         -0.
     } else if d == -1. {
         f32::NEG_INFINITY

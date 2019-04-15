@@ -30,21 +30,21 @@ impl SqrtAsDoubled for f64 {
     }
 }
 
-pub trait Sqrt {
+pub(crate) trait Sqrt {
     fn sqrt(self) -> Self;
 }
 
 impl Sqrt for f32 {
     #[inline]
     fn sqrt(self) -> Self {
-        crate::f32::u05::sqrtf(self)
+        crate::f32::sqrt_u05(self)
     }
 }
 
 impl Sqrt for f64 {
     #[inline]
     fn sqrt(self) -> Self {
-        crate::f64::u05::sqrt(self)
+        crate::f64::sqrt_u05(self)
     }
 }
 

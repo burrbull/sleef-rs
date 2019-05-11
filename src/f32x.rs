@@ -279,30 +279,95 @@ macro_rules! impl_math_f32 {
         );
         const LOG10_2_F: F32x = F32x::splat(3.321_928_094_887_362_347_870_319_429_489_390_175_864_831_393);
 
-        pub mod u05 {
+        mod u05 {
             //! Functions with 0.5 ULP error bound
             impl_math_f32_u05!();
         }
+        pub use u05::{
+            sincospif as sincospi_u05,
+            sqrtf as sqrt_u05,
+            hypotf as hypot_u05,
+            sinpif as sinpi_u05,
+            cospif as cospi_u05,
+        };
 
-        pub mod u10 {
+        mod u10 {
             //! Functions with 1.0 ULP error bound
             impl_math_f32_u10!();
         }
+        pub use u10::{
+            sinf as sin_u10,
+            cosf as cos_u10,
+            sincosf as sincos_u10,
+            tanf as tan_u10,
+            atan2f as atan2_u10,
+            asinf as asin_u10,
+            acosf as acos_u10,
+            atanf as atan_u10,
+            expf as exp_u10,
+            cbrtf as cbrt_u10,
+            logf as log_u10,
+            powf as pow_u10,
+            sinhf as sinh_u10,
+            coshf as cosh_u10,
+            tanhf as tanh_u10,
+            asinhf as asinh_u10,
+            acoshf as acosh_u10,
+            atanhf as atanh_u10,
+            exp10f as exp10_u10,
+            expm1f as expm1_u10,
+            log10f as log10_u10,
+            log2f as log2_u10,
+            tgammaf as tgamma_u10,
+            lgammaf as lgamma_u10,
+            erff as erf_u10,
+            log1pf as log1p_u10,
+            exp2f as exp2_u10,
+        };
 
-        pub mod u15 {
+        mod u15 {
             //! Functions with 1.5 ULP error bound
             impl_math_f32_u15!();
         }
+        pub use u15::{
+            erfcf as erfc_u15,
+        };
 
-        pub mod u35 {
+        mod u35 {
             //! Functions with 3.5 ULP error bound
             impl_math_f32_u35!();
         }
+        pub use u35::{
+            sinf as sin_u35,
+            cosf as cos_u35,
+            tanf as tan_u35,
+            sincosf as sincos_u35,
+            sincospif as sincospi_u35,
+            atanf as atan_u35,
+            atan2f as atan2_u35,
+            asinf as asin_u35,
+            acosf as acos_u35,
+            logf as log_u35,
+            sqrtf as sqrt_u35,
+            cbrtf as cbrt_u35,
+            sinhf as sinh_u35,
+            coshf as cosh_u35,
+            tanhf as tanh_u35,
+            hypotf as hypot_u35,
+            exp2f as exp2_u35,
+            exp10f as exp10_u35,
+            log2f as log2_u35,
+        };
 
-        pub mod fast {
+        mod fast {
             //! Fast functions with 3500 ULP error bound
             impl_math_f32_fast!();
         }
+        pub use fast::{
+            sinf as sin_fast,
+            cosf as cos_fast,
+            powf as pow_fast,
+        };
 
         #[cfg(test)]
         fn test_f_f(fun_fx: fn(F32x) -> F32x, fun_f: fn(f32) -> f32, mn: f32, mx: f32, ulp: f32) {

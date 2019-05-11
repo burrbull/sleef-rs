@@ -285,25 +285,85 @@ macro_rules! impl_math_f64 {
         const L10L: F64x = F64x::splat(1.420_502_322_726_609_941_8_e-13);
         const LOG10_2: F64x = F64x::splat(3.321_928_094_887_362_347_870_319_429_489_390_175_864_831_393);
 
-        pub mod u05 {
+        mod u05 {
             //! Functions with 0.5 ULP error bound
             impl_math_f64_u05!();
         }
+        pub use u05::{
+            sincospi as sincospi_u05,
+            sqrt as sqrt_u05,
+            hypot as hypot_u05,
+            sinpi as sinpi_u05,
+            cospi as cospi_u05,
+        };
 
-        pub mod u10 {
+        mod u10 {
             //! Functions with 1.0 ULP error bound
             impl_math_f64_u10!();
         }
+        pub use u10::{
+            sin as sin_u10,
+            cos as cos_u10,
+            sincos as sincos_u10,
+            tan as tan_u10,
+            atan2 as atan2_u10,
+            asin as asin_u10,
+            acos as acos_u10,
+            atan as atan_u10,
+            exp as exp_u10,
+            cbrt as cbrt_u10,
+            log as log_u10,
+            pow as pow_u10,
+            sinh as sinh_u10,
+            cosh as cosh_u10,
+            tanh as tanh_u10,
+            asinh as asinh_u10,
+            acosh as acosh_u10,
+            atanh as atanh_u10,
+            exp10 as exp10_u10,
+            expm1 as expm1_u10,
+            log10 as log10_u10,
+            log2 as log2_u10,
+            tgamma as tgamma_u10,
+            lgamma as lgamma_u10,
+            erf as erf_u10,
+            log1p as log1p_u10,
+            exp2 as exp2_u10,
+        };
 
-        pub mod u15 {
+        mod u15 {
             //! Functions with 1.5 ULP error bound
             impl_math_f64_u15!();
         }
+        pub use u15::{
+            erfc as erfc_u15,
+        };
 
-        pub mod u35 {
+        mod u35 {
             //! Functions with 3.5 ULP error bound
             impl_math_f64_u35!();
         }
+        pub use u35::{
+            sin as sin_u35,
+            cos as cos_u35,
+            tan as tan_u35,
+            sincos as sincos_u35,
+            sincospi as sincospi_u35,
+            atan as atan_u35,
+            atan2 as atan2_u35,
+            asin as asin_u35,
+            acos as acos_u35,
+            log as log_u35,
+            sqrt as sqrt_u35,
+            cbrt as cbrt_u35,
+            sinh as sinh_u35,
+            cosh as cosh_u35,
+            tanh as tanh_u35,
+            hypot as hypot_u35,
+            exp2 as exp2_u35,
+            exp10 as exp10_u35,
+            log2 as log2_u35,
+        };
 
         #[cfg(test)]
         fn test_f_f(fun_fx: fn(F64x) -> F64x, fun_f: fn(f64) -> f64, mn: f64, mx: f64, ulp: f64) {

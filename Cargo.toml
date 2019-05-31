@@ -5,7 +5,7 @@ version = "0.1.0"
 authors = ["Andrey Zgarbul <zgarbul.andrey@gmail.com>"]
 
 [dependencies.doubled]
-git = "https://github.com/burrbull/doubled-rs"
+version = "0.1"
 features = ["packed_simd"]
 
 [dependencies.packed_simd]

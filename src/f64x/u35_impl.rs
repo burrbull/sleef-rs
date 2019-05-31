@@ -545,7 +545,7 @@ macro_rules! impl_math_f64_u35 {
                 ql = dql.roundi();
                 x = dql.mul_add(-PI_A2 * HALF, d);
                 x = dql.mul_add(-PI_B2 * HALF, x);
-            } else if d.abs().lt(F64x::splat(1e+7)).all() {
+            } else if d.abs().lt(F64x::splat(1e+6)).all() {
                 let dqh = (d * (F64x::FRAC_2_PI / D1_24X)).trunc();
                 let dqh = dqh * D1_24X;
                 let dql = (d * F64x::FRAC_2_PI - dqh).round();

@@ -1087,19 +1087,19 @@ macro_rules! impl_math_f32_u35 {
             let x = (m - ONE) / (m + ONE);
             let x2 = x * x;
 
-            let t = F32x::splat(0.437_455_028_3)
-                .mul_add(x2, F32x::splat(0.576_479_017_7))
-                .mul_add(x2, F32x::splat(0.961_801_290_512));
+            let t = F32x::splat(0.437_408_834_7)
+                .mul_add(x2, F32x::splat(0.576_484_382_2))
+                .mul_add(x2, F32x::splat(0.961_802_423));
 
             //if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")
             {
-                let mut r = (x2 * x).mul_add(t, x.mul_add(F32x::splat(2.885_390_043_258_666_992_2), F32x::from_cast(e)));
+                let mut r = (x2 * x).mul_add(t, x.mul_add(F32x::splat(0.288_539_004_3_e+1), F32x::from_cast(e)));
 
                 r = d.eq(F32x::INFINITY).select(F32x::INFINITY, r);
                 r = (d.lt(ZERO) | d.is_nan()).select(F32x::NAN, r);
                 d.eq(ZERO).select(F32x::NEG_INFINITY, r)
             /*} else {
-                let r = (x2 * x).mul_add(t, x.mul_add(F32x::splat(2.885_390_043_258_666_992_2), e));
+                let r = (x2 * x).mul_add(t, x.mul_add(F32x::splat(0.288_539_004_3_e+1), e));
 
                 vfixup_vf_vf_vf_vi2_i(r, d, I32::splat((4 << (2*4)) | (3 << (4*4)) | (5 << (5*4)) | (2 << (6*4))), 0)
             */

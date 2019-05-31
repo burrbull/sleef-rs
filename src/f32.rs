@@ -39,6 +39,7 @@ const fn df(h: f32, l: f32) -> Doubled<f32> {
 }
 
 mod u05;
+#[cfg_attr(rustfmt, rustfmt_skip)]
 pub use u05::{
     sincospif as sincospi_u05,
     sqrtf as sqrt_u05,
@@ -48,6 +49,7 @@ pub use u05::{
 };
 
 mod u10;
+#[cfg_attr(rustfmt, rustfmt_skip)]
 pub use u10::{
     sinf as sin_u10,
     cosf as cos_u10,
@@ -79,11 +81,13 @@ pub use u10::{
 };
 
 mod u15;
+#[cfg_attr(rustfmt, rustfmt_skip)]
 pub use u15::{
     erfcf as erfc_u15,
 };
 
 mod u35;
+#[cfg_attr(rustfmt, rustfmt_skip)]
 pub use u35::{
     sinf as sin_u35,
     cosf as cos_u35,
@@ -106,6 +110,7 @@ pub use u35::{
     log2f as log2_u35,
 };
 mod fast;
+#[cfg_attr(rustfmt, rustfmt_skip)]
 pub use fast::{
     sinf as sin_fast,
     cosf as cos_fast,

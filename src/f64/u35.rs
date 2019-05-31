@@ -499,7 +499,7 @@ pub fn tan(d: f64) -> f64 {
         ql = qlf as isize;
         x = qlf.mul_add(-PI_A2 * 0.5, d);
         x = qlf.mul_add(-PI_B2 * 0.5, x);
-    } else if fabsk(d) < 1e+7 {
+    } else if fabsk(d) < 1e+6 {
         let dqh = trunck(d * (FRAC_2_PI / D1_24)) * D1_24;
         let qlf = rintk(d * FRAC_2_PI - dqh);
         ql = qlf as isize;

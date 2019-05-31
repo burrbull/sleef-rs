@@ -68,6 +68,7 @@ const fn dd(h: f64, l: f64) -> Doubled<f64> {
 }
 
 mod u05;
+#[cfg_attr(rustfmt, rustfmt_skip)]
 pub use u05::{
     sincospi as sincospi_u05,
     sqrt as sqrt_u05,
@@ -76,6 +77,7 @@ pub use u05::{
     cospi as cospi_u05,
 };
 mod u10;
+#[cfg_attr(rustfmt, rustfmt_skip)]
 pub use u10::{
     sin as sin_u10,
     cos as cos_u10,
@@ -107,10 +109,12 @@ pub use u10::{
 };
 
 mod u15;
+#[cfg_attr(rustfmt, rustfmt_skip)]
 pub use u15::{
     erfc as erfc_u15,
 };
 mod u35;
+#[cfg_attr(rustfmt, rustfmt_skip)]
 pub use u35::{
     sin as sin_u35,
     cos as cos_u35,

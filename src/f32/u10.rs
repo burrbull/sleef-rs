@@ -918,13 +918,14 @@ pub fn exp10f(d: f32) -> f32 {
     let s = qf.mul_add(-L10U_F, d);
     let s = qf.mul_add(-L10L_F, s);
 
-    let mut u = 0.206_400_498_7_f32
-        .mul_add(s, 0.541_787_743_6)
-        .mul_add(s, 0.117_128_682_1_e+1)
-        .mul_add(s, 0.203_465_604_8_e+1)
-        .mul_add(s, 0.265_094_876_3_e+1)
-        .mul_add(s, 0.230_258_512_5_e+1);
-    u = (1.).add_checked(u.mul_as_doubled(s)).normalize().0;
+    let mut u = 0.680_255_591_9_e-1
+        .mul_add(s, 0.207_808_032_6)
+        .mul_add(s, 0.539_390_385_2)
+        .mul_add(s, 0.117_124_533_7_e+1)
+        .mul_add(s, 0.203_467_869_8_e+1)
+        .mul_add(s, 0.265_094_900_1_e+1);
+    let x = df(2.3025851249694824219, -3.1705172516493593157e-08).add_checked(u * s);
+    u = (1.).add_checked(x * s).normalize().0;
 
     if d > 38.531_839_419_103_623_894_138_7 {
         f32::INFINITY // log10(FLT_MAX)

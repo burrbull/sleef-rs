@@ -150,13 +150,8 @@ macro_rules! impl_math_f64_u35 {
         fn test_sin() {
             test_f_f(
                 sin,
-                if cfg!(feature = "std") {
-                    f64::sin
-                } else {
-                    libm::sin
-                },
-                f64::MIN,
-                f64::MAX,
+                rug::Float::sin,
+                f64::MIN..=f64::MAX,
                 3.5,
             );
         }
@@ -308,13 +303,8 @@ macro_rules! impl_math_f64_u35 {
         fn test_cos() {
             test_f_f(
                 cos,
-                if cfg!(feature = "std") {
-                    f64::cos
-                } else {
-                    libm::cos
-                },
-                f64::MIN,
-                f64::MAX,
+                rug::Float::cos,
+                f64::MIN..=f64::MAX,
                 3.5,
             );
         }
@@ -468,13 +458,11 @@ macro_rules! impl_math_f64_u35 {
         fn test_sincos() {
             test_f_ff(
                 sincos,
-                if cfg!(feature = "std") {
-                    f64::sin_cos
-                } else {
-                    libm::sincos
+                |in1| {
+                    let prec = in1.prec();
+                    in1.sin_cos(rug::Float::new(prec))
                 },
-                f64::MIN,
-                f64::MAX,
+                f64::MIN..=f64::MAX,
                 3.5,
             );
         }
@@ -597,13 +585,8 @@ macro_rules! impl_math_f64_u35 {
         fn test_tan() {
             test_f_f(
                 tan,
-                if cfg!(feature = "std") {
-                    f64::tan
-                } else {
-                    libm::tan
-                },
-                f64::MIN,
-                f64::MAX,
+                rug::Float::tan,
+                f64::MIN..=f64::MAX,
                 3.5,
             );
         }
@@ -694,9 +677,8 @@ macro_rules! impl_math_f64_u35 {
         fn test_atan2() {
             test_ff_f(
                 atan2,
-                if cfg!(feature="std") { f64::atan2 } else { libm::atan2 },
-                f64::MIN,
-                f64::MAX,
+                rug::Float::atan2,
+                f64::MIN..=f64::MAX,
                 3.5
             );
         }
@@ -734,13 +716,8 @@ macro_rules! impl_math_f64_u35 {
         fn test_asin() {
             test_f_f(
                 asin,
-                if cfg!(feature = "std") {
-                    f64::asin
-                } else {
-                    libm::asin
-                },
-                -1.,
-                1.,
+                rug::Float::asin,
+                -1.0..=1.0,
                 3.5,
             );
         }
@@ -786,13 +763,8 @@ macro_rules! impl_math_f64_u35 {
         fn test_acos() {
             test_f_f(
                 acos,
-                if cfg!(feature = "std") {
-                    f64::acos
-                } else {
-                    libm::acos
-                },
-                -1.,
-                1.,
+                rug::Float::acos,
+                -1.0..=1.0,
                 3.5,
             );
         }
@@ -905,13 +877,8 @@ macro_rules! impl_math_f64_u35 {
         fn test_log() {
             test_f_f(
                 log,
-                if cfg!(feature = "std") {
-                    f64::ln
-                } else {
-                    libm::log
-                },
-                0.,
-                f64::MAX,
+                rug::Float::ln,
+                0.0..=f64::MAX,
                 3.5,
             );
         }
@@ -931,9 +898,8 @@ macro_rules! impl_math_f64_u35 {
         fn test_sinh() {
             test_f_f(
                 sinh,
-                if cfg!(feature="std") { f64::sinh } else { libm::sinh },
-                -709.,
-                709.,
+                rug::Float::sinh,
+                -709.0..=709.0,
                 3.5
             );
         }
@@ -950,9 +916,8 @@ macro_rules! impl_math_f64_u35 {
         fn test_cosh() {
             test_f_f(
                 cosh,
-                if cfg!(feature="std") { f64::cosh } else { libm::cosh },
-                -709.,
-                709.,
+                rug::Float::cosh,
+                -709.0..=709.0,
                 3.5
             );
         }
@@ -970,9 +935,8 @@ macro_rules! impl_math_f64_u35 {
         fn test_tanh() {
             test_f_f(
                 tanh,
-                if cfg!(feature="std") { f64::tanh } else { libm::tanh },
-                -19.,
-                19.,
+                rug::Float::tanh,
+                -19.0..=19.0,
                 3.5
             );
         }
@@ -1026,9 +990,8 @@ macro_rules! impl_math_f64_u35 {
         fn test_cbrt() {
             test_f_f(
                 cbrt,
-                if cfg!(feature="std") { f64::cbrt } else { libm::cbrt },
-                f64::MIN,
-                f64::MAX,
+                rug::Float::cbrt,
+                f64::MIN..=f64::MAX,
                 3.5
             );
         }
@@ -1054,9 +1017,8 @@ macro_rules! impl_math_f64_u35 {
         fn test_hypot() {
             test_ff_f(
                 hypot,
-                if cfg!(feature="std") { f64::hypot } else { libm::hypot },
-                f64::MIN,
-                f64::MAX,
+                rug::Float::hypot,
+                f64::MIN..=f64::MAX,
                 3.5
             );
         }
@@ -1100,9 +1062,8 @@ macro_rules! impl_math_f64_u35 {
         fn test_exp2() {
             test_f_f(
                 exp2,
-                if cfg!(feature="std") { f64::exp2 } else { libm::exp2 },
-                -2000.,
-                1024.,
+                rug::Float::exp2,
+                -2000.0..=1024.0,
                 3.5
             );
         }
@@ -1192,9 +1153,8 @@ macro_rules! impl_math_f64_u35 {
         fn test_log2() {
             test_f_f(
                 log2,
-                if cfg!(feature="std") { f64::log2 } else { libm::log2 },
-                0.,
-                f64::MAX,
+                rug::Float::log2,
+                0.0..=f64::MAX,
                 3.5
             );
         }

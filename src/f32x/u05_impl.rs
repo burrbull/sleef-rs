@@ -105,17 +105,7 @@ macro_rules! impl_math_f32_u05 {
 
         #[test]
         fn test_sqrtf() {
-            test_f_f(
-                sqrtf,
-                if cfg!(feature = "std") {
-                    f32::sqrt
-                } else {
-                    libm::sqrtf
-                },
-                f32::MIN,
-                f32::MAX,
-                0.5,
-            );
+            test_f_f(sqrtf, rug::Float::sqrt, f32::MIN..=f32::MAX, 0.5);
         }
 
         pub fn hypotf(x: F32x, y: F32x) -> F32x {
@@ -141,17 +131,7 @@ macro_rules! impl_math_f32_u05 {
 
         #[test]
         fn test_hypotf() {
-            test_ff_f(
-                hypotf,
-                if cfg!(feature = "std") {
-                    f32::hypot
-                } else {
-                    libm::hypotf
-                },
-                f32::MIN,
-                f32::MAX,
-                0.5,
-            );
+            test_ff_f(hypotf, rug::Float::hypot, f32::MIN..=f32::MAX, 0.5);
         }
 
         pub fn sinpif(d: F32x) -> F32x {

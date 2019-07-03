@@ -273,17 +273,7 @@ pub fn sin(d: f64) -> f64 {
 
 #[test]
 fn test_sin() {
-    test_f_f(
-        sin,
-        if cfg!(feature = "std") {
-            f64::sin
-        } else {
-            libm::sin
-        },
-        f64::MIN,
-        f64::MAX,
-        1.,
-    );
+    super::test_f_f(sin, rug::Float::sin, f64::MIN..=f64::MAX, 1.);
 }
 
 pub fn cos(d: f64) -> f64 {
@@ -438,13 +428,11 @@ pub fn sincos(d: f64) -> (f64, f64) {
 fn test_sincos() {
     test_f_ff(
         sincos,
-        if cfg!(feature = "std") {
-            f64::sin_cos
-        } else {
-            libm::sincos
+        |in1| {
+            let prec = in1.prec();
+            in1.sin_cos(Float::new(prec))
         },
-        f64::MIN,
-        f64::MAX,
+        f64::MIN..=f64::MAX,
         1.,
     );
 }
@@ -990,15 +978,12 @@ pub fn pow(x: f64, y: f64) -> f64 {
 
 #[test]
 fn test_pow() {
+    use rug::{ops::Pow, Float};
     test_ff_f(
         pow,
-        if cfg!(feature = "std") {
-            f64::powf
-        } else {
-            libm::pow
-        },
-        f64::MIN,
-        f64::MAX,
+        |in1, in2| Float::with_val(in1.prec(), in1.pow(in2)),
+        f64::MIN..=f64::MAX,
+        f64::MIN..=f64::MAX,
         1.,
     );
 }

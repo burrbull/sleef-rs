@@ -30,22 +30,10 @@ macro_rules! impl_math_f32_fast {
             u
         }
 
-        /*
         #[test]
         fn test_sinf() {
-            test_f_f(
-                sinf,
-                if cfg!(feature = "std") {
-                    f32::sin
-                } else {
-                    libm::sinf
-                },
-                -30.,
-                30.,
-                3500.,
-            );
+            test_f_f(sinf, rug::Float::sin, -30.0..=30.0, 3500.);
         }
-        */
 
         pub fn cosf(mut d: F32x) -> F32x {
             let t = d;
@@ -75,20 +63,10 @@ macro_rules! impl_math_f32_fast {
             u
         }
 
-        /*#[test]
+        #[test]
         fn test_cosf() {
-            test_f_f(
-                cosf,
-                if cfg!(feature = "std") {
-                    f32::cos
-                } else {
-                    libm::cosf
-                },
-                -30.,
-                30.,
-                3500.,
-            );
-        }*/
+            test_f_f(cosf, rug::Float::cos, -30.0..=30.0, 3500.);
+        }
 
         pub fn powf(x: F32x, y: F32x) -> F32x {
             let mut result = expk3f(logk3f(x.abs()) * y);
@@ -102,19 +80,15 @@ macro_rules! impl_math_f32_fast {
             y.eq(ZERO).select(ONE, result)
         }
 
-        /*#[test]
+        #[test]
         fn test_powf() {
+            use rug::{ops::Pow, Float};
             test_ff_f(
                 powf,
-                if cfg!(feature = "std") {
-                    f32::powf
-                } else {
-                    libm::powf
-                },
-                f32::MIN,
-                f32::MAX,
+                |in1, in2| Float::with_val(in1.prec(), in1.pow(in2)),
+                f32::MIN..=f32::MAX,
                 3500.,
             );
-        }*/
+        }
     };
 }

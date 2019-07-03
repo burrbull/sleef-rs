@@ -155,9 +155,8 @@ macro_rules! impl_math_f64_u10 {
         fn test_sin() {
             test_f_f(
                 sin,
-                if cfg!(feature="std") { f64::sin } else { libm::sin },
-                f64::MIN,
-                f64::MAX,
+                rug::Float::sin,
+                f64::MIN..=f64::MAX,
                 1.
             );
         }
@@ -318,9 +317,8 @@ macro_rules! impl_math_f64_u10 {
         fn test_cos() {
             test_f_f(
                 cos,
-                if cfg!(feature="std") { f64::cos } else { libm::cos },
-                f64::MIN,
-                f64::MAX,
+                rug::Float::cos,
+                f64::MIN..=f64::MAX,
                 1.
             );
         }
@@ -488,9 +486,12 @@ macro_rules! impl_math_f64_u10 {
         fn test_sincos() {
             test_f_ff(
                 sincos,
-                if cfg!(feature="std") { f64::sin_cos } else { libm::sincos },
-                f64::MIN,
-                f64::MAX,
+
+        |in1| {
+            let prec = in1.prec();
+            in1.sin_cos(rug::Float::new(prec))
+        },
+                f64::MIN..=f64::MAX,
                 1.
             );
         }
@@ -630,9 +631,8 @@ macro_rules! impl_math_f64_u10 {
         fn test_tan() {
             test_f_f(
                 tan,
-                if cfg!(feature="std") { f64::tan } else { libm::tan },
-                f64::MIN,
-                f64::MAX,
+                rug::Float::tan,
+                f64::MIN..=f64::MAX,
                 1.
             );
         }
@@ -717,9 +717,8 @@ macro_rules! impl_math_f64_u10 {
         fn test_atan2() {
             test_ff_f(
                 atan2,
-                if cfg!(feature="std") { f64::atan2 } else { libm::atan2 },
-                f64::MIN,
-                f64::MAX,
+                rug::Float::atan2,
+                f64::MIN..=f64::MAX,
                 1.
             );
         }
@@ -765,9 +764,8 @@ macro_rules! impl_math_f64_u10 {
         fn test_asin() {
             test_f_f(
                 asin,
-                if cfg!(feature="std") { f64::asin } else { libm::asin },
-                -1.,
-                1.,
+                rug::Float::asin,
+                -1.0..=1.0,
                 1.
             );
         }
@@ -819,9 +817,8 @@ macro_rules! impl_math_f64_u10 {
         fn test_acos() {
             test_f_f(
                 acos,
-                if cfg!(feature="std") { f64::acos } else { libm::acos },
-                -1.,
-                1.,
+                rug::Float::acos,
+                -1.0..=1.0,
                 1.
             );
         }
@@ -839,9 +836,8 @@ macro_rules! impl_math_f64_u10 {
         fn test_atan() {
             test_f_f(
                 atan,
-                if cfg!(feature="std") { f64::atan } else { libm::atan },
-                f64::MIN,
-                f64::MAX,
+                rug::Float::atan,
+                f64::MIN..=f64::MAX,
                 1.
             );
         }
@@ -924,9 +920,8 @@ macro_rules! impl_math_f64_u10 {
         fn test_exp() {
             test_f_f(
                 exp,
-                if cfg!(feature="std") { f64::exp } else { libm::exp },
-                -1000.,
-                710.,
+                rug::Float::exp,
+                -1000.0..=710.0,
                 1.
             );
         }
@@ -983,9 +978,8 @@ macro_rules! impl_math_f64_u10 {
         fn test_log() {
             test_f_f(
                 log,
-                if cfg!(feature="std") { f64::ln } else { libm::log },
-                0.,
-                f64::MAX,
+                rug::Float::ln,
+                0.0..=f64::MAX,
                 1.
             );
         }
@@ -1036,11 +1030,11 @@ macro_rules! impl_math_f64_u10 {
 
         #[test]
         fn test_pow() {
+            use rug::{ops::Pow, Float};
             test_ff_f(
                 pow,
-                if cfg!(feature="std") { f64::powf } else { libm::pow },
-                f64::MIN,
-                f64::MAX,
+                |in1, in2| Float::with_val(in1.prec(), in1.pow(in2)),
+                f64::MIN..=f64::MAX,
                 1.
             );
         }
@@ -1060,9 +1054,8 @@ macro_rules! impl_math_f64_u10 {
         fn test_sinh() {
             test_f_f(
                 sinh,
-                if cfg!(feature="std") { f64::sinh } else { libm::sinh },
-                -709.,
-                709.,
+                rug::Float::sinh,
+                -709.0..=709.0,
                 1.
             );
         }
@@ -1081,9 +1074,8 @@ macro_rules! impl_math_f64_u10 {
         fn test_cosh() {
             test_f_f(
                 cosh,
-                if cfg!(feature="std") { f64::cosh } else { libm::cosh },
-                -709.,
-                709.,
+                rug::Float::cosh,
+                -709.0..=709.0,
                 1.
             );
         }
@@ -1104,9 +1096,8 @@ macro_rules! impl_math_f64_u10 {
         fn test_tanh() {
             test_f_f(
                 tanh,
-                if cfg!(feature="std") { f64::tanh } else { libm::tanh },
-                -19.,
-                19.,
+                rug::Float::tanh,
+                -19.0..=19.0,
                 1.
             );
         }
@@ -1132,9 +1123,8 @@ macro_rules! impl_math_f64_u10 {
         fn test_asinh() {
             test_f_f(
                 asinh,
-                if cfg!(feature="std") { f64::asinh } else { libm::asinh },
-                -1.35_e+154,
-                1.35_e+154,
+                rug::Float::asinh,
+                -1.35_e+154..=1.35_e+154,
                 1.
             );
         }
@@ -1154,9 +1144,8 @@ macro_rules! impl_math_f64_u10 {
         fn test_acosh() {
             test_f_f(
                 acosh,
-                if cfg!(feature="std") { f64::acosh } else { libm::acosh },
-                -1.35_e+154,
-                1.35_e+154,
+                rug::Float::acosh,
+                -1.35_e+154..=1.35_e+154,
                 1.
             );
         }
@@ -1178,9 +1167,8 @@ macro_rules! impl_math_f64_u10 {
         fn test_atanh() {
             test_f_f(
                 atanh,
-                if cfg!(feature="std") { f64::atanh } else { libm::atanh },
-                f64::MIN,
-                f64::MAX,
+                rug::Float::atanh,
+                f64::MIN..=f64::MAX,
                 1.
             );
         }
@@ -1256,9 +1244,8 @@ macro_rules! impl_math_f64_u10 {
         fn test_cbrt() {
             test_f_f(
                 cbrt,
-                if cfg!(feature="std") { f64::cbrt } else { libm::cbrt },
-                f64::MIN,
-                f64::MAX,
+                rug::Float::cbrt,
+                f64::MIN..=f64::MAX,
                 1.
             );
         }
@@ -1302,9 +1289,8 @@ macro_rules! impl_math_f64_u10 {
         fn test_exp2() {
             test_f_f(
                 exp2,
-                if cfg!(feature="std") { f64::exp2 } else { libm::exp2 },
-                -2000.,
-                1024.,
+                rug::Float::exp2,
+                -2000.0..=1024.0,
                 1.
             );
         }
@@ -1358,9 +1344,8 @@ macro_rules! impl_math_f64_u10 {
         fn test_expm1() {
             test_f_f(
                 expm1,
-                if cfg!(feature="std") { f64::exp_m1 } else { libm::expm1 },
-                -37.,
-                710.,
+                rug::Float::exp_m1,
+                -37.0..=710.0,
                 1.
             );
         }
@@ -1426,9 +1411,8 @@ macro_rules! impl_math_f64_u10 {
         fn test_log10() {
             test_f_f(
                 log10,
-                if cfg!(feature="std") { f64::log10 } else { libm::log10 },
-                0.,
-                f64::MAX,
+                rug::Float::log10,
+                0.0..=f64::MAX,
                 1.
             );
         }
@@ -1488,9 +1472,8 @@ macro_rules! impl_math_f64_u10 {
         fn test_log2() {
             test_f_f(
                 log2,
-                if cfg!(feature="std") { f64::log2 } else { libm::log2 },
-                0.,
-                f64::MAX,
+                rug::Float::log2,
+                0.0..=f64::MAX,
                 1.
             );
         }

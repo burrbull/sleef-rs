@@ -118,13 +118,8 @@ macro_rules! impl_math_f32_u35 {
         fn test_sinf() {
             test_f_f(
                 sinf,
-                if cfg!(feature = "std") {
-                    f32::sin
-                } else {
-                    libm::sinf
-                },
-                f32::MIN,
-                f32::MAX,
+                rug::Float::sin,
+                f32::MIN..=f32::MAX,
                 3.5,
             );
         }
@@ -247,13 +242,8 @@ macro_rules! impl_math_f32_u35 {
         fn test_cosf() {
             test_f_f(
                 cosf,
-                if cfg!(feature = "std") {
-                    f32::cos
-                } else {
-                    libm::cosf
-                },
-                f32::MIN,
-                f32::MAX,
+                rug::Float::cos,
+                f32::MIN..=f32::MAX,
                 3.5,
             );
         }
@@ -380,13 +370,8 @@ macro_rules! impl_math_f32_u35 {
         fn test_tanf() {
             test_f_f(
                 tanf,
-                if cfg!(feature = "std") {
-                    f32::tan
-                } else {
-                    libm::tanf
-                },
-                f32::MIN,
-                f32::MAX,
+                rug::Float::tan,
+                f32::MIN..=f32::MAX,
                 3.5,
             );
         }
@@ -519,13 +504,11 @@ macro_rules! impl_math_f32_u35 {
         fn test_sincosf() {
             test_f_ff(
                 sincosf,
-                if cfg!(feature = "std") {
-                    f32::sin_cos
-                } else {
-                    libm::sincosf
+                |in1| {
+                    let prec = in1.prec();
+                    in1.sin_cos(rug::Float::new(prec))
                 },
-                f32::MIN,
-                f32::MAX,
+                f32::MIN..=f32::MAX,
                 3.5,
             );
         }
@@ -631,13 +614,8 @@ macro_rules! impl_math_f32_u35 {
         fn test_atanf() {
             test_f_f(
                 atanf,
-                if cfg!(feature = "std") {
-                    f32::atan
-                } else {
-                    libm::atanf
-                },
-                f32::MIN,
-                f32::MAX,
+                rug::Float::atan,
+                f32::MIN..=f32::MAX,
                 3.5,
             );
         }
@@ -667,9 +645,8 @@ macro_rules! impl_math_f32_u35 {
         fn test_atan2f() {
             test_ff_f(
                 atan2f,
-                if cfg!(feature="std") { f32::atan2 } else { libm::atan2f },
-                f32::MIN,
-                f32::MAX,
+                rug::Float::atan2,
+                f32::MIN..=f32::MAX,
                 3.5
             );
         }
@@ -694,13 +671,8 @@ macro_rules! impl_math_f32_u35 {
         fn test_asinf() {
             test_f_f(
                 asinf,
-                if cfg!(feature = "std") {
-                    f32::asin
-                } else {
-                    libm::asinf
-                },
-                -1.,
-                1.,
+                rug::Float::asin,
+                -1.0..=1.0,
                 3.5,
             );
         }
@@ -736,13 +708,8 @@ macro_rules! impl_math_f32_u35 {
         fn test_acosf() {
             test_f_f(
                 acosf,
-                if cfg!(feature = "std") {
-                    f32::acos
-                } else {
-                    libm::acosf
-                },
-                -1.,
-                1.,
+                rug::Float::acos,
+                -1.0..=1.0,
                 3.5,
             );
         }
@@ -788,13 +755,8 @@ macro_rules! impl_math_f32_u35 {
         fn test_logf() {
             test_f_f(
                 logf,
-                if cfg!(feature = "std") {
-                    f32::ln
-                } else {
-                    libm::logf
-                },
-                0.,
-                f32::MAX,
+                rug::Float::ln,
+                0.0..=f32::MAX,
                 3.5,
             );
         }
@@ -844,13 +806,8 @@ macro_rules! impl_math_f32_u35 {
         fn test_sqrtf() {
             test_f_f(
                 sqrtf,
-                if cfg!(feature = "std") {
-                    f32::sqrt
-                } else {
-                    libm::sqrtf
-                },
-                0.,
-                f32::MAX,
+                rug::Float::sqrt,
+                0.0..=f32::MAX,
                 3.5,
             );
         }
@@ -903,13 +860,8 @@ macro_rules! impl_math_f32_u35 {
         fn test_cbrtf() {
             test_f_f(
                 cbrtf,
-                if cfg!(feature = "std") {
-                    f32::cbrt
-                } else {
-                    libm::cbrtf
-                },
-                f32::MIN,
-                f32::MAX,
+                rug::Float::cbrt,
+                f32::MIN..=f32::MAX,
                 3.5,
             );
         }
@@ -928,13 +880,8 @@ macro_rules! impl_math_f32_u35 {
         fn test_sinhf() {
             test_f_f(
                 sinhf,
-                if cfg!(feature = "std") {
-                    f32::sinh
-                } else {
-                    libm::sinhf
-                },
-                -88.,
-                88.,
+                rug::Float::sinh,
+                -88.0..=88.0,
                 3.5,
             );
         }
@@ -951,13 +898,8 @@ macro_rules! impl_math_f32_u35 {
         fn test_coshf() {
             test_f_f(
                 coshf,
-                if cfg!(feature = "std") {
-                    f32::cosh
-                } else {
-                    libm::coshf
-                },
-                -88.,
-                88.,
+                rug::Float::cosh,
+                -88.0..=88.0,
                 3.5,
             );
         }
@@ -975,13 +917,8 @@ macro_rules! impl_math_f32_u35 {
         fn test_tanhf() {
             test_f_f(
                 tanhf,
-                if cfg!(feature = "std") {
-                    f32::tanh
-                } else {
-                    libm::tanhf
-                },
-                -8.7,
-                8.7,
+                rug::Float::tanh,
+                -8.7..=8.7,
                 3.5,
             );
         }
@@ -1003,13 +940,8 @@ macro_rules! impl_math_f32_u35 {
         fn test_hypotf() {
             test_ff_f(
                 hypotf,
-                if cfg!(feature = "std") {
-                    f32::hypot
-                } else {
-                    libm::hypotf
-                },
-                f32::MIN,
-                f32::MAX,
+                rug::Float::hypot,
+                f32::MIN..=f32::MAX,
                 3.5,
             );
         }
@@ -1038,13 +970,8 @@ macro_rules! impl_math_f32_u35 {
         fn test_exp2f() {
             test_f_f(
                 exp2f,
-                if cfg!(feature = "std") {
-                    f32::exp2
-                } else {
-                    libm::exp2f
-                },
-                -150.,
-                128.,
+                rug::Float::exp2,
+                -150.0..=128.0,
                 3.5,
             );
         }
@@ -1110,13 +1037,8 @@ macro_rules! impl_math_f32_u35 {
         fn test_log2f() {
             test_f_f(
                 log2f,
-                if cfg!(feature = "std") {
-                    f32::log2
-                } else {
-                    libm::log2f
-                },
-                0.,
-                f32::MAX,
+                rug::Float::log2,
+                0.0..=f32::MAX,
                 3.5,
             );
         }

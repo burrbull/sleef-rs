@@ -366,31 +366,38 @@ macro_rules! impl_math_f64 {
         };
 
         #[cfg(test)]
-        fn test_f_f(fun_fx: fn(F64x) -> F64x, fun_f: fn(f64) -> f64, mn: f64, mx: f64, ulp: f64) {
+        fn gen_input(rng: &mut rand::rngs::ThreadRng, range: core::ops::RangeInclusive<f64>) -> F64x {
             use rand::Rng;
-            let mut rng = rand::thread_rng();
-            for _ in 0..crate::TEST_REPEAT {
-                let mut in_f = [0_f64; $size];
-                for v in in_f.iter_mut() {
-                    *v = rng.gen_range(mn..mx);
+            loop {
+                let input: F64x = rng.gen();
+                for i in 0..$size {
+                    let val = input.extract(i);
+                    if !range.contains(&val) {
+                        continue;
+                    }
                 }
-                let in_fx = F64x::from_slice_unaligned(&in_f);
+                break input;
+            }
+        }
+
+        #[cfg(test)]
+        fn test_f_f(fun_fx: fn(F64x) -> F64x, fun_f: fn(rug::Float) -> rug::Float, range: core::ops::RangeInclusive<f64>, ulp_ex: f64) {
+            let mut rng = rand::thread_rng();
+            for _ in 0..crate::TEST_REPEAT_FAST {
+                let in_fx = gen_input(&mut rng, range.clone());
                 let out_fx = fun_fx(in_fx);
                 for i in 0..$size {
-                    let input = in_f[i];
-                    let expected = fun_f(input);
+                    let input = in_fx.extract(i);
                     let output = out_fx.extract(i);
+                    let expected = fun_f(rug::Float::with_val(crate::f64::PRECF64, input));
                     if expected.is_nan() && output.is_nan() {
                         continue;
                     }
-                    let diff = (expected.to_bits() as i64).wrapping_sub(output.to_bits() as i64) as f64;
-                    #[cfg(not(feature = "std"))]
-                    assert!(libm::fabs(diff) <= ulp);
-                    #[cfg(feature = "std")]
+                    let ulp = crate::f64::count_ulp(output, &expected);
                     assert!(
-                        diff.abs() <= ulp,
-                            "Position: {i}, Input: {input:e}, Output: {output}, Expected: {expected}, ULP: {}",
-                            diff.abs()
+                        ulp <= ulp_ex,
+                        "Iteration: {i}, Input: {input:e}, Output: {output}, Expected: {expected}, ULP: {}",
+                        ulp
                     );
                 }
             }
@@ -399,39 +406,34 @@ macro_rules! impl_math_f64 {
         #[cfg(test)]
         fn test_f_ff(
             fun_fx: fn(F64x) -> (F64x, F64x),
-            fun_f: fn(f64) -> (f64, f64),
-            mn: f64,
-            mx: f64,
-            ulp: f64,
+            fun_f: fn(rug::Float) -> (rug::Float, rug::Float),
+            range: core::ops::RangeInclusive<f64>,
+            ulp_ex: f64,
         ) {
-            use rand::Rng;
             let mut rng = rand::thread_rng();
-            for _ in 0..crate::TEST_REPEAT {
-                let mut in_f = [0_f64; $size];
-                for v in in_f.iter_mut() {
-                    *v = rng.gen_range(mn..mx);
-                }
-                let in_fx = F64x::from_slice_unaligned(&in_f);
+            for _ in 0..crate::TEST_REPEAT_FAST {
+                let in_fx = gen_input(&mut rng, range.clone());
                 let (out_fx1, out_fx2) = fun_fx(in_fx);
                 for i in 0..$size {
-                    let input = in_f[i];
-                    let (expected1, expected2) = fun_f(input);
+                    let input = in_fx.extract(i);
                     let output1 = out_fx1.extract(i);
                     let output2 = out_fx2.extract(i);
+                    let (expected1, expected2) = fun_f(rug::Float::with_val(crate::f64::PRECF64, input));
                     if (expected1.is_nan() && output1.is_nan()) || (expected2.is_nan() && output2.is_nan())
                     {
                         continue;
                     }
-                    let diff1 = (expected1.to_bits() as i64).wrapping_sub(output1.to_bits() as i64) as f64;
-                    let diff2 = (expected2.to_bits() as i64).wrapping_sub(output2.to_bits() as i64) as f64;
-                    #[cfg(not(feature = "std"))]
-                    assert!(libm::fabs(diff1) <= ulp && libm::fabs(diff2) <= ulp);
-                    #[cfg(feature = "std")]
+                    let ulp1 = crate::f64::count_ulp(output1, &expected1);
+                    let ulp2 = crate::f64::count_ulp(output2, &expected2);
                     assert!(
-                        diff1.abs() <= ulp && diff2.abs() <= ulp,
-                            "Position: {i}, Input: {input:e}, Output: ({output1}, {output2}), Expected: ({expected1}, {expected2}), ULP: ({}, {})",
-                            diff1.abs(),
-                            diff2.abs(),
+                        ulp1 <= ulp_ex,
+                            "Input: {input:e}, Output: ({output1}, {output2}), Expected: ({expected1}, {expected2}), ULP: ({ulp1}, {})",
+                            ulp2
+                    );
+                    assert!(
+                        ulp2 <= ulp_ex,
+                            "Input: {input:e}, Output: ({output1}, {output2}), Expected: ({expected1}, {expected2}), ULP: ({ulp1}, {})",
+                            ulp2
                     );
                 }
             }
@@ -440,41 +442,31 @@ macro_rules! impl_math_f64 {
         #[cfg(test)]
         fn test_ff_f(
             fun_fx: fn(F64x, F64x) -> F64x,
-            fun_f: fn(f64, f64) -> f64,
-            mn: f64,
-            mx: f64,
-            ulp: f64,
+            fun_f: fn(rug::Float, &rug::Float) -> rug::Float,
+            range: core::ops::RangeInclusive<f64>,
+            ulp_ex: f64,
         ) {
-            use rand::Rng;
             let mut rng = rand::thread_rng();
-            for _ in 0..crate::TEST_REPEAT {
-                let mut in_f1 = [0_f64; $size];
-                let mut in_f2 = [0_f64; $size];
-                for v in in_f1.iter_mut() {
-                    *v = rng.gen_range(mn..mx);
-                }
-                for v in in_f2.iter_mut() {
-                    *v = rng.gen_range(mn..mx);
-                }
-                let in_fx1 = F64x::from_slice_unaligned(&in_f1);
-                let in_fx2 = F64x::from_slice_unaligned(&in_f2);
+            for _ in 0..crate::TEST_REPEAT_FAST {
+                let in_fx1 = gen_input(&mut rng, range.clone());
+                let in_fx2 = gen_input(&mut rng, range.clone());
                 let out_fx = fun_fx(in_fx1, in_fx2);
                 for i in 0..$size {
-                    let input1 = in_f1[i];
-                    let input2 = in_f2[i];
-                    let expected = fun_f(input1, input2);
+                    let input1 = in_fx1.extract(i);
+                    let input2 = in_fx2.extract(i);
                     let output = out_fx.extract(i);
+                    let expected = fun_f(
+                        rug::Float::with_val(crate::f64::PRECF64, input1),
+                        &rug::Float::with_val(crate::f64::PRECF64, input2),
+                    );
                     if expected.is_nan() && output.is_nan() {
                         continue;
                     }
-                    let diff = (expected.to_bits() as i64).wrapping_sub(output.to_bits() as i64) as f64;
-                    #[cfg(not(feature = "std"))]
-                    assert!(libm::fabs(diff) <= ulp);
-                    #[cfg(feature = "std")]
+                    let ulp = crate::f64::count_ulp(output, &expected);
                     assert!(
-                        diff.abs() <= 1. + ulp,
-                            "Position: {i}, Input: ({input1:e}, {input2:e}), Output: {output}, Expected: {expected}, ULP:{}",
-                            diff.abs()
+                        ulp <= ulp_ex,
+                        "Input: ({input1:e}, {input2:e}), Output: {output}, Expected: {expected}, ULP: {}",
+                        ulp
                     );
                 }
             }

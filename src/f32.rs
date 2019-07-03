@@ -118,24 +118,74 @@ pub use fast::{
 };
 
 #[cfg(test)]
-fn test_f_f(fun_fx: fn(f32) -> f32, fun_f: fn(f32) -> f32, mn: f32, mx: f32, ulp: f32) {
+use rug::{Assign, Float};
+#[cfg(test)]
+pub(crate) const PRECF32: u32 = 32;
+
+#[cfg(test)]
+pub(crate) fn count_ulp(d: f32, c: &Float) -> f32 {
+    let c2 = c.to_f32();
+    if (c2 == 0.) && (d != 0.) {
+        return 10000.;
+    }
+
+    if (c2 == 0.) && (d == 0.) {
+        return 0.;
+    }
+
+    if c2.is_infinite() && d.is_infinite() {
+        return 0.;
+    }
+
+    let prec = c.prec();
+
+    let mut fry = Float::with_val(prec, d);
+
+    let mut frw = Float::new(prec);
+
+    let (_, e) = c.to_f32_exp();
+
+    frw.assign(Float::u_exp(1, e - 24_i32));
+
+    fry -= c;
+    fry /= &frw;
+    let u = fabsf(fry.to_f32());
+
+    u
+}
+
+#[cfg(test)]
+fn gen_input(rng: &mut rand::rngs::ThreadRng, range: core::ops::RangeInclusive<f32>) -> f32 {
     use rand::Rng;
+    loop {
+        let input = rng.gen();
+        if !range.contains(&input) {
+            continue;
+        }
+        break input;
+    }
+}
+
+#[cfg(test)]
+fn test_f_f(
+    fun_fx: fn(f32) -> f32,
+    fun_f: fn(Float) -> Float,
+    range: core::ops::RangeInclusive<f32>,
+    ulp_ex: f32,
+) {
     let mut rng = rand::thread_rng();
     for _ in 0..crate::TEST_REPEAT {
-        let input = rng.gen_range(mn..mx);
-        let expected = fun_f(input);
+        let input = gen_input(&mut rng, range.clone());
         let output = fun_fx(input);
+        let expected = fun_f(Float::with_val(PRECF32, input));
         if expected.is_nan() && output.is_nan() {
             continue;
         }
-        let diff = (expected.to_bits() as i32).wrapping_sub(output.to_bits() as i32) as f32;
-        #[cfg(not(feature = "std"))]
-        assert!(libm::fabsf(diff) <= ulp);
-        #[cfg(feature = "std")]
+        let ulp = count_ulp(output, &expected);
         assert!(
-            diff.abs() <= ulp,
+            ulp <= ulp_ex,
             "Input: {input:e}, Output: {output}, Expected: {expected}, ULP: {}",
-            diff.abs()
+            ulp
         );
     }
 }
@@ -143,54 +193,57 @@ fn test_f_f(fun_fx: fn(f32) -> f32, fun_f: fn(f32) -> f32, mn: f32, mx: f32, ulp
 #[cfg(test)]
 fn test_f_ff(
     fun_fx: fn(f32) -> (f32, f32),
-    fun_f: fn(f32) -> (f32, f32),
-    mn: f32,
-    mx: f32,
-    ulp: f32,
+    fun_f: fn(Float) -> (Float, Float),
+    range: core::ops::RangeInclusive<f32>,
+    ulp_ex: f32,
 ) {
-    use rand::Rng;
     let mut rng = rand::thread_rng();
     for _ in 0..crate::TEST_REPEAT {
-        let input = rng.gen_range(mn..mx);
-        let (expected1, expected2) = fun_f(input);
+        let input = gen_input(&mut rng, range.clone());
         let (output1, output2) = fun_fx(input);
+        let (expected1, expected2) = fun_f(Float::with_val(PRECF32, input));
         if (expected1.is_nan() && output1.is_nan()) || (expected2.is_nan() && output2.is_nan()) {
             continue;
         }
-        let diff1 = (expected1.to_bits() as i32).wrapping_sub(output1.to_bits() as i32) as f32;
-        let diff2 = (expected2.to_bits() as i32).wrapping_sub(output2.to_bits() as i32) as f32;
-        #[cfg(not(feature = "std"))]
-        assert!(libm::fabsf(diff1) <= ulp && libm::fabsf(diff2) <= ulp);
-        #[cfg(feature = "std")]
+        let ulp1 = count_ulp(output1, &expected1);
+        let ulp2 = count_ulp(output2, &expected2);
         assert!(
-            diff1.abs() <= ulp && diff2.abs() <= ulp,
-                "Input: {input:e}, Output: ({output1}, {output2}), Expected: ({expected1}, {expected2}), ULP: ({}, {})",
-                diff1.abs(),
-                diff2.abs(),
+            ulp1 <= ulp_ex,
+                "Input: {input:e}, Output: ({output1}, {output2}), Expected: ({expected1}, {expected2}), ULP: ({ulp1}, {})",
+                ulp2
+        );
+        assert!(
+            ulp2 <= ulp_ex,
+                "Input: {input:e}, Output: ({output1}, {output2}), Expected: ({expected1}, {expected2}), ULP: ({ulp1}, {})",
+                ulp2
         );
     }
 }
 
 #[cfg(test)]
-fn test_ff_f(fun_fx: fn(f32, f32) -> f32, fun_f: fn(f32, f32) -> f32, mn: f32, mx: f32, ulp: f32) {
-    use rand::Rng;
+fn test_ff_f(
+    fun_fx: fn(f32, f32) -> f32,
+    fun_f: fn(Float, &Float) -> Float,
+    range: core::ops::RangeInclusive<f32>,
+    ulp_ex: f32,
+) {
     let mut rng = rand::thread_rng();
     for _ in 0..crate::TEST_REPEAT {
-        let input1 = rng.gen_range(mn..mx);
-        let input2 = rng.gen_range(mn..mx);
-        let expected = fun_f(input1, input2);
+        let input1 = gen_input(&mut rng, range.clone());
+        let input2 = gen_input(&mut rng, range.clone());
         let output = fun_fx(input1, input2);
+        let expected = fun_f(
+            Float::with_val(PRECF32, input1),
+            &Float::with_val(PRECF32, input2),
+        );
         if expected.is_nan() && output.is_nan() {
             continue;
         }
-        let diff = (expected.to_bits() as i32).wrapping_sub(output.to_bits() as i32) as f32;
-        #[cfg(not(feature = "std"))]
-        assert!(libm::fabsf(diff) <= ulp);
-        #[cfg(feature = "std")]
+        let ulp = count_ulp(output, &expected);
         assert!(
-            diff.abs() <= ulp,
+            ulp <= ulp_ex,
             "Input: ({input1:e}, {input2:e}), Output: {output}, Expected: {expected}, ULP: {}",
-            diff.abs()
+            ulp
         );
     }
 }
@@ -450,24 +503,6 @@ fn rintfk(x: f32) -> f32 {
 #[inline]
 fn ceilfk(x: f32) -> i32 {
     (x as i32) + (if x < 0. { 0 } else { 1 })
-}
-
-#[inline]
-fn fminfk(x: f32, y: f32) -> f32 {
-    if x < y {
-        x
-    } else {
-        y
-    }
-}
-
-#[inline]
-fn fmaxfk(x: f32, y: f32) -> f32 {
-    if x > y {
-        x
-    } else {
-        y
-    }
 }
 
 #[inline]

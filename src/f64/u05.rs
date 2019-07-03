@@ -145,9 +145,9 @@ pub fn sqrt(mut d: f64) -> f64 {
 pub fn hypot(mut x: f64, mut y: f64) -> f64 {
     x = fabsk(x);
     y = fabsk(y);
-    let min = fmink(x, y);
+    let min = x.min(y);
     let mut n = min;
-    let max = fmaxk(x, y);
+    let max = x.max(y);
     let mut d = max;
 
     if max < f64::MIN_POSITIVE {

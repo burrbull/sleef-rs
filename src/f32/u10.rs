@@ -81,17 +81,7 @@ pub fn sinf(d: f32) -> f32 {
 
 #[test]
 fn test_sinf() {
-    test_f_f(
-        sinf,
-        if cfg!(feature = "std") {
-            f32::sin
-        } else {
-            libm::sinf
-        },
-        f32::MIN,
-        f32::MAX,
-        1.,
-    );
+    test_f_f(sinf, rug::Float::sin, f32::MIN..=f32::MAX, 1.);
 }
 
 /// Cosine function
@@ -147,6 +137,11 @@ pub fn cosf(mut d: f32) -> f32 {
     } else {
         u
     }
+}
+
+#[test]
+fn test_cosf() {
+    test_f_f(cosf, rug::Float::cos, f32::MIN..=f32::MAX, 1.);
 }
 
 /// Evaluate sine and cosine functions simultaneously
@@ -213,13 +208,11 @@ pub fn sincosf(d: f32) -> (f32, f32) {
 fn test_sincosf() {
     test_f_ff(
         sincosf,
-        if cfg!(feature = "std") {
-            f32::sin_cos
-        } else {
-            libm::sincosf
+        |in1| {
+            let prec = in1.prec();
+            in1.sin_cos(Float::new(prec))
         },
-        f32::MIN,
-        f32::MAX,
+        f32::MIN..=f32::MAX,
         1.,
     );
 }
@@ -743,15 +736,11 @@ pub fn powf(x: f32, y: f32) -> f32 {
 
 #[test]
 fn test_powf() {
+    use rug::{ops::Pow, Float};
     test_ff_f(
         powf,
-        if cfg!(feature = "std") {
-            f32::powf
-        } else {
-            libm::powf
-        },
-        f32::MIN,
-        f32::MAX,
+        |in1, in2| Float::with_val(in1.prec(), in1.pow(in2)),
+        f32::MIN..=f32::MAX,
         1.,
     );
 }

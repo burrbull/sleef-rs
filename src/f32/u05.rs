@@ -115,9 +115,9 @@ pub fn sincospif(d: f32) -> (f32, f32) {
 pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
     x = fabsfk(x);
     y = fabsfk(y);
-    let min = super::fminfk(x, y);
+    let min = x.min(y);
     let mut n = min;
-    let max = super::fmaxfk(x, y);
+    let max = x.max(y);
     let mut d = max;
 
     if max < f32::MIN_POSITIVE {

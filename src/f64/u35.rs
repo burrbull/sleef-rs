@@ -107,8 +107,8 @@ pub fn sqrt(d: f64) -> f64 {
 pub fn hypot(mut x: f64, mut y: f64) -> f64 {
     x = fabsk(x);
     y = fabsk(y);
-    let min = fmink(x, y);
-    let max = fmaxk(x, y);
+    let min = x.min(y);
+    let max = x.max(y);
 
     let t = min / max;
     if (x == f64::INFINITY) || (y == f64::INFINITY) {
@@ -120,6 +120,17 @@ pub fn hypot(mut x: f64, mut y: f64) -> f64 {
     } else {
         max * (1. + t * t).sqrt()
     }
+}
+
+#[test]
+fn test_hypot() {
+    test_ff_f(
+        hypot,
+        rug::Float::hypot,
+        -1e307..=1e307,
+        -1e307..=1e307,
+        3.5,
+    );
 }
 
 pub fn atan2(y: f64, x: f64) -> f64 {
@@ -355,6 +366,11 @@ pub fn sin(mut d: f64) -> f64 {
     }
 }
 
+#[test]
+fn test_sin() {
+    super::test_f_f(sin, rug::Float::sin, f64::MIN..=f64::MAX, 3.5);
+}
+
 pub fn cos(mut d: f64) -> f64 {
     let t = d;
     let ql: isize;
@@ -424,6 +440,11 @@ pub fn cos(mut d: f64) -> f64 {
     .mul_add(s, -0.166_666_666_666_666_657_414_808);
 
     s.mul_add(u * d, d)
+}
+
+#[test]
+fn test_cos() {
+    super::test_f_f(cos, rug::Float::cos, f64::MIN..=f64::MAX, 3.5);
 }
 
 pub fn sincos(d: f64) -> (f64, f64) {

@@ -138,79 +138,135 @@ pub use u35::{
 };
 
 #[cfg(test)]
-fn test_f_f(fun_fx: fn(f64) -> f64, fun_f: fn(f64) -> f64, mn: f64, mx: f64, ulp: f64) {
+use rug::{Assign, Float};
+#[cfg(test)]
+pub(crate) const PRECF64: u32 = 60;
+
+#[cfg(test)]
+pub(crate) fn count_ulp(d: f64, c: &Float) -> f64 {
+    let c2 = c.to_f64();
+    if (c2 == 0.) && (d != 0.) {
+        return 10000.;
+    }
+
+    if (c2 == 0.) && (d == 0.) {
+        return 0.;
+    }
+
+    if c2.is_infinite() && d.is_infinite() {
+        return 0.;
+    }
+
+    let prec = c.prec();
+
+    let mut fry = Float::with_val(prec, d);
+
+    let mut frw = Float::new(prec);
+
+    let (_, e) = c.to_f64_exp();
+
+    frw.assign(Float::u_exp(1, e - 53_i32));
+
+    fry -= c;
+    fry /= &frw;
+    let u = fabs(fry.to_f64());
+
+    u
+}
+
+#[cfg(test)]
+fn gen_input(rng: &mut rand::rngs::ThreadRng, range: core::ops::RangeInclusive<f64>) -> f64 {
     use rand::Rng;
-    let mut rng = rand::thread_rng();
-    for _ in 0..crate::TEST_REPEAT {
-        let input = rng.gen_range(mn..mx);
-        let expected = fun_f(input);
-        let output = fun_fx(input);
-        if expected.is_nan() && output.is_nan() {
+    loop {
+        let input = rng.gen();
+        if !range.contains(&input) {
             continue;
         }
-        let diff = (expected.to_bits() as i64).wrapping_sub(output.to_bits() as i64) as f64;
-        #[cfg(not(feature = "std"))]
-        assert!(libm::fabs(diff) <= ulp);
-        #[cfg(feature = "std")]
-        assert!(
-            diff.abs() <= ulp,
-            "Input: {input:e}, Output: {output}, Expected: {expected}, ULP: {}",
-            diff.abs()
-        );
+        break input;
     }
 }
 
 #[cfg(test)]
-fn test_f_ff(
-    fun_fx: fn(f64) -> (f64, f64),
-    fun_f: fn(f64) -> (f64, f64),
-    mn: f64,
-    mx: f64,
-    ulp: f64,
+#[allow(warnings)]
+fn test_f_f(
+    fun_fx: fn(f64) -> f64,
+    fun_f: fn(Float) -> Float,
+    range: core::ops::RangeInclusive<f64>,
+    ulp_ex: f64,
 ) {
     use rand::Rng;
     let mut rng = rand::thread_rng();
     for _ in 0..crate::TEST_REPEAT {
-        let input = rng.gen_range(mn..mx);
-        let (expected1, expected2) = fun_f(input);
-        let (output1, output2) = fun_fx(input);
-        if (expected1.is_nan() && output1.is_nan()) || (expected2.is_nan() && output2.is_nan()) {
+        let input = gen_input(&mut rng, range.clone());
+        let output = fun_fx(input);
+        let expected = fun_f(Float::with_val(PRECF64, input));
+        if expected.is_nan() && output.is_nan() {
             continue;
         }
-        let diff1 = (expected1.to_bits() as i64).wrapping_sub(output1.to_bits() as i64) as f64;
-        let diff2 = (expected2.to_bits() as i64).wrapping_sub(output2.to_bits() as i64) as f64;
-        #[cfg(not(feature = "std"))]
-        assert!(libm::fabs(diff1) <= ulp && libm::fabs(diff2) <= ulp);
-        #[cfg(feature = "std")]
+        let ulp = count_ulp(output, &expected);
         assert!(
-            diff1.abs() <= ulp && diff2.abs() <= ulp,
-                "Input: {input:e}, Output: ({output1}, {output2}), Expected: ({expected1}, {expected2}), Expected: ({}, {})",
-                diff1.abs(),
-                diff2.abs()
+            ulp <= ulp_ex,
+            "Input: {input:e}, Output: {output}, Expected: {expected}, ULP: {ulp}"
         );
     }
 }
 
 #[cfg(test)]
-fn test_ff_f(fun_fx: fn(f64, f64) -> f64, fun_f: fn(f64, f64) -> f64, mn: f64, mx: f64, ulp: f64) {
+#[allow(warnings)]
+fn test_f_ff(
+    fun_fx: fn(f64) -> (f64, f64),
+    fun_f: fn(Float) -> (Float, Float),
+    range: core::ops::RangeInclusive<f64>,
+    ulp_ex: f64,
+) {
     use rand::Rng;
     let mut rng = rand::thread_rng();
     for _ in 0..crate::TEST_REPEAT {
-        let input1 = rng.gen_range(mn..mx);
-        let input2 = rng.gen_range(mn..mx);
-        let expected = fun_f(input1, input2);
+        let input = gen_input(&mut rng, range.clone());
+        let (output1, output2) = fun_fx(input);
+        let (expected1, expected2) = fun_f(Float::with_val(PRECF64, input));
+        if (expected1.is_nan() && output1.is_nan()) || (expected2.is_nan() && output2.is_nan()) {
+            continue;
+        }
+        let ulp1 = count_ulp(output1, &expected1);
+        let ulp2 = count_ulp(output2, &expected2);
+        assert!(
+            ulp1 <= ulp_ex,
+                "Input: {input:e}, Output: ({output1}, {output2}), Expected: ({expected1}, {expected2}), ULP: ({ulp1}, {ulp2})"
+        );
+        assert!(
+            ulp2 <= ulp_ex,
+                "Input: {input:e}, Output: ({output1}, {output2}), Expected: ({expected1}, {expected2}), ULP: ({ulp1}, {ulp2})"
+        );
+    }
+}
+
+#[cfg(test)]
+#[allow(warnings)]
+fn test_ff_f(
+    fun_fx: fn(f64, f64) -> f64,
+    fun_f: fn(Float, &Float) -> Float,
+    range1: core::ops::RangeInclusive<f64>,
+    range2: core::ops::RangeInclusive<f64>,
+    ulp_ex: f64,
+) {
+    use rand::Rng;
+    let mut rng = rand::thread_rng();
+    for _ in 0..crate::TEST_REPEAT {
+        let input1 = gen_input(&mut rng, range1.clone());
+        let input2 = gen_input(&mut rng, range2.clone());
         let output = fun_fx(input1, input2);
+        let expected = fun_f(
+            Float::with_val(PRECF64, input1),
+            &Float::with_val(PRECF64, input2),
+        );
         if expected.is_nan() && output.is_nan() {
             continue;
         }
-        let diff = (expected.to_bits() as i64).wrapping_sub(output.to_bits() as i64) as f64;
-        #[cfg(not(feature = "std"))]
-        assert!(libm::fabs(diff) <= ulp);
-        #[cfg(feature = "std")]
+        let ulp = count_ulp(output, &expected);
         assert!(
-            diff.abs() <= ulp,
-            "Input: ({input1:e}, {input2:e}), Output: {output}, Expected: {expected}, ULP: {}",
-            diff.abs()
+            ulp <= ulp_ex,
+            "Input: ({input1:e}, {input2:e}), Output: {output}, Expected: {expected}, ULP: {ulp}",
         );
     }
 }
@@ -484,24 +540,6 @@ fn ceilk(x: f64) -> isize {
 #[inline]
 fn trunck(x: f64) -> f64 {
     x as isize as f64
-}
-
-#[inline]
-fn fmink(x: f64, y: f64) -> f64 {
-    if x < y {
-        x
-    } else {
-        y
-    }
-}
-
-#[inline]
-fn fmaxk(x: f64, y: f64) -> f64 {
-    if x > y {
-        x
-    } else {
-        y
-    }
 }
 
 #[inline]
@@ -968,7 +1006,8 @@ fn expk(d: Doubled<f64>) -> f64 {
         0.500_000_000_000_000_999_200_722,
     );
 
-    let mut t = (1.).add_checked(s);
+    //    let mut t = (1.).add_checked(s);
+    let mut t = 1. + s;
     t = t.add_checked(s.square() * u);
 
     if d.0 < -1000. {

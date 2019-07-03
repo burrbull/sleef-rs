@@ -16,9 +16,10 @@ features = ["into_bits"]
 [features]
 default = []
 deterministic = []
-std = []
-fasttest = []
 
 [dev-dependencies]
-rand = "0.8.5"
-libm = "0.2.3"
+rug = "1.16"
+
+[dev-dependencies.rand]
+version = "0.8.5"
+features = ["simd_support"]

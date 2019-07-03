@@ -126,8 +126,7 @@ pub fn sincospif(d: f32) -> (f32, f32) {
 /// Hyperbolic sine function
 ///
 /// These functions evaluates the hyperbolic sine function of a value in ***a***.
-/// The error bound of the returned value is 3.5 ULP if ***a*** is in [-709, 709]
-/// for the double-precision function or [-88, 88] for the single-precision function.
+/// The error bound of the returned value is 3.5 ULP if ***a*** is in [-88, 88].
 /// If ***a*** is a finite value out of this range, infinity with a correct sign
 /// or a correct value with 3.5 ULP error bound is returned.
 pub fn sinhf(x: f32) -> f32 {
@@ -147,8 +146,7 @@ pub fn sinhf(x: f32) -> f32 {
 /// Hyperbolic cosine function
 ///
 /// These functions evaluates the hyperbolic cosine function of a value in ***a***.
-/// The error bound of the returned value is 3.5 ULP if a is in [-709, 709]
-/// for the double-precision function or [-88, 88] for the single-precision function.
+/// The error bound of the returned value is 3.5 ULP if a is in [-88, 88].
 /// If ***a*** is a finite value out of this range, infinity with a correct sign
 /// or a correct value with 3.5 ULP error bound is returned.
 pub fn coshf(x: f32) -> f32 {

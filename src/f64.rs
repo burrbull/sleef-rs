@@ -138,6 +138,61 @@ pub use u35::{
 };
 
 #[cfg(test)]
+use rug::{Float, Assign};
+#[cfg(test)]
+const PRECF64: u32 = 60;
+
+#[cfg(test)]
+fn count_ulp(d: f64, c: &Float) -> f64 {
+    let c2 = c.to_f64();
+    if (c2 == 0.) && (d != 0.) {
+        return 10000.;
+    }
+
+    let prec = c.prec();
+
+    let mut fry = Float::with_val(prec, d);
+
+    let mut frw = Float::new(prec);
+
+    let (_, e) = c.to_f64_exp();
+
+    frw.assign(Float::u_exp(1, e - 53_i32));
+
+    fry -= c;
+    fry /= &frw;
+    let u = fry.to_f64().abs();
+
+    u
+}
+
+#[cfg(test)]
+fn rug_test_f_f(fun_fx: fn(f64) -> f64, fun_f: fn(Float) -> Float, mn: f64, mx: f64, ulp_ex: f64) {
+    use rand::Rng;
+    let mut rng = rand::thread_rng();
+    let mut av_ulp = 0.;
+    let mut max_ulp = 0.;
+    let mut max_ulp_at = 0.;
+    for _ in 0..crate::TEST_REPEAT {
+        let input = rng.gen_range(mn, mx);
+        let expected = fun_f(Float::with_val(PRECF64, input));
+        let output = fun_fx(input);
+        if expected.is_nan() && output.is_nan() {
+            continue;
+        }
+        let ulp = count_ulp(output, &expected);
+        av_ulp += ulp;
+        if ulp > max_ulp {
+            max_ulp = ulp;
+            max_ulp_at = input;
+        }
+        assert!(ulp <= ulp_ex);
+    }
+    av_ulp /= crate::TEST_REPEAT as f64;
+    print!("Max ULP = {} at {:e}, Average ULP = {}\t", max_ulp, max_ulp_at, av_ulp);
+}
+/*
+#[cfg(test)]
 fn test_f_f(fun_fx: fn(f64) -> f64, fun_f: fn(f64) -> f64, mn: f64, mx: f64, ulp: f64) {
     use rand::Rng;
     let mut rng = rand::thread_rng();
@@ -164,7 +219,7 @@ fn test_f_f(fun_fx: fn(f64) -> f64, fun_f: fn(f64) -> f64, mn: f64, mx: f64, ulp
         );
     }
 }
-
+*/
 #[cfg(test)]
 fn test_f_ff(
     fun_fx: fn(f64) -> (f64, f64),

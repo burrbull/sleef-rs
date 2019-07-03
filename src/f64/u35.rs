@@ -351,6 +351,11 @@ pub fn sin(mut d: f64) -> f64 {
     }
 }
 
+#[test]
+fn test_sin() {
+    super::rug_test_f_f(sin, rug::Float::sin, f64::MIN, f64::MAX, 3.5);
+}
+
 pub fn cos(mut d: f64) -> f64 {
     let t = d;
     let ql: isize;
@@ -420,6 +425,11 @@ pub fn cos(mut d: f64) -> f64 {
     .mul_add(s, -0.166_666_666_666_666_657_414_808);
 
     s.mul_add(u * d, d)
+}
+
+#[test]
+fn test_cos() {
+    super::rug_test_f_f(cos, rug::Float::cos, f64::MIN, f64::MAX, 3.5);
 }
 
 pub fn sincos(d: f64) -> (f64, f64) {

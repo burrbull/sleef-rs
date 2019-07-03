@@ -273,17 +273,7 @@ pub fn sin(d: f64) -> f64 {
 
 #[test]
 fn test_sin() {
-    test_f_f(
-        sin,
-        if cfg!(feature = "std") {
-            f64::sin
-        } else {
-            libm::sin
-        },
-        f64::MIN,
-        f64::MAX,
-        1.,
-    );
+    super::rug_test_f_f(sin, rug::Float::sin, f64::MIN, f64::MAX, 1.0);
 }
 
 pub fn cos(d: f64) -> f64 {

@@ -21,3 +21,4 @@ fasttest = []
 [dev-dependencies]
 rand = "0.6"
 libm = "0.1.3"
+rug = {git = "https://gitlab.com/tspiteri/rug"}

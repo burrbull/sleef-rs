@@ -138,7 +138,7 @@ pub use u35::{
 };
 
 #[cfg(test)]
-use rug::{Float, Assign};
+use rug::{Assign, Float};
 #[cfg(test)]
 const PRECF64: u32 = 60;
 
@@ -147,6 +147,14 @@ fn count_ulp(d: f64, c: &Float) -> f64 {
     let c2 = c.to_f64();
     if (c2 == 0.) && (d != 0.) {
         return 10000.;
+    }
+
+    if (c2 == 0.) && (d == 0.) {
+        return 0.;
+    }
+
+    if c2.is_infinite() && d.is_infinite() {
+        return 0.;
     }
 
     let prec = c.prec();
@@ -167,14 +175,15 @@ fn count_ulp(d: f64, c: &Float) -> f64 {
 }
 
 #[cfg(test)]
-fn rug_test_f_f(fun_fx: fn(f64) -> f64, fun_f: fn(Float) -> Float, mn: f64, mx: f64, ulp_ex: f64) {
+#[allow(warnings)]
+fn rug_test_f_f(fun_fx: fn(f64) -> f64, fun_f: fn(Float) -> Float, mnx: (f64, f64), ulp_ex: f64) {
     use rand::Rng;
     let mut rng = rand::thread_rng();
     let mut av_ulp = 0.;
     let mut max_ulp = 0.;
     let mut max_ulp_at = 0.;
     for _ in 0..crate::TEST_REPEAT {
-        let input = rng.gen_range(mn, mx);
+        let input = rng.gen_range(mnx.0, mnx.1);
         let expected = fun_f(Float::with_val(PRECF64, input));
         let output = fun_fx(input);
         if expected.is_nan() && output.is_nan() {
@@ -186,10 +195,23 @@ fn rug_test_f_f(fun_fx: fn(f64) -> f64, fun_f: fn(Float) -> Float, mn: f64, mx: 
             max_ulp = ulp;
             max_ulp_at = input;
         }
+        #[cfg(not(feature = "std"))]
         assert!(ulp <= ulp_ex);
+        #[cfg(feature = "std")]
+        assert!(
+            ulp <= ulp_ex,
+            format!(
+                "Input: {:e}, Output: {}, Expected: {}, ULP: {}",
+                input, output, expected, ulp
+            )
+        );
     }
     av_ulp /= crate::TEST_REPEAT as f64;
-    print!("Max ULP = {} at {:e}, Average ULP = {}\t", max_ulp, max_ulp_at, av_ulp);
+    #[cfg(feature = "std")]
+    print!(
+        "Max ULP = {} at {:e}, Average ULP = {}\t",
+        max_ulp, max_ulp_at, av_ulp
+    );
 }
 /*
 #[cfg(test)]
@@ -259,6 +281,58 @@ fn test_f_ff(
 }
 
 #[cfg(test)]
+#[allow(warnings)]
+fn rug_test_ff_f(
+    fun_fx: fn(f64, f64) -> f64,
+    fun_f: fn(Float, &Float) -> Float,
+    mnx1: (f64, f64),
+    mnx2: (f64, f64),
+    ulp_ex: f64,
+) {
+    use rand::Rng;
+    let mut rng = rand::thread_rng();
+    let mut av_ulp = 0.;
+    let mut max_ulp = 0.;
+    let mut max_ulp_at1 = 0.;
+    let mut max_ulp_at2 = 0.;
+    for _ in 0..crate::TEST_REPEAT {
+        let input1 = rng.gen_range(mnx1.0, mnx1.1);
+        let input2 = rng.gen_range(mnx2.0, mnx2.1);
+        let expected = fun_f(
+            Float::with_val(PRECF64, input1),
+            &Float::with_val(PRECF64, input2),
+        );
+        let output = fun_fx(input1, input2);
+        if expected.is_nan() && output.is_nan() {
+            continue;
+        }
+        let ulp = count_ulp(output, &expected);
+        av_ulp += ulp;
+        if ulp > max_ulp {
+            max_ulp = ulp;
+            max_ulp_at1 = input1;
+            max_ulp_at2 = input2;
+        }
+        #[cfg(not(feature = "std"))]
+        assert!(ulp <= ulp_ex);
+        #[cfg(feature = "std")]
+        assert!(
+            ulp <= ulp_ex,
+            format!(
+                "Input: ({:e}, {:e}), Output: {}, Expected: {}, ULP: {}",
+                input1, input2, output, expected, ulp
+            )
+        );
+    }
+    av_ulp /= crate::TEST_REPEAT as f64;
+    #[cfg(feature = "std")]
+    print!(
+        "Max ULP = {} at ({:e}, {:e}), Average ULP = {}\t",
+        max_ulp, max_ulp_at1, max_ulp_at2, av_ulp
+    );
+}
+/*
+#[cfg(test)]
 fn test_ff_f(
     fun_fx: fn(f64, f64) -> (f64),
     fun_f: fn(f64, f64) -> f64,
@@ -293,7 +367,7 @@ fn test_ff_f(
         );
     }
 }
-
+*/
 impl crate::Sleef for f64 {
     type Int = i32;
     #[inline]
@@ -563,24 +637,6 @@ fn ceilk(x: f64) -> isize {
 #[inline]
 fn trunck(x: f64) -> f64 {
     x as isize as f64
-}
-
-#[inline]
-fn fmink(x: f64, y: f64) -> f64 {
-    if x < y {
-        x
-    } else {
-        y
-    }
-}
-
-#[inline]
-fn fmaxk(x: f64, y: f64) -> f64 {
-    if x > y {
-        x
-    } else {
-        y
-    }
 }
 
 #[inline]
@@ -1047,7 +1103,8 @@ fn expk(d: Doubled<f64>) -> f64 {
         0.500_000_000_000_000_999_200_722,
     );
 
-    let mut t = (1.).add_checked(s);
+    //    let mut t = (1.).add_checked(s);
+    let mut t = 1. + s;
     t = t.add_checked(s.square() * u);
 
     if d.0 < -1000. {

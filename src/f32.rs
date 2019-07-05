@@ -477,24 +477,6 @@ fn ceilfk(x: f32) -> i32 {
 }
 
 #[inline]
-fn fminfk(x: f32, y: f32) -> f32 {
-    if x < y {
-        x
-    } else {
-        y
-    }
-}
-
-#[inline]
-fn fmaxfk(x: f32, y: f32) -> f32 {
-    if x > y {
-        x
-    } else {
-        y
-    }
-}
-
-#[inline]
 fn ilogbkf(mut d: f32) -> i32 {
     let m = d < 5.421_010_862_427_522E-20;
     d = if m { 1.844_674_407_370_955_2E19 * d } else { d };

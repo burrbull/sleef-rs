@@ -16,9 +16,8 @@ features = ["into_bits"]
 default = []
 deterministic = []
 std = []
-fasttest = []
 
 [dev-dependencies]
 rand = "0.6"
 libm = "0.1.3"
-rug = {git = "https://gitlab.com/tspiteri/rug"}
+rug = "1.5"

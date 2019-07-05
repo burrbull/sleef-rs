@@ -369,7 +369,7 @@ macro_rules! impl_math_f64 {
         fn test_f_f(fun_fx: fn(F64x) -> F64x, fun_f: fn(f64) -> f64, mn: f64, mx: f64, ulp: f64) {
             use rand::Rng;
             let mut rng = rand::thread_rng();
-            for _ in 0..crate::TEST_REPEAT {
+            for _ in 0..crate::TEST_REPEAT_FAST {
                 let mut in_f = [0_f64; $size];
                 for v in in_f.iter_mut() {
                     *v = rng.gen_range(mn, mx);
@@ -412,7 +412,7 @@ macro_rules! impl_math_f64 {
         ) {
             use rand::Rng;
             let mut rng = rand::thread_rng();
-            for _ in 0..crate::TEST_REPEAT {
+            for _ in 0..crate::TEST_REPEAT_FAST {
                 let mut in_f = [0_f64; $size];
                 for v in in_f.iter_mut() {
                     *v = rng.gen_range(mn, mx);
@@ -461,7 +461,7 @@ macro_rules! impl_math_f64 {
         ) {
             use rand::Rng;
             let mut rng = rand::thread_rng();
-            for _ in 0..crate::TEST_REPEAT {
+            for _ in 0..crate::TEST_REPEAT_FAST {
                 let mut in_f1 = [0_f64; $size];
                 let mut in_f2 = [0_f64; $size];
                 for v in in_f1.iter_mut() {

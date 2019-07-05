@@ -84,11 +84,8 @@ pub mod f64x8 {
 }
 
 #[cfg(test)]
-#[cfg(feature = "fasttest")]
-const TEST_REPEAT: usize = 1_000;
-
+const TEST_REPEAT_FAST: usize = 1_000;
 #[cfg(test)]
-#[cfg(not(feature = "fasttest"))]
 const TEST_REPEAT: usize = 100_000;
 
 pub trait Sleef: Sized {

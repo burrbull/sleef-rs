@@ -188,8 +188,8 @@ pub fn tanhf(x: f32) -> f32 {
 pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
     x = fabsfk(x);
     y = fabsfk(y);
-    let min = fminfk(x, y);
-    let max = fmaxfk(x, y);
+    let min = x.min(y);
+    let max = x.max(y);
 
     let t = min / max;
     if (x == f32::INFINITY) || (y == f32::INFINITY) {

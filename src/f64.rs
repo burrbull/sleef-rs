@@ -216,7 +216,12 @@ fn rug_test_f_f(fun_fx: fn(f64) -> f64, fun_f: fn(Float) -> Float, mnx: (f64, f6
 
 #[cfg(test)]
 #[allow(warnings)]
-fn rug_test_f_ff(fun_fx: fn(f64) -> (f64, f64), fun_f: fn(Float, Float) -> (Float, Float), mnx: (f64, f64), ulp_ex: f64) {
+fn rug_test_f_ff(
+    fun_fx: fn(f64) -> (f64, f64),
+    fun_f: fn(Float, Float) -> (Float, Float),
+    mnx: (f64, f64),
+    ulp_ex: f64,
+) {
     use rand::Rng;
     let mut rng = rand::thread_rng();
     let mut av_ulp = 0.;
@@ -232,7 +237,7 @@ fn rug_test_f_ff(fun_fx: fn(f64) -> (f64, f64), fun_f: fn(Float, Float) -> (Floa
         let ulp1 = count_ulp(output1, &expected1);
         let ulp2 = count_ulp(output2, &expected2);
         let ulp = ulp1.max(ulp2);
-        av_ulp += (ulp1 + ulp2)/2.;
+        av_ulp += (ulp1 + ulp2) / 2.;
         if ulp > max_ulp {
             max_ulp = ulp;
             max_ulp_at = input;

@@ -426,12 +426,7 @@ pub fn sincos(d: f64) -> (f64, f64) {
 
 #[test]
 fn test_sincos() {
-    rug_test_f_ff(
-        sincos,
-        rug::Float::sin_cos,
-        (f64::MIN, f64::MAX),
-        1.,
-    );
+    rug_test_f_ff(sincos, rug::Float::sin_cos, (f64::MIN, f64::MAX), 1.);
 }
 
 pub fn tan(d: f64) -> f64 {

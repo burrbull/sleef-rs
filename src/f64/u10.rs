@@ -426,15 +426,10 @@ pub fn sincos(d: f64) -> (f64, f64) {
 
 #[test]
 fn test_sincos() {
-    test_f_ff(
+    rug_test_f_ff(
         sincos,
-        if cfg!(feature = "std") {
-            f64::sin_cos
-        } else {
-            libm::sincos
-        },
-        f64::MIN,
-        f64::MAX,
+        |in1| {let prec = in1.prec(); rug::Float::sin_cos(in1, rug::Float::new(prec))}, // TODO: fix
+        (f64::MIN, f64::MAX),
         1.,
     );
 }

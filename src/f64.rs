@@ -213,71 +213,47 @@ fn rug_test_f_f(fun_fx: fn(f64) -> f64, fun_f: fn(Float) -> Float, mnx: (f64, f6
         max_ulp, max_ulp_at, av_ulp
     );
 }
-/*
+
 #[cfg(test)]
-fn test_f_f(fun_fx: fn(f64) -> f64, fun_f: fn(f64) -> f64, mn: f64, mx: f64, ulp: f64) {
+#[allow(warnings)]
+fn rug_test_f_ff(fun_fx: fn(f64) -> (f64, f64), fun_f: fn(Float) -> (Float, Float), mnx: (f64, f64), ulp_ex: f64) {
     use rand::Rng;
     let mut rng = rand::thread_rng();
+    let mut av_ulp = 0.;
+    let mut max_ulp = 0.;
+    let mut max_ulp_at = 0.;
     for _ in 0..crate::TEST_REPEAT {
-        let input = rng.gen_range(mn, mx);
-        let expected = fun_f(input);
-        let output = fun_fx(input);
-        if expected.is_nan() && output.is_nan() {
-            continue;
-        }
-        let diff = (expected.to_bits() as i64).wrapping_sub(output.to_bits() as i64) as f64;
-        #[cfg(not(feature = "std"))]
-        assert!(libm::fabs(diff) <= ulp);
-        #[cfg(feature = "std")]
-        assert!(
-            diff.abs() <= ulp,
-            format!(
-                "Input: {:e}, Output: {}, Expected: {}, ULP: {}",
-                input,
-                output,
-                expected,
-                diff.abs()
-            )
-        );
-    }
-}
-*/
-#[cfg(test)]
-fn test_f_ff(
-    fun_fx: fn(f64) -> (f64, f64),
-    fun_f: fn(f64) -> (f64, f64),
-    mn: f64,
-    mx: f64,
-    ulp: f64,
-) {
-    use rand::Rng;
-    let mut rng = rand::thread_rng();
-    for _ in 0..crate::TEST_REPEAT {
-        let input = rng.gen_range(mn, mx);
-        let (expected1, expected2) = fun_f(input);
+        let input = rng.gen_range(mnx.0, mnx.1);
+        let (expected1, expected2) = fun_f(Float::with_val(PRECF64, input));
         let (output1, output2) = fun_fx(input);
         if (expected1.is_nan() && output1.is_nan()) || (expected2.is_nan() && output2.is_nan()) {
             continue;
         }
-        let diff1 = (expected1.to_bits() as i64).wrapping_sub(output1.to_bits() as i64) as f64;
-        let diff2 = (expected2.to_bits() as i64).wrapping_sub(output2.to_bits() as i64) as f64;
+        let ulp1 = count_ulp(output1, &expected1);
+        let ulp2 = count_ulp(output2, &expected2);
+        let ulp = ulp1.max(ulp2);
+        av_ulp += (ulp1 + ulp2)/2.;
+        if ulp > max_ulp {
+            max_ulp = ulp;
+            max_ulp_at = input;
+        }
         #[cfg(not(feature = "std"))]
-        assert!(libm::fabs(diff1) <= ulp && libm::fabs(diff2) <= ulp);
+        assert!(ulp <= ulp_ex);
         #[cfg(feature = "std")]
         assert!(
-            diff1.abs() <= ulp && diff2.abs() <= ulp,
+            ulp <= ulp_ex,
             format!(
-                "Input: {:e}, Output: ({}, {}), Expected: ({}, {}), Expected: ({}, {})",
-                input,
-                output1,
-                output2,
-                expected1,
-                expected2,
-                diff1.abs(),
-                diff2.abs()
+                "Input: {:e}, Output: ({}, {}), Expected: ({}, {}), ULP: ({}, {})",
+                input, output1, output2, expected1, expected2, ulp1, ulp2
             )
         );
     }
+    av_ulp /= crate::TEST_REPEAT as f64;
+    #[cfg(feature = "std")]
+    print!(
+        "Max ULP = {} at {:e}, Average ULP = {}\t",
+        max_ulp, max_ulp_at, av_ulp
+    );
 }
 
 #[cfg(test)]
@@ -331,43 +307,7 @@ fn rug_test_ff_f(
         max_ulp, max_ulp_at1, max_ulp_at2, av_ulp
     );
 }
-/*
-#[cfg(test)]
-fn test_ff_f(
-    fun_fx: fn(f64, f64) -> (f64),
-    fun_f: fn(f64, f64) -> f64,
-    mn: f64,
-    mx: f64,
-    ulp: f64,
-) {
-    use rand::Rng;
-    let mut rng = rand::thread_rng();
-    for _ in 0..crate::TEST_REPEAT {
-        let input1 = rng.gen_range(mn, mx);
-        let input2 = rng.gen_range(mn, mx);
-        let expected = fun_f(input1, input2);
-        let output = fun_fx(input1, input2);
-        if expected.is_nan() && output.is_nan() {
-            continue;
-        }
-        let diff = (expected.to_bits() as i64).wrapping_sub(output.to_bits() as i64) as f64;
-        #[cfg(not(feature = "std"))]
-        assert!(libm::fabs(diff) <= ulp);
-        #[cfg(feature = "std")]
-        assert!(
-            diff.abs() <= ulp,
-            format!(
-                "Input: ({:e}, {:e}), Output: {}, Expected: {}, ULP: {}",
-                input1,
-                input2,
-                output,
-                expected,
-                diff.abs()
-            )
-        );
-    }
-}
-*/
+
 impl crate::Sleef for f64 {
     type Int = i32;
     #[inline]

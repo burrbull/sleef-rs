@@ -216,7 +216,7 @@ fn rug_test_f_f(fun_fx: fn(f64) -> f64, fun_f: fn(Float) -> Float, mnx: (f64, f6
 
 #[cfg(test)]
 #[allow(warnings)]
-fn rug_test_f_ff(fun_fx: fn(f64) -> (f64, f64), fun_f: fn(Float) -> (Float, Float), mnx: (f64, f64), ulp_ex: f64) {
+fn rug_test_f_ff(fun_fx: fn(f64) -> (f64, f64), fun_f: fn(Float, Float) -> (Float, Float), mnx: (f64, f64), ulp_ex: f64) {
     use rand::Rng;
     let mut rng = rand::thread_rng();
     let mut av_ulp = 0.;
@@ -224,7 +224,7 @@ fn rug_test_f_ff(fun_fx: fn(f64) -> (f64, f64), fun_f: fn(Float) -> (Float, Floa
     let mut max_ulp_at = 0.;
     for _ in 0..crate::TEST_REPEAT {
         let input = rng.gen_range(mnx.0, mnx.1);
-        let (expected1, expected2) = fun_f(Float::with_val(PRECF64, input));
+        let (expected1, expected2) = fun_f(Float::with_val(PRECF64, input), Float::new(PRECF64));
         let (output1, output2) = fun_fx(input);
         if (expected1.is_nan() && output1.is_nan()) || (expected2.is_nan() && output2.is_nan()) {
             continue;

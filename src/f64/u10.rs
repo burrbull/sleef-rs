@@ -428,7 +428,7 @@ pub fn sincos(d: f64) -> (f64, f64) {
 fn test_sincos() {
     rug_test_f_ff(
         sincos,
-        |in1| {let prec = in1.prec(); rug::Float::sin_cos(in1, rug::Float::new(prec))}, // TODO: fix
+        rug::Float::sin_cos,
         (f64::MIN, f64::MAX),
         1.,
     );

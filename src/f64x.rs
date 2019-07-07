@@ -504,7 +504,7 @@ macro_rules! impl_math_f64 {
         #[inline]
         fn from_slice_offset(ptr: &[f64], vi: Ix) -> F64x {
             const L: usize = F64x::lanes();
-            let mut ar: [f64; L] = unsafe { core::mem::uninitialized() };
+            let mut ar: [f64; L] = unsafe { core::mem::MaybeUninit::uninit().assume_init() };
             for i in 0..L {
                 ar[i] = ptr[vi.extract(i) as usize];
             }
@@ -669,7 +669,7 @@ macro_rules! impl_math_f64 {
         #[inline]
         fn cast_into_upper(q: Ix) -> I64x {
             const L: usize = Ix::lanes();
-            let mut a: [<Ix as BaseType>::Base; L * 2] = unsafe { core::mem::uninitialized() };
+            let mut a: [<Ix as BaseType>::Base; L * 2] = unsafe { core::mem::MaybeUninit::uninit().assume_init() };
             for i in 0..L {
                 a[i * 2] = 0;
                 a[i * 2 + 1] = q.extract(i);

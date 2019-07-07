@@ -492,7 +492,7 @@ macro_rules! impl_math_f32 {
         #[inline]
         fn from_slice_offset(ptr: &[f32], vi: I32x) -> F32x {
             const L: usize = F32x::lanes();
-            let mut ar: [f32; L] = unsafe{core::mem::uninitialized()};
+            let mut ar: [f32; L] = unsafe{core::mem::MaybeUninit::uninit().assume_init()};
             for i in 0..L {
                 ar[i] = ptr[vi.extract(i) as usize];
             }

@@ -328,7 +328,11 @@ pub fn atan2f(mut y: f32, mut x: f32) -> f32 {
 
     r = mulsignf(r, x);
     r = if y == 0. {
-        (if signf(x) == -1. { PI } else { 0. })
+        if signf(x) == -1. {
+            PI
+        } else {
+            0.
+        }
     } else if y.is_infinite() {
         FRAC_PI_2
             - (if x.is_infinite() {

@@ -122,7 +122,7 @@ fn test_f_f(fun_fx: fn(f32) -> f32, fun_f: fn(f32) -> f32, mn: f32, mx: f32, ulp
     use rand::Rng;
     let mut rng = rand::thread_rng();
     for _ in 0..crate::TEST_REPEAT {
-        let input = rng.gen_range(mn, mx);
+        let input = rng.gen_range(mn..mx);
         let expected = fun_f(input);
         let output = fun_fx(input);
         if expected.is_nan() && output.is_nan() {
@@ -134,13 +134,8 @@ fn test_f_f(fun_fx: fn(f32) -> f32, fun_f: fn(f32) -> f32, mn: f32, mx: f32, ulp
         #[cfg(feature = "std")]
         assert!(
             diff.abs() <= ulp,
-            format!(
-                "Input: {:e}, Output: {}, Expected: {}, ULP: {}",
-                input,
-                output,
-                expected,
-                diff.abs()
-            )
+            "Input: {input:e}, Output: {output}, Expected: {expected}, ULP: {}",
+            diff.abs()
         );
     }
 }
@@ -156,7 +151,7 @@ fn test_f_ff(
     use rand::Rng;
     let mut rng = rand::thread_rng();
     for _ in 0..crate::TEST_REPEAT {
-        let input = rng.gen_range(mn, mx);
+        let input = rng.gen_range(mn..mx);
         let (expected1, expected2) = fun_f(input);
         let (output1, output2) = fun_fx(input);
         if (expected1.is_nan() && output1.is_nan()) || (expected2.is_nan() && output2.is_nan()) {
@@ -169,33 +164,20 @@ fn test_f_ff(
         #[cfg(feature = "std")]
         assert!(
             diff1.abs() <= ulp && diff2.abs() <= ulp,
-            format!(
-                "Input: {:e}, Output: ({}, {}), Expected: ({}, {}), ULP: ({}, {})",
-                input,
-                output1,
-                output2,
-                expected1,
-                expected2,
+                "Input: {input:e}, Output: ({output1}, {output2}), Expected: ({expected1}, {expected2}), ULP: ({}, {})",
                 diff1.abs(),
                 diff2.abs(),
-            )
         );
     }
 }
 
 #[cfg(test)]
-fn test_ff_f(
-    fun_fx: fn(f32, f32) -> (f32),
-    fun_f: fn(f32, f32) -> f32,
-    mn: f32,
-    mx: f32,
-    ulp: f32,
-) {
+fn test_ff_f(fun_fx: fn(f32, f32) -> f32, fun_f: fn(f32, f32) -> f32, mn: f32, mx: f32, ulp: f32) {
     use rand::Rng;
     let mut rng = rand::thread_rng();
     for _ in 0..crate::TEST_REPEAT {
-        let input1 = rng.gen_range(mn, mx);
-        let input2 = rng.gen_range(mn, mx);
+        let input1 = rng.gen_range(mn..mx);
+        let input2 = rng.gen_range(mn..mx);
         let expected = fun_f(input1, input2);
         let output = fun_fx(input1, input2);
         if expected.is_nan() && output.is_nan() {
@@ -207,14 +189,8 @@ fn test_ff_f(
         #[cfg(feature = "std")]
         assert!(
             diff.abs() <= ulp,
-            format!(
-                "Input: ({:e}, {:e}), Output: {}, Expected: {}, ULP: {}",
-                input1,
-                input2,
-                output,
-                expected,
-                diff.abs()
-            )
+            "Input: ({input1:e}, {input2:e}), Output: {output}, Expected: {expected}, ULP: {}",
+            diff.abs()
         );
     }
 }
@@ -468,7 +444,7 @@ fn fabsfk(x: f32) -> f32 {
 
 #[inline]
 fn rintfk(x: f32) -> f32 {
-    (if x < 0. { (x - 0.5) } else { (x + 0.5) }) as i32 as f32
+    (if x < 0. { x - 0.5 } else { x + 0.5 }) as i32 as f32
 }
 
 #[inline]
@@ -1323,7 +1299,7 @@ pub fn fmodf(x: f32, y: f32) -> f32 {
         if fabsfk(x) >= F1_23 {
             x
         } else {
-            (x - (x - (x as i32 as f32)))
+            x - (x - (x as i32 as f32))
         }
     }
 
@@ -1345,7 +1321,7 @@ pub fn fmodf(x: f32, y: f32) -> f32 {
         let q = if (de + de > r.0) && (r.0 >= de) {
             1.
         } else {
-            (toward0(r.0) * rde)
+            toward0(r.0) * rde
         };
         r = (r + trunc_positive(q).mul_as_doubled(-de)).normalize();
         if r.0 < de {

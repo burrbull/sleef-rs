@@ -372,7 +372,7 @@ macro_rules! impl_math_f64 {
             for _ in 0..crate::TEST_REPEAT {
                 let mut in_f = [0_f64; $size];
                 for v in in_f.iter_mut() {
-                    *v = rng.gen_range(mn, mx);
+                    *v = rng.gen_range(mn..mx);
                 }
                 let in_fx = F64x::from_slice_unaligned(&in_f);
                 let out_fx = fun_fx(in_fx);
@@ -389,14 +389,8 @@ macro_rules! impl_math_f64 {
                     #[cfg(feature = "std")]
                     assert!(
                         diff.abs() <= ulp,
-                        format!(
-                            "Position: {}, Input: {:e}, Output: {}, Expected: {}, ULP: {}",
-                            i,
-                            input,
-                            output,
-                            expected,
+                            "Position: {i}, Input: {input:e}, Output: {output}, Expected: {expected}, ULP: {}",
                             diff.abs()
-                        )
                     );
                 }
             }
@@ -415,7 +409,7 @@ macro_rules! impl_math_f64 {
             for _ in 0..crate::TEST_REPEAT {
                 let mut in_f = [0_f64; $size];
                 for v in in_f.iter_mut() {
-                    *v = rng.gen_range(mn, mx);
+                    *v = rng.gen_range(mn..mx);
                 }
                 let in_fx = F64x::from_slice_unaligned(&in_f);
                 let (out_fx1, out_fx2) = fun_fx(in_fx);
@@ -435,17 +429,9 @@ macro_rules! impl_math_f64 {
                     #[cfg(feature = "std")]
                     assert!(
                         diff1.abs() <= ulp && diff2.abs() <= ulp,
-                        format!(
-                            "Position: {}, Input: {:e}, Output: ({}, {}), Expected: ({}, {}), ULP: ({}, {})",
-                            i,
-                            input,
-                            output1,
-                            output2,
-                            expected1,
-                            expected2,
+                            "Position: {i}, Input: {input:e}, Output: ({output1}, {output2}), Expected: ({expected1}, {expected2}), ULP: ({}, {})",
                             diff1.abs(),
                             diff2.abs(),
-                        )
                     );
                 }
             }
@@ -453,7 +439,7 @@ macro_rules! impl_math_f64 {
 
         #[cfg(test)]
         fn test_ff_f(
-            fun_fx: fn(F64x, F64x) -> (F64x),
+            fun_fx: fn(F64x, F64x) -> F64x,
             fun_f: fn(f64, f64) -> f64,
             mn: f64,
             mx: f64,
@@ -465,10 +451,10 @@ macro_rules! impl_math_f64 {
                 let mut in_f1 = [0_f64; $size];
                 let mut in_f2 = [0_f64; $size];
                 for v in in_f1.iter_mut() {
-                    *v = rng.gen_range(mn, mx);
+                    *v = rng.gen_range(mn..mx);
                 }
                 for v in in_f2.iter_mut() {
-                    *v = rng.gen_range(mn, mx);
+                    *v = rng.gen_range(mn..mx);
                 }
                 let in_fx1 = F64x::from_slice_unaligned(&in_f1);
                 let in_fx2 = F64x::from_slice_unaligned(&in_f2);
@@ -487,15 +473,8 @@ macro_rules! impl_math_f64 {
                     #[cfg(feature = "std")]
                     assert!(
                         diff.abs() <= 1. + ulp,
-                        format!(
-                            "Position: {}, Input: ({:e}, {:e}), Output: {}, Expected: {}, ULP:{}",
-                            i,
-                            input1,
-                            input2,
-                            output,
-                            expected,
+                            "Position: {i}, Input: ({input1:e}, {input2:e}), Output: {output}, Expected: {expected}, ULP:{}",
                             diff.abs()
-                        )
                     );
                 }
             }
@@ -503,22 +482,27 @@ macro_rules! impl_math_f64 {
 
         #[inline]
         fn from_slice_offset(ptr: &[f64], vi: Ix) -> F64x {
+            use core::mem::MaybeUninit;
+
             const L: usize = F64x::lanes();
-            let mut ar: [f64; L] = unsafe { core::mem::uninitialized() };
+            let mut ar: [MaybeUninit<f64>; L] = MaybeUninit::uninit_array();
             for i in 0..L {
-                ar[i] = ptr[vi.extract(i) as usize];
+                ar[i].write(ptr[vi.extract(i) as usize]);
             }
-            unsafe { core::mem::transmute(ar) }
+            unsafe {
+                let ar = MaybeUninit::array_assume_init(ar);
+                F64x::from_slice_aligned_unchecked(ar.as_slice())
+            }
         }
 
         #[inline]
-        fn swap_upper_lower(i: I64x) -> I64x {
+        fn swap_upper_lower(mut i: I64x) -> I64x {
             const L: usize = I64x::lanes();
-            let mut r: [i32; L * 2] = unsafe { core::mem::transmute(i) };
-            for i in 0..L {
-                r.swap(i * 2, i * 2 + 1);
+            let r = unsafe { &mut *(&mut i as *mut I64x as *mut [i32; L * 2]) };
+            for j in 0..4 {
+                r.swap(j * 2, j * 2 + 1);
             }
-            unsafe { core::mem::transmute(r) }
+            i
         }
 
         impl Round for F64x {
@@ -668,13 +652,16 @@ macro_rules! impl_math_f64 {
 
         #[inline]
         fn cast_into_upper(q: Ix) -> I64x {
+            use core::mem::MaybeUninit;
+
             const L: usize = Ix::lanes();
-            let mut a: [<Ix as BaseType>::Base; L * 2] = unsafe { core::mem::uninitialized() };
+            let mut a: [MaybeUninit<<Ix as BaseType>::Base>; L * 2] = MaybeUninit::uninit_array();
             for i in 0..L {
-                a[i * 2] = 0;
-                a[i * 2 + 1] = q.extract(i);
+                a[i * 2].write(0);
+                a[i * 2 + 1].write(q.extract(i));
             }
-            unsafe { core::mem::transmute(a) }
+
+            unsafe { core::mem::transmute(MaybeUninit::array_assume_init(a)) }
         }
 
         #[inline]

@@ -376,7 +376,7 @@ macro_rules! impl_math_f32 {
             for _ in 0..crate::TEST_REPEAT {
                 let mut in_f = [0_f32; $size];
                 for v in in_f.iter_mut() {
-                    *v = rng.gen_range(mn, mx);
+                    *v = rng.gen_range(mn..mx);
                 }
                 let in_fx = F32x::from_slice_unaligned(&in_f);
                 let out_fx = fun_fx(in_fx);
@@ -393,10 +393,8 @@ macro_rules! impl_math_f32 {
                     #[cfg(feature = "std")]
                     assert!(
                         diff.abs() <= ulp,
-                        format!(
-                            "Position: {}, Input: {:e}, Output: {}, Expected: {}. ULP: {}",
-                            i, input, output, expected, diff.abs()
-                        )
+                            "Position: {i}, Input: {input:e}, Output: {output}, Expected: {expected}. ULP: {}",
+                            diff.abs()
                     );
                 }
             }
@@ -415,7 +413,7 @@ macro_rules! impl_math_f32 {
             for _ in 0..crate::TEST_REPEAT {
                 let mut in_f = [0_f32; $size];
                 for v in in_f.iter_mut() {
-                    *v = rng.gen_range(mn, mx);
+                    *v = rng.gen_range(mn..mx);
                 }
                 let in_fx = F32x::from_slice_unaligned(&in_f);
                 let (out_fx1, out_fx2) = fun_fx(in_fx);
@@ -435,10 +433,8 @@ macro_rules! impl_math_f32 {
                     #[cfg(feature = "std")]
                     assert!(
                         diff1.abs() <= ulp && diff2.abs() <= ulp,
-                        format!(
-                            "Position: {}, Input: {:e}, Output: ({}, {}), Expected: ({}, {}), ULP: ({}, {})",
-                            i, input, output1, output2, expected1, expected2, diff1.abs(), diff2.abs()
-                        )
+                            "Position: {i}, Input: {input:e}, Output: ({output1}, {output2}), Expected: ({expected1}, {expected2}), ULP: ({}, {})",
+                            diff1.abs(), diff2.abs()
                     );
                 }
             }
@@ -446,7 +442,7 @@ macro_rules! impl_math_f32 {
 
         #[cfg(test)]
         fn test_ff_f(
-            fun_fx: fn(F32x, F32x) -> (F32x),
+            fun_fx: fn(F32x, F32x) -> F32x,
             fun_f: fn(f32, f32) -> f32,
             mn: f32,
             mx: f32,
@@ -458,10 +454,10 @@ macro_rules! impl_math_f32 {
                 let mut in_f1 = [0_f32; $size];
                 let mut in_f2 = [0_f32; $size];
                 for v in in_f1.iter_mut() {
-                    *v = rng.gen_range(mn, mx);
+                    *v = rng.gen_range(mn..mx);
                 }
                 for v in in_f2.iter_mut() {
-                    *v = rng.gen_range(mn, mx);
+                    *v = rng.gen_range(mn..mx);
                 }
                 let in_fx1 = F32x::from_slice_unaligned(&in_f1);
                 let in_fx2 = F32x::from_slice_unaligned(&in_f2);
@@ -480,10 +476,8 @@ macro_rules! impl_math_f32 {
                     #[cfg(feature = "std")]
                     assert!(
                         diff.abs() <= ulp,
-                        format!(
-                            "Position: {}, Input: ({:e}, {:e}), Output: {}, Expected: {}, ULP: {}",
-                            i, input1, input2, output, expected, diff.abs()
-                        )
+                            "Position: {i}, Input: ({input1:e}, {input2:e}), Output: {output}, Expected: {expected}, ULP: {}",
+                            diff.abs()
                     );
                 }
             }
@@ -491,12 +485,18 @@ macro_rules! impl_math_f32 {
 
         #[inline]
         fn from_slice_offset(ptr: &[f32], vi: I32x) -> F32x {
+            use core::mem::MaybeUninit;
+
             const L: usize = F32x::lanes();
-            let mut ar: [f32; L] = unsafe{core::mem::uninitialized()};
+            let mut ar: [MaybeUninit<f32>; L] = MaybeUninit::uninit_array();
             for i in 0..L {
-                ar[i] = ptr[vi.extract(i) as usize];
+                ar[i].write(ptr[vi.extract(i) as usize]);
             }
-            unsafe{core::mem::transmute(ar)}
+
+            unsafe {
+                let ar = MaybeUninit::array_assume_init(ar);
+                F32x::from_slice_aligned_unchecked(ar.as_slice())
+            }
         }
 
         impl SqrtAsDoubled for F32x {

@@ -142,7 +142,7 @@ fn test_f_f(fun_fx: fn(f64) -> f64, fun_f: fn(f64) -> f64, mn: f64, mx: f64, ulp
     use rand::Rng;
     let mut rng = rand::thread_rng();
     for _ in 0..crate::TEST_REPEAT {
-        let input = rng.gen_range(mn, mx);
+        let input = rng.gen_range(mn..mx);
         let expected = fun_f(input);
         let output = fun_fx(input);
         if expected.is_nan() && output.is_nan() {
@@ -154,13 +154,8 @@ fn test_f_f(fun_fx: fn(f64) -> f64, fun_f: fn(f64) -> f64, mn: f64, mx: f64, ulp
         #[cfg(feature = "std")]
         assert!(
             diff.abs() <= ulp,
-            format!(
-                "Input: {:e}, Output: {}, Expected: {}, ULP: {}",
-                input,
-                output,
-                expected,
-                diff.abs()
-            )
+            "Input: {input:e}, Output: {output}, Expected: {expected}, ULP: {}",
+            diff.abs()
         );
     }
 }
@@ -176,7 +171,7 @@ fn test_f_ff(
     use rand::Rng;
     let mut rng = rand::thread_rng();
     for _ in 0..crate::TEST_REPEAT {
-        let input = rng.gen_range(mn, mx);
+        let input = rng.gen_range(mn..mx);
         let (expected1, expected2) = fun_f(input);
         let (output1, output2) = fun_fx(input);
         if (expected1.is_nan() && output1.is_nan()) || (expected2.is_nan() && output2.is_nan()) {
@@ -189,33 +184,20 @@ fn test_f_ff(
         #[cfg(feature = "std")]
         assert!(
             diff1.abs() <= ulp && diff2.abs() <= ulp,
-            format!(
-                "Input: {:e}, Output: ({}, {}), Expected: ({}, {}), Expected: ({}, {})",
-                input,
-                output1,
-                output2,
-                expected1,
-                expected2,
+                "Input: {input:e}, Output: ({output1}, {output2}), Expected: ({expected1}, {expected2}), Expected: ({}, {})",
                 diff1.abs(),
                 diff2.abs()
-            )
         );
     }
 }
 
 #[cfg(test)]
-fn test_ff_f(
-    fun_fx: fn(f64, f64) -> (f64),
-    fun_f: fn(f64, f64) -> f64,
-    mn: f64,
-    mx: f64,
-    ulp: f64,
-) {
+fn test_ff_f(fun_fx: fn(f64, f64) -> f64, fun_f: fn(f64, f64) -> f64, mn: f64, mx: f64, ulp: f64) {
     use rand::Rng;
     let mut rng = rand::thread_rng();
     for _ in 0..crate::TEST_REPEAT {
-        let input1 = rng.gen_range(mn, mx);
-        let input2 = rng.gen_range(mn, mx);
+        let input1 = rng.gen_range(mn..mx);
+        let input2 = rng.gen_range(mn..mx);
         let expected = fun_f(input1, input2);
         let output = fun_fx(input1, input2);
         if expected.is_nan() && output.is_nan() {
@@ -227,14 +209,8 @@ fn test_ff_f(
         #[cfg(feature = "std")]
         assert!(
             diff.abs() <= ulp,
-            format!(
-                "Input: ({:e}, {:e}), Output: {}, Expected: {}, ULP: {}",
-                input1,
-                input2,
-                output,
-                expected,
-                diff.abs()
-            )
+            "Input: ({input1:e}, {input2:e}), Output: {output}, Expected: {expected}, ULP: {}",
+            diff.abs()
         );
     }
 }
@@ -497,7 +473,7 @@ fn fabsk(x: f64) -> f64 {
 
 #[inline]
 fn rintk(x: f64) -> f64 {
-    (if x < 0. { (x - 0.5) } else { (x + 0.5) }) as isize as f64
+    (if x < 0. { x - 0.5 } else { x + 0.5 }) as isize as f64
 }
 
 #[inline]
@@ -636,7 +612,7 @@ fn rempisub(x: f64) -> (f64, i32) {
     let mut reti = ((7 & ((if x > 0. { 4 } else { 3 }) + ((fr * 8.) as i32))) - 3) >> 1;
     fr = fr - 0.25 * ((fr * 4. + mulsign(0.5, x)) as i32 as f64);
     fr = if fabsk(fr) > 0.25 {
-        (fr - mulsign(0.5, x))
+        fr - mulsign(0.5, x)
     } else {
         fr
     };

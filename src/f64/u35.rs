@@ -126,7 +126,11 @@ pub fn atan2(y: f64, x: f64) -> f64 {
     let mut r = atan2k(fabsk(y), x);
 
     r = if y == 0. {
-        (if sign(x) == -1. { PI } else { 0. })
+        if sign(x) == -1. {
+            PI
+        } else {
+            0.
+        }
     } else if y.is_infinite() {
         FRAC_PI_2
             - (if x.is_infinite() {
@@ -137,7 +141,7 @@ pub fn atan2(y: f64, x: f64) -> f64 {
     } else if x.is_infinite() || (x == 0.) {
         FRAC_PI_2
             - (if x.is_infinite() {
-                (sign(x) * FRAC_PI_2)
+                sign(x) * FRAC_PI_2
             } else {
                 0.
             })

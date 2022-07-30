@@ -5,11 +5,12 @@ version = "0.1.0"
 authors = ["Andrey Zgarbul <zgarbul.andrey@gmail.com>"]
 
 [dependencies.doubled]
-version = "0.1"
+version = "0.2"
 features = ["packed_simd"]
 
 [dependencies.packed_simd]
-version = "0.3.3"
+package = "packed_simd_2"
+version = "0.3.8"
 features = ["into_bits"]
 
 [features]
@@ -19,5 +20,5 @@ std = []
 fasttest = []
 
 [dev-dependencies]
-rand = "0.6"
-libm = "0.1.3"
+rand = "0.8.5"
+libm = "0.2.3"

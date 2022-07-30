@@ -25,7 +25,11 @@ pub fn atan2f(y: f32, x: f32) -> f32 {
                 0.
             })
     } else if y == 0. {
-        (if signf(x) == -1. { PI } else { 0. })
+        if signf(x) == -1. {
+            PI
+        } else {
+            0.
+        }
     } else {
         mulsignf(r, x)
     };
@@ -234,7 +238,7 @@ pub fn sqrtf(mut d: f32) -> f32 {
     if d == f32::INFINITY {
         f32::INFINITY
     } else {
-        (x * d * q)
+        x * d * q
     }
 }
 
@@ -537,7 +541,7 @@ pub fn asinf(d: f32) -> f32 {
         .mul_add(x2, 0.166_667_729_6)
         .mul_add(x * x2, x);
 
-    let r = if o { u } else { (FRAC_PI_2 - 2. * u) };
+    let r = if o { u } else { FRAC_PI_2 - 2. * u };
     mulsignf(r, d)
 }
 

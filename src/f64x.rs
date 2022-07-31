@@ -396,8 +396,8 @@ macro_rules! impl_math_f64 {
                     let ulp = crate::f64::count_ulp(output, &expected);
                     assert!(
                         ulp <= ulp_ex,
-                        "Iteration: {i}, Input: {input:e}, Output: {output}, Expected: {expected}, ULP: {}",
-                        ulp
+                        "Iteration: {i}, Input: {input:e}, Output: {output}, Expected: {expected}, ULP: {ulp} > {}",
+                        ulp_ex
                     );
                 }
             }
@@ -426,14 +426,9 @@ macro_rules! impl_math_f64 {
                     let ulp1 = crate::f64::count_ulp(output1, &expected1);
                     let ulp2 = crate::f64::count_ulp(output2, &expected2);
                     assert!(
-                        ulp1 <= ulp_ex,
-                            "Input: {input:e}, Output: ({output1}, {output2}), Expected: ({expected1}, {expected2}), ULP: ({ulp1}, {})",
-                            ulp2
-                    );
-                    assert!(
-                        ulp2 <= ulp_ex,
-                            "Input: {input:e}, Output: ({output1}, {output2}), Expected: ({expected1}, {expected2}), ULP: ({ulp1}, {})",
-                            ulp2
+                        ulp1 <= ulp_ex && ulp2 <= ulp_ex,
+                            "Input: {input:e}, Output: ({output1}, {output2}), Expected: ({expected1}, {expected2}), ULP: ({ulp1}, {ulp2}) > {}",
+                            ulp_ex
                     );
                 }
             }
@@ -465,8 +460,8 @@ macro_rules! impl_math_f64 {
                     let ulp = crate::f64::count_ulp(output, &expected);
                     assert!(
                         ulp <= ulp_ex,
-                        "Input: ({input1:e}, {input2:e}), Output: {output}, Expected: {expected}, ULP: {}",
-                        ulp
+                        "Input: ({input1:e}, {input2:e}), Output: {output}, Expected: {expected}, ULP: {ulp} > {}",
+                        ulp_ex
                     );
                 }
             }

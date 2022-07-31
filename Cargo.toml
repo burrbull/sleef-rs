@@ -5,7 +5,7 @@ version = "0.1.0"
 authors = ["Andrey Zgarbul <zgarbul.andrey@gmail.com>"]
 
 [dependencies.doubled]
-version = "0.2"
+version = "0.2.1"
 features = ["packed_simd"]
 
 [dependencies.packed_simd]

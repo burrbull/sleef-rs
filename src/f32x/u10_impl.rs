@@ -937,8 +937,7 @@ macro_rules! impl_math_f32_u10 {
             y = d.0 + d.1;
 
             y = (x.abs().gt(SQRT_FLT_MAX) | y.is_nan())
-                .select(F32x::INFINITY, x)
-                .mul_sign(y);
+                .select(F32x::INFINITY.mul_sign(x), y);
             y = F32x::from_bits(U32x::from_bits(x.is_nan()) | U32x::from_bits(y));
             x.is_neg_zero().select(NEG_ZERO, y)
         }

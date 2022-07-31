@@ -423,6 +423,11 @@ pub fn acosf(d: f32) -> f32 {
     y.0 + y.1
 }
 
+#[test]
+fn test_acosf() {
+    test_f_f(acosf, rug::Float::acos, -1.0..=1.0, 1.);
+}
+
 /// Arc tangent function
 ///
 /// This function evaluates the arc tangent function of a value in ***a***.
@@ -843,6 +848,11 @@ pub fn asinhf(x: f32) -> f32 {
     } else {
         y
     }
+}
+
+#[test]
+fn test_asinhf() {
+    test_f_f(asinhf, rug::Float::asinh, -18.5_e18..=18.5_e18, 1.);
 }
 
 /// Inverse hyperbolic cosine function

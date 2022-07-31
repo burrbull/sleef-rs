@@ -951,7 +951,7 @@ macro_rules! impl_math_f64_u35 {
 
             let t = F64x::from_cast(e) + F64x::splat(6144.);
             let qu = (t * F64x::splat(1. / 3.)).trunci();
-            let re = (t * (F64x::from_cast(qu) * F64x::splat(3.))).trunci();
+            let re = (t - (F64x::from_cast(qu) * F64x::splat(3.))).trunci();
 
             q = M64x::from_cast(re.eq(Ix::splat(1)))
                 .select(F64x::splat(1.259_921_049_894_873_164_767_210_6), q);

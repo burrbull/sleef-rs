@@ -6,6 +6,7 @@
 #![allow(clippy::cast_lossless)]
 #![allow(clippy::float_cmp)]
 #![allow(clippy::cognitive_complexity)]
+#![allow(clippy::wrong_self_convention)]
 #![feature(maybe_uninit_uninit_array)]
 #![feature(maybe_uninit_array_assume_init)]
 

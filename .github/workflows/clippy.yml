@@ -13,17 +13,10 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: stable
-          target: thumbv7em-none-eabihf
+          toolchain: nightly
           override: true
           components: clippy
-
-      - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v1
-        with:
-          key: pac-v0.14
 
       - uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          args: --examples --features=stm32f479,usb_fs,sdio-host

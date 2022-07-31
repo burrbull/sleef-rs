@@ -11,7 +11,7 @@ mod u15_impl;
 mod u35_impl;
 
 macro_rules! impl_math_f64 {
-    ($size:expr, $uint:ty, $int:ty, $mask:ty) => {
+    ($size:literal, $uint:ty, $int:ty, $mask:ty) => {
         use crate::common::*;
         use doubled::*;
 
@@ -383,7 +383,7 @@ macro_rules! impl_math_f64 {
         #[cfg(test)]
         fn test_f_f(fun_fx: fn(F64x) -> F64x, fun_f: fn(rug::Float) -> rug::Float, range: core::ops::RangeInclusive<f64>, ulp_ex: f64) {
             let mut rng = rand::thread_rng();
-            for _ in 0..crate::TEST_REPEAT_FAST {
+            for n in 0..crate::TEST_REPEAT_FAST {
                 let in_fx = gen_input(&mut rng, range.clone());
                 let out_fx = fun_fx(in_fx);
                 for i in 0..$size {
@@ -396,7 +396,7 @@ macro_rules! impl_math_f64 {
                     let ulp = crate::f64::count_ulp(output, &expected);
                     assert!(
                         ulp <= ulp_ex,
-                        "Iteration: {i}, Input: {input:e}, Output: {output}, Expected: {expected}, ULP: {ulp} > {}",
+                        "Iteration: {n}, Position: {i}, Input: {input:e}, Output: {output}, Expected: {expected}, ULP: {ulp} > {}",
                         ulp_ex
                     );
                 }
@@ -411,7 +411,7 @@ macro_rules! impl_math_f64 {
             ulp_ex: f64,
         ) {
             let mut rng = rand::thread_rng();
-            for _ in 0..crate::TEST_REPEAT_FAST {
+            for n in 0..crate::TEST_REPEAT_FAST {
                 let in_fx = gen_input(&mut rng, range.clone());
                 let (out_fx1, out_fx2) = fun_fx(in_fx);
                 for i in 0..$size {
@@ -427,7 +427,7 @@ macro_rules! impl_math_f64 {
                     let ulp2 = crate::f64::count_ulp(output2, &expected2);
                     assert!(
                         ulp1 <= ulp_ex && ulp2 <= ulp_ex,
-                            "Input: {input:e}, Output: ({output1}, {output2}), Expected: ({expected1}, {expected2}), ULP: ({ulp1}, {ulp2}) > {}",
+                            "Iteration: {n}, Position: {i}, Input: {input:e}, Output: ({output1}, {output2}), Expected: ({expected1}, {expected2}), ULP: ({ulp1}, {ulp2}) > {}",
                             ulp_ex
                     );
                 }
@@ -442,7 +442,7 @@ macro_rules! impl_math_f64 {
             ulp_ex: f64,
         ) {
             let mut rng = rand::thread_rng();
-            for _ in 0..crate::TEST_REPEAT_FAST {
+            for n in 0..crate::TEST_REPEAT_FAST {
                 let in_fx1 = gen_input(&mut rng, range.clone());
                 let in_fx2 = gen_input(&mut rng, range.clone());
                 let out_fx = fun_fx(in_fx1, in_fx2);
@@ -460,7 +460,7 @@ macro_rules! impl_math_f64 {
                     let ulp = crate::f64::count_ulp(output, &expected);
                     assert!(
                         ulp <= ulp_ex,
-                        "Input: ({input1:e}, {input2:e}), Output: {output}, Expected: {expected}, ULP: {ulp} > {}",
+                        "Iteration: {n}, Position: {i}, Input: ({input1:e}, {input2:e}), Output: {output}, Expected: {expected}, ULP: {ulp} > {}",
                         ulp_ex
                     );
                 }

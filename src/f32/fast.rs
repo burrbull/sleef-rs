@@ -10,7 +10,7 @@ pub fn sinf(mut d: f32) -> f32 {
 
     let s = d * d;
 
-    let mut u = -0.188_174_817_6_e-3
+    let mut u = (-0.188_174_817_6_e-3)
         .mul_add(s, 0.832_350_272_7_e-2)
         .mul_add(s, -0.166_665_136_8);
     u = (s * d).mul_add(u, d);
@@ -34,7 +34,7 @@ pub fn cosf(mut d: f32) -> f32 {
 
     let s = d * d;
 
-    let mut u = -0.188_174_817_6_e-3
+    let mut u = (-0.188_174_817_6_e-3)
         .mul_add(s, 0.832_350_272_7_e-2)
         .mul_add(s, -0.166_665_136_8);
     u = (s * d).mul_add(u, d);

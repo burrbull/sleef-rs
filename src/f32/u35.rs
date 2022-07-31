@@ -93,7 +93,7 @@ pub fn sincospif(d: f32) -> (f32, f32) {
     let t = s;
     let s = s * s;
 
-    let mut rsin = -0.360_092_526_5_e-4_f32
+    let mut rsin = (-0.360_092_526_5_e-4_f32)
         .mul_add(s, 0.249_008_811_1_e-2)
         .mul_add(s, -0.807_455_107_6_e-1)
         .mul_add(s, 0.785_398_185_3)

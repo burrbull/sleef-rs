@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [ staging, trying, master ]
+  pull_request:
+
+jobs:
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    needs: [check, test, test-deterministic]
+    steps:
+      - name: Done
+        run: exit 0
+
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - uses: actions-rs/cargo@v1
+        with:
+          command: check
+
+  test:
+    name: Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+
+  test-deterministic:
+    name: Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --features=deterministic

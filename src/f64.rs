@@ -68,7 +68,7 @@ const fn dd(h: f64, l: f64) -> Doubled<f64> {
 }
 
 mod u05;
-#[cfg_attr(rustfmt, rustfmt_skip)]
+#[rustfmt::skip]
 pub use u05::{
     sincospi as sincospi_u05,
     sqrt as sqrt_u05,
@@ -77,7 +77,7 @@ pub use u05::{
     cospi as cospi_u05,
 };
 mod u10;
-#[cfg_attr(rustfmt, rustfmt_skip)]
+#[rustfmt::skip]
 pub use u10::{
     sin as sin_u10,
     cos as cos_u10,
@@ -109,12 +109,12 @@ pub use u10::{
 };
 
 mod u15;
-#[cfg_attr(rustfmt, rustfmt_skip)]
+#[rustfmt::skip]
 pub use u15::{
     erfc as erfc_u15,
 };
 mod u35;
-#[cfg_attr(rustfmt, rustfmt_skip)]
+#[rustfmt::skip]
 pub use u35::{
     sin as sin_u35,
     cos as cos_u35,
@@ -196,7 +196,7 @@ fn test_f_f(
 ) {
     use rand::Rng;
     let mut rng = rand::thread_rng();
-    for _ in 0..crate::TEST_REPEAT {
+    for n in 0..crate::TEST_REPEAT {
         let input = gen_input(&mut rng, range.clone());
         let output = fun_fx(input);
         let expected = fun_f(Float::with_val(PRECF64, input));
@@ -206,7 +206,7 @@ fn test_f_f(
         let ulp = count_ulp(output, &expected);
         assert!(
             ulp <= ulp_ex,
-            "Input: {input:e}, Output: {output}, Expected: {expected}, ULP: {ulp} > {}",
+            "Iteration: {n}, Input: {input:e}, Output: {output}, Expected: {expected}, ULP: {ulp} > {}",
             ulp_ex
         );
     }
@@ -222,7 +222,7 @@ fn test_f_ff(
 ) {
     use rand::Rng;
     let mut rng = rand::thread_rng();
-    for _ in 0..crate::TEST_REPEAT {
+    for n in 0..crate::TEST_REPEAT {
         let input = gen_input(&mut rng, range.clone());
         let (output1, output2) = fun_fx(input);
         let (expected1, expected2) = fun_f(Float::with_val(PRECF64, input));
@@ -233,7 +233,7 @@ fn test_f_ff(
         let ulp2 = count_ulp(output2, &expected2);
         assert!(
             ulp1 <= ulp_ex && ulp2 <= ulp_ex,
-                "Input: {input:e}, Output: ({output1}, {output2}), Expected: ({expected1}, {expected2}), ULP: ({ulp1}, {ulp2}) > {}",
+                "Iteration: {n}, Input: {input:e}, Output: ({output1}, {output2}), Expected: ({expected1}, {expected2}), ULP: ({ulp1}, {ulp2}) > {}",
                 ulp_ex
         );
     }
@@ -250,7 +250,7 @@ fn test_ff_f(
 ) {
     use rand::Rng;
     let mut rng = rand::thread_rng();
-    for _ in 0..crate::TEST_REPEAT {
+    for n in 0..crate::TEST_REPEAT {
         let input1 = gen_input(&mut rng, range1.clone());
         let input2 = gen_input(&mut rng, range2.clone());
         let output = fun_fx(input1, input2);
@@ -264,7 +264,7 @@ fn test_ff_f(
         let ulp = count_ulp(output, &expected);
         assert!(
             ulp <= ulp_ex,
-            "Input: ({input1:e}, {input2:e}), Output: {output}, Expected: {expected}, ULP: {ulp} > {}",
+            "Iteration: {n}, Input: ({input1:e}, {input2:e}), Output: {output}, Expected: {expected}, ULP: {ulp} > {}",
             ulp_ex
         );
     }

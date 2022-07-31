@@ -25,7 +25,7 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: nightly
           profile: minimal
           override: true
 
@@ -34,7 +34,7 @@ jobs:
           command: check
 
   test:
-    name: Check
+    name: Test
     runs-on: ubuntu-latest
 
     steps:
@@ -44,7 +44,7 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: nightly
           profile: minimal
           override: true
 
@@ -53,7 +53,7 @@ jobs:
           command: test
 
   test-deterministic:
-    name: Check
+    name: Test Deterministic
     runs-on: ubuntu-latest
 
     steps:
@@ -63,7 +63,7 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: nightly
           profile: minimal
           override: true
 

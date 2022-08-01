@@ -23,7 +23,7 @@ const TRIGRANGEMAX2_F: f32 = 125.0;
 
 const SLEEF_FP_ILOGB0: i32 = -2_147_483_648;
 const SLEEF_FP_ILOGBNAN: i32 = 2_147_483_647;
-const SQRT_FLT_MAX: f32 = 18_446_743_523_953_729_536.;
+pub(crate) const SQRT_FLT_MAX: f32 = 18_446_743_523_953_729_536.;
 const L10U_F: f32 = 0.301_025_390_6;
 const L10L_F: f32 = 4.605_038_981_e-6;
 const TRIGRANGEMAX4_F: f32 = 8e+6;
@@ -219,13 +219,14 @@ fn test_f_ff(
 fn test_ff_f(
     fun_fx: fn(f32, f32) -> f32,
     fun_f: fn(Float, &Float) -> Float,
-    range: core::ops::RangeInclusive<f32>,
+    range1: core::ops::RangeInclusive<f32>,
+    range2: core::ops::RangeInclusive<f32>,
     ulp_ex: f32,
 ) {
     let mut rng = rand::thread_rng();
     for n in 0..crate::TEST_REPEAT {
-        let input1 = gen_input(&mut rng, range.clone());
-        let input2 = gen_input(&mut rng, range.clone());
+        let input1 = gen_input(&mut rng, range1.clone());
+        let input2 = gen_input(&mut rng, range2.clone());
         let output = fun_fx(input1, input2);
         let expected = fun_f(
             Float::with_val(PRECF32, input1),

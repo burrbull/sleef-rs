@@ -442,13 +442,14 @@ macro_rules! impl_math_f32 {
         fn test_ff_f(
             fun_fx: fn(F32x, F32x) -> F32x,
             fun_f: fn(rug::Float, &rug::Float) -> rug::Float,
-            range: core::ops::RangeInclusive<f32>,
+            range1: core::ops::RangeInclusive<f32>,
+            range2: core::ops::RangeInclusive<f32>,
             ulp_ex: f32,
         ) {
             let mut rng = rand::thread_rng();
             for n in 0..crate::TEST_REPEAT_FAST {
-                let in_fx1 = gen_input(&mut rng, range.clone());
-                let in_fx2 = gen_input(&mut rng, range.clone());
+                let in_fx1 = gen_input(&mut rng, range1.clone());
+                let in_fx2 = gen_input(&mut rng, range2.clone());
                 let out_fx = fun_fx(in_fx1, in_fx2);
                 for i in 0..$size {
                     let input1 = in_fx1.extract(i);

@@ -79,6 +79,21 @@ pub fn sincospi(d: f64) -> (f64, f64) {
     (rsin, rcos)
 }
 
+#[test]
+fn test_sincospi() {
+    use rug::{float::Constant, Float};
+    let rangemax2 = 1e+9 / 4.;
+    test_f_ff(
+        sincospi,
+        |in1| {
+            let prec = in1.prec();
+            (in1 * Float::with_val(prec, Constant::Pi)).sin_cos(Float::new(prec))
+        },
+        -rangemax2..=rangemax2,
+        0.506,
+    );
+}
+
 pub fn sinpi(d: f64) -> f64 {
     let x = sinpik(d);
     if d.is_infinite() {
@@ -90,6 +105,21 @@ pub fn sinpi(d: f64) -> f64 {
     } else {
         x.0 + x.1
     }
+}
+
+#[test]
+fn test_sinpi() {
+    use rug::{float::Constant, Float};
+    let rangemax2 = 1e+9 / 4.;
+    test_f_f(
+        sinpi,
+        |in1| {
+            let prec = in1.prec();
+            (in1 * Float::with_val(prec, Constant::Pi)).sin()
+        },
+        -rangemax2..=rangemax2,
+        0.506,
+    );
 }
 
 pub fn cospi(d: f64) -> f64 {
@@ -104,14 +134,29 @@ pub fn cospi(d: f64) -> f64 {
     }
 }
 
+#[test]
+fn test_cospi() {
+    use rug::{float::Constant, Float};
+    let rangemax2 = 1e+9 / 4.;
+    test_f_f(
+        cospi,
+        |in1| {
+            let prec = in1.prec();
+            (in1 * Float::with_val(prec, Constant::Pi)).cos()
+        },
+        -rangemax2..=rangemax2,
+        0.506,
+    );
+}
+
 pub fn sqrt(mut d: f64) -> f64 {
     let mut q = 0.5;
 
     d = if d < 0. { f64::NAN } else { d };
 
-    if d < 8.636_168_555_094_445E-78 {
-        d *= 1.157_920_892_373_162E77;
-        q = 2.938_735_877_055_718_8E-39 * 0.5;
+    if d < 8.636_168_555_094_445_e-78 {
+        d *= 1.157_920_892_373_162_e77;
+        q = 2.938_735_877_055_718_8_e-39 * 0.5;
     }
 
     if d > 1.340_780_792_994_259_7_e+154 {
@@ -140,6 +185,11 @@ pub fn sqrt(mut d: f64) -> f64 {
     } else {
         ret
     }
+}
+
+#[test]
+fn test_sqrt() {
+    test_f_f(sqrt, rug::Float::sqrt, f64::MIN..=f64::MAX, 0.50001);
 }
 
 pub fn hypot(mut x: f64, mut y: f64) -> f64 {

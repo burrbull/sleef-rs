@@ -87,6 +87,7 @@ macro_rules! impl_math_f32_fast {
                 powf,
                 |in1, in2| Float::with_val(in1.prec(), in1.pow(in2)),
                 f32::MIN..=f32::MAX,
+                f32::MIN..=f32::MAX,
                 350.,
             );
         }

@@ -317,3 +317,8 @@ pub fn erfc(a: f64) -> f64 {
         r
     }
 }
+
+#[test]
+fn test_erfc() {
+    test_f_f(erfc, rug::Float::erfc, f64::MIN..=26.2, 1.5);
+}

@@ -146,7 +146,13 @@ macro_rules! impl_math_f32_u05 {
 
         #[test]
         fn test_hypotf() {
-            test_ff_f(hypotf, rug::Float::hypot, f32::MIN..=f32::MAX, 0.5001);
+            test_ff_f(
+                hypotf,
+                rug::Float::hypot,
+                f32::MIN..=f32::MAX,
+                f32::MIN..=f32::MAX,
+                0.5001,
+            );
         }
 
         pub fn sinpif(d: F32x) -> F32x {

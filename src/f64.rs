@@ -16,7 +16,7 @@ const D1_23: f64 = (1u64 << 23) as f64;
 
 const SLEEF_FP_ILOGB0: i32 = -2_147_483_648;
 const SLEEF_FP_ILOGBNAN: i32 = 2_147_483_647;
-const SQRT_DBL_MAX: f64 = 1.340_780_792_994_259_635_5_e+154;
+pub(crate) const SQRT_DBL_MAX: f64 = 1.340_780_792_994_259_635_5_e+154;
 const M_2_PI_H: f64 = 0.636_619_772_367_581_382_43;
 const M_2_PI_L: f64 = -3.935_735_335_036_497_176_4_e-17;
 const TRIGRANGEMAX3: f64 = 1e+9;

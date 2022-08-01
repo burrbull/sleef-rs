@@ -85,6 +85,21 @@ macro_rules! impl_math_f64_u05 {
             (rsin, rcos)
         }
 
+        #[test]
+        fn test_sincospi() {
+            use rug::{float::Constant, Float};
+            let rangemax2 = 1e+9 / 4.;
+            test_f_ff(
+                sincospi,
+                |in1| {
+                    let prec = in1.prec();
+                    (in1 * Float::with_val(prec, Constant::Pi)).sin_cos(Float::new(prec))
+                },
+                -rangemax2..=rangemax2,
+                0.506,
+            );
+        }
+
         pub fn sinpi(d: F64x) -> F64x {
             let x = sinpik(d);
             let mut r = x.0 + x.1;
@@ -96,12 +111,42 @@ macro_rules! impl_math_f64_u05 {
             F64x::from_bits(U64x::from_bits(d.is_infinite()) | U64x::from_bits(r))
         }
 
+        #[test]
+        fn test_sinpi() {
+            use rug::{float::Constant, Float};
+            let rangemax2 = 1e+9 / 4.;
+            test_f_f(
+                sinpi,
+                |in1| {
+                    let prec = in1.prec();
+                    (in1 * Float::with_val(prec, Constant::Pi)).sin()
+                },
+                -rangemax2..=rangemax2,
+                0.506,
+            );
+        }
+
         pub fn cospi(d: F64x) -> F64x {
             let x = cospik(d);
             let r = x.0 + x.1;
 
             let r = d.abs().gt(TRIGRANGEMAX3 / F64x::splat(4.)).select(ONE, r);
             F64x::from_bits(U64x::from_bits(d.is_infinite()) | U64x::from_bits(r))
+        }
+
+        #[test]
+        fn test_cospi() {
+            use rug::{float::Constant, Float};
+            let rangemax2 = 1e+9 / 4.;
+            test_f_f(
+                cospi,
+                |in1| {
+                    let prec = in1.prec();
+                    (in1 * Float::with_val(prec, Constant::Pi)).cos()
+                },
+                -rangemax2..=rangemax2,
+                0.506,
+            );
         }
 
         pub fn sqrt(d: F64x) -> F64x {
@@ -133,6 +178,11 @@ macro_rules! impl_math_f64_u05 {
             d.eq(ZERO).select(d, x)
         }
 
+        #[test]
+        fn test_sqrt() {
+            test_f_f(sqrt, rug::Float::sqrt, f64::MIN..=f64::MAX, 0.50001);
+        }
+
         pub fn hypot(x: F64x, y: F64x) -> F64x {
             let x = x.abs();
             let y = y.abs();
@@ -152,6 +202,17 @@ macro_rules! impl_math_f64_u05 {
             ret = min.eq(ZERO).select(max, ret);
             ret = (x.is_nan() | y.is_nan()).select(F64x::NAN, ret);
             (x.eq(F64x::INFINITY) | y.eq(F64x::INFINITY)).select(F64x::INFINITY, ret)
+        }
+
+        #[test]
+        fn test_hypot() {
+            test_ff_f(
+                hypot,
+                rug::Float::hypot,
+                f64::MIN..=f64::MAX,
+                f64::MIN..=f64::MAX,
+                0.5,
+            );
         }
     };
 }

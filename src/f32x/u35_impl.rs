@@ -662,6 +662,7 @@ macro_rules! impl_math_f32_u35 {
                 atan2f,
                 rug::Float::atan2,
                 f32::MIN..=f32::MAX,
+                f32::MIN..=f32::MAX,
                 3.5
             );
         }
@@ -956,6 +957,7 @@ macro_rules! impl_math_f32_u35 {
             test_ff_f(
                 hypotf,
                 rug::Float::hypot,
+                f32::MIN..=f32::MAX,
                 f32::MIN..=f32::MAX,
                 3.5,
             );

@@ -537,6 +537,7 @@ macro_rules! impl_math_f32_u10 {
                 atan2f,
                 rug::Float::atan2,
                 f32::MIN..=f32::MAX,
+                f32::MIN..=f32::MAX,
                 1.
             );
         }
@@ -858,6 +859,7 @@ macro_rules! impl_math_f32_u10 {
                 powf,
                 |in1, in2| Float::with_val(in1.prec(), in1.pow(in2)),
                 f32::MIN..=f32::MAX,
+                f32::MIN..=f32::MAX,
                 1.
             );
         }
@@ -947,7 +949,7 @@ macro_rules! impl_math_f32_u10 {
             test_f_f(
                 asinhf,
                 rug::Float::asinh,
-                -18.5_e18..=18.5_e18,
+                -crate::f32::SQRT_FLT_MAX..=crate::f32::SQRT_FLT_MAX,
                 1.0001
             );
         }
@@ -971,7 +973,7 @@ macro_rules! impl_math_f32_u10 {
             test_f_f(
                 acoshf,
                 rug::Float::acosh,
-                -18.5_e18..=18.5_e18,
+                -crate::f32::SQRT_FLT_MAX..=crate::f32::SQRT_FLT_MAX,
                 1.0001
             );
         }

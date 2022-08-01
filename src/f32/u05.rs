@@ -162,7 +162,13 @@ pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
 
 #[test]
 fn test_hypotf() {
-    test_ff_f(hypotf, rug::Float::hypot, f32::MIN..=f32::MAX, 0.5001);
+    test_ff_f(
+        hypotf,
+        rug::Float::hypot,
+        f32::MIN..=f32::MAX,
+        f32::MIN..=f32::MAX,
+        0.5001,
+    );
 }
 
 /// Evaluate sin( π***a*** ) for given ***a***

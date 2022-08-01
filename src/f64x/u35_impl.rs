@@ -522,6 +522,21 @@ macro_rules! impl_math_f64_u35 {
             (rsin, rcos)
         }
 
+        #[test]
+        fn test_sincospi() {
+            use rug::{float::Constant, Float};
+            let rangemax2 = 1e+9 / 4.;
+            test_f_ff(
+                sincospi,
+                |in1| {
+                    let prec = in1.prec();
+                    (in1 * Float::with_val(prec, Constant::Pi)).sin_cos(Float::new(prec))
+                },
+                -rangemax2..=rangemax2,
+                1.5,
+            );
+        }
+
         #[cfg(not(feature = "deterministic"))]
         pub fn tan(d: F64x) -> F64x {
             let ql: Ix;
@@ -579,16 +594,6 @@ macro_rules! impl_math_f64_u35 {
 
             u = o.select(-y, x) / o.select(x, y);
             d.eq(ZERO).select(d, u)
-        }
-
-        #[test]
-        fn test_tan() {
-            test_f_f(
-                tan,
-                rug::Float::tan,
-                f64::MIN..=f64::MAX,
-                3.5,
-            );
         }
 
         #[cfg(feature = "deterministic")]
@@ -653,6 +658,16 @@ macro_rules! impl_math_f64_u35 {
             d.eq(ZERO).select(d, u)
         }
 
+        #[test]
+        fn test_tan() {
+            test_f_f(
+                tan,
+                rug::Float::tan,
+                f64::MIN..=f64::MAX,
+                3.5,
+            );
+        }
+
         pub fn atan2(y: F64x, x: F64x) -> F64x {
             let mut r = atan2k(y.abs(), x);
 
@@ -678,6 +693,7 @@ macro_rules! impl_math_f64_u35 {
             test_ff_f(
                 atan2,
                 rug::Float::atan2,
+                f64::MIN..=f64::MAX,
                 f64::MIN..=f64::MAX,
                 3.5
             );
@@ -823,6 +839,16 @@ macro_rules! impl_math_f64_u35 {
                 t = w.eq(ZERO).select(w, t);
             }*/
             t
+        }
+
+        #[test]
+        fn test_atan() {
+            test_f_f(
+                atan,
+                rug::Float::atan,
+                f64::MIN..=f64::MAX,
+                3.5,
+            );
         }
 
         pub fn log(mut d: F64x) -> F64x {
@@ -1018,8 +1044,9 @@ macro_rules! impl_math_f64_u35 {
             test_ff_f(
                 hypot,
                 rug::Float::hypot,
-                f64::MIN..=f64::MAX,
-                3.5
+                -1e307..=1e307,
+                -1e307..=1e307,
+                3.5,
             );
         }
 
@@ -1104,6 +1131,16 @@ macro_rules! impl_math_f64_u35 {
                 .gt(F64x::splat(308.254_715_559_916_71))
                 .select(F64x::INFINITY, u);
             F64x::from_bits(!U64x::from_bits(d.lt(F64x::splat(-350.))) & U64x::from_bits(u))
+        }
+
+        #[test]
+        fn test_exp10() {
+            test_f_f(
+                exp10,
+                rug::Float::exp10,
+                -350.0..=308.26,
+                3.5
+            );
         }
 
         pub fn log2(mut d: F64x) -> F64x {

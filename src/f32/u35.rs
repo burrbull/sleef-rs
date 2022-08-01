@@ -43,7 +43,13 @@ pub fn atan2f(y: f32, x: f32) -> f32 {
 
 #[test]
 fn test_atan2f() {
-    test_ff_f(atan2f, rug::Float::atan2, f32::MIN..=f32::MAX, 3.5);
+    test_ff_f(
+        atan2f,
+        rug::Float::atan2,
+        f32::MIN..=f32::MAX,
+        f32::MIN..=f32::MAX,
+        3.5,
+    );
 }
 
 /// Natural logarithmic function
@@ -249,7 +255,13 @@ pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
 
 #[test]
 fn test_hypotf() {
-    test_ff_f(hypotf, rug::Float::hypot, f32::MIN..=f32::MAX, 3.5);
+    test_ff_f(
+        hypotf,
+        rug::Float::hypot,
+        f32::MIN..=f32::MAX,
+        f32::MIN..=f32::MAX,
+        3.5,
+    );
 }
 
 /// Square root function

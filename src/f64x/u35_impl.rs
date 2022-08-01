@@ -619,7 +619,7 @@ macro_rules! impl_math_f64_u35 {
 
                 ql = Mx::from_cast(g).select(ql, dql.roundi());
                 s = g.select(s, u);
-                let g = d.abs().lt(F64x::splat(1e+7));
+                let g = d.abs().lt(F64x::splat(1e+6));
 
                 if !g.all() {
                     let (ddidd, ddii) = rempi(d);

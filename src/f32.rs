@@ -1257,7 +1257,7 @@ pub fn nextafterf(x: f32, y: f32) -> f32 {
     let mut cxi = (if x == 0. { mulsignf(0., y) } else { x }).to_bits() as i32;
     let c = (cxi < 0) == (y < x);
     if c {
-        cxi = -(cxi ^ (1 << 31));
+        cxi = -(cxi ^ i32::MIN);
     }
 
     if x != y {
@@ -1265,7 +1265,7 @@ pub fn nextafterf(x: f32, y: f32) -> f32 {
     }
 
     if c {
-        cxi = -(cxi ^ (1 << 31));
+        cxi = -(cxi ^ i32::MIN);
     }
 
     let cxf = f32::from_bits(cxi as u32);

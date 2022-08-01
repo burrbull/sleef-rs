@@ -693,7 +693,7 @@ macro_rules! impl_math_f64 {
             let o = d.lt(F64x::splat(4.909_093_465_297_726_6_e-91));
             d = o.select(F64x::splat(2.037_035_976_334_486_e90) * d, d);
             let mut q = cast_from_upper(U64x::from_bits(d));
-            q &= Ix::splat(((1 << 12) - 1) << 20);
+            q &= Ix::splat((((1u32 << 12) - 1) << 20) as _);
             q = Ix::from_bits(Ux::from_bits(q) >> 20);
             q - Mx::from_cast(o).select(Ix::splat(300 + 0x3ff), Ix::splat(0x3ff))
         }

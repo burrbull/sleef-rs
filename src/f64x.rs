@@ -24,22 +24,6 @@ macro_rules! impl_math_f64 {
         type Ix = packed_simd::Simd<[$int; $size]>;
         type Mx = packed_simd::Simd<[$mask; $size]>;
 
-        impl BaseType for F64x {
-            type Base = f64;
-        }
-
-        impl BaseType for U64x {
-            type Base = u64;
-        }
-
-        impl BaseType for I64x {
-            type Base = i64;
-        }
-        /*
-                impl BaseType for M64x {
-                    type Base = m64;
-                }
-        */
         impl MaskType for F64x {
             type Mask = M64x;
         }
@@ -575,9 +559,15 @@ macro_rules! impl_math_f64 {
             }
         }
 
-        impl Poly for F64x {
-            fn c2v(c: Self::Base) -> Self {
+        impl Poly<f64> for F64x {
+            fn c2v(c: f64) -> Self {
                 F64x::splat(c)
+            }
+        }
+
+        impl Poly<Self> for F64x {
+            fn c2v(c: Self) -> Self {
+                c
             }
         }
 
@@ -643,7 +633,7 @@ macro_rules! impl_math_f64 {
             use core::mem::MaybeUninit;
 
             const L: usize = Ix::lanes();
-            let mut a: [MaybeUninit<<Ix as BaseType>::Base>; L * 2] = MaybeUninit::uninit_array();
+            let mut a: [MaybeUninit<$int>; L * 2] = MaybeUninit::uninit_array();
             for i in 0..L {
                 a[i * 2].write(0);
                 a[i * 2 + 1].write(q.extract(i));

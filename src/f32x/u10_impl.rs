@@ -1214,83 +1214,85 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
-        /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
+        fn dfmla(x: F32x, y: Doubled<F32x>, z: Doubled<F32x>) -> Doubled<F32x> {
+            z + (y * x)
+        }
+        fn poly2df_b(x: F32x, c1: Doubled<F32x>, c0: Doubled<F32x>) -> Doubled<F32x> {
+            dfmla(x, c1, c0)
+        }
+        fn poly2df(x: F32x, c1: F32x, c0: Doubled<F32x>) -> Doubled<F32x> {
+            dfmla(x, Doubled::new(c1, ZERO), c0)
+        }
+        fn poly4df(x: F32x, c3: F32x, c2: Doubled<F32x>, c1: Doubled<F32x>, c0: Doubled<F32x>) -> Doubled<F32x> {
+            dfmla(x*x, poly2df(x, c3, c2), poly2df_b(x, c1, c0))
+        }
+
         pub fn erff(a: F32x) -> F32x {
-            let s = a;
+            let x = a.abs();
+            let x2 = x * x;
+            let x4 = x2 * x2;
+            let o25 = x.le(F32x::splat(2.5));
 
-            let a = a.abs();
-            let o0 = a.lt(F32x::splat(1.1));
-            let o1 = a.lt(F32x::splat(2.4));
-            let o2 = a.lt(F32x::splat(4.));
-            let u = o0.select(a * a, a);
+            let mut t2;
+            if o25.all() {
+                // Abramowitz and Stegun
+                let t = F32x::poly6(x, x2, x4,
+                    -0.436_044_700_8_e-6,
+                    0.686_751_536_7_e-5,
+                    -0.304_515_67_e-4,
+                    0.980_853_656_1_e-4,
+                    0.239_552_391_6_e-3,
+                    0.145_990_154_1_e-3);
+                t2 = poly4df(x, t,
+                    Doubled::from((0.009_288_344_532_251_358_032_2, -2.786_374_589_702_533_075_5_e-11)),
+                    Doubled::from((0.042_275_499_552_488_327_026, 1.346_139_928_998_810_605_7_e-09)),
+                    Doubled::from((0.070_523_701_608_180_999_756, -3.661_630_931_870_736_516_3_e-09))
+                );
+                t2 = ONE.add_checked(t2 * x);
+                t2 = t2.square();
+                t2 = t2.square();
+                t2 = t2.square();
+                t2 = t2.square();
+                t2 = t2.recpre();
+            } else {
+                let t = F32x::poly6(x, x2, x4,
+                        o25.select_splat(-0.436_044_700_8_e-6, -0.113_001_284_8_e-6),
+                        o25.select_splat(0.686_751_536_7_e-5, 0.411_527_298_6_e-5),
+                        o25.select_splat(-0.304_515_67_e-4, -0.692_830_435_6_e-4),
+                        o25.select_splat(0.980_853_656_1_e-4, 0.717_269_256_7_e-3),
+                        o25.select_splat(0.239_552_391_6_e-3, -0.513_104_535_6_e-2),
+                        o25.select_splat(0.145_990_154_1_e-3, 0.270_863_715_6_e-1));
+                t2 = poly4df(x, t,
+                    o25.select_doubled(
+                        Doubled::from((0.009_288_344_532_251_358_032_2, -2.786_374_589_702_533_075_5_e-11)),
+                        Doubled::from((-0.110_643_193_125_724_792_48, 3.705_045_277_722_528_300_7_e-09))
+                            ),
+                    o25.select_doubled(
+                        Doubled::from((0.042_275_499_552_488_327_026, 1.346_139_928_998_810_605_7_e-09)),
+                        Doubled::from((-0.631_922_304_630_279_541_02, -2.020_043_258_507_317_785_9_e-08))
+                            ),
+                    o25.select_doubled(
+                        Doubled::from((0.070_523_701_608_180_999_756, -3.661_630_931_870_736_516_3_e-09)),
+                        Doubled::from((-1.129_663_825_035_095_214_8, 2.551_512_019_645_325_925_2_e-08))
+                            ));
+                t2 *= x;
+                let mut s2 = ONE.add_checked(t2);
+                s2 = s2.square();
+                s2 = s2.square();
+                s2 = s2.square();
+                s2 = s2.square();
+                s2 = s2.recpre();
+                t2 = o25.select_doubled(s2, Doubled::new(expkf(t2), ZERO));
+            }
 
-            let t = F32x::select3(
-                o0,
-                o1,
-                0.708_929_219_4_e-4,
-                -0.179_266_789_9_e-4,
-                -0.949_575_769_5_e-5,
-            )
-            .mul_add(
-                u,
-                F32x::select3(
-                    o0,
-                    o1,
-                    -0.776_831_118_9_e-3,
-                    0.393_763_301_e-3,
-                    0.248_146_592_6_e-3,
-                ),
-            )
-            .mul_add(
-                u,
-                F32x::select3(
-                    o0,
-                    o1,
-                    0.515_946_373_3_e-2,
-                    -0.394_918_117_7_e-2,
-                    -0.291_817_681_9_e-2,
-                ),
-            )
-            .mul_add(
-                u,
-                F32x::select3(
-                    o0,
-                    o1,
-                    -0.268_378_127_4_e-1,
-                    0.244_547_464_e-1,
-                    0.205_970_667_3_e-1,
-                ),
-            )
-            .mul_add(
-                u,
-                F32x::select3(
-                    o0,
-                    o1,
-                    0.112_831_801_2,
-                    -0.107_099_615,
-                    -0.990_189_984_4_e-1,
-                ),
-            );
-            let mut d = t.mul_as_doubled(u);
-            d += Doubled::select3(
-                o0,
-                o1,
-                -0.376_125_876_000_657_465_175_213_237_214,
-                -0.634_588_905_908_410_389_971_210_809_21,
-                -0.643_598_050_547_891_613_081_201_721_633,
-            );
-            d *= u;
-            d += Doubled::select3(
-                o0,
-                o1,
-                0.112_837_916_021_059_138_255_978_217_023_e+1,
-                -0.112_879_855_826_694_507_209_862_753_992_e+1,
-                -0.112_461_487_742_845_562_801_052_956_293_e+1,
-            );
-            d *= a;
-            d = o0.select_doubled(d, ONE.add_checked(-expk2f(d)));
-            let u = o2.select(d.0 + d.1, ONE).mul_sign(s);
-            a.is_nan().select(F32x::NAN, u)
+            t2 += F32x::splat(-1.);
+            t2 = x.lt(F32x::splat(1e-4)).select_doubled(Doubled::from((-1.128_379_225_730_895_996_1, 5.863_538_342_219_759_109_7_e-08)) * x, t2);
+
+            let mut z = -(t2.0 + t2.1);
+            z = x.ge(F32x::splat(6.)).select(ONE, z);
+            z = a.is_infinite().select(ONE, z);
+            z = a.eq(ZERO).select(ZERO, z);
+            z.mul_sign(a)
         }
 
         #[test]

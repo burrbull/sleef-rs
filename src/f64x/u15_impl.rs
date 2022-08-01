@@ -306,5 +306,10 @@ macro_rules! impl_math_f64_u15 {
             r = s.is_sign_negative().select(F64x::splat(2.) - r, r);
             s.is_nan().select(F64x::NAN, r)
         }
+
+        #[test]
+        fn test_erfc() {
+            test_f_f(erfc, rug::Float::erfc, f64::MIN..=26.2, 1.5);
+        }
     };
 }

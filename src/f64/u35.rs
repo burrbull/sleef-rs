@@ -58,6 +58,21 @@ pub fn sincospi(d: f64) -> (f64, f64) {
     (rsin, rcos)
 }
 
+#[test]
+fn test_sincospi() {
+    use rug::{float::Constant, Float};
+    let rangemax2 = 1e+9 / 4.;
+    test_f_ff(
+        sincospi,
+        |in1| {
+            let prec = in1.prec();
+            (in1 * Float::with_val(prec, Constant::Pi)).sin_cos(Float::new(prec))
+        },
+        -rangemax2..=rangemax2,
+        1.5,
+    );
+}
+
 pub fn sinh(x: f64) -> f64 {
     let e = expm1k(fabsk(x));
     let mut y = (e + 2.) / (e + 1.) * (0.5 * e);
@@ -70,6 +85,10 @@ pub fn sinh(x: f64) -> f64 {
     } else {
         y
     }
+}
+#[test]
+fn test_sinh() {
+    test_f_f(sinh, rug::Float::sinh, -709.0..=709.0, 3.5);
 }
 
 pub fn cosh(x: f64) -> f64 {
@@ -85,6 +104,11 @@ pub fn cosh(x: f64) -> f64 {
     }
 }
 
+#[test]
+fn test_cosh() {
+    test_f_f(cosh, rug::Float::cosh, -709.0..=709.0, 3.5);
+}
+
 pub fn tanh(x: f64) -> f64 {
     let mut y = fabsk(x);
     let d = expm1k(2. * y);
@@ -98,6 +122,11 @@ pub fn tanh(x: f64) -> f64 {
     } else {
         y
     }
+}
+
+#[test]
+fn test_tanh() {
+    test_f_f(tanh, rug::Float::tanh, -19.0..=19.0, 3.5);
 }
 
 pub fn sqrt(d: f64) -> f64 {
@@ -166,6 +195,17 @@ pub fn atan2(y: f64, x: f64) -> f64 {
     }
 }
 
+#[test]
+fn test_atan2() {
+    test_ff_f(
+        atan2,
+        rug::Float::atan2,
+        f64::MIN..=f64::MAX,
+        f64::MIN..=f64::MAX,
+        3.5,
+    );
+}
+
 pub fn asin(d: f64) -> f64 {
     let o = fabsk(d) < 0.5;
     let x2 = if o { d * d } else { (1. - fabsk(d)) * 0.5 };
@@ -197,6 +237,11 @@ pub fn asin(d: f64) -> f64 {
 
     let r = if o { u } else { FRAC_PI_2 - 2. * u };
     mulsign(r, d)
+}
+
+#[test]
+fn test_asin() {
+    test_f_f(asin, rug::Float::asin, -1.0..=1.0, 3.5);
 }
 
 pub fn acos(d: f64) -> f64 {
@@ -238,6 +283,11 @@ pub fn acos(d: f64) -> f64 {
     } else {
         r
     }
+}
+
+#[test]
+fn test_acos() {
+    test_f_f(acos, rug::Float::acos, -1.0..=1.0, 3.5);
 }
 
 pub fn atan(mut s: f64) -> f64 {
@@ -296,6 +346,11 @@ pub fn atan(mut s: f64) -> f64 {
     } else {
         t
     }
+}
+
+#[test]
+fn test_atan() {
+    test_f_f(atan, rug::Float::atan, f64::MIN..=f64::MAX, 3.5);
 }
 
 pub fn sin(mut d: f64) -> f64 {
@@ -515,6 +570,19 @@ pub fn sincos(d: f64) -> (f64, f64) {
     (rsin, rcos)
 }
 
+#[test]
+fn test_sincos() {
+    test_f_ff(
+        sincos,
+        |in1| {
+            let prec = in1.prec();
+            in1.sin_cos(rug::Float::new(prec))
+        },
+        f64::MIN..=f64::MAX,
+        3.5,
+    );
+}
+
 pub fn tan(d: f64) -> f64 {
     let mut x: f64;
     let ql: isize;
@@ -579,6 +647,11 @@ pub fn tan(d: f64) -> f64 {
     x / y
 }
 
+#[test]
+fn test_tan() {
+    test_f_f(tan, rug::Float::tan, f64::MIN..=f64::MAX, 3.5);
+}
+
 pub fn log(mut d: f64) -> f64 {
     let o = d < f64::MIN_POSITIVE;
     if o {
@@ -624,6 +697,11 @@ pub fn log(mut d: f64) -> f64 {
     }
 }
 
+#[test]
+fn test_log() {
+    test_f_f(log, rug::Float::ln, 0.0..=f64::MAX, 3.5);
+}
+
 pub fn cbrt(mut d: f64) -> f64 {
     // max error : 2 ulps
     let mut q = 1.;
@@ -659,6 +737,11 @@ pub fn cbrt(mut d: f64) -> f64 {
     (y - (2. / 3.) * y * (y * x - 1.)) * q
 }
 
+#[test]
+fn test_cbrt() {
+    test_f_f(cbrt, rug::Float::cbrt, f64::MIN..=f64::MAX, 3.5);
+}
+
 pub fn exp2(d: f64) -> f64 {
     let q = rintk(d);
 
@@ -686,6 +769,11 @@ pub fn exp2(d: f64) -> f64 {
     } else {
         u
     }
+}
+
+#[test]
+fn test_exp2() {
+    test_f_f(exp2, rug::Float::exp2, -2000.0..=1024.0, 3.5);
 }
 
 pub fn exp10(d: f64) -> f64 {
@@ -716,6 +804,11 @@ pub fn exp10(d: f64) -> f64 {
     } else {
         u
     }
+}
+
+#[test]
+fn test_exp10() {
+    test_f_f(exp10, rug::Float::exp10, -350.0..=308.26, 3.5);
 }
 
 pub fn log2(mut d: f64) -> f64 {
@@ -754,4 +847,9 @@ pub fn log2(mut d: f64) -> f64 {
     } else {
         r
     }
+}
+
+#[test]
+fn test_log2() {
+    test_f_f(log2, rug::Float::log2, 0.0..=f64::MAX, 3.5);
 }

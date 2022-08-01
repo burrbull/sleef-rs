@@ -566,6 +566,21 @@ macro_rules! impl_math_f32_u35 {
             (rsin, rcos)
         }
 
+        #[test]
+        fn test_sincospif() {
+            use rug::{float::Constant, Float};
+            let rangemax2 = 1e+7 / 4.;
+            test_f_ff(
+                sincospif,
+                |in1| {
+                    let prec = in1.prec();
+                    (in1 * Float::with_val(prec, Constant::Pi)).sin_cos(Float::new(prec))
+                },
+                -rangemax2..=rangemax2,
+                2.,
+            );
+        }
+
         pub fn atanf(d: F32x) -> F32x {
             let q = vsel_vi2_vf_vi2(d, I32x::splat(2));
             let s = d.abs();
@@ -646,6 +661,7 @@ macro_rules! impl_math_f32_u35 {
             test_ff_f(
                 atan2f,
                 rug::Float::atan2,
+                f32::MIN..=f32::MAX,
                 f32::MIN..=f32::MAX,
                 3.5
             );
@@ -942,6 +958,7 @@ macro_rules! impl_math_f32_u35 {
                 hypotf,
                 rug::Float::hypot,
                 f32::MIN..=f32::MAX,
+                f32::MIN..=f32::MAX,
                 3.5,
             );
         }
@@ -997,6 +1014,16 @@ macro_rules! impl_math_f32_u35 {
                 .gt(F32x::splat(38.531_839_419_103_623_894_138_7))
                 .select(F32x::INFINITY, u);
             F32x::from_bits(!U32x::from_bits(d.lt(F32x::splat(-50.))) & U32x::from_bits(u))
+        }
+
+        #[test]
+        fn test_exp10f() {
+            test_f_f(
+                exp10f,
+                rug::Float::exp10,
+                -38.54..=38.54,
+                3.5,
+            );
         }
 
         pub fn log2f(mut d: F32x) -> F32x {

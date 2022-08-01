@@ -36,6 +36,11 @@ pub fn sqrtf(mut d: f32) -> f32 {
     }
 }
 
+#[test]
+fn test_sqrtf() {
+    test_f_f(sqrtf, rug::Float::sqrt, f32::MIN..=f32::MAX, 0.5);
+}
+
 /// Evaluate sin( π***a*** ) and cos( π***a*** ) for given ***a*** simultaneously
 ///
 /// Evaluates the sine and cosine functions of π***a*** at a time, and store the two values in a tuple.
@@ -109,6 +114,20 @@ pub fn sincospif(d: f32) -> (f32, f32) {
     (rsin, rcos)
 }
 
+#[test]
+fn test_sincospif() {
+    let rangemax2 = 1e+7 / 4.;
+    test_f_ff(
+        sincospif,
+        |in1| {
+            let prec = in1.prec();
+            (in1 * Float::with_val(prec, rug::float::Constant::Pi)).sin_cos(Float::new(prec))
+        },
+        -rangemax2..=rangemax2,
+        0.505,
+    );
+}
+
 /// 2D Euclidian distance function
 ///
 /// The error bound of the returned value is 0.5001 ULP.
@@ -141,6 +160,17 @@ pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
     }
 }
 
+#[test]
+fn test_hypotf() {
+    test_ff_f(
+        hypotf,
+        rug::Float::hypot,
+        f32::MIN..=f32::MAX,
+        f32::MIN..=f32::MAX,
+        0.5001,
+    );
+}
+
 /// Evaluate sin( π***a*** ) for given ***a***
 ///
 /// This function evaluates the sine function of π***a***.
@@ -162,6 +192,20 @@ pub fn sinpif(d: f32) -> f32 {
     }
 }
 
+#[test]
+fn test_sinpif() {
+    let rangemax2 = 1e+7 / 4.;
+    test_f_f(
+        sinpif,
+        |in1| {
+            let prec = in1.prec();
+            (in1 * Float::with_val(prec, rug::float::Constant::Pi)).sin()
+        },
+        -rangemax2..=rangemax2,
+        0.506,
+    );
+}
+
 /// Evaluate cos( π***a*** ) for given ***a***
 ///
 /// This function evaluates the cosine function of π***a***.
@@ -179,4 +223,18 @@ pub fn cospif(d: f32) -> f32 {
     } else {
         x.0 + x.1
     }
+}
+
+#[test]
+fn test_cospif() {
+    let rangemax2 = 1e+7 / 4.;
+    test_f_f(
+        cospif,
+        |in1| {
+            let prec = in1.prec();
+            (in1 * Float::with_val(prec, rug::float::Constant::Pi)).cos()
+        },
+        -rangemax2..=rangemax2,
+        0.506,
+    );
 }

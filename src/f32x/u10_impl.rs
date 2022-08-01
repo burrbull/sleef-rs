@@ -537,6 +537,7 @@ macro_rules! impl_math_f32_u10 {
                 atan2f,
                 rug::Float::atan2,
                 f32::MIN..=f32::MAX,
+                f32::MIN..=f32::MAX,
                 1.
             );
         }
@@ -858,6 +859,7 @@ macro_rules! impl_math_f32_u10 {
                 powf,
                 |in1, in2| Float::with_val(in1.prec(), in1.pow(in2)),
                 f32::MIN..=f32::MAX,
+                f32::MIN..=f32::MAX,
                 1.
             );
         }
@@ -878,7 +880,7 @@ macro_rules! impl_math_f32_u10 {
             test_f_f(
                 sinhf,
                 rug::Float::sinh,
-                -88.0..=88.0,
+                -88.5..=88.5,
                 1.
             );
         }
@@ -898,7 +900,7 @@ macro_rules! impl_math_f32_u10 {
             test_f_f(
                 coshf,
                 rug::Float::cosh,
-                -88.0..=88.0,
+                -88.5..=88.5,
                 1.
             );
         }
@@ -910,7 +912,7 @@ macro_rules! impl_math_f32_u10 {
             let d = d.add_checked(-e) / d.add_checked(e);
             y = d.0 + d.1;
 
-            y = (x.abs().gt(F32x::splat(8.664_339_742)) | y.is_nan()).select(ONE, y);
+            y = (x.abs().gt(F32x::splat(8.664_339_742)) | y.is_nan()).select(ONE, y); // TODO: check
             y = y.mul_sign(x);
             F32x::from_bits(U32x::from_bits(x.is_nan()) | U32x::from_bits(y))
         }
@@ -921,7 +923,7 @@ macro_rules! impl_math_f32_u10 {
                 tanhf,
                 rug::Float::tanh,
                 -8.7..=8.7,
-                1.
+                1.0001
             );
         }
 
@@ -947,8 +949,8 @@ macro_rules! impl_math_f32_u10 {
             test_f_f(
                 asinhf,
                 rug::Float::asinh,
-                -18.5_e18..=18.5_e18,
-                1.
+                -crate::f32::SQRT_FLT_MAX..=crate::f32::SQRT_FLT_MAX,
+                1.0001
             );
         }
 
@@ -971,8 +973,8 @@ macro_rules! impl_math_f32_u10 {
             test_f_f(
                 acoshf,
                 rug::Float::acosh,
-                1.0..=18.5_e18,
-                1.
+                -crate::f32::SQRT_FLT_MAX..=crate::f32::SQRT_FLT_MAX,
+                1.0001
             );
         }
 
@@ -995,7 +997,7 @@ macro_rules! impl_math_f32_u10 {
                 atanhf,
                 rug::Float::atanh,
                 f32::MIN..=f32::MAX,
-                1.
+                1.0001
             );
         }
 
@@ -1026,6 +1028,16 @@ macro_rules! impl_math_f32_u10 {
             F32x::from_bits(!U32x::from_bits(d.lt(F32x::splat(-50.))) & U32x::from_bits(u))
         }
 
+        #[test]
+        fn test_exp10f() {
+            test_f_f(
+                exp10f,
+                rug::Float::exp10,
+                -50.0..=38.54,
+                1.
+            );
+        }
+
         pub fn expm1f(a: F32x) -> F32x {
             let d = expk2f(Doubled::new(a, ZERO)) + F32x::splat(-1.);
             let mut x = d.0 + d.1;
@@ -1036,6 +1048,16 @@ macro_rules! impl_math_f32_u10 {
                 .lt(F32x::splat(-16.635_532_333_438_687_426_013_570))
                 .select(F32x::splat(-1.), x);
             a.is_neg_zero().select(NEG_ZERO, x)
+        }
+
+        #[test]
+        fn test_expm1f() {
+            test_f_f(
+                expm1f,
+                rug::Float::exp_m1,
+                -16.64..=88.73,
+                1.
+            );
         }
 
         pub fn log10f(mut d: F32x) -> F32x {
@@ -1080,6 +1102,16 @@ macro_rules! impl_math_f32_u10 {
                     0,
                 )
             }*/
+        }
+
+        #[test]
+        fn test_log10f() {
+            test_f_f(
+                log10f,
+                rug::Float::log10,
+                0.0..=f32::MAX,
+                1.
+            );
         }
 
         pub fn log2f(mut d: F32x) -> F32x {
@@ -1152,6 +1184,16 @@ macro_rules! impl_math_f32_u10 {
             o.select(F32x::INFINITY, a).mul_sign(r)
         }
 
+        #[test]
+        fn test_tgammaf() {
+            test_f_f(
+                tgammaf,
+                rug::Float::gamma,
+                f32::MIN..=f32::MAX,
+                1.0
+            );
+        }
+
         pub fn lgammaf(a: F32x) -> F32x {
             let (da, db) = gammafk(a);
             let y = da + logk2f(db.abs());
@@ -1160,6 +1202,16 @@ macro_rules! impl_math_f32_u10 {
             let o =
                 a.is_infinite() | ((a.le(ZERO) & a.is_integer()) | (a.is_finite() & r.is_nan()));
             o.select(F32x::INFINITY, r)
+        }
+
+        #[test]
+        fn test_lgammaf() {
+            test_f_f(
+                lgammaf,
+                rug::Float::ln_gamma,
+                0.0..=4e36,
+                1.0
+            );
         }
 
         /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
@@ -1241,6 +1293,16 @@ macro_rules! impl_math_f32_u10 {
             a.is_nan().select(F32x::NAN, u)
         }
 
+        #[test]
+        fn test_erff() {
+            test_f_f(
+                erff,
+                rug::Float::erf,
+                f32::MIN..=f32::MAX,
+                0.75
+            );
+        }
+
         pub fn log1pf(d: F32x) -> F32x {
             let m: F32x;
 
@@ -1281,6 +1343,16 @@ macro_rules! impl_math_f32_u10 {
             d.is_neg_zero().select(NEG_ZERO, r)
         }
 
+        #[test]
+        fn test_log1pf() {
+            test_f_f(
+                log1pf,
+                rug::Float::ln_1p,
+                -1.0..=1e+38,
+                1.
+            );
+        }
+
         pub fn exp2f(d: F32x) -> F32x {
             let mut u = d.round();
             let q = u.roundi();
@@ -1306,5 +1378,14 @@ macro_rules! impl_math_f32_u10 {
             F32x::from_bits(!U32x::from_bits(d.lt(F32x::splat(-150.))) & U32x::from_bits(u))
         }
 
+        #[test]
+        fn test_exp2f() {
+            test_f_f(
+                exp2f,
+                rug::Float::exp2,
+                -150.0..=128.0,
+                1.
+            );
+        }
     };
 }

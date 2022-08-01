@@ -719,6 +719,7 @@ macro_rules! impl_math_f64_u10 {
                 atan2,
                 rug::Float::atan2,
                 f64::MIN..=f64::MAX,
+                f64::MIN..=f64::MAX,
                 1.
             );
         }
@@ -1035,6 +1036,7 @@ macro_rules! impl_math_f64_u10 {
                 pow,
                 |in1, in2| Float::with_val(in1.prec(), in1.pow(in2)),
                 f64::MIN..=f64::MAX,
+                f64::MIN..=f64::MAX,
                 1.
             );
         }
@@ -1124,7 +1126,7 @@ macro_rules! impl_math_f64_u10 {
             test_f_f(
                 asinh,
                 rug::Float::asinh,
-                -1.35_e+154..=1.35_e+154,
+                -crate::f64::SQRT_DBL_MAX..=crate::f64::SQRT_DBL_MAX,
                 1.
             );
         }
@@ -1145,7 +1147,7 @@ macro_rules! impl_math_f64_u10 {
             test_f_f(
                 acosh,
                 rug::Float::acosh,
-                -1.35_e+154..=1.35_e+154,
+                -crate::f64::SQRT_DBL_MAX..=crate::f64::SQRT_DBL_MAX,
                 1.
             );
         }
@@ -1326,6 +1328,16 @@ macro_rules! impl_math_f64_u10 {
                 .gt(F64x::splat(308.254_715_559_916_71))
                 .select(F64x::INFINITY, u);
             F64x::from_bits(!U64x::from_bits(d.lt(F64x::splat(-350.))) & U64x::from_bits(u))
+        }
+
+        #[test]
+        fn test_exp10() {
+            test_f_f(
+                exp10,
+                rug::Float::exp10,
+                -350.0..=308.26,
+                1.09
+            );
         }
 
         pub fn expm1(a: F64x) -> F64x {
@@ -1526,6 +1538,16 @@ macro_rules! impl_math_f64_u10 {
             d.is_neg_zero().select(NEG_ZERO, r)
         }
 
+        #[test]
+        fn test_log1p() {
+            test_f_f(
+                log1p,
+                rug::Float::ln_1p,
+                -1.0..=1e+307,
+                1.
+            );
+        }
+
         pub fn tgamma(a: F64x) -> F64x {
             let (da, db) = gammak(a);
             let y = expk2(da) * db;
@@ -1540,6 +1562,16 @@ macro_rules! impl_math_f64_u10 {
             o.select(F64x::INFINITY.mul_sign(a), r)
         }
 
+        #[test]
+        fn test_tgamma() {
+            test_f_f(
+                tgamma,
+                rug::Float::gamma,
+                f64::MIN..=f64::MAX,
+                1.
+            );
+        }
+
         pub fn lgamma(a: F64x) -> F64x {
             let (da, db) = gammak(a);
             let y = da + logk2(db.abs());
@@ -1547,6 +1579,16 @@ macro_rules! impl_math_f64_u10 {
 
             let o = a.is_infinite() | (a.le(ZERO) & a.is_integer()) | (a.is_finite() & r.is_nan());
             o.select(F64x::INFINITY, r)
+        }
+
+        #[test]
+        fn test_lgamma() {
+            test_f_f(
+                lgamma,
+                rug::Float::ln_gamma,
+                0.0..=2e305,
+                1.
+            );
         }
 
         /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
@@ -1778,6 +1820,16 @@ macro_rules! impl_math_f64_u10 {
 
             let u = o2.select(d.0 + d.1, ONE).mul_sign(s);
             a.is_nan().select(F64x::NAN, u)
+        }
+
+        #[test]
+        fn test_erf() {
+            test_f_f(
+                erf,
+                rug::Float::erf,
+                f64::MIN..=f64::MAX,
+                0.75
+            );
         }
     };
 }

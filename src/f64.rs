@@ -16,7 +16,7 @@ const D1_23: f64 = (1u64 << 23) as f64;
 
 const SLEEF_FP_ILOGB0: i32 = -2_147_483_648;
 const SLEEF_FP_ILOGBNAN: i32 = 2_147_483_647;
-const SQRT_DBL_MAX: f64 = 1.340_780_792_994_259_635_5_e+154;
+pub(crate) const SQRT_DBL_MAX: f64 = 1.340_780_792_994_259_635_5_e+154;
 const M_2_PI_H: f64 = 0.636_619_772_367_581_382_43;
 const M_2_PI_L: f64 = -3.935_735_335_036_497_176_4_e-17;
 const TRIGRANGEMAX3: f64 = 1e+9;
@@ -574,17 +574,21 @@ fn ldexp3k(d: f64, e: i32) -> f64 {
 
 #[inline]
 fn ilogbk(mut d: f64) -> i32 {
-    let m = d < 4.909_093_465_297_726_6E-91;
-    d = if m { 2.037_035_976_334_486E90 * d } else { d };
-    let q = (d.to_bits() >> 52) & 0x7ff;
-    (if m { q - (300 + 0x03ff) } else { q - 0x03ff }) as i32
+    let m = d < 4.909_093_465_297_726_6_e-91;
+    d = if m { 2.037_035_976_334_486_e90 * d } else { d };
+    let q = ((d.to_bits() >> 52) & 0x7ff) as i32;
+    if m {
+        q - (300 + 0x03ff)
+    } else {
+        q - 0x03ff
+    }
 }
 
 // ilogb2k is similar to ilogbk, but the argument has to be a
 // normalized FP value.
 #[inline]
 fn ilogb2k(d: f64) -> i32 {
-    (((d.to_bits() >> 52) & 0x7ff) - 0x3ff) as i32
+    (((d.to_bits() >> 52) & 0x7ff) as i32) - 0x3ff
 }
 
 #[inline]

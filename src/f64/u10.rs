@@ -48,6 +48,11 @@ pub fn acos(d: f64) -> f64 {
     y.0 + y.1
 }
 
+#[test]
+fn test_acos() {
+    test_f_f(acos, rug::Float::acos, -1.0..=1.0, 1.);
+}
+
 pub fn atan(d: f64) -> f64 {
     let d2 = atan2k_u1(dd(fabsk(d), 0.), dd(1., 0.));
     let r = if d.is_infinite() {
@@ -56,6 +61,11 @@ pub fn atan(d: f64) -> f64 {
         d2.0 + d2.1
     };
     mulsign(r, d)
+}
+
+#[test]
+fn test_atan() {
+    test_f_f(atan, rug::Float::atan, f64::MIN..=f64::MAX, 1.);
 }
 
 fn atan2k_u1(mut y: Doubled<f64>, mut x: Doubled<f64>) -> Doubled<f64> {
@@ -160,6 +170,17 @@ pub fn atan2(mut y: f64, mut x: f64) -> f64 {
     }
 }
 
+#[test]
+fn test_atan2() {
+    test_ff_f(
+        atan2,
+        rug::Float::atan2,
+        f64::MIN..=f64::MAX,
+        f64::MIN..=f64::MAX,
+        1.,
+    );
+}
+
 pub fn asin(d: f64) -> f64 {
     let o = fabsk(d) < 0.5;
     let x2 = if o { d * d } else { (1. - fabsk(d)) * 0.5 };
@@ -201,6 +222,11 @@ pub fn asin(d: f64) -> f64 {
     .add_checked(-u);
     let r = if o { u + x.0 } else { (y.0 + y.1) * 2. };
     mulsign(r, d)
+}
+
+#[test]
+fn test_asin() {
+    test_f_f(asin, rug::Float::asin, -1.0..=1.0, 1.);
 }
 
 pub fn sin(d: f64) -> f64 {
@@ -351,6 +377,11 @@ pub fn cos(d: f64) -> f64 {
     } else {
         u
     }
+}
+
+#[test]
+fn test_cos() {
+    test_f_f(cos, rug::Float::cos, f64::MIN..=f64::MAX, 1.);
 }
 
 pub fn sincos(d: f64) -> (f64, f64) {
@@ -511,6 +542,11 @@ pub fn tan(d: f64) -> f64 {
     }
 }
 
+#[test]
+fn test_tan() {
+    test_f_f(tan, rug::Float::tan, f64::MIN..=f64::MAX, 1.);
+}
+
 pub fn log(mut d: f64) -> f64 {
     let o = d < f64::MIN_POSITIVE;
     if o {
@@ -559,6 +595,16 @@ pub fn log(mut d: f64) -> f64 {
     } else {
         s.0 + s.1
     }
+}
+
+#[test]
+fn test_log() {
+    test_f_f(log, rug::Float::ln, 0.0..=f64::MAX, 1.);
+}
+
+#[test]
+fn test_log2() {
+    test_f_f(log2, rug::Float::log2, 0.0..=f64::MAX, 1.);
 }
 
 pub fn cbrt(d: f64) -> f64 {
@@ -617,6 +663,16 @@ pub fn cbrt(d: f64) -> f64 {
     }
 }
 
+#[test]
+fn test_cbrt() {
+    test_f_f(cbrt, rug::Float::cbrt, f64::MIN..=f64::MAX, 1.);
+}
+
+#[test]
+fn test_log1p() {
+    test_f_f(log1p, rug::Float::ln_1p, -1.0..=1e+307, 1.);
+}
+
 pub fn tgamma(a: f64) -> f64 {
     let (da, db) = gammak(a);
     let y = expk2(da) * db;
@@ -639,6 +695,11 @@ pub fn tgamma(a: f64) -> f64 {
     }
 }
 
+#[test]
+fn test_tgamma() {
+    test_f_f(tgamma, rug::Float::gamma, f64::MIN..=f64::MAX, 1.);
+}
+
 pub fn lgamma(a: f64) -> f64 {
     let (da, db) = gammak(a);
     let y = da + logk2(db.abs());
@@ -648,6 +709,11 @@ pub fn lgamma(a: f64) -> f64 {
     } else {
         r
     }
+}
+
+#[test]
+fn test_lgamma() {
+    test_f_f(lgamma, rug::Float::ln_gamma, 0.0..=2e305, 1.);
 }
 
 pub fn erf(a: f64) -> f64 {
@@ -885,6 +951,11 @@ pub fn erf(a: f64) -> f64 {
     }
 }
 
+#[test]
+fn test_erf() {
+    test_f_f(erf, rug::Float::erf, f64::MIN..=f64::MAX, 0.75);
+}
+
 pub fn exp(d: f64) -> f64 {
     let qf = rintk(d * R_LN2);
     let q = qf as i32;
@@ -923,6 +994,11 @@ pub fn exp(d: f64) -> f64 {
     } else {
         ldexp2k(u, q)
     }
+}
+
+#[test]
+fn test_exp() {
+    test_f_f(exp, rug::Float::exp, -1000.0..=710.0, 1.);
 }
 
 pub fn pow(x: f64, y: f64) -> f64 {
@@ -1004,6 +1080,11 @@ pub fn sinh(x: f64) -> f64 {
     }
 }
 
+#[test]
+fn test_sinh() {
+    test_f_f(sinh, rug::Float::sinh, -709.0..=709.0, 1.);
+}
+
 pub fn cosh(x: f64) -> f64 {
     let mut y = fabsk(x);
     let mut d = expk2(dd(y, 0.));
@@ -1017,6 +1098,11 @@ pub fn cosh(x: f64) -> f64 {
     } else {
         y
     }
+}
+
+#[test]
+fn test_cosh() {
+    test_f_f(cosh, rug::Float::cosh, -709.0..=709.0, 1.);
 }
 
 pub fn asinh(x: f64) -> f64 {
@@ -1042,6 +1128,11 @@ pub fn asinh(x: f64) -> f64 {
     }
 }
 
+#[test]
+fn test_asinh() {
+    test_f_f(asinh, rug::Float::asinh, -SQRT_DBL_MAX..=SQRT_DBL_MAX, 1.);
+}
+
 pub fn acosh(x: f64) -> f64 {
     let d = logk2(x.add_as_doubled(1.).sqrt() * x.add_as_doubled(-1.).sqrt() + x);
     let mut y = d.0 + d.1;
@@ -1058,6 +1149,11 @@ pub fn acosh(x: f64) -> f64 {
     } else {
         y
     }
+}
+
+#[test]
+fn test_acosh() {
+    test_f_f(acosh, rug::Float::acosh, -SQRT_DBL_MAX..=SQRT_DBL_MAX, 1.);
 }
 
 pub fn atanh(x: f64) -> f64 {
@@ -1077,6 +1173,11 @@ pub fn atanh(x: f64) -> f64 {
     } else {
         y
     }
+}
+
+#[test]
+fn test_atanh() {
+    test_f_f(atanh, rug::Float::atanh, f64::MIN..=f64::MAX, 1.);
 }
 
 pub fn exp2(d: f64) -> f64 {
@@ -1119,6 +1220,11 @@ pub fn exp2(d: f64) -> f64 {
     }
 }
 
+#[test]
+fn test_exp2() {
+    test_f_f(exp2, rug::Float::exp2, -2000.0..=1024.0, 1.);
+}
+
 pub fn exp10(d: f64) -> f64 {
     let q = rintk(d * LOG10_2) as i32;
     let qf = q as f64;
@@ -1147,6 +1253,11 @@ pub fn exp10(d: f64) -> f64 {
     }
 }
 
+#[test]
+fn test_exp10() {
+    test_f_f(exp10, rug::Float::exp10, -350.0..=308.26, 1.09);
+}
+
 pub fn expm1(a: f64) -> f64 {
     let d = expk2(dd(a, 0.)) + (-1.0);
     if a.is_neg_zero() {
@@ -1158,6 +1269,11 @@ pub fn expm1(a: f64) -> f64 {
     } else {
         d.0 + d.1
     }
+}
+
+#[test]
+fn test_expm1() {
+    test_f_f(expm1, rug::Float::exp_m1, -37.0..=710.0, 1.);
 }
 
 pub fn log2(mut d: f64) -> f64 {
@@ -1280,6 +1396,11 @@ pub fn tanh(x: f64) -> f64 {
     }
 }
 
+#[test]
+fn test_tanh() {
+    test_f_f(tanh, rug::Float::tanh, -19.0..=19.0, 1.);
+}
+
 pub fn log10(mut d: f64) -> f64 {
     let o = d < f64::MIN_POSITIVE;
     if o {
@@ -1333,4 +1454,9 @@ pub fn log10(mut d: f64) -> f64 {
     } else {
         s.0 + s.1
     }
+}
+
+#[test]
+fn test_log10() {
+    test_f_f(log10, rug::Float::log10, 0.0..=f64::MAX, 1.);
 }

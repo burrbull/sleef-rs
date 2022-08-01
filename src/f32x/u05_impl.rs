@@ -74,6 +74,21 @@ macro_rules! impl_math_f32_u05 {
             (rsin, rcos)
         }
 
+        #[test]
+        fn test_sincospif() {
+            use rug::{float::Constant, Float};
+            let rangemax2 = 1e+7 / 4.;
+            test_f_ff(
+                sincospif,
+                |in1| {
+                    let prec = in1.prec();
+                    (in1 * Float::with_val(prec, Constant::Pi)).sin_cos(Float::new(prec))
+                },
+                -rangemax2..=rangemax2,
+                0.505,
+            );
+        }
+
         pub fn sqrtf(d: F32x) -> F32x {
             let d = d.lt(ZERO).select(F32x::NAN, d);
 
@@ -131,7 +146,13 @@ macro_rules! impl_math_f32_u05 {
 
         #[test]
         fn test_hypotf() {
-            test_ff_f(hypotf, rug::Float::hypot, f32::MIN..=f32::MAX, 0.5);
+            test_ff_f(
+                hypotf,
+                rug::Float::hypot,
+                f32::MIN..=f32::MAX,
+                f32::MIN..=f32::MAX,
+                0.5001,
+            );
         }
 
         pub fn sinpif(d: F32x) -> F32x {
@@ -143,12 +164,42 @@ macro_rules! impl_math_f32_u05 {
             F32x::from_bits(U32x::from_bits(d.is_infinite()) | U32x::from_bits(r))
         }
 
+        #[test]
+        fn test_sinpif() {
+            use rug::{float::Constant, Float};
+            let rangemax2 = 1e+7 / 4.;
+            test_f_f(
+                sinpif,
+                |in1| {
+                    let prec = in1.prec();
+                    (in1 * Float::with_val(prec, Constant::Pi)).sin()
+                },
+                -rangemax2..=rangemax2,
+                0.506,
+            );
+        }
+
         pub fn cospif(d: F32x) -> F32x {
             let x = cospifk(d);
             let r = x.0 + x.1;
 
             let r = d.abs().gt(TRIGRANGEMAX4_F).select(ONE, r);
             F32x::from_bits(U32x::from_bits(d.is_infinite()) | U32x::from_bits(r))
+        }
+
+        #[test]
+        fn test_cospif() {
+            use rug::{float::Constant, Float};
+            let rangemax2 = 1e+7 / 4.;
+            test_f_f(
+                cospif,
+                |in1| {
+                    let prec = in1.prec();
+                    (in1 * Float::with_val(prec, Constant::Pi)).cos()
+                },
+                -rangemax2..=rangemax2,
+                0.506,
+            );
         }
     };
 }

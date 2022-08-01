@@ -114,6 +114,20 @@ pub fn sincospif(d: f32) -> (f32, f32) {
     (rsin, rcos)
 }
 
+#[test]
+fn test_sincospif() {
+    let rangemax2 = 1e+7 / 4.;
+    test_f_ff(
+        sincospif,
+        |in1| {
+            let prec = in1.prec();
+            (in1 * Float::with_val(prec, rug::float::Constant::Pi)).sin_cos(Float::new(prec))
+        },
+        -rangemax2..=rangemax2,
+        0.505,
+    );
+}
+
 /// 2D Euclidian distance function
 ///
 /// The error bound of the returned value is 0.5001 ULP.
@@ -172,6 +186,20 @@ pub fn sinpif(d: f32) -> f32 {
     }
 }
 
+#[test]
+fn test_sinpif() {
+    let rangemax2 = 1e+7 / 4.;
+    test_f_f(
+        sinpif,
+        |in1| {
+            let prec = in1.prec();
+            (in1 * Float::with_val(prec, rug::float::Constant::Pi)).sin()
+        },
+        -rangemax2..=rangemax2,
+        0.506,
+    );
+}
+
 /// Evaluate cos( π***a*** ) for given ***a***
 ///
 /// This function evaluates the cosine function of π***a***.
@@ -189,4 +217,18 @@ pub fn cospif(d: f32) -> f32 {
     } else {
         x.0 + x.1
     }
+}
+
+#[test]
+fn test_cospif() {
+    let rangemax2 = 1e+7 / 4.;
+    test_f_f(
+        cospif,
+        |in1| {
+            let prec = in1.prec();
+            (in1 * Float::with_val(prec, rug::float::Constant::Pi)).cos()
+        },
+        -rangemax2..=rangemax2,
+        0.506,
+    );
 }

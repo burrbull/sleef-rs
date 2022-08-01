@@ -566,6 +566,21 @@ macro_rules! impl_math_f32_u35 {
             (rsin, rcos)
         }
 
+        #[test]
+        fn test_sincospif() {
+            use rug::{float::Constant, Float};
+            let rangemax2 = 1e+7 / 4.;
+            test_f_ff(
+                sincospif,
+                |in1| {
+                    let prec = in1.prec();
+                    (in1 * Float::with_val(prec, Constant::Pi)).sin_cos(Float::new(prec))
+                },
+                -rangemax2..=rangemax2,
+                2.,
+            );
+        }
+
         pub fn atanf(d: F32x) -> F32x {
             let q = vsel_vi2_vf_vi2(d, I32x::splat(2));
             let s = d.abs();

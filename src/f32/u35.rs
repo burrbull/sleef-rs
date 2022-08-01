@@ -137,6 +137,21 @@ pub fn sincospif(d: f32) -> (f32, f32) {
     (rsin, rcos)
 }
 
+#[test]
+fn test_sincospif() {
+    use rug::{float::Constant, Float};
+    let rangemax2 = 1e+7 / 4.;
+    test_f_ff(
+        sincospif,
+        |in1| {
+            let prec = in1.prec();
+            (in1 * Float::with_val(prec, Constant::Pi)).sin_cos(Float::new(prec))
+        },
+        -rangemax2..=rangemax2,
+        2.,
+    );
+}
+
 /// Hyperbolic sine function
 ///
 /// These functions evaluates the hyperbolic sine function of a value in ***a***.

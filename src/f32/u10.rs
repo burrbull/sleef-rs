@@ -1070,10 +1070,9 @@ pub fn log10f(mut d: f32) -> f32 {
         .mul_add(x2, 0.173_549_354_1)
         .mul_add(x2, 0.289_530_962_7);
 
-    let s = df(0.301_030_01, -1.432_098_889_e-8)
-        * (e as f32)
-            .add_checked(x * df(0.868_588_984, -2.170_757_285_e-8))
-            .add_checked(x2 * x.0 * t);
+    let s = (df(0.301_030_01, -1.432_098_889_e-8) * (e as f32))
+        .add_checked(x * df(0.868_588_984, -2.170_757_285_e-8))
+        .add_checked(x2 * x.0 * t);
 
     if d == 0. {
         f32::NEG_INFINITY

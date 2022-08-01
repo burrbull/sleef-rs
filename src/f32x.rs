@@ -1062,11 +1062,11 @@ macro_rules! impl_math_f32 {
             let mut xi2 = I32x::from_bits(x);
             let c = x.is_sign_negative() ^ y.ge(x);
 
-            xi2 = c.select(I32x::splat(0) - (xi2 ^ I32x::splat(1 << 31)), xi2);
+            xi2 = c.select(I32x::splat(0) - (xi2 ^ I32x::splat(i32::MIN)), xi2);
 
             xi2 = x.ne(y).select(xi2 - I32x::splat(1), xi2);
 
-            xi2 = c.select(I32x::splat(0) - (xi2 ^ I32x::splat(1 << 31)), xi2);
+            xi2 = c.select(I32x::splat(0) - (xi2 ^ I32x::splat(i32::MIN)), xi2);
 
             let mut ret = F32x::from_bits(xi2);
 

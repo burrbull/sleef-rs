@@ -503,8 +503,12 @@ fn ceilfk(x: f32) -> i32 {
 
 #[inline]
 fn ilogbkf(mut d: f32) -> i32 {
-    let m = d < 5.421_010_862_427_522E-20;
-    d = if m { 1.844_674_407_370_955_2E19 * d } else { d };
+    let m = d < 5.421_010_862_427_522_e-20;
+    d = if m {
+        1.844_674_407_370_955_2_e19 * d
+    } else {
+        d
+    };
     let q = ((d.to_bits() >> 23) & 0xff) as i32;
     if m {
         q - (64 + 0x7f)

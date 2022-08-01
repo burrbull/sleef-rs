@@ -115,5 +115,10 @@ macro_rules! impl_math_f32_u15 {
             r = s.is_sign_negative().select(F32x::splat(2.) - r, r);
             s.is_nan().select(F32x::NAN, r)
         }
+
+        #[test]
+        fn test_erfcf() {
+            test_f_f(erfcf, rug::Float::erfc, f32::MIN..=f32::MAX, 1.5);
+        }
     };
 }

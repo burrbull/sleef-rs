@@ -28,6 +28,11 @@ pub fn exp2f(d: f32) -> f32 {
     }
 }
 
+#[test]
+fn test_exp2f() {
+    test_f_f(exp2f, rug::Float::exp2, -150.0..=128.0, 1.);
+}
+
 /// Sine function
 ///
 /// This function evaluates the sine function of a value in ***a***.
@@ -267,6 +272,11 @@ pub fn tanf(d: f32) -> f32 {
     }
 }
 
+#[test]
+fn test_tanf() {
+    test_f_f(tanf, rug::Float::tan, f32::MIN..=f32::MAX, 1.);
+}
+
 fn atan2kf_u1(mut y: Doubled<f32>, mut x: Doubled<f32>) -> Doubled<f32> {
     let mut q = if x.0 < 0. {
         x.0 = -x.0;
@@ -351,6 +361,11 @@ pub fn atan2f(mut y: f32, mut x: f32) -> f32 {
     }
 }
 
+#[test]
+fn test_atan2f() {
+    test_ff_f(atan2f, rug::Float::atan2, f32::MIN..=f32::MAX, 1.);
+}
+
 /// Arc sine function
 ///
 /// This function evaluates the arc sine function of a value in ***a***.
@@ -381,6 +396,11 @@ pub fn asinf(d: f32) -> f32 {
     .add_checked(-u);
     let r = if o { u + x.0 } else { (y.0 + y.1) * 2. };
     mulsignf(r, d)
+}
+
+#[test]
+fn test_asinf() {
+    test_f_f(asinf, rug::Float::asin, -1.0..=1.0, 1.);
 }
 
 /// Arc cosine function
@@ -442,6 +462,11 @@ pub fn atanf(d: f32) -> f32 {
     mulsignf(r, d)
 }
 
+#[test]
+fn test_atanf() {
+    test_f_f(atanf, rug::Float::atan, f32::MIN..=f32::MAX, 1.);
+}
+
 /// Natural logarithmic function
 ///
 /// This function returns the natural logarithm of ***a***.
@@ -479,6 +504,11 @@ pub fn logf(mut d: f32) -> f32 {
     } else {
         s.0 + s.1
     }
+}
+
+#[test]
+fn test_logf() {
+    test_f_f(logf, rug::Float::ln, 0.0..=f32::MAX, 1.);
 }
 
 /// Cube root function
@@ -536,6 +566,11 @@ pub fn cbrtf(mut d: f32) -> f32 {
     }
 }
 
+#[test]
+fn test_cbrtf() {
+    test_f_f(cbrtf, rug::Float::cbrt, f32::MIN..=f32::MAX, 1.);
+}
+
 /// Gamma function
 ///
 /// The error bound of the returned value is 1.0 ULP.
@@ -560,6 +595,11 @@ pub fn tgammaf(a: f32) -> f32 {
     }
 }
 
+#[test]
+fn test_tgammaf() {
+    test_f_f(tgammaf, rug::Float::gamma, f32::MIN..=f32::MAX, 1.0);
+}
+
 /// Log gamma function
 ///
 /// The error bound of the returned value is 1.0 ULP if the argument is positive.
@@ -574,6 +614,11 @@ pub fn lgammaf(a: f32) -> f32 {
     } else {
         r
     }
+}
+
+#[test]
+fn test_lgammaf() {
+    test_f_f(lgammaf, rug::Float::ln_gamma, 0.0..=4e36, 1.0);
 }
 
 /// Error function
@@ -661,6 +706,11 @@ pub fn erff(mut a: f32) -> f32 {
     }
 }
 
+#[test]
+fn test_erff() {
+    test_f_f(erff, rug::Float::erf, f32::MIN..=f32::MAX, 0.75);
+}
+
 /// Base-*e* exponential function
 ///
 /// This function returns the value of *e* raised to ***a***.
@@ -687,6 +737,11 @@ pub fn expf(d: f32) -> f32 {
     } else {
         ldexp2kf(u, q)
     }
+}
+
+#[test]
+fn test_expf() {
+    test_f_f(expf, rug::Float::exp, -104.0..=100.0, 1.);
 }
 
 /// Power function
@@ -774,6 +829,11 @@ pub fn sinhf(x: f32) -> f32 {
     }
 }
 
+#[test]
+fn test_sinhf() {
+    test_f_f(sinhf, rug::Float::sinh, -88.5..=88.5, 1.);
+}
+
 /// Hyperbolic cosine function
 ///
 /// This function evaluates the hyperbolic cosine function of a value in ***a***.
@@ -797,6 +857,11 @@ pub fn coshf(x: f32) -> f32 {
     }
 }
 
+#[test]
+fn test_coshf() {
+    test_f_f(coshf, rug::Float::cosh, -88.5..=88.5, 1.);
+}
+
 /// Hyperbolic tangent function
 ///
 /// This function evaluates the hyperbolic tangent function of a value in ***a***.
@@ -809,7 +874,7 @@ pub fn tanhf(x: f32) -> f32 {
     d = d.sub_checked(e) / d.add_checked(e);
     y = d.0 + d.1;
 
-    y = if fabsfk(x) > 18.714_973_875 { 1. } else { y };
+    y = if fabsfk(x) > 18.714_973_875 { 1. } else { y }; // TODO: check
     y = if y.is_nan() { 1. } else { y };
     y = mulsignf(y, x);
     if x.is_nan() {
@@ -817,6 +882,11 @@ pub fn tanhf(x: f32) -> f32 {
     } else {
         y
     }
+}
+
+#[test]
+fn test_tanhf() {
+    test_f_f(tanhf, rug::Float::tanh, -8.7..=8.7, 1.0001);
 }
 
 /// Inverse hyperbolic sine function
@@ -852,7 +922,7 @@ pub fn asinhf(x: f32) -> f32 {
 
 #[test]
 fn test_asinhf() {
-    test_f_f(asinhf, rug::Float::asinh, -18.5_e18..=18.5_e18, 1.);
+    test_f_f(asinhf, rug::Float::asinh, -18.5_e18..=18.5_e18, 1.0001);
 }
 
 /// Inverse hyperbolic cosine function
@@ -879,6 +949,11 @@ pub fn acoshf(x: f32) -> f32 {
     } else {
         y
     }
+}
+
+#[test]
+fn test_acoshf() {
+    test_f_f(acoshf, rug::Float::acosh, -18.5_e18..=18.5_e18, 1.0001);
 }
 
 /// Inverse hyperbolic tangent function
@@ -910,6 +985,11 @@ pub fn atanhf(x: f32) -> f32 {
     }
 }
 
+#[test]
+fn test_atanhf() {
+    test_f_f(atanhf, rug::Float::atanh, f32::MIN..=f32::MAX, 1.0001);
+}
+
 /// Base-10 exponential function
 ///
 /// This function returns 10 raised to ***a***.
@@ -939,6 +1019,11 @@ pub fn exp10f(d: f32) -> f32 {
     }
 }
 
+#[test]
+fn test_exp10f() {
+    test_f_f(exp10f, rug::Float::exp10, -50.0..=38.54, 1.);
+}
+
 /// Base-*e* exponential function minus 1
 ///
 /// This function returns the value one less than *e* raised to ***a***.
@@ -954,6 +1039,11 @@ pub fn expm1f(a: f32) -> f32 {
     } else {
         d.0 + d.1
     }
+}
+
+#[test]
+fn test_expm1f() {
+    test_f_f(expm1f, rug::Float::exp_m1, -16.64..=88.73, 1.);
 }
 
 /// Base-10 logarithmic function
@@ -996,6 +1086,11 @@ pub fn log10f(mut d: f32) -> f32 {
     }
 }
 
+#[test]
+fn test_log10f() {
+    test_f_f(log10f, rug::Float::log10, 0.0..=f32::MAX, 1.);
+}
+
 /// Base-2 logarithmic function
 ///
 /// This function returns the base-2 logarithm of ***a***.
@@ -1032,6 +1127,11 @@ pub fn log2f(mut d: f32) -> f32 {
     } else {
         s.0 + s.1
     }
+}
+
+#[test]
+fn test_log2f() {
+    test_f_f(log2f, rug::Float::log2, 0.0..=f32::MAX, 1.);
 }
 
 /// Logarithm of one plus argument
@@ -1077,4 +1177,9 @@ pub fn log1pf(d: f32) -> f32 {
     } else {
         s.0 + s.1
     }
+}
+
+#[test]
+fn test_log1pf() {
+    test_f_f(log1pf, rug::Float::ln_1p, -1.0..=1e+38, 1.);
 }

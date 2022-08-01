@@ -360,7 +360,7 @@ macro_rules! impl_math_f32 {
         };
 
         mod fast {
-            //! Fast functions with 3500 ULP error bound
+            //! Fast functions with 350.0 ULP error bound
             impl_math_f32_fast!();
         }
         pub use fast::{

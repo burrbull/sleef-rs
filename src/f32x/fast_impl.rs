@@ -32,7 +32,7 @@ macro_rules! impl_math_f32_fast {
 
         #[test]
         fn test_sinf() {
-            test_f_f(sinf, rug::Float::sin, -30.0..=30.0, 3500.);
+            test_f_f(sinf, rug::Float::sin, -30.0..=30.0, 350.);
         }
 
         pub fn cosf(mut d: F32x) -> F32x {
@@ -65,7 +65,7 @@ macro_rules! impl_math_f32_fast {
 
         #[test]
         fn test_cosf() {
-            test_f_f(cosf, rug::Float::cos, -30.0..=30.0, 3500.);
+            test_f_f(cosf, rug::Float::cos, -30.0..=30.0, 350.);
         }
 
         pub fn powf(x: F32x, y: F32x) -> F32x {
@@ -87,7 +87,7 @@ macro_rules! impl_math_f32_fast {
                 powf,
                 |in1, in2| Float::with_val(in1.prec(), in1.pow(in2)),
                 f32::MIN..=f32::MAX,
-                3500.,
+                350.,
             );
         }
     };

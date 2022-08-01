@@ -36,6 +36,11 @@ pub fn sqrtf(mut d: f32) -> f32 {
     }
 }
 
+#[test]
+fn test_sqrtf() {
+    test_f_f(sqrtf, rug::Float::sqrt, f32::MIN..=f32::MAX, 0.5);
+}
+
 /// Evaluate sin( π***a*** ) and cos( π***a*** ) for given ***a*** simultaneously
 ///
 /// Evaluates the sine and cosine functions of π***a*** at a time, and store the two values in a tuple.
@@ -139,6 +144,11 @@ pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
     } else {
         ret
     }
+}
+
+#[test]
+fn test_hypotf() {
+    test_ff_f(hypotf, rug::Float::hypot, f32::MIN..=f32::MAX, 0.5001);
 }
 
 /// Evaluate sin( π***a*** ) for given ***a***

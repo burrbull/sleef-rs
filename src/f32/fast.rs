@@ -26,6 +26,11 @@ pub fn sinf(mut d: f32) -> f32 {
     u
 }
 
+#[test]
+fn test_sinf() {
+    test_f_f(sinf, rug::Float::sin, -30.0..=30.0, 350.);
+}
+
 pub fn cosf(mut d: f32) -> f32 {
     let t = d;
 
@@ -50,6 +55,11 @@ pub fn cosf(mut d: f32) -> f32 {
     u
 }
 
+#[test]
+fn test_cosf() {
+    test_f_f(cosf, rug::Float::cos, -30.0..=30.0, 350.);
+}
+
 pub fn powf(x: f32, y: f32) -> f32 {
     let mut result = expk3f(logk3f(fabsfk(x)) * y);
 
@@ -65,4 +75,15 @@ pub fn powf(x: f32, y: f32) -> f32 {
     } else {
         result
     }
+}
+
+#[test]
+fn test_powf() {
+    use rug::{ops::Pow, Float};
+    test_ff_f(
+        powf,
+        |in1, in2| Float::with_val(in1.prec(), in1.pow(in2)),
+        f32::MIN..=f32::MAX,
+        350.,
+    );
 }

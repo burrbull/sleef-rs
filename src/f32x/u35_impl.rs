@@ -999,6 +999,16 @@ macro_rules! impl_math_f32_u35 {
             F32x::from_bits(!U32x::from_bits(d.lt(F32x::splat(-50.))) & U32x::from_bits(u))
         }
 
+        #[test]
+        fn test_exp10f() {
+            test_f_f(
+                exp10f,
+                rug::Float::exp10,
+                -38.54..=38.54,
+                3.5,
+            );
+        }
+
         pub fn log2f(mut d: F32x) -> F32x {
             let (m, e) = //if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")
             {

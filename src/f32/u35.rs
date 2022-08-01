@@ -41,6 +41,11 @@ pub fn atan2f(y: f32, x: f32) -> f32 {
     }
 }
 
+#[test]
+fn test_atan2f() {
+    test_ff_f(atan2f, rug::Float::atan2, f32::MIN..=f32::MAX, 3.5);
+}
+
 /// Natural logarithmic function
 ///
 /// These functions return the natural logarithm of ***a***.
@@ -76,6 +81,11 @@ pub fn logf(mut d: f32) -> f32 {
     } else {
         x * t + 0.693_147_180_559_945_286_226_764 * (e as f32)
     }
+}
+
+#[test]
+fn test_logf() {
+    test_f_f(logf, rug::Float::ln, 0.0..=f32::MAX, 3.5);
 }
 
 /// Evaluate sin( π**a** ) and cos( π**a** ) for given **a** simultaneously
@@ -147,6 +157,11 @@ pub fn sinhf(x: f32) -> f32 {
     }
 }
 
+#[test]
+fn test_sinhf() {
+    test_f_f(sinhf, rug::Float::sinh, -88.0..=88.0, 3.5);
+}
+
 /// Hyperbolic cosine function
 ///
 /// These functions evaluates the hyperbolic cosine function of a value in ***a***.
@@ -164,6 +179,11 @@ pub fn coshf(x: f32) -> f32 {
     } else {
         y
     }
+}
+
+#[test]
+fn test_coshf() {
+    test_f_f(coshf, rug::Float::cosh, -88.0..=88.0, 3.5);
 }
 
 /// Hyperbolic tangent function
@@ -186,6 +206,11 @@ pub fn tanhf(x: f32) -> f32 {
     }
 }
 
+#[test]
+fn test_tanhf() {
+    test_f_f(tanhf, rug::Float::tanh, -8.7..=8.7, 3.5);
+}
+
 /// 2D Euclidian distance function
 ///
 /// The error bound of the returned value is 3.5 ULP.
@@ -205,6 +230,11 @@ pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
     } else {
         max * (1. + t * t).sqrt()
     }
+}
+
+#[test]
+fn test_hypotf() {
+    test_ff_f(hypotf, rug::Float::hypot, f32::MIN..=f32::MAX, 3.5);
 }
 
 /// Square root function
@@ -238,6 +268,11 @@ pub fn sqrtf(mut d: f32) -> f32 {
     } else {
         x * d * q
     }
+}
+
+#[test]
+fn test_sqrtf() {
+    test_f_f(sqrtf, rug::Float::sqrt, 0.0..=f32::MAX, 3.5);
 }
 
 /// Sine function
@@ -294,6 +329,11 @@ pub fn sinf(mut d: f32) -> f32 {
     }
 }
 
+#[test]
+fn test_sinf() {
+    test_f_f(sinf, rug::Float::sin, f32::MIN..=f32::MAX, 3.5);
+}
+
 /// Cosine function
 ///
 /// These functions evaluates the cosine function of a value in ***a***.
@@ -348,6 +388,11 @@ pub fn cosf(mut d: f32) -> f32 {
         .mul_add(s, -0.166_666_597_127_914_428_710_938);
 
     s.mul_add(u * d, d)
+}
+
+#[test]
+fn test_cosf() {
+    test_f_f(cosf, rug::Float::cos, f32::MIN..=f32::MAX, 3.5);
 }
 
 /// Evaluate sine and cosine function simultaneously
@@ -415,6 +460,19 @@ pub fn sincosf(d: f32) -> (f32, f32) {
     (rsin, rcos)
 }
 
+#[test]
+fn test_sincosf() {
+    test_f_ff(
+        sincosf,
+        |in1| {
+            let prec = in1.prec();
+            in1.sin_cos(rug::Float::new(prec))
+        },
+        f32::MIN..=f32::MAX,
+        3.5,
+    );
+}
+
 /// Tangent function
 ///
 /// These functions evaluates the tangent function of a value in ***a***.
@@ -476,6 +534,11 @@ pub fn tanf(d: f32) -> f32 {
     }
 }
 
+#[test]
+fn test_tanf() {
+    test_f_f(tanf, rug::Float::tan, f32::MIN..=f32::MAX, 3.5);
+}
+
 /// Arc tangent function
 ///
 /// These functions evaluates the arc tangent function of a value in ***a***.
@@ -523,6 +586,11 @@ pub fn atanf(mut s: f32) -> f32 {
     }
 }
 
+#[test]
+fn test_atanf() {
+    test_f_f(atanf, rug::Float::atan, f32::MIN..=f32::MAX, 3.5);
+}
+
 /// Arc sine function
 ///
 /// These functions evaluates the arc sine function of a value in ***a***.
@@ -541,6 +609,11 @@ pub fn asinf(d: f32) -> f32 {
 
     let r = if o { u } else { FRAC_PI_2 - 2. * u };
     mulsignf(r, d)
+}
+
+#[test]
+fn test_asinf() {
+    test_f_f(asinf, rug::Float::asin, -1.0..=1.0, 3.5);
 }
 
 /// Arc cosine function
@@ -574,6 +647,11 @@ pub fn acosf(d: f32) -> f32 {
     } else {
         r
     }
+}
+
+#[test]
+fn test_acosf() {
+    test_f_f(acosf, rug::Float::acos, -1.0..=1.0, 3.5);
 }
 
 /// Cube root function
@@ -610,6 +688,11 @@ pub fn cbrtf(mut d: f32) -> f32 {
     (y - (2. / 3.) * y * (y * x - 1.)) * q
 }
 
+#[test]
+fn test_cbrtf() {
+    test_f_f(cbrtf, rug::Float::cbrt, f32::MIN..=f32::MAX, 3.5);
+}
+
 pub fn exp2f(d: f32) -> f32 {
     let q = rintfk(d);
 
@@ -632,6 +715,11 @@ pub fn exp2f(d: f32) -> f32 {
     } else {
         u
     }
+}
+
+#[test]
+fn test_exp2f() {
+    test_f_f(exp2f, rug::Float::exp2, -150.0..=128.0, 3.5);
 }
 
 pub fn exp10f(d: f32) -> f32 {
@@ -657,6 +745,11 @@ pub fn exp10f(d: f32) -> f32 {
     } else {
         u
     }
+}
+
+#[test]
+fn test_exp10f() {
+    test_f_f(exp10f, rug::Float::exp10, -38.54..=38.54, 3.5);
 }
 
 pub fn log2f(mut d: f32) -> f32 {
@@ -690,4 +783,9 @@ pub fn log2f(mut d: f32) -> f32 {
     } else {
         r
     }
+}
+
+#[test]
+fn test_log2f() {
+    test_f_f(log2f, rug::Float::log2, 0.0..=f32::MAX, 3.5);
 }

@@ -123,3 +123,8 @@ pub fn erfcf(mut a: f32) -> f32 {
         r
     }
 }
+
+#[test]
+fn test_erfcf() {
+    test_f_f(erfcf, rug::Float::erfc, f32::MIN..=f32::MAX, 1.5);
+}

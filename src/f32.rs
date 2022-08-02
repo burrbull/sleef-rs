@@ -155,7 +155,10 @@ pub(crate) fn count_ulp(d: f32, c: &Float) -> f32 {
 }
 
 #[cfg(test)]
-pub(crate) fn gen_input(rng: &mut rand::rngs::ThreadRng, range: core::ops::RangeInclusive<f32>) -> f32 {
+pub(crate) fn gen_input(
+    rng: &mut rand::rngs::ThreadRng,
+    range: core::ops::RangeInclusive<f32>,
+) -> f32 {
     use rand::Rng;
     let mut start = *range.start();
     if start == f32::MIN {

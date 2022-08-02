@@ -175,7 +175,10 @@ pub(crate) fn count_ulp(d: f64, c: &Float) -> f64 {
 }
 
 #[cfg(test)]
-pub(crate) fn gen_input(rng: &mut rand::rngs::ThreadRng, range: core::ops::RangeInclusive<f64>) -> f64 {
+pub(crate) fn gen_input(
+    rng: &mut rand::rngs::ThreadRng,
+    range: core::ops::RangeInclusive<f64>,
+) -> f64 {
     use rand::Rng;
     let mut start = *range.start();
     if start == f64::MIN {

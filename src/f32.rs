@@ -120,7 +120,7 @@ pub use fast::{
 #[cfg(test)]
 use rug::{Assign, Float};
 #[cfg(test)]
-pub(crate) const PRECF32: u32 = 256;
+pub(crate) const PRECF32: u32 = 80;
 
 #[cfg(test)]
 pub(crate) fn count_ulp(d: f32, c: &Float) -> f32 {

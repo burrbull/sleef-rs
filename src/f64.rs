@@ -140,7 +140,7 @@ pub use u35::{
 #[cfg(test)]
 use rug::{Assign, Float};
 #[cfg(test)]
-pub(crate) const PRECF64: u32 = 256;
+pub(crate) const PRECF64: u32 = 128;
 
 #[cfg(test)]
 pub(crate) fn count_ulp(d: f64, c: &Float) -> f64 {

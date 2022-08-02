@@ -2,6 +2,10 @@ macro_rules! impl_math_f32_u10 {
     () => {
         use super::*;
 
+        /// Sine function
+        ///
+        /// This function evaluates the sine function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         #[cfg(not(feature = "deterministic"))]
         pub fn sinf(d: F32x) -> F32x {
             let mut q: I32x;
@@ -54,6 +58,10 @@ macro_rules! impl_math_f32_u10 {
             d.is_neg_zero().select(d, u)
         }
 
+        /// Sine function
+        ///
+        /// This function evaluates the sine function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         #[cfg(feature = "deterministic")]
         pub fn sinf(d: F32x) -> F32x {
             let u = (d * F32x::FRAC_1_PI).round();
@@ -117,6 +125,10 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
+        /// Cosine function
+        ///
+        /// This function evaluates the cosine function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         #[cfg(not(feature = "deterministic"))]
         pub fn cosf(d: F32x) -> F32x {
             let mut q: I32x;
@@ -170,6 +182,10 @@ macro_rules! impl_math_f32_u10 {
             )
         }
 
+        /// Cosine function
+        ///
+        /// This function evaluates the cosine function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         #[cfg(feature = "deterministic")]
         pub fn cosf(d: F32x) -> F32x {
             let dq = (d.mul_add(F32x::FRAC_1_PI, F32x::splat(-0.5)))
@@ -234,6 +250,13 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
+        /// Evaluate sine and cosine functions simultaneously
+        ///
+        /// Evaluates the sine and cosine functions of a value in a at a time,
+        /// and store the two values in *first* and *second* position in the returned value, respectively.
+        /// returned value, respectively.
+        /// The error bound of the returned values is `1.0 ULP`.
+        /// If ***a*** is a `NaN` or `infinity`, a `NaN` is returned.
         #[cfg(not(feature = "deterministic"))]
         pub fn sincosf(d: F32x) -> (F32x, F32x) {
             let q: I32x;
@@ -293,6 +316,13 @@ macro_rules! impl_math_f32_u10 {
             (rsin, rcos)
         }
 
+        /// Evaluate sine and cosine functions simultaneously
+        ///
+        /// Evaluates the sine and cosine functions of a value in a at a time,
+        /// and store the two values in *first* and *second* position in the returned value, respectively.
+        /// returned value, respectively.
+        /// The error bound of the returned values is `1.0 ULP`.
+        /// If ***a*** is a `NaN` or `infinity`, a `NaN` is returned.
         #[cfg(feature = "deterministic")]
         pub fn sincosf(d: F32x) -> (F32x, F32x) {
             let u = (d * F32x::FRAC_2_PI).round();
@@ -364,6 +394,10 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
+        /// Tangent function
+        ///
+        /// This function evaluates the tangent function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         #[cfg(not(feature = "deterministic"))]
         pub fn tanf(d: F32x) -> F32x {
             let q: I32x;
@@ -412,6 +446,10 @@ macro_rules! impl_math_f32_u10 {
             d.is_neg_zero().select(d, u)
         }
 
+        /// Tangent function
+        ///
+        /// This function evaluates the tangent function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         #[cfg(feature = "deterministic")]
         pub fn tanf(d: F32x) -> F32x {
             let u = (d * F32x::FRAC_2_PI).round();
@@ -504,6 +542,12 @@ macro_rules! impl_math_f32_u10 {
             .add_checked(t)
         }
 
+        /// Arc tangent function of two variables
+        ///
+        /// This function evaluates the arc tangent function of (***y*** / ***x***).
+        /// The quadrant of the result is determined according to the signs
+        /// of ***x*** and ***y***.
+        /// The error bound of the returned values is `max(1.0 ULP, f32::MIN_POSITIVE)`.
         pub fn atan2f(mut y: F32x, mut x: F32x) -> F32x {
             let o = x.abs().lt(F32x::splat(2.938_737_278_354_183_094_7_e-39)); // nexttowardf((1.0 / FLT_MAX), 1)
             x = o.select(x * F1_24X, x);
@@ -542,6 +586,10 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
+        /// Arc sine function
+        ///
+        /// This function evaluates the arc sine function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         pub fn asinf(d: F32x) -> F32x {
             let o = d.abs().lt(HALF);
             let x2 = o.select(d * d, (ONE - d.abs()) * HALF);
@@ -576,6 +624,10 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
+        /// Arc cosine function
+        ///
+        /// This function evaluates the arc cosine function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         pub fn acosf(d: F32x) -> F32x {
             let o = d.abs().lt(HALF);
             let x2 = o.select(d * d, (ONE - d.abs()) * HALF);
@@ -621,6 +673,10 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
+        /// Arc tangent function
+        ///
+        /// This function evaluates the arc tangent function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         pub fn atanf(d: F32x) -> F32x {
             let d2 = atan2kf_u1(Doubled::new(d.abs(), ZERO), Doubled::from((1., 0.)));
             let mut r = d2.0 + d2.1;
@@ -640,6 +696,10 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
+        /// Base-*e* exponential function
+        ///
+        /// This function returns the value of *e* raised to ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         pub fn expf(d: F32x) -> F32x {
             let q = (d * R_LN2_F).roundi();
 
@@ -671,6 +731,10 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
+        /// Cube root function
+        ///
+        /// This function returns the real cube root of ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         pub fn cbrtf(mut d: F32x) -> F32x {
             let mut q2 = Doubled::from((1., 0.));
 
@@ -748,6 +812,10 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
+        /// Natural logarithmic function
+        ///
+        /// This function returns the natural logarithm of ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         pub fn logf(mut d: F32x) -> F32x {
             let m: F32x;
 
@@ -803,6 +871,10 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
+        /// Power function
+        ///
+        /// This function returns the value of ***x*** raised to the power of ***y***.
+        /// The error bound of the returned value is `1.0 ULP`.
         pub fn powf(x: F32x, y: F32x) -> F32x {
             if true {
                 let yisint = y.trunc().eq(y) | y.abs().gt(F1_24X);
@@ -864,6 +936,14 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
+        /// Hyperbolic sine function
+        ///
+        /// This function evaluates the hyperbolic sine function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP` if ***a*** is in
+        /// `[-709, 709]` for the double-precision function or `[-88.5, 88.5]`
+        /// for the single-precision function.
+        /// If ***a*** is a finite value out of this range, infinity with a correct
+        /// sign or a correct value with `1.0 ULP` error bound is returned.
         pub fn sinhf(x: F32x) -> F32x {
             let mut y = x.abs();
             let d = expk2f(Doubled::new(y, ZERO));
@@ -885,6 +965,14 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
+        /// Hyperbolic cosine function
+        ///
+        /// This function evaluates the hyperbolic cosine function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP` if ***a** is in
+        /// `[-709, 709]` for the double-precision function or `[-88.5, 88.5]`
+        /// for the single-precision function.
+        /// If a is a finite value out of this range, infinity with a correct
+        /// sign or a correct value with `1.0 ULP` error bound is returned.
         pub fn coshf(x: F32x) -> F32x {
             let mut y = x.abs();
             let d = expk2f(Doubled::new(y, ZERO));
@@ -905,6 +993,10 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
+        /// Hyperbolic tangent function
+        ///
+        /// This function evaluates the hyperbolic tangent function of a value in ***a***.
+        /// The error bound of the returned value is `1.0001 ULP`.
         pub fn tanhf(x: F32x) -> F32x {
             let mut y = x.abs();
             let d = expk2f(Doubled::new(y, ZERO));
@@ -927,6 +1019,12 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
+        /// Inverse hyperbolic sine function
+        ///
+        /// This function evaluates the inverse hyperbolic sine function of a value in ***a***.
+        /// The error bound of the returned value is `1.001 ULP` if ***a*** is in `[-1.84e+19, 1.84e+19]`.
+        /// If ***a*** is a finite value out of this range, infinity with a correct
+        /// sign or a correct value with `1.0 ULP` error bound is returned.
         pub fn asinhf(x: F32x) -> F32x {
             let mut y = x.abs();
             let o = y.gt(ONE);
@@ -954,6 +1052,12 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
+        /// Inverse hyperbolic cosine function
+        ///
+        /// This function evaluates the inverse hyperbolic cosine function of a value in ***a***.
+        /// The error bound of the returned value is `1.001 ULP` if ***a*** is in `[-1.84e+19, 1.84e+19]`.
+        /// If ***a*** is a finite value out of this range, infinity with a correct
+        /// sign or a correct value with `1.0 ULP` error bound is returned.
         pub fn acoshf(x: F32x) -> F32x {
             let d = logk2f(
                 x.add_as_doubled(ONE).sqrt() * x.add_as_doubled(F32x::splat(-1.)).sqrt() + x,
@@ -978,6 +1082,10 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
+        /// Inverse hyperbolic tangent function
+        ///
+        /// This function evaluates the inverse hyperbolic tangent function of a value in ***a***.
+        /// The error bound of the returned value is `1.0001 ULP`.
         pub fn atanhf(x: F32x) -> F32x {
             let mut y = x.abs();
             let d = logk2f(ONE.add_as_doubled(y) / ONE.add_as_doubled(-y));
@@ -1001,6 +1109,10 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
+        /// Base-10 exponential function
+        ///
+        /// This function returns 10 raised to ***a***.
+        /// The error bound of the returned value is `1.09 ULP`.
         pub fn exp10f(d: F32x) -> F32x {
             let mut u = (d * LOG10_2_F).round();
             let q = u.roundi();
@@ -1038,6 +1150,10 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
+        /// Base-*e* exponential function minus 1
+        ///
+        /// This function returns the value one less than *e* raised to ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         pub fn expm1f(a: F32x) -> F32x {
             let d = expk2f(Doubled::new(a, ZERO)) + F32x::splat(-1.);
             let mut x = d.0 + d.1;
@@ -1060,6 +1176,10 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
+        /// Base-10 logarithmic function
+        ///
+        /// This function returns the base-10 logarithm of ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         pub fn log10f(mut d: F32x) -> F32x {
             let m: F32x;
 
@@ -1114,6 +1234,10 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
+        /// Base-2 logarithmic function
+        ///
+        /// This function returns the base-2 logarithm of ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         pub fn log2f(mut d: F32x) -> F32x {
             let m: F32x;
 
@@ -1168,6 +1292,9 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
+        /// Gamma function
+        ///
+        /// The error bound of the returned value is `1.0 ULP`.
         pub fn tgammaf(a: F32x) -> F32x {
             let (da, db) = gammafk(a);
             let y = expk2f(da) * db;
@@ -1194,6 +1321,11 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
+        /// Log gamma function
+        ///
+        /// The error bound of the returned value is `1.0 ULP` if the argument is positive.
+        /// If the argument is larger than `4e+36`, it may return infinity instead of the correct value.
+        /// The error bound is `max(1 ULP and 1e-8)`, if the argument is negative.
         pub fn lgammaf(a: F32x) -> F32x {
             let (da, db) = gammafk(a);
             let y = da + logk2f(db.abs());
@@ -1227,6 +1359,9 @@ macro_rules! impl_math_f32_u10 {
             dfmla(x*x, poly2df(x, c3, c2), poly2df_b(x, c1, c0))
         }
 
+        /// Error function
+        ///
+        /// The error bound of the returned value is `1.0 ULP`.
         pub fn erff(a: F32x) -> F32x {
             let x = a.abs();
             let x2 = x * x;
@@ -1305,6 +1440,10 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
+        /// Logarithm of one plus argument
+        ///
+        /// This function returns the natural logarithm of (1+***a***).
+        /// The error bound of the returned value is `1.0 ULP`.
         pub fn log1pf(d: F32x) -> F32x {
             let m: F32x;
 
@@ -1355,6 +1494,10 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
+        /// Base-2 exponential function
+        ///
+        /// This function returns `2` raised to ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         pub fn exp2f(d: F32x) -> F32x {
             let mut u = d.round();
             let q = u.roundi();

@@ -4,7 +4,7 @@ use super::*;
 
 /// Square root function
 ///
-/// The error bound of the returned value is 0.5001 ULP.
+/// The error bound of the returned value is `0.5001 ULP`.
 pub fn sqrtf(mut d: f32) -> f32 {
     let mut q = 0.5;
 
@@ -44,9 +44,9 @@ fn test_sqrtf() {
 /// Evaluate sin( π***a*** ) and cos( π***a*** ) for given ***a*** simultaneously
 ///
 /// Evaluates the sine and cosine functions of π***a*** at a time, and store the two values in a tuple.
-/// The error bound of the returned value are `max(0.506 ULP, f32::MIN_POSITIVE)` if [-1e+7, 1e+7].
-/// If ***a*** is a finite value out of this range, an arbitrary value within [-1, 1] is returned.
-/// If ***a*** is a NaN or infinity, a NaN is returned.
+/// The error bound of the returned value are `max(0.506 ULP, f32::MIN_POSITIVE)` if `[-1e+7, 1e+7]`.
+/// If ***a*** is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
+/// If ***a*** is a `NaN` or infinity, a `NaN` is returned.
 pub fn sincospif(d: f32) -> (f32, f32) {
     let u = d * 4.;
     let q = super::ceilfk(u) & !1_i32;
@@ -131,7 +131,7 @@ fn test_sincospif() {
 
 /// 2D Euclidian distance function
 ///
-/// The error bound of the returned value is 0.5001 ULP.
+/// The error bound of the returned value is `0.5001 ULP`.
 pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
     x = fabsfk(x);
     y = fabsfk(y);
@@ -176,9 +176,9 @@ fn test_hypotf() {
 ///
 /// This function evaluates the sine function of π***a***.
 /// The error bound of the returned value is `max(0.506 ULP, f32::MIN_POSITIVE)`
-/// if [-1e+7, 1e+7] for the single-precision function.
-/// If ***a*** is a finite value out of this range, an arbitrary value within [-1, 1] is returned.
-/// If ***a*** is a NaN or infinity, a NaN is returned.
+/// if `[-1e+7, 1e+7]` for the single-precision function.
+/// If ***a*** is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
+/// If ***a*** is a `NaN` or infinity, a NaN is returned.
 pub fn sinpif(d: f32) -> f32 {
     let x = super::sinpifk(d);
 
@@ -212,9 +212,9 @@ fn test_sinpif() {
 ///
 /// This function evaluates the cosine function of π***a***.
 /// The error bound of the returned value is `max(0.506 ULP, f32::MIN_POSITIVE)`
-/// if [-1e+7, 1e+7] for the single-precision function.
-/// If ***a*** is a finite value out of this range, an arbitrary value within [-1, 1] is returned.
-/// If ***a*** is a NaN or infinity, a NaN is returned.
+/// if `[-1e+7, 1e+7]` for the single-precision function.
+/// If ***a*** is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
+/// If ***a*** is a `NaN` or infinity, a `NaN` is returned.
 pub fn cospif(d: f32) -> f32 {
     let x = super::cospifk(d);
 

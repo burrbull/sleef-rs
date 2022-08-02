@@ -3,6 +3,9 @@ macro_rules! impl_math_f32_u15 {
         use super::*;
 
         /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
+        /// Complementary error function
+        ///
+        /// The error bound is `max(1.5 ULP, f32::MIN_POSITIVE)`.
         pub fn erfcf(a: F32x) -> F32x {
             let s = a;
             let a = a.abs();

@@ -667,6 +667,7 @@ macro_rules! impl_math_f32 {
             q - I32x::splat(0x7f)
         }
 
+        /// Integer exponent of an FP number
         pub fn ilogbf(d: F32x) -> I32x {
             let mut e = ilogbkf(d.abs());
             e = d.eq(ZERO).select(SLEEF_FP_ILOGB0, e);
@@ -703,6 +704,9 @@ macro_rules! impl_math_f32 {
             F32x::from_bits(I32x::from_bits(d) + (q << 23))
         }
 
+        /// Multiply by integral power of `2`
+        ///
+        /// These functions return the result of multiplying ***m*** by `2` raised to the power ***x***.
         pub fn ldexpf(x: F32x, q: I32x) -> F32x {
             ldexpkf(x, q)
         }
@@ -771,6 +775,7 @@ macro_rules! impl_math_f32 {
             (x, q)
         }
 
+        /// Integral and fractional value of FP number
         pub fn modff(x: F32x) -> (F32x, F32x) {
             let fr = x - F32x::from_cast(x.trunci());
             let fr = x.abs().gt(F1_23X).select(ZERO, fr);
@@ -926,14 +931,17 @@ macro_rules! impl_math_f32 {
             s.add_checked(x2 * x * t)
         }
 
+        /// Absolute value
         pub fn fabsf(x: F32x) -> F32x {
             x.abs()
         }
 
+        /// Copy sign of a number
         pub fn copysignf(x: F32x, y: F32x) -> F32x {
             x.copy_sign(y)
         }
 
+        /// Maximum of two numbers
         pub fn fmaxf(x: F32x, y: F32x) -> F32x {
             if cfg!(target_arch = "x86_64") || cfg!(target_arch = "x86")
             /*    && !cfg!(feature = "enable_vecext")
@@ -945,6 +953,7 @@ macro_rules! impl_math_f32 {
             }
         }
 
+        /// Minimum of two numbers
         pub fn fminf(x: F32x, y: F32x) -> F32x {
             if cfg!(target_arch = "x86_64") || cfg!(target_arch = "x86")
             /*    && !cfg!(feature = "enable_vecext")
@@ -956,28 +965,33 @@ macro_rules! impl_math_f32 {
             }
         }
 
+        /// Positive difference
         pub fn fdimf(x: F32x, y: F32x) -> F32x {
             let ret = x - y;
             (ret.lt(ZERO) | x.eq(y)).select(ZERO, ret)
         }
 
+        /// Round to integer towards zero
         pub fn truncf(x: F32x) -> F32x {
             let fr = x - F32x::from_cast(x.trunci());
             (x.is_infinite() | x.abs().ge(F1_23X)).select(x, (x - fr).copy_sign(x))
         }
 
+        /// Round to integer towards minus infinity
         pub fn floorf(x: F32x) -> F32x {
             let fr = x - F32x::from_cast(x.trunci());
             let fr = fr.lt(ZERO).select(fr + ONE, fr);
             (x.is_infinite() | x.abs().ge(F1_23X)).select(x, (x - fr).copy_sign(x))
         }
 
+        /// Round to integer towards plus infinity
         pub fn ceilf(x: F32x) -> F32x {
             let fr = x - F32x::from_cast(x.trunci());
             let fr = fr.le(ZERO).select(fr, fr - ONE);
             (x.is_infinite() | x.abs().ge(F1_23X)).select(x, (x - fr).copy_sign(x))
         }
 
+        /// Round to integer away from zero
         pub fn roundf(d: F32x) -> F32x {
             let mut x = d + HALF;
             let fr = x - F32x::from_cast(x.trunci());
@@ -989,6 +1003,7 @@ macro_rules! impl_math_f32 {
             (d.is_infinite() | d.abs().ge(F1_23X)).select(d, (x - fr).copy_sign(d))
         }
 
+        /// Round to integer, ties round to even
         pub fn rintf(d: F32x) -> F32x {
             let mut x = d + HALF;
             let isodd = (I32x::splat(1) & x.trunci()).eq(I32x::splat(1));
@@ -1048,6 +1063,7 @@ macro_rules! impl_math_f32 {
             }*/
         }
 
+        /// Find the next representable FP value
         pub fn nextafterf(x: F32x, y: F32x) -> F32x {
             let x = x.eq(ZERO).select(ZERO.mul_sign(y), x);
             let mut xi2 = I32x::from_bits(x);
@@ -1068,6 +1084,7 @@ macro_rules! impl_math_f32 {
             (x.is_nan() | y.is_nan()).select(F32x::NAN, ret)
         }
 
+        /// Fractional component of an FP number
         pub fn frfrexpf(x: F32x) -> F32x {
             let x = x
                 .abs()
@@ -1084,6 +1101,7 @@ macro_rules! impl_math_f32 {
             x.eq(ZERO).select(x, ret)
         }
 
+        /// Exponent of an FP number
         pub fn expfrexpf(_x: F32x) -> I32x {
             /*
               x = x.abs().lt(F32x::splat(f32::MIN_POSITIVE)).select(x * F1_63X, x);
@@ -1096,6 +1114,7 @@ macro_rules! impl_math_f32 {
             I32x::splat(0)
         }
 
+        /// FP remainder
         pub fn fmodf(x: F32x, y: F32x) -> F32x {
             #[inline]
             fn toward0(x: F32x) -> F32x {

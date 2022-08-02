@@ -2,6 +2,10 @@ macro_rules! impl_math_f32_u35 {
     () => {
         use super::*;
 
+        /// Sine function
+        ///
+        /// These functions evaluates the sine function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP`.
         #[cfg(not(feature = "deterministic"))]
         pub fn sinf(mut d: F32x) -> F32x {
             let mut q: I32x;
@@ -55,6 +59,10 @@ macro_rules! impl_math_f32_u35 {
             r.is_neg_zero().select(r, u)
         }
 
+        /// Sine function
+        ///
+        /// These functions evaluates the sine function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP`.
         #[cfg(feature = "deterministic")]
         pub fn sinf(mut d: F32x) -> F32x {
             let r = d;
@@ -124,6 +132,10 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
+        /// Cosine function
+        ///
+        /// These functions evaluates the cosine function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP`.
         #[cfg(not(feature = "deterministic"))]
         pub fn cosf(mut d: F32x) -> F32x {
             let mut q: I32x;
@@ -179,6 +191,10 @@ macro_rules! impl_math_f32_u35 {
             s * (u * d) + d
         }
 
+        /// Cosine function
+        ///
+        /// These functions evaluates the cosine function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP`.
         #[cfg(feature = "deterministic")]
         pub fn cosf(mut d: F32x) -> F32x {
             let r = d;
@@ -248,6 +264,10 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
+        /// Tangent function
+        ///
+        /// These functions evaluates the tangent function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP`.
         #[cfg(not(feature = "deterministic"))]
         pub fn tanf(d: F32x) -> F32x {
             let q: I32x;
@@ -305,6 +325,10 @@ macro_rules! impl_math_f32_u35 {
             o.select(u.recpre(), u)
         }
 
+        /// Tangent function
+        ///
+        /// These functions evaluates the tangent function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP`.
         #[cfg(feature = "deterministic")]
         pub fn tanf(d: F32x) -> F32x {
             let mut q = (d * F32x::FRAC_2_PI).roundi();
@@ -376,6 +400,12 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
+        /// Evaluate sine and cosine function simultaneously
+        ///
+        /// Evaluates the sine and cosine functions of a value in ***a*** at a time,
+        /// and store the two values in *first* and *second* position in the returned value, respectively.
+        /// The error bound of the returned values is `3.5 ULP`.
+        /// If ***a*** is a `NaN` or `infinity`, a `NaN` is returned.
         #[cfg(not(feature = "deterministic"))]
         pub fn sincosf(d: F32x) -> (F32x, F32x) {
             let q: I32x;
@@ -435,6 +465,12 @@ macro_rules! impl_math_f32_u35 {
             (rsin, rcos)
         }
 
+        /// Evaluate sine and cosine function simultaneously
+        ///
+        /// Evaluates the sine and cosine functions of a value in ***a*** at a time,
+        /// and store the two values in *first* and *second* position in the returned value, respectively.
+        /// The error bound of the returned values is `3.5 ULP`.
+        /// If ***a*** is a `NaN` or `infinity`, a `NaN` is returned.
         #[cfg(feature = "deterministic")]
         pub fn sincosf(d: F32x) -> (F32x, F32x) {
             let mut q = (d * F32x::FRAC_2_PI).roundi();
@@ -513,6 +549,13 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
+        /// Evaluate sin( π**a** ) and cos( π**a** ) for given **a** simultaneously
+        ///
+        /// Evaluates the sine and cosine functions of π**a** at a time,
+        /// and store the two values in *first* and *second* position in the returned value, respectively.
+        /// The error bound of the returned values is `3.5 ULP` if ***a*** is in `[-1e+7, 1e+7]`.
+        /// If a is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
+        /// If a is a `NaN` or `infinity`, a `NaN` is returned.
         pub fn sincospif(d: F32x) -> (F32x, F32x) {
             let u = d * F32x::splat(4.);
             let q = u.trunci();
@@ -582,6 +625,10 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
+        /// Arc tangent function
+        ///
+        /// These functions evaluates the arc tangent function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP`.
         pub fn atanf(d: F32x) -> F32x {
             let q = vsel_vi2_vf_vi2(d, I32x::splat(2));
             let s = d.abs();
@@ -636,6 +683,11 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
+        /// Arc tangent function of two variables
+        ///
+        /// These functions evaluates the arc tangent function of (***y*** / ***x***).
+        /// The quadrant of the result is determined according to the signs of ***x*** and ***y***.
+        /// The error bound of the returned value is `3.5 ULP`.
         pub fn atan2f(y: F32x, x: F32x) -> F32x {
             let mut r = atan2kf(y.abs(), x);
 
@@ -668,6 +720,10 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
+        /// Arc sine function
+        ///
+        /// These functions evaluates the arc sine function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP`.
         pub fn asinf(d: F32x) -> F32x {
             let o = d.abs().lt(HALF);
             let x2 = o.select(d * d, (ONE - d.abs()) * HALF);
@@ -694,6 +750,10 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
+        /// Arc cosine function
+        ///
+        /// These functions evaluates the arc cosine function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP`.
         pub fn acosf(d: F32x) -> F32x {
             let o = d.abs().lt(HALF);
             let x2 = o.select(d * d, (ONE - d.abs()) * HALF);
@@ -731,6 +791,10 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
+        /// Natural logarithmic function
+        ///
+        /// These functions return the natural logarithm of ***a***.
+        /// The error bound of the returned value is `3.5 ULP`.
         pub fn logf(mut d: F32x) -> F32x {
             let m: F32x;
 
@@ -810,6 +874,9 @@ macro_rules! impl_math_f32_u35 {
             q = d.is_neg_zero().select(NEG_ZERO, q);
             d.eq(F32x::INFINITY).select(F32x::INFINITY, q)
         }*/
+        /// Square root function
+        ///
+        /// The error bound of the returned value is `3.5 ULP`.
         #[cfg(all(
                     not(feature = "enable_neon32"),
                     not(feature = "enable_neon32vfpv4"),
@@ -829,6 +896,10 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
+        /// Cube root function
+        ///
+        /// These functions return the real cube root of ***a***.
+        /// The error bound of the returned value is `3.5 ULP`.
         pub fn cbrtf(mut d: F32x) -> F32x {
             let mut q = ONE;
 
@@ -883,6 +954,12 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
+        /// Hyperbolic sine function
+        ///
+        /// These functions evaluates the hyperbolic sine function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP` if ***a*** is in `[-88, 88]`.
+        /// If ***a*** is a finite value out of this range, infinity with a correct sign
+        /// or a correct value with `3.5 ULP` error bound is returned.
         pub fn sinhf(x: F32x) -> F32x {
             let e = expm1fk(x.abs());
             let mut y = (e + F32x::splat(2.)) / (e + ONE);
@@ -903,6 +980,12 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
+        /// Hyperbolic cosine function
+        ///
+        /// These functions evaluates the hyperbolic cosine function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP` if a is in `[-88, 88]`.
+        /// If ***a*** is a finite value out of this range, infinity with a correct sign
+        /// or a correct value with `3.5 ULP` error bound is returned.
         pub fn coshf(x: F32x) -> F32x {
             let e = u10::expf(x.abs());
             let mut y = HALF.mul_add(e, HALF / e);
@@ -921,6 +1004,11 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
+        /// Hyperbolic tangent function
+        ///
+        /// These functions evaluates the hyperbolic tangent function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP` for the double-precision
+        /// function or `3.5 ULP` for the single-precision function.
         pub fn tanhf(x: F32x) -> F32x {
             let d = expm1fk(F32x::splat(2.) * x.abs());
             let mut y = d / (F32x::splat(2.) + d);
@@ -940,6 +1028,9 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
+        /// 2D Euclidian distance function
+        ///
+        /// The error bound of the returned value is `3.5 ULP`.
         pub fn hypotf(x: F32x, y: F32x) -> F32x {
             let x = x.abs();
             let y = y.abs();
@@ -964,6 +1055,9 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
+        /// Base-2 exponential function
+        ///
+        /// This function returns `2` raised to ***a***.
         pub fn exp2f(d: F32x) -> F32x {
             let mut u = d.round();
             let q = u.roundi();
@@ -994,6 +1088,9 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
+        /// Base-10 exponential function
+        ///
+        /// This function returns 10 raised to ***a***.
         pub fn exp10f(d: F32x) -> F32x {
             let mut u = (d * LOG10_2_F).round();
             let q = u.roundi();
@@ -1027,6 +1124,9 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
+        /// Base-10 logarithmic function
+        ///
+        /// This function returns the base-10 logarithm of ***a***.
         pub fn log2f(mut d: F32x) -> F32x {
             let (m, e) = //if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")
             {

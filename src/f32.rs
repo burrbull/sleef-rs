@@ -1230,9 +1230,9 @@ pub fn modff(x: f32) -> (f32, f32) {
     (copysignfk(fr, x), copysignfk(x - fr, x))
 }
 
-/// Multiply by integral power of 2
+/// Multiply by integral power of `2`
 ///
-/// These functions return the result of multiplying ***m*** by 2 raised to the power ***x***.
+/// These functions return the result of multiplying ***m*** by `2` raised to the power ***x***.
 pub fn ldexpf(x: f32, mut exp: i32) -> f32 {
     if exp > 300 {
         exp = 300;

@@ -6,7 +6,7 @@ use super::*;
 ///
 /// These functions evaluates the arc tangent function of (***y*** / ***x***).
 /// The quadrant of the result is determined according to the signs of ***x*** and ***y***.
-/// The error bound of the returned value is 3.5 ULP.
+/// The error bound of the returned value is `3.5 ULP`.
 pub fn atan2f(y: f32, x: f32) -> f32 {
     let mut r = atan2kf(fabsfk(y), x);
 
@@ -55,7 +55,7 @@ fn test_atan2f() {
 /// Natural logarithmic function
 ///
 /// These functions return the natural logarithm of ***a***.
-/// The error bound of the returned value is 3.5 ULP.
+/// The error bound of the returned value is `3.5 ULP`.
 pub fn logf(mut d: f32) -> f32 {
     let o = d < f32::MIN_POSITIVE;
     if o {
@@ -96,11 +96,11 @@ fn test_logf() {
 
 /// Evaluate sin( π**a** ) and cos( π**a** ) for given **a** simultaneously
 ///
-/// Evaluates the sine and cosine functions of πa at a time,
+/// Evaluates the sine and cosine functions of π**a** at a time,
 /// and store the two values in *first* and *second* position in the returned value, respectively.
-/// The error bound of the returned values is 3.5 ULP if ***a*** is in [-1e+7, 1e+7].
-/// If a is a finite value out of this range, an arbitrary value within [-1, 1] is returned.
-/// If a is a NaN or infinity, a NaN is returned.
+/// The error bound of the returned values is `3.5 ULP` if ***a*** is in `[-1e+7, 1e+7]`.
+/// If a is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
+/// If a is a `NaN` or `infinity`, a `NaN` is returned.
 pub fn sincospif(d: f32) -> (f32, f32) {
     let u = d * 4.;
     let q = ceilfk(u) & !1_i32;
@@ -162,9 +162,9 @@ fn test_sincospif() {
 /// Hyperbolic sine function
 ///
 /// These functions evaluates the hyperbolic sine function of a value in ***a***.
-/// The error bound of the returned value is 3.5 ULP if ***a*** is in [-88, 88].
+/// The error bound of the returned value is `3.5 ULP` if ***a*** is in `[-88, 88]`.
 /// If ***a*** is a finite value out of this range, infinity with a correct sign
-/// or a correct value with 3.5 ULP error bound is returned.
+/// or a correct value with `3.5 ULP` error bound is returned.
 pub fn sinhf(x: f32) -> f32 {
     let e = expm1kf(fabsfk(x));
     let mut y = (e + 2.) / (e + 1.) * (0.5 * e);
@@ -187,9 +187,9 @@ fn test_sinhf() {
 /// Hyperbolic cosine function
 ///
 /// These functions evaluates the hyperbolic cosine function of a value in ***a***.
-/// The error bound of the returned value is 3.5 ULP if a is in [-88, 88].
+/// The error bound of the returned value is `3.5 ULP` if a is in `[-88, 88]`.
 /// If ***a*** is a finite value out of this range, infinity with a correct sign
-/// or a correct value with 3.5 ULP error bound is returned.
+/// or a correct value with `3.5 ULP` error bound is returned.
 pub fn coshf(x: f32) -> f32 {
     let e = u10::expf(fabsfk(x));
     let mut y = 0.5 * e + 0.5 / e;
@@ -211,8 +211,8 @@ fn test_coshf() {
 /// Hyperbolic tangent function
 ///
 /// These functions evaluates the hyperbolic tangent function of a value in ***a***.
-/// The error bound of the returned value is 3.5 ULP for the double-precision
-/// function or 3.5 ULP for the single-precision function.
+/// The error bound of the returned value is `3.5 ULP` for the double-precision
+/// function or `3.5 ULP` for the single-precision function.
 pub fn tanhf(x: f32) -> f32 {
     let mut y = fabsfk(x);
     let d = expm1kf(2. * y);
@@ -235,7 +235,7 @@ fn test_tanhf() {
 
 /// 2D Euclidian distance function
 ///
-/// The error bound of the returned value is 3.5 ULP.
+/// The error bound of the returned value is `3.5 ULP`.
 pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
     x = fabsfk(x);
     y = fabsfk(y);
@@ -267,7 +267,7 @@ fn test_hypotf() {
 
 /// Square root function
 ///
-/// The error bound of the returned value is 3.5 ULP.
+/// The error bound of the returned value is `3.5 ULP`.
 pub fn sqrtf(mut d: f32) -> f32 {
     let mut q = 1.;
 
@@ -306,7 +306,7 @@ fn test_sqrtf() {
 /// Sine function
 ///
 /// These functions evaluates the sine function of a value in ***a***.
-/// The error bound of the returned value is 3.5 ULP.
+/// The error bound of the returned value is `3.5 ULP`.
 pub fn sinf(mut d: f32) -> f32 {
     let q: i32;
     let t = d;
@@ -365,7 +365,7 @@ fn test_sinf() {
 /// Cosine function
 ///
 /// These functions evaluates the cosine function of a value in ***a***.
-/// The error bound of the returned value is 3.5 ULP.
+/// The error bound of the returned value is `3.5 ULP`.
 pub fn cosf(mut d: f32) -> f32 {
     let q: i32;
     let t = d;
@@ -427,8 +427,8 @@ fn test_cosf() {
 ///
 /// Evaluates the sine and cosine functions of a value in ***a*** at a time,
 /// and store the two values in *first* and *second* position in the returned value, respectively.
-/// The error bound of the returned values is 3.5 ULP.
-/// If ***a*** is a NaN or infinity, a NaN is returned.
+/// The error bound of the returned values is `3.5 ULP`.
+/// If ***a*** is a `NaN` or `infinity`, a `NaN` is returned.
 pub fn sincosf(d: f32) -> (f32, f32) {
     let q: i32;
 
@@ -504,7 +504,7 @@ fn test_sincosf() {
 /// Tangent function
 ///
 /// These functions evaluates the tangent function of a value in ***a***.
-/// The error bound of the returned value is 3.5 ULP.
+/// The error bound of the returned value is `3.5 ULP`.
 pub fn tanf(d: f32) -> f32 {
     let q;
 
@@ -570,7 +570,7 @@ fn test_tanf() {
 /// Arc tangent function
 ///
 /// These functions evaluates the arc tangent function of a value in ***a***.
-/// The error bound of the returned value is 3.5 ULP.
+/// The error bound of the returned value is `3.5 ULP`.
 pub fn atanf(mut s: f32) -> f32 {
     let mut q = if signf(s) == -1. {
         s = -s;
@@ -622,7 +622,7 @@ fn test_atanf() {
 /// Arc sine function
 ///
 /// These functions evaluates the arc sine function of a value in ***a***.
-/// The error bound of the returned value is 3.5 ULP.
+/// The error bound of the returned value is `3.5 ULP`.
 pub fn asinf(d: f32) -> f32 {
     let o = fabsfk(d) < 0.5;
     let x2 = if o { d * d } else { (1. - fabsfk(d)) * 0.5 };
@@ -647,7 +647,7 @@ fn test_asinf() {
 /// Arc cosine function
 ///
 /// These functions evaluates the arc cosine function of a value in ***a***.
-/// The error bound of the returned value is 3.5 ULP.
+/// The error bound of the returned value is `3.5 ULP`.
 pub fn acosf(d: f32) -> f32 {
     let o = fabsfk(d) < 0.5;
     let x2 = if o { d * d } else { (1. - fabsfk(d)) * 0.5 };
@@ -685,7 +685,7 @@ fn test_acosf() {
 /// Cube root function
 ///
 /// These functions return the real cube root of ***a***.
-/// The error bound of the returned value is 3.5 ULP.
+/// The error bound of the returned value is `3.5 ULP`.
 pub fn cbrtf(mut d: f32) -> f32 {
     let e = ilogbkf(fabsfk(d)) + 1;
     d = ldexp2kf(d, -e);
@@ -721,6 +721,9 @@ fn test_cbrtf() {
     test_f_f(cbrtf, rug::Float::cbrt, f32::MIN..=f32::MAX, 3.5);
 }
 
+/// Base-2 exponential function
+///
+/// This function returns `2` raised to ***a***.
 pub fn exp2f(d: f32) -> f32 {
     let q = rintfk(d);
 
@@ -750,6 +753,9 @@ fn test_exp2f() {
     test_f_f(exp2f, rug::Float::exp2, -150.0..=128.0, 3.5);
 }
 
+/// Base-10 exponential function
+///
+/// This function returns 10 raised to ***a***.
 pub fn exp10f(d: f32) -> f32 {
     let q = rintfk(d * LOG10_2_F);
 
@@ -780,6 +786,9 @@ fn test_exp10f() {
     test_f_f(exp10f, rug::Float::exp10, -38.54..=38.54, 3.5);
 }
 
+/// Base-10 logarithmic function
+///
+/// This function returns the base-10 logarithm of ***a***.
 pub fn log2f(mut d: f32) -> f32 {
     let o = d < f32::MIN_POSITIVE;
     if o {

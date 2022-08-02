@@ -101,7 +101,7 @@ macro_rules! impl_math_f64_u35 {
                 let g = r.abs().lt(TRIGRANGEMAX);
 
                 if !g.all() {
-                    let (mut ddidd, ddii) = rempi(d);
+                    let (mut ddidd, ddii) = rempi(r);
                     let mut ql2 = ddii & Ix::splat(3);
                     ql2 = ql2 + ql2 + Mx::from_cast(ddidd.0.gt(ZERO)).select(Ix::splat(2), Ix::splat(1));
                     ql2 >>= 2;
@@ -255,7 +255,7 @@ macro_rules! impl_math_f64_u35 {
                 let g = r.abs().lt(TRIGRANGEMAX);
 
                 if !g.all() {
-                    let (mut ddidd, ddii) = rempi(d);
+                    let (mut ddidd, ddii) = rempi(r);
                     let mut ql2 = ddii & Ix::splat(3);
                     ql2 = ql2 + ql2 + Mx::from_cast(ddidd.0.gt(ZERO)).select(Ix::splat(8), Ix::splat(7));
                     ql2 >>= 1;

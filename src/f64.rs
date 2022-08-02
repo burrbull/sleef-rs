@@ -140,7 +140,7 @@ pub use u35::{
 #[cfg(test)]
 use rug::{Assign, Float};
 #[cfg(test)]
-pub(crate) const PRECF64: u32 = 60;
+pub(crate) const PRECF64: u32 = 256;
 
 #[cfg(test)]
 pub(crate) fn count_ulp(d: f64, c: &Float) -> f64 {
@@ -149,7 +149,7 @@ pub(crate) fn count_ulp(d: f64, c: &Float) -> f64 {
         return 10000.;
     }
 
-    if (c2 == 0.) && (d == 0.) {
+    if (c2 == 0. || c2.is_subnormal()) && (d == 0. || d.is_subnormal()) {
         return 0.;
     }
 
@@ -175,15 +175,17 @@ pub(crate) fn count_ulp(d: f64, c: &Float) -> f64 {
 }
 
 #[cfg(test)]
-fn gen_input(rng: &mut rand::rngs::ThreadRng, range: core::ops::RangeInclusive<f64>) -> f64 {
+pub(crate) fn gen_input(rng: &mut rand::rngs::ThreadRng, range: core::ops::RangeInclusive<f64>) -> f64 {
     use rand::Rng;
-    loop {
-        let input = rng.gen();
-        if !range.contains(&input) {
-            continue;
-        }
-        break input;
+    let mut start = *range.start();
+    if start == f64::MIN {
+        start = -1e306;
     }
+    let mut end = *range.end();
+    if end == f64::MAX {
+        end = 1e306;
+    }
+    rng.gen_range(start..=end)
 }
 
 #[cfg(test)]

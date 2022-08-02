@@ -351,17 +351,11 @@ macro_rules! impl_math_f64 {
 
         #[cfg(test)]
         fn gen_input(rng: &mut rand::rngs::ThreadRng, range: core::ops::RangeInclusive<f64>) -> F64x {
-            use rand::Rng;
-            loop {
-                let input: F64x = rng.gen();
-                for i in 0..$size {
-                    let val = input.extract(i);
-                    if !range.contains(&val) {
-                        continue;
-                    }
-                }
-                break input;
+            let mut arr = [0.; $size];
+            for i in 0..$size {
+                arr[i] = crate::f64::gen_input(rng, range.clone());
             }
+            arr.into()
         }
 
         #[cfg(test)]
@@ -461,10 +455,7 @@ macro_rules! impl_math_f64 {
             for i in 0..L {
                 ar[i].write(ptr[vi.extract(i) as usize]);
             }
-            unsafe {
-                let ar = MaybeUninit::array_assume_init(ar);
-                F64x::from_slice_aligned_unchecked(ar.as_slice())
-            }
+            unsafe { MaybeUninit::array_assume_init(ar) }.into()
         }
 
         #[inline]

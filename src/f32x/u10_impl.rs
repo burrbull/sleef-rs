@@ -1181,7 +1181,7 @@ macro_rules! impl_math_f32_u10 {
             let o = (a.eq(F32x::INFINITY) | a.is_finite())
                 & a.ge(F32x::splat(-f32::MIN_POSITIVE))
                 & (a.eq(ZERO) | a.gt(F32x::splat(36.)) | r.is_nan());
-            o.select(F32x::INFINITY, a).mul_sign(r)
+            o.select(F32x::INFINITY.mul_sign(a), r)
         }
 
         #[test]

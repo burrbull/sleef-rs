@@ -1084,8 +1084,8 @@ fn logk2(d: Doubled<f64>) -> Doubled<f64> {
         0.693_147_180_559_945_286_226_764,
         2.319_046_813_846_299_558_417_771_e-17,
     ) * (e as f64))
-        .add_checked(x.scale(2.))
-        .add_checked(x2 * x * t)
+        + x.scale(2.)
+        + x2 * x * t
 }
 
 fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {

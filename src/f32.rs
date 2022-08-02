@@ -775,8 +775,8 @@ fn logk2f(d: Doubled<f32>) -> Doubled<f32> {
         .mul_add(x2.0, 0.666_666_686_534_881_591_796_875);
 
     (df(0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9) * (e as f32))
-        .add_checked(x.scale(2.))
-        .add_checked(x2 * x * t)
+        + x.scale(2.)
+        + x2 * x * t
 }
 
 #[inline]

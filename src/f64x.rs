@@ -11,18 +11,25 @@ mod u15_impl;
 mod u35_impl;
 
 macro_rules! impl_math_f64 {
-    ($size:literal, $uint:ty, $int:ty, $mask:ty) => {
+    ($size:literal, $f64x:ident, $u64x:ident, $i64x:ident, $m64x:ident, $u32x:ident, $i32x:ident, $m32x:ident) => {
+        use packed_simd::{FromBits, FromCast};
         use crate::common::*;
         use doubled::*;
 
-
-        type F64x = packed_simd::Simd<[f64; $size]>;
-        type U64x = packed_simd::Simd<[u64; $size]>;
-        type I64x = packed_simd::Simd<[i64; $size]>;
-        type M64x = packed_simd::Simd<[packed_simd::m64; $size]>;
-        type Ux = packed_simd::Simd<[$uint; $size]>;
-        type Ix = packed_simd::Simd<[$int; $size]>;
-        type Mx = packed_simd::Simd<[$mask; $size]>;
+        pub use packed_simd::$f64x;
+        pub use packed_simd::$u64x;
+        pub use packed_simd::$i64x;
+        pub use packed_simd::$m64x;
+        pub use packed_simd::$u32x;
+        pub use packed_simd::$i32x;
+        pub use packed_simd::$m32x;
+        type F64x = $f64x;
+        type U64x = $u64x;
+        type I64x = $i64x;
+        type M64x = $m64x;
+        type Ux = $u32x;
+        type Ix = $i32x;
+        type Mx = $m32x;
 
         impl MaskType for F64x {
             type Mask = M64x;
@@ -624,7 +631,7 @@ macro_rules! impl_math_f64 {
             use core::mem::MaybeUninit;
 
             const L: usize = Ix::lanes();
-            let mut a: [MaybeUninit<$int>; L * 2] = MaybeUninit::uninit_array();
+            let mut a: [MaybeUninit<i32>; L * 2] = MaybeUninit::uninit_array();
             for i in 0..L {
                 a[i * 2].write(0);
                 a[i * 2 + 1].write(q.extract(i));

@@ -1381,8 +1381,8 @@ pub fn fmodf(x: f32, y: f32) -> f32 {
 /// Fused multiply and accumulate
 ///
 /// This function compute (***x*** × ***y*** + ***z***) without rounding, and then return the rounded value of the result.
-/// This function may return infinity with a correct sign if the absolute value of the correct return value is greater than 1e+33.
-/// The error bounds of the returned value is max(0.500_01 ULP, f32::MIN_POSITIVE).
+/// This function may return infinity with a correct sign if the absolute value of the correct return value is greater than `1e+33`.
+/// The error bounds of the returned value is `max(0.500_01 ULP, f32::MIN_POSITIVE)`.
 pub fn fmaf(mut x: f32, mut y: f32, mut z: f32) -> f32 {
     const C0: f32 = F1_25;
     const C1: f32 = C0 * C0;

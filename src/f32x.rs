@@ -14,14 +14,19 @@ mod u35_impl;
 mod fast_impl;
 
 macro_rules! impl_math_f32 {
-    ($size:literal) => {
+    ($size:literal, $f32x:ident, $u32x:ident, $i32x:ident, $m32x:ident) => {
+        use packed_simd::{FromBits, FromCast};
         use crate::common::*;
         use doubled::*;
 
-        type F32x = packed_simd::Simd<[f32; $size]>;
-        type U32x = packed_simd::Simd<[u32; $size]>;
-        type I32x = packed_simd::Simd<[i32; $size]>;
-        type M32x = packed_simd::Simd<[packed_simd::m32; $size]>;
+        pub use packed_simd::$f32x;
+        pub use packed_simd::$u32x;
+        pub use packed_simd::$i32x;
+        pub use packed_simd::$m32x;
+        type F32x = $f32x;
+        type U32x = $u32x;
+        type I32x = $i32x;
+        type M32x = $m32x;
 
         impl MaskType for F32x {
             type Mask = M32x;
@@ -995,6 +1000,11 @@ macro_rules! impl_math_f32 {
             (d.is_infinite() | d.abs().ge(F1_23X)).select(d, (x - fr).copy_sign(d))
         }
 
+        /// Fused multiply and accumulate
+        ///
+        /// This function compute (***x*** × ***y*** + ***z***) without rounding, and then return the rounded value of the result.
+        /// This function may return infinity with a correct sign if the absolute value of the correct return value is greater than `1e+33`.
+        /// The error bounds of the returned value is `max(0.500_01 ULP, f32::MIN_POSITIVE)`.
         pub fn fmaf(mut x: F32x, mut y: F32x, mut z: F32x) -> F32x {
             let h2 = x * y + z;
             let mut q = ONE;

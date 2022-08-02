@@ -628,21 +628,13 @@ macro_rules! impl_math_f64 {
 
         #[inline]
         fn cast_into_upper(q: Ix) -> I64x {
-            use core::mem::MaybeUninit;
-
-            const L: usize = Ix::lanes();
-            let mut a: [MaybeUninit<i32>; L * 2] = MaybeUninit::uninit_array();
-            for i in 0..L {
-                a[i * 2].write(0);
-                a[i * 2 + 1].write(q.extract(i));
-            }
-
-            unsafe { core::mem::transmute(MaybeUninit::array_assume_init(a)) }
+            let q64 = I64x::from_cast(q);
+            q64 << 32
         }
 
         #[inline]
         fn cast_from_upper(q: U64x) -> Ix {
-            Ix::from_cast(q >> 32) // TODO: optimize
+            Ix::from_cast(q >> 32)
         }
 
         #[inline]

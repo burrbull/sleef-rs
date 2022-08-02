@@ -51,6 +51,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
+          args: -- --skip fast
 
   test-deterministic:
     name: Test Deterministic
@@ -70,7 +71,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --features=deterministic
+          args: --features=deterministic -- --skip fast
 
   test-release:
     name: Test (release)
@@ -90,4 +91,4 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --release
+          args: --release -- --skip fast

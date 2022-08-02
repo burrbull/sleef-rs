@@ -120,7 +120,7 @@ pub use fast::{
 #[cfg(test)]
 use rug::{Assign, Float};
 #[cfg(test)]
-pub(crate) const PRECF32: u32 = 32;
+pub(crate) const PRECF32: u32 = 80;
 
 #[cfg(test)]
 pub(crate) fn count_ulp(d: f32, c: &Float) -> f32 {
@@ -129,7 +129,7 @@ pub(crate) fn count_ulp(d: f32, c: &Float) -> f32 {
         return 10000.;
     }
 
-    if (c2 == 0.) && (d == 0.) {
+    if (c2 == 0. || c2.is_subnormal()) && (d == 0. || d.is_subnormal()) {
         return 0.;
     }
 
@@ -155,15 +155,20 @@ pub(crate) fn count_ulp(d: f32, c: &Float) -> f32 {
 }
 
 #[cfg(test)]
-fn gen_input(rng: &mut rand::rngs::ThreadRng, range: core::ops::RangeInclusive<f32>) -> f32 {
+pub(crate) fn gen_input(
+    rng: &mut rand::rngs::ThreadRng,
+    range: core::ops::RangeInclusive<f32>,
+) -> f32 {
     use rand::Rng;
-    loop {
-        let input = rng.gen();
-        if !range.contains(&input) {
-            continue;
-        }
-        break input;
+    let mut start = *range.start();
+    if start == f32::MIN {
+        start = -1e37;
     }
+    let mut end = *range.end();
+    if end == f32::MAX {
+        end = 1e37;
+    }
+    rng.gen_range(start..=end)
 }
 
 #[cfg(test)]

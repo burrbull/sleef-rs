@@ -355,17 +355,11 @@ macro_rules! impl_math_f32 {
 
         #[cfg(test)]
         fn gen_input(rng: &mut rand::rngs::ThreadRng, range: core::ops::RangeInclusive<f32>) -> F32x {
-            use rand::Rng;
-            loop {
-                let input: F32x = rng.gen();
-                for i in 0..$size {
-                    let val = input.extract(i);
-                    if !range.contains(&val) {
-                        continue;
-                    }
-                }
-                break input;
+            let mut arr = [0.; $size];
+            for i in 0..$size {
+                arr[i] = crate::f32::gen_input(rng, range.clone());
             }
+            arr.into()
         }
 
         #[cfg(test)]
@@ -466,10 +460,7 @@ macro_rules! impl_math_f32 {
                 ar[i].write(ptr[vi.extract(i) as usize]);
             }
 
-            unsafe {
-                let ar = MaybeUninit::array_assume_init(ar);
-                F32x::from_slice_aligned_unchecked(ar.as_slice())
-            }
+            unsafe { MaybeUninit::array_assume_init(ar) }.into()
         }
 
         impl SqrtAsDoubled for F32x {

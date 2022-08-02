@@ -572,9 +572,10 @@ macro_rules! impl_math_f32_u35 {
             let rangemax2 = 1e+7 / 4.;
             test_f_ff(
                 sincospif,
-                |in1| {
+                |mut in1| {
                     let prec = in1.prec();
-                    (in1 * Float::with_val(prec, Constant::Pi)).sin_cos(Float::new(prec))
+                    in1.set_prec(prec * 2);
+                    (in1 * Float::with_val(prec * 2, Constant::Pi)).sin_cos(Float::new(prec))
                 },
                 -rangemax2..=rangemax2,
                 2.,

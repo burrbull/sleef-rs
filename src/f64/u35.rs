@@ -64,9 +64,10 @@ fn test_sincospi() {
     let rangemax2 = 1e+9 / 4.;
     test_f_ff(
         sincospi,
-        |in1| {
+        |mut in1| {
             let prec = in1.prec();
-            (in1 * Float::with_val(prec, Constant::Pi)).sin_cos(Float::new(prec))
+            in1.set_prec(prec * 2);
+            (in1 * Float::with_val(prec * 2, Constant::Pi)).sin_cos(Float::new(prec))
         },
         -rangemax2..=rangemax2,
         1.5,

@@ -694,7 +694,7 @@ pub fn log(mut d: f64) -> f64 {
     } else if d.is_infinite() {
         f64::INFINITY
     } else {
-        x * t + 0.693_147_180_559_945_286_226_764 * (e as f64)
+        x
     }
 }
 

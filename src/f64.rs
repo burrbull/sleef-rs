@@ -145,12 +145,13 @@ pub(crate) const PRECF64: u32 = 128;
 #[cfg(test)]
 pub(crate) fn count_ulp(d: f64, c: &Float) -> f64 {
     let c2 = c.to_f64();
-    if (c2 == 0.) && (d != 0.) {
-        return 10000.;
-    }
 
     if (c2 == 0. || c2.is_subnormal()) && (d == 0. || d.is_subnormal()) {
         return 0.;
+    }
+
+    if (c2 == 0.) && (d != 0.) {
+        return 10000.;
     }
 
     if c2.is_infinite() && d.is_infinite() {

@@ -436,10 +436,6 @@ impl crate::Sleef for f32 {
     }
 }
 
-impl BaseType for f32 {
-    type Base = Self;
-}
-
 impl MaskType for f32 {
     type Mask = bool;
 }
@@ -451,8 +447,8 @@ impl MulAdd for f32 {
     }
 }
 
-impl Poly for f32 {
-    fn c2v(c: Self::Base) -> Self {
+impl Poly<Self> for f32 {
+    fn c2v(c: Self) -> Self {
         c
     }
 }

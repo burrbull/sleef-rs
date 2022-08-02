@@ -23,22 +23,6 @@ macro_rules! impl_math_f32 {
         type I32x = packed_simd::Simd<[i32; $size]>;
         type M32x = packed_simd::Simd<[packed_simd::m32; $size]>;
 
-        impl BaseType for F32x {
-            type Base = f32;
-        }
-
-        impl BaseType for U32x {
-            type Base = u32;
-        }
-
-        impl BaseType for I32x {
-            type Base = i32;
-        }
-        /*
-        impl BaseType for M32x {
-            type Base = m32;
-        }
-        */
         impl MaskType for F32x {
             type Mask = M32x;
         }
@@ -598,9 +582,15 @@ macro_rules! impl_math_f32 {
             }
         }
 
-        impl Poly for F32x {
-            fn c2v(c: Self::Base) -> Self {
+        impl Poly<f32> for F32x {
+            fn c2v(c: f32) -> Self {
                 F32x::splat(c)
+            }
+        }
+
+        impl Poly<Self> for F32x {
+            fn c2v(c: Self) -> Self {
+                c
             }
         }
 

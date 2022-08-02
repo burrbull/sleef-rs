@@ -1368,7 +1368,7 @@ macro_rules! impl_math_f32_u10 {
                 .mul_add(s, F32x::splat(0.240_226_447_6))
                 .mul_add(s, F32x::splat(0.693_147_182_5));
 
-            if !cfg!(target_feature = "fma") {
+            if cfg!(target_feature = "fma") {
                 u = u.mul_adde(s, ONE);
             } else {
                 u = ONE.add_checked(u.mul_as_doubled(s)).normalize().0;

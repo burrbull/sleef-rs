@@ -1,4 +1,5 @@
 #![deny(warnings)]
+#![deny(missing_docs)]
 #![allow(clippy::many_single_char_names)]
 #![allow(clippy::mistyped_literal_suffixes)]
 #![allow(clippy::excessive_precision)]
@@ -9,6 +10,12 @@
 #![allow(clippy::wrong_self_convention)]
 #![feature(maybe_uninit_uninit_array)]
 #![feature(maybe_uninit_array_assume_init)]
+
+//! SLEEF stands for SIMD Library for Evaluating Elementary Functions.
+//! It implements vectorized versions of all C99 real floating point math functions.
+//! It can utilize SIMD instructions that are available on modern processors.
+//! SLEEF is designed to effciently perform computation with SIMD instruction
+//! by reducing the use of conditional branches and scatter/gather memory access.
 
 mod common;
 mod tables;
@@ -65,6 +72,7 @@ const TEST_REPEAT: usize = 100_000;
 
 /// Generic trait for floating point & SIMD numbers
 pub trait Sleef: Sized {
+    /// Signed integer type or SIMD vector of integers
     type Int;
 
     /// Sine function

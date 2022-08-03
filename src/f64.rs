@@ -520,6 +520,7 @@ impl IsOdd for f64 {
     }
 }
 
+/// Multiply left value with sign of right value
 #[inline]
 pub fn mulsign(x: f64, y: f64) -> f64 {
     f64::from_bits(x.to_bits() ^ (y.to_bits() & (1 << 63)))

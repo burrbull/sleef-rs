@@ -1084,6 +1084,23 @@ macro_rules! impl_math_f32 {
             (x.is_nan() | y.is_nan()).select(F32x::NAN, ret)
         }
 
+        #[test]
+        fn test_nextafterf() {
+            test_ff_f(
+                nextafterf,
+                |mut f, t| {
+                    let prec = f.prec();
+                    f.set_prec(24);
+                    f.next_toward(&t);
+                    f.set_prec(prec);
+                    f
+                },
+                f32::MIN..=f32::MAX,
+                f32::MIN..=f32::MAX,
+                0.1,
+            );
+        }
+
         /// Fractional component of an FP number
         pub fn frfrexpf(x: F32x) -> F32x {
             let x = x

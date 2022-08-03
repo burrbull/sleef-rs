@@ -1283,6 +1283,23 @@ pub fn nextafterf(x: f32, y: f32) -> f32 {
     }
 }
 
+#[test]
+fn test_nextafterf() {
+    test_ff_f(
+        nextafterf,
+        |mut f, t| {
+            let prec = f.prec();
+            f.set_prec(24);
+            f.next_toward(&t);
+            f.set_prec(prec);
+            f
+        },
+        f32::MIN..=f32::MAX,
+        f32::MIN..=f32::MAX,
+        0.1,
+    );
+}
+
 /// Fractional component of an FP number
 pub fn frfrexpf(mut x: f32) -> f32 {
     if fabsfk(x) < f32::MIN_POSITIVE {

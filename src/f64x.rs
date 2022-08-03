@@ -1209,6 +1209,7 @@ macro_rules! impl_math_f64 {
             (d.is_infinite() | d.abs().ge(D1_52X)).select(d, (x - fr).copy_sign(d))
         }
 
+        /// Find the next representable FP value
         pub fn nextafter(x: F64x, y: F64x) -> F64x {
             let x = x.eq(ZERO).select(ZERO.mul_sign(y), x);
             let mut xi2 = I64x::from_bits(x);
@@ -1238,6 +1239,23 @@ macro_rules! impl_math_f64 {
             ret = (x.eq(ZERO) & y.eq(ZERO)).select(y, ret);
 
             (x.is_nan() | y.is_nan()).select(F64x::NAN, ret)
+        }
+
+        #[test]
+        fn test_nextafter() {
+            test_ff_f(
+                nextafter,
+                |mut f, t| {
+                    let prec = f.prec();
+                    f.set_prec(53);
+                    f.next_toward(&t);
+                    f.set_prec(prec);
+                    f
+                },
+                f64::MIN..=f64::MAX,
+                f64::MIN..=f64::MAX,
+                0.1,
+            );
         }
 
         pub fn frfrexp(x: F64x) -> F64x {

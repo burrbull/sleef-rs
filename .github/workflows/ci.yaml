@@ -9,14 +9,21 @@ jobs:
   ci:
     name: CI
     runs-on: ubuntu-latest
-    needs: [check, test, test-deterministic, test-release]
+    needs: [build, test, test-deterministic, test-release]
     steps:
       - name: Done
         run: exit 0
 
-  check:
-    name: Check
-    runs-on: ubuntu-latest
+  build:
+    name: Build
+    strategy:
+      matrix:
+        include:
+          - { target: x86_64-unknown-linux-gnu, os: ubuntu-latest  }
+          - { target: x86_64-apple-darwin,      os: macos-latest   }
+          - { target: aarch64-apple-darwin,     os: macos-latest   }
+          - { target: x86_64-pc-windows-msvc,   os: windows-latest }
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout code
@@ -27,11 +34,13 @@ jobs:
         with:
           toolchain: nightly
           profile: minimal
+          target: ${{ matrix.target }}
           override: true
 
       - uses: actions-rs/cargo@v1
         with:
-          command: check
+          command: build
+          args: --target ${{ matrix.target }} --release
 
   test:
     name: Test

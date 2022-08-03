@@ -445,9 +445,7 @@ fn test_atanf() {
 /// Hyperbolic sine function
 ///
 /// This function evaluates the hyperbolic sine function of a value in ***a***.
-/// The error bound of the returned value is `1.0 ULP` if ***a*** is in
-/// `[-709, 709]` for the double-precision function or `[-88.5, 88.5]`
-/// for the single-precision function.
+/// The error bound of the returned value is `1.0 ULP` if ***a*** is in `[-88.5, 88.5]`.
 /// If ***a*** is a finite value out of this range, infinity with a correct
 /// sign or a correct value with `1.0 ULP` error bound is returned.
 pub fn sinhf(x: f32) -> f32 {
@@ -474,9 +472,7 @@ fn test_sinhf() {
 /// Hyperbolic cosine function
 ///
 /// This function evaluates the hyperbolic cosine function of a value in ***a***.
-/// The error bound of the returned value is `1.0 ULP` if ***a** is in
-/// `[-709, 709]` for the double-precision function or `[-88.5, 88.5]`
-/// for the single-precision function.
+/// The error bound of the returned value is `1.0 ULP` if ***a** is in `[-88.5, 88.5]`.
 /// If a is a finite value out of this range, infinity with a correct
 /// sign or a correct value with `1.0 ULP` error bound is returned.
 pub fn coshf(x: f32) -> f32 {
@@ -630,7 +626,6 @@ pub fn atanhf(x: f32) -> f32 {
 fn test_atanhf() {
     test_f_f(atanhf, rug::Float::atanh, f32::MIN..=f32::MAX, 1.0001);
 }
-
 
 /// Natural logarithmic function
 ///

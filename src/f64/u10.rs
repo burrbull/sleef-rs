@@ -2,6 +2,10 @@
 
 use super::*;
 
+/// Sine function
+///
+/// This function evaluates the sine function of a value in ***a***.
+/// The error bound of the returned value is `1.0 ULP`.
 pub fn sin(d: f64) -> f64 {
     let mut s: Doubled<f64>;
     let ql: isize;
@@ -75,6 +79,10 @@ fn test_sin() {
     super::test_f_f(sin, rug::Float::sin, f64::MIN..=f64::MAX, 1.);
 }
 
+/// Cosine function
+///
+/// This function evaluates the cosine function of a value in ***a***.
+/// The error bound of the returned value is `1.0 ULP`.
 pub fn cos(d: f64) -> f64 {
     let mut s: Doubled<f64>;
     let ql: isize;
@@ -157,6 +165,13 @@ fn test_cos() {
     test_f_f(cos, rug::Float::cos, f64::MIN..=f64::MAX, 1.);
 }
 
+/// Evaluate sine and cosine functions simultaneously
+///
+/// Evaluates the sine and cosine functions of a value in a at a time,
+/// and store the two values in *first* and *second* position in the returned value, respectively.
+/// returned value, respectively.
+/// The error bound of the returned values is `1.0 ULP`.
+/// If ***a*** is a `NaN` or `infinity`, a `NaN` is returned.
 pub fn sincos(d: f64) -> (f64, f64) {
     let mut s: Doubled<f64>;
     let ql: isize;
@@ -241,6 +256,10 @@ fn test_sincos() {
     );
 }
 
+/// Tangent function
+///
+/// This function evaluates the tangent function of a value in ***a***.
+/// The error bound of the returned value is `1.0 ULP`.
 pub fn tan(d: f64) -> f64 {
     let mut s: Doubled<f64>;
     let ql: isize;
@@ -384,6 +403,12 @@ fn atan2k_u1(mut y: Doubled<f64>, mut x: Doubled<f64>) -> Doubled<f64> {
         + t
 }
 
+/// Arc tangent function of two variables
+///
+/// This function evaluates the arc tangent function of (***y*** / ***x***).
+/// The quadrant of the result is determined according to the signs
+/// of ***x*** and ***y***.
+/// The error bound of the returned values is `max(1.0 ULP, f64::MIN_POSITIVE)`.
 pub fn atan2(mut y: f64, mut x: f64) -> f64 {
     if fabsk(x) < 5.562_684_646_268_008_398_4_e-309 {
         y *= D1_53;
@@ -433,6 +458,10 @@ fn test_atan2() {
     );
 }
 
+/// Arc sine function
+///
+/// This function evaluates the arc sine function of a value in ***a***.
+/// The error bound of the returned value is `1.0 ULP`.
 pub fn asin(d: f64) -> f64 {
     let o = fabsk(d) < 0.5;
     let x2 = if o { d * d } else { (1. - fabsk(d)) * 0.5 };
@@ -481,6 +510,10 @@ fn test_asin() {
     test_f_f(asin, rug::Float::asin, -1.0..=1.0, 1.);
 }
 
+/// Arc cosine function
+///
+/// This function evaluates the arc cosine function of a value in ***a***.
+/// The error bound of the returned value is `1.0 ULP`.
 pub fn acos(d: f64) -> f64 {
     let o = fabsk(d) < 0.5;
     let x2 = if o { d * d } else { (1. - fabsk(d)) * 0.5 };
@@ -532,6 +565,10 @@ fn test_acos() {
     test_f_f(acos, rug::Float::acos, -1.0..=1.0, 1.);
 }
 
+/// Arc tangent function
+///
+/// This function evaluates the arc tangent function of a value in ***a***.
+/// The error bound of the returned value is `1.0 ULP`.
 pub fn atan(d: f64) -> f64 {
     let d2 = atan2k_u1(dd(fabsk(d), 0.), dd(1., 0.));
     let r = if d.is_infinite() {
@@ -547,6 +584,12 @@ fn test_atan() {
     test_f_f(atan, rug::Float::atan, f64::MIN..=f64::MAX, 1.);
 }
 
+/// Hyperbolic sine function
+///
+/// This function evaluates the hyperbolic sine function of a value in ***a***.
+/// The error bound of the returned value is `1.0 ULP` if ***a*** is in `[-709, 709]`.
+/// If ***a*** is a finite value out of this range, infinity with a correct
+/// sign or a correct value with `1.0 ULP` error bound is returned.
 pub fn sinh(x: f64) -> f64 {
     let mut y = fabsk(x);
     let mut d = expk2(dd(y, 0.));
@@ -568,6 +611,12 @@ fn test_sinh() {
     test_f_f(sinh, rug::Float::sinh, -709.0..=709.0, 1.);
 }
 
+/// Hyperbolic cosine function
+///
+/// This function evaluates the hyperbolic cosine function of a value in ***a***.
+/// The error bound of the returned value is `1.0 ULP` if ***a** is in `[-709, 709]`.
+/// If a is a finite value out of this range, infinity with a correct
+/// sign or a correct value with `1.0 ULP` error bound is returned.
 pub fn cosh(x: f64) -> f64 {
     let mut y = fabsk(x);
     let mut d = expk2(dd(y, 0.));
@@ -588,6 +637,10 @@ fn test_cosh() {
     test_f_f(cosh, rug::Float::cosh, -709.0..=709.0, 1.);
 }
 
+/// Hyperbolic tangent function
+///
+/// This function evaluates the hyperbolic tangent function of a value in ***a***.
+/// The error bound of the returned value is `1.0 ULP`.
 pub fn tanh(x: f64) -> f64 {
     let mut y = fabsk(x);
     let mut d = expk2(dd(y, 0.));
@@ -610,6 +663,12 @@ fn test_tanh() {
     test_f_f(tanh, rug::Float::tanh, -19.0..=19.0, 1.);
 }
 
+/// Inverse hyperbolic sine function
+///
+/// This function evaluates the inverse hyperbolic sine function of a value in ***a***.
+/// The error bound of the returned value is `1.0 ULP` if ***a*** is in `[-1.34e+154, 1.34e+154]`.
+/// If ***a*** is a finite value out of this range, infinity with a correct
+/// sign or a correct value with `1.0 ULP` error bound is returned.
 pub fn asinh(x: f64) -> f64 {
     let mut y = fabsk(x);
 
@@ -638,6 +697,12 @@ fn test_asinh() {
     test_f_f(asinh, rug::Float::asinh, -SQRT_DBL_MAX..=SQRT_DBL_MAX, 1.);
 }
 
+/// Inverse hyperbolic cosine function
+///
+/// This function evaluates the inverse hyperbolic cosine function of a value in ***a***.
+/// The error bound of the returned value is `1.0 ULP` if ***a*** is in `[-1.34e+154, 1.34e+154]`.
+/// If ***a*** is a finite value out of this range, infinity with a correct
+/// sign or a correct value with `1.0 ULP` error bound is returned.
 pub fn acosh(x: f64) -> f64 {
     let d = logk2(x.add_as_doubled(1.).sqrt() * x.add_as_doubled(-1.).sqrt() + x);
     let mut y = d.0 + d.1;
@@ -661,6 +726,10 @@ fn test_acosh() {
     test_f_f(acosh, rug::Float::acosh, -SQRT_DBL_MAX..=SQRT_DBL_MAX, 1.);
 }
 
+/// Inverse hyperbolic tangent function
+///
+/// This function evaluates the inverse hyperbolic tangent function of a value in ***a***.
+/// The error bound of the returned value is `1.0 ULP`.
 pub fn atanh(x: f64) -> f64 {
     let mut y = fabsk(x);
     let d = logk2((1.).add_as_doubled(y) / (1.).add_as_doubled(-y));
@@ -685,6 +754,10 @@ fn test_atanh() {
     test_f_f(atanh, rug::Float::atanh, f64::MIN..=f64::MAX, 1.);
 }
 
+/// Natural logarithmic function
+///
+/// This function returns the natural logarithm of ***a***.
+/// The error bound of the returned value is `1.0 ULP`.
 pub fn log(mut d: f64) -> f64 {
     let o = d < f64::MIN_POSITIVE;
     if o {
@@ -740,6 +813,10 @@ fn test_log() {
     test_f_f(log, rug::Float::ln, 0.0..=f64::MAX, 1.);
 }
 
+/// Base-10 logarithmic function
+///
+/// This function returns the base-10 logarithm of ***a***.
+/// The error bound of the returned value is `1.0 ULP`.
 pub fn log10(mut d: f64) -> f64 {
     let o = d < f64::MIN_POSITIVE;
     if o {
@@ -800,6 +877,10 @@ fn test_log10() {
     test_f_f(log10, rug::Float::log10, 0.0..=f64::MAX, 1.);
 }
 
+/// Base-2 logarithmic function
+///
+/// This function returns the base-2 logarithm of ***a***.
+/// The error bound of the returned value is `1.0 ULP`.
 pub fn log2(mut d: f64) -> f64 {
     let o = d < f64::MIN_POSITIVE;
     if o {
@@ -852,6 +933,10 @@ fn test_log2() {
     test_f_f(log2, rug::Float::log2, 0.0..=f64::MAX, 1.);
 }
 
+/// Logarithm of one plus argument
+///
+/// This function returns the natural logarithm of (1+***a***).
+/// The error bound of the returned value is `1.0 ULP`.
 pub fn log1p(d: f64) -> f64 {
     let mut dp1 = d + 1.;
 
@@ -913,6 +998,10 @@ fn test_log1p() {
     test_f_f(log1p, rug::Float::ln_1p, -1.0..=1e+307, 1.);
 }
 
+/// Base-*e* exponential function
+///
+/// This function returns the value of *e* raised to ***a***.
+/// The error bound of the returned value is `1.0 ULP`.
 pub fn exp(d: f64) -> f64 {
     let qf = rintk(d * R_LN2);
     let q = qf as i32;
@@ -958,6 +1047,10 @@ fn test_exp() {
     test_f_f(exp, rug::Float::exp, -1000.0..=710.0, 1.);
 }
 
+/// Base-10 exponential function
+///
+/// This function returns 10 raised to ***a***.
+/// The error bound of the returned value is `1.09 ULP`.
 pub fn exp10(d: f64) -> f64 {
     let q = rintk(d * LOG10_2) as i32;
     let qf = q as f64;
@@ -991,6 +1084,10 @@ fn test_exp10() {
     test_f_f(exp10, rug::Float::exp10, -350.0..=308.26, 1.09);
 }
 
+/// Base-*e* exponential function minus 1
+///
+/// This function returns the value one less than *e* raised to ***a***.
+/// The error bound of the returned value is `1.0 ULP`.
 pub fn expm1(a: f64) -> f64 {
     let d = expk2(dd(a, 0.)) + (-1.0);
     if a.is_neg_zero() {
@@ -1009,6 +1106,10 @@ fn test_expm1() {
     test_f_f(expm1, rug::Float::exp_m1, -37.0..=710.0, 1.);
 }
 
+/// Base-2 exponential function
+///
+/// This function returns `2` raised to ***a***.
+/// The error bound of the returned value is `1.0 ULP`.
 pub fn exp2(d: f64) -> f64 {
     let q = rintk(d) as i32;
 
@@ -1054,7 +1155,10 @@ fn test_exp2() {
     test_f_f(exp2, rug::Float::exp2, -2000.0..=1024.0, 1.);
 }
 
-
+/// Power function
+///
+/// This function returns the value of ***x*** raised to the power of ***y***.
+/// The error bound of the returned value is `1.0 ULP`.
 pub fn pow(x: f64, y: f64) -> f64 {
     let yisint = y.is_integer();
     let yisodd = yisint && y.is_odd();
@@ -1118,6 +1222,10 @@ fn test_pow() {
     );
 }
 
+/// Cube root function
+///
+/// This function returns the real cube root of ***a***.
+/// The error bound of the returned value is `1.0 ULP`.
 pub fn cbrt(d: f64) -> f64 {
     let mut q2 = dd(1., 0.);
 
@@ -1179,7 +1287,9 @@ fn test_cbrt() {
     test_f_f(cbrt, rug::Float::cbrt, f64::MIN..=f64::MAX, 1.);
 }
 
-
+/// Gamma function
+///
+/// The error bound of the returned value is `1.0 ULP`.
 pub fn tgamma(a: f64) -> f64 {
     let (da, db) = gammak(a);
     let y = expk2(da) * db;
@@ -1207,6 +1317,11 @@ fn test_tgamma() {
     test_f_f(tgamma, rug::Float::gamma, f64::MIN..=f64::MAX, 1.);
 }
 
+/// Log gamma function
+///
+/// The error bound of the returned value is `1.0 ULP` if the argument is positive.
+/// If the argument is larger than `2e+305`, it may return infinity instead of the correct value.
+/// The error bound is `max(1 ULP and 1e-15)`, if the argument is negative.
 pub fn lgamma(a: f64) -> f64 {
     let (da, db) = gammak(a);
     let y = da + logk2(db.abs());
@@ -1236,6 +1351,9 @@ fn poly4dd(x: f64, c3: f64, c2: Doubled<f64>, c1: Doubled<f64>, c0: Doubled<f64>
     ddmla(x * x, poly2dd(x, c3, c2), poly2dd_b(x, c1, c0))
 }
 
+/// Error function
+///
+/// The error bound of the returned value is `1.0 ULP`.
 pub fn erf(a: f64) -> f64 {
     let x = fabsk(a);
     let x2 = x * x;

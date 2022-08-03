@@ -2,6 +2,10 @@ macro_rules! impl_math_f64_u15 {
     () => {
         use super::*;
 
+        /// Complementary error function
+        ///
+        /// The error bound of the returned value is `max(1.5 ULP, f64::MIN_POSITIVE)`
+        /// if the argument is less than `26.2`, and `max(2.5 ULP, f64::MIN_POSITIVE)` otherwise.
         /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
         pub fn erfc(a: F64x) -> F64x {
             let s = a;
@@ -310,6 +314,7 @@ macro_rules! impl_math_f64_u15 {
         #[test]
         fn test_erfc() {
             test_f_f(erfc, rug::Float::erfc, f64::MIN..=26.2, 1.5);
+            test_f_f(erfc, rug::Float::erfc, 26.2..=f64::MAX, 2.5);
         }
     };
 }

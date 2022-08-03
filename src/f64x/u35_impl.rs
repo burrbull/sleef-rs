@@ -2,6 +2,10 @@ macro_rules! impl_math_f64_u35 {
     () => {
         use super::*;
 
+        /// Sine function
+        ///
+        /// These functions evaluates the sine function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP`.
         #[cfg(not(feature = "deterministic"))]
         pub fn sin(mut d: F64x) -> F64x {
             let r = d;
@@ -68,6 +72,10 @@ macro_rules! impl_math_f64_u35 {
             r.is_neg_zero().select(r, u)
         }
 
+        /// Sine function
+        ///
+        /// These functions evaluates the sine function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP`.
         #[cfg(feature = "deterministic")]
         pub fn sin(mut d: F64x) -> F64x {
             // This is the deterministic implementation of sin function. Returned
@@ -156,6 +164,10 @@ macro_rules! impl_math_f64_u35 {
             );
         }
 
+        /// Cosine function
+        ///
+        /// These functions evaluates the cosine function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP`.
         #[cfg(not(feature = "deterministic"))]
         pub fn cos(mut d: F64x) -> F64x {
             let r = d;
@@ -225,6 +237,10 @@ macro_rules! impl_math_f64_u35 {
             s * (u * d) + d
         }
 
+        /// Cosine function
+        ///
+        /// These functions evaluates the cosine function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP`.
         #[cfg(feature = "deterministic")]
         pub fn cos(mut d: F64x) -> F64x {
             let r = d;
@@ -309,6 +325,12 @@ macro_rules! impl_math_f64_u35 {
             );
         }
 
+        /// Evaluate sine and cosine function simultaneously
+        ///
+        /// Evaluates the sine and cosine functions of a value in ***a*** at a time,
+        /// and store the two values in *first* and *second* position in the returned value, respectively.
+        /// The error bound of the returned values is `3.5 ULP`.
+        /// If ***a*** is a `NaN` or `infinity`, a `NaN` is returned.
         #[cfg(not(feature = "deterministic"))]
         pub fn sincos(d: F64x) -> (F64x, F64x) {
             let mut s: F64x;
@@ -378,6 +400,12 @@ macro_rules! impl_math_f64_u35 {
             (rsin, rcos)
         }
 
+        /// Evaluate sine and cosine function simultaneously
+        ///
+        /// Evaluates the sine and cosine functions of a value in ***a*** at a time,
+        /// and store the two values in *first* and *second* position in the returned value, respectively.
+        /// The error bound of the returned values is `3.5 ULP`.
+        /// If ***a*** is a `NaN` or `infinity`, a `NaN` is returned.
         #[cfg(feature = "deterministic")]
         pub fn sincos(d: F64x) -> (F64x, F64x) {
             let mut s = d;
@@ -467,6 +495,10 @@ macro_rules! impl_math_f64_u35 {
             );
         }
 
+        /// Tangent function
+        ///
+        /// These functions evaluates the tangent function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP`.
         #[cfg(not(feature = "deterministic"))]
         pub fn tan(d: F64x) -> F64x {
             let ql: Ix;
@@ -526,6 +558,10 @@ macro_rules! impl_math_f64_u35 {
             d.eq(ZERO).select(d, u)
         }
 
+        /// Tangent function
+        ///
+        /// These functions evaluates the tangent function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP`.
         #[cfg(feature = "deterministic")]
         pub fn tan(d: F64x) -> F64x {
             let dql = (d * F64x::FRAC_2_PI).round();
@@ -598,6 +634,13 @@ macro_rules! impl_math_f64_u35 {
             );
         }
 
+        /// Evaluate sin( π**a** ) and cos( π**a** ) for given **a** simultaneously
+        ///
+        /// Evaluates the sine and cosine functions of π**a** at a time,
+        /// and store the two values in *first* and *second* position in the returned value, respectively.
+        /// The error bound of the returned values is `3.5 ULP` if ***a*** is in `[-1e+7, 1e+7]`.
+        /// If a is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
+        /// If a is a `NaN` or `infinity`, a `NaN` is returned.
         pub fn sincospi(d: F64x) -> (F64x, F64x) {
             let u = d * F64x::splat(4.);
             let mut q = u.trunci();
@@ -669,6 +712,11 @@ macro_rules! impl_math_f64_u35 {
             );
         }
 
+        /// Arc tangent function of two variables
+        ///
+        /// These functions evaluates the arc tangent function of (***y*** / ***x***).
+        /// The quadrant of the result is determined according to the signs of ***x*** and ***y***.
+        /// The error bound of the returned value is `3.5 ULP`.
         pub fn atan2(y: F64x, x: F64x) -> F64x {
             let mut r = atan2k(y.abs(), x);
 
@@ -700,6 +748,10 @@ macro_rules! impl_math_f64_u35 {
             );
         }
 
+        /// Arc sine function
+        ///
+        /// These functions evaluates the arc sine function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP`.
         pub fn asin(d: F64x) -> F64x {
             let o = d.abs().lt(HALF);
             let x2 = o.select(d * d, (ONE - d.abs()) * HALF);
@@ -739,6 +791,10 @@ macro_rules! impl_math_f64_u35 {
             );
         }
 
+        /// Arc cosine function
+        ///
+        /// These functions evaluates the arc cosine function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP`.
         pub fn acos(d: F64x) -> F64x {
             let o = d.abs().lt(HALF);
             let x2 = o.select(d * d, (ONE - d.abs()) * HALF);
@@ -786,6 +842,10 @@ macro_rules! impl_math_f64_u35 {
             );
         }
 
+        /// Arc tangent function
+        ///
+        /// These functions evaluates the arc tangent function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP`.
         pub fn atan(mut s: F64x) -> F64x {
             /*if cfg!(feature = "__intel_compiler") {
                 // && defined(ENABLE_PURECFMA_SCALAR)
@@ -852,6 +912,12 @@ macro_rules! impl_math_f64_u35 {
             );
         }
 
+        /// Hyperbolic sine function
+        ///
+        /// These functions evaluates the hyperbolic sine function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP` if ***a*** is in `[-709, 709]`.
+        /// If ***a*** is a finite value out of this range, infinity with a correct sign
+        /// or a correct value with `3.5 ULP` error bound is returned.
         pub fn sinh(x: F64x) -> F64x {
             let e = expm1k(x.abs());
 
@@ -873,6 +939,12 @@ macro_rules! impl_math_f64_u35 {
             );
         }
 
+        /// Hyperbolic cosine function
+        ///
+        /// These functions evaluates the hyperbolic cosine function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP` if a is in `[-709, 709]`.
+        /// If ***a*** is a finite value out of this range, infinity with a correct sign
+        /// or a correct value with `3.5 ULP` error bound is returned.
         pub fn cosh(x: F64x) -> F64x {
             let e = u10::exp(x.abs());
             let mut y = HALF.mul_add(e, HALF / e);
@@ -891,6 +963,11 @@ macro_rules! impl_math_f64_u35 {
             );
         }
 
+        /// Hyperbolic tangent function
+        ///
+        /// These functions evaluates the hyperbolic tangent function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP` for the double-precision
+        /// function or `3.5 ULP` for the single-precision function.
         pub fn tanh(x: F64x) -> F64x {
             let d = expm1k(F64x::splat(2.) * x.abs());
             let mut y = d / (F64x::splat(2.) + d);
@@ -910,6 +987,10 @@ macro_rules! impl_math_f64_u35 {
             );
         }
 
+        /// Natural logarithmic function
+        ///
+        /// These functions return the natural logarithm of ***a***.
+        /// The error bound of the returned value is `3.5 ULP`.
         pub fn log(mut d: F64x) -> F64x {
             let m: F64x;
 
@@ -968,6 +1049,9 @@ macro_rules! impl_math_f64_u35 {
             );
         }
 
+        /// Base-10 logarithmic function
+        ///
+        /// This function returns the base-10 logarithm of ***a***.
         pub fn log2(mut d: F64x) -> F64x {
             let (m, e) = //if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")
             {
@@ -1021,6 +1105,47 @@ macro_rules! impl_math_f64_u35 {
             );
         }
 
+        /// Base-10 exponential function
+        ///
+        /// This function returns 10 raised to ***a***.
+        pub fn exp10(d: F64x) -> F64x {
+            let mut u = (d * LOG10_2).round();
+            let q = u.roundi();
+
+            let mut s = u.mul_add(-L10U, d);
+            s = u.mul_add(-L10L, s);
+
+            let s2 = s * s;
+            let s4 = s2 * s2;
+            let s8 = s4 * s4;
+            u = F64x::poly11(
+                s,
+                s2,
+                s4,
+                s8,
+                0.241_146_349_833_426_765_2_e-3,
+                0.115_748_841_521_718_737_5_e-2,
+                0.501_397_554_678_973_365_9_e-2,
+                0.195_976_232_072_053_308_e-1,
+                0.680_893_639_944_678_413_8_e-1,
+                0.206_995_849_472_267_623_4,
+                0.539_382_929_205_853_622_9,
+                0.117_125_514_890_854_165_5_e+1,
+                0.203_467_859_229_343_295_3_e+1,
+                0.265_094_905_523_920_587_6_e+1,
+                0.230_258_509_299_404_590_1_e+1,
+            );
+
+            u = u.mul_add(s, ONE);
+
+            u = ldexp2k(u, q);
+
+            u = d
+                .gt(F64x::splat(308.254_715_559_916_71))
+                .select(F64x::INFINITY, u);
+            F64x::from_bits(!U64x::from_bits(d.lt(F64x::splat(-350.))) & U64x::from_bits(u))
+        }
+
         #[test]
         fn test_exp10() {
             test_f_f(
@@ -1031,6 +1156,9 @@ macro_rules! impl_math_f64_u35 {
             );
         }
 
+        /// Base-2 exponential function
+        ///
+        /// This function returns `2` raised to ***a***.
         pub fn exp2(d: F64x) -> F64x {
             let mut u = d.round();
             let q = u.roundi();
@@ -1076,10 +1204,17 @@ macro_rules! impl_math_f64_u35 {
             );
         }
 
+        /// Square root function
+        ///
+        /// The error bound of the returned value is `3.5 ULP`.
         pub fn sqrt(d: F64x) -> F64x {
             return u05::sqrt(d);
         }
 
+        /// Cube root function
+        ///
+        /// These functions return the real cube root of ***a***.
+        /// The error bound of the returned value is `3.5 ULP`.
         pub fn cbrt(mut d: F64x) -> F64x {
             let mut q = ONE;
             /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
@@ -1135,6 +1270,9 @@ macro_rules! impl_math_f64_u35 {
             );
         }
 
+        /// 2D Euclidian distance function
+        ///
+        /// The error bound of the returned value is `3.5 ULP`.
         pub fn hypot(x: F64x, y: F64x) -> F64x {
             let x = x.abs();
             let y = y.abs();
@@ -1157,44 +1295,6 @@ macro_rules! impl_math_f64_u35 {
                 -1e307..=1e307,
                 3.5,
             );
-        }
-
-        pub fn exp10(d: F64x) -> F64x {
-            let mut u = (d * LOG10_2).round();
-            let q = u.roundi();
-
-            let mut s = u.mul_add(-L10U, d);
-            s = u.mul_add(-L10L, s);
-
-            let s2 = s * s;
-            let s4 = s2 * s2;
-            let s8 = s4 * s4;
-            u = F64x::poly11(
-                s,
-                s2,
-                s4,
-                s8,
-                0.241_146_349_833_426_765_2_e-3,
-                0.115_748_841_521_718_737_5_e-2,
-                0.501_397_554_678_973_365_9_e-2,
-                0.195_976_232_072_053_308_e-1,
-                0.680_893_639_944_678_413_8_e-1,
-                0.206_995_849_472_267_623_4,
-                0.539_382_929_205_853_622_9,
-                0.117_125_514_890_854_165_5_e+1,
-                0.203_467_859_229_343_295_3_e+1,
-                0.265_094_905_523_920_587_6_e+1,
-                0.230_258_509_299_404_590_1_e+1,
-            );
-
-            u = u.mul_add(s, ONE);
-
-            u = ldexp2k(u, q);
-
-            u = d
-                .gt(F64x::splat(308.254_715_559_916_71))
-                .select(F64x::INFINITY, u);
-            F64x::from_bits(!U64x::from_bits(d.lt(F64x::splat(-350.))) & U64x::from_bits(u))
         }
     };
 }

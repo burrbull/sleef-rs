@@ -1230,9 +1230,9 @@ pub fn modff(x: f32) -> (f32, f32) {
     (copysignfk(fr, x), copysignfk(x - fr, x))
 }
 
-/// Multiply by integral power of 2
+/// Multiply by integral power of `2`
 ///
-/// These functions return the result of multiplying ***m*** by 2 raised to the power ***x***.
+/// These functions return the result of multiplying ***m*** by `2` raised to the power ***x***.
 pub fn ldexpf(x: f32, mut exp: i32) -> f32 {
     if exp > 300 {
         exp = 300;
@@ -1281,6 +1281,23 @@ pub fn nextafterf(x: f32, y: f32) -> f32 {
     } else {
         cxf
     }
+}
+
+#[test]
+fn test_nextafterf() {
+    test_ff_f(
+        nextafterf,
+        |mut f, t| {
+            let prec = f.prec();
+            f.set_prec(24);
+            f.next_toward(&t);
+            f.set_prec(prec);
+            f
+        },
+        f32::MIN..=f32::MAX,
+        f32::MIN..=f32::MAX,
+        0.1,
+    );
 }
 
 /// Fractional component of an FP number
@@ -1381,8 +1398,8 @@ pub fn fmodf(x: f32, y: f32) -> f32 {
 /// Fused multiply and accumulate
 ///
 /// This function compute (***x*** × ***y*** + ***z***) without rounding, and then return the rounded value of the result.
-/// This function may return infinity with a correct sign if the absolute value of the correct return value is greater than 1e+33.
-/// The error bounds of the returned value is max(0.500_01 ULP, f32::MIN_POSITIVE).
+/// This function may return infinity with a correct sign if the absolute value of the correct return value is greater than `1e+33`.
+/// The error bounds of the returned value is `max(0.500_01 ULP, f32::MIN_POSITIVE)`.
 pub fn fmaf(mut x: f32, mut y: f32, mut z: f32) -> f32 {
     const C0: f32 = F1_25;
     const C1: f32 = C0 * C0;

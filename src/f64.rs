@@ -1618,6 +1618,23 @@ pub fn nextafter(x: f64, y: f64) -> f64 {
     }
 }
 
+#[test]
+fn test_nextafter() {
+    test_ff_f(
+        nextafter,
+        |mut f, t| {
+            let prec = f.prec();
+            f.set_prec(53);
+            f.next_toward(&t);
+            f.set_prec(prec);
+            f
+        },
+        f64::MIN..=f64::MAX,
+        f64::MIN..=f64::MAX,
+        0.1,
+    );
+}
+
 pub fn frfrexp(mut x: f64) -> f64 {
     if fabsk(x) < f64::MIN_POSITIVE {
         x *= D1_63;

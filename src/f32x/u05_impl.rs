@@ -2,6 +2,12 @@ macro_rules! impl_math_f32_u05 {
     () => {
         use super::*;
 
+        /// Evaluate sin( π***a*** ) and cos( π***a*** ) for given ***a*** simultaneously
+        ///
+        /// Evaluates the sine and cosine functions of π***a*** at a time, and store the two values in a tuple.
+        /// The error bound of the returned value are `max(0.506 ULP, f32::MIN_POSITIVE)` if `[-1e+7, 1e+7]`.
+        /// If ***a*** is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
+        /// If ***a*** is a `NaN` or infinity, a `NaN` is returned.
         pub fn sincospif(d: F32x) -> (F32x, F32x) {
             let u = d * F32x::splat(4.);
             let q = u.trunci();
@@ -90,6 +96,9 @@ macro_rules! impl_math_f32_u05 {
             );
         }
 
+        /// Square root function
+        ///
+        /// The error bound of the returned value is `0.5001 ULP`.
         pub fn sqrtf(d: F32x) -> F32x {
             let d = d.lt(ZERO).select(F32x::NAN, d);
 
@@ -124,6 +133,9 @@ macro_rules! impl_math_f32_u05 {
             test_f_f(sqrtf, rug::Float::sqrt, f32::MIN..=f32::MAX, 0.5);
         }
 
+        /// 2D Euclidian distance function
+        ///
+        /// The error bound of the returned value is `0.5001 ULP`.
         pub fn hypotf(x: F32x, y: F32x) -> F32x {
             let x = x.abs();
             let y = y.abs();
@@ -156,6 +168,13 @@ macro_rules! impl_math_f32_u05 {
             );
         }
 
+        /// Evaluate sin( π***a*** ) for given ***a***
+        ///
+        /// This function evaluates the sine function of π***a***.
+        /// The error bound of the returned value is `max(0.506 ULP, f32::MIN_POSITIVE)`
+        /// if `[-1e+7, 1e+7]` for the single-precision function.
+        /// If ***a*** is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
+        /// If ***a*** is a `NaN` or infinity, a NaN is returned.
         pub fn sinpif(d: F32x) -> F32x {
             let x = sinpifk(d);
             let mut r = x.0 + x.1;
@@ -181,6 +200,13 @@ macro_rules! impl_math_f32_u05 {
             );
         }
 
+        /// Evaluate cos( π***a*** ) for given ***a***
+        ///
+        /// This function evaluates the cosine function of π***a***.
+        /// The error bound of the returned value is `max(0.506 ULP, f32::MIN_POSITIVE)`
+        /// if `[-1e+7, 1e+7]` for the single-precision function.
+        /// If ***a*** is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
+        /// If ***a*** is a `NaN` or infinity, a `NaN` is returned.
         pub fn cospif(d: F32x) -> F32x {
             let x = cospifk(d);
             let r = x.0 + x.1;

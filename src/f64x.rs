@@ -11,18 +11,25 @@ mod u15_impl;
 mod u35_impl;
 
 macro_rules! impl_math_f64 {
-    ($size:literal, $uint:ty, $int:ty, $mask:ty) => {
+    ($size:literal, $f64x:ident, $u64x:ident, $i64x:ident, $m64x:ident, $u32x:ident, $i32x:ident, $m32x:ident) => {
+        use packed_simd::{FromBits, FromCast};
         use crate::common::*;
         use doubled::*;
 
-
-        type F64x = packed_simd::Simd<[f64; $size]>;
-        type U64x = packed_simd::Simd<[u64; $size]>;
-        type I64x = packed_simd::Simd<[i64; $size]>;
-        type M64x = packed_simd::Simd<[packed_simd::m64; $size]>;
-        type Ux = packed_simd::Simd<[$uint; $size]>;
-        type Ix = packed_simd::Simd<[$int; $size]>;
-        type Mx = packed_simd::Simd<[$mask; $size]>;
+        pub use packed_simd::$f64x;
+        pub use packed_simd::$u64x;
+        pub use packed_simd::$i64x;
+        pub use packed_simd::$m64x;
+        pub use packed_simd::$u32x;
+        pub use packed_simd::$i32x;
+        pub use packed_simd::$m32x;
+        type F64x = $f64x;
+        type U64x = $u64x;
+        type I64x = $i64x;
+        type M64x = $m64x;
+        type Ux = $u32x;
+        type Ix = $i32x;
+        type Mx = $m32x;
 
         impl MaskType for F64x {
             type Mask = M64x;
@@ -459,13 +466,8 @@ macro_rules! impl_math_f64 {
         }
 
         #[inline]
-        fn swap_upper_lower(mut i: I64x) -> I64x {
-            const L: usize = I64x::lanes();
-            let r = unsafe { &mut *(&mut i as *mut I64x as *mut [i32; L * 2]) };
-            for j in 0..4 {
-                r.swap(j * 2, j * 2 + 1);
-            }
-            i
+        fn swap_upper_lower(i: I64x) -> I64x {
+            i.rotate_left(I64x::splat(32))
         }
 
         impl Round for F64x {
@@ -621,21 +623,13 @@ macro_rules! impl_math_f64 {
 
         #[inline]
         fn cast_into_upper(q: Ix) -> I64x {
-            use core::mem::MaybeUninit;
-
-            const L: usize = Ix::lanes();
-            let mut a: [MaybeUninit<$int>; L * 2] = MaybeUninit::uninit_array();
-            for i in 0..L {
-                a[i * 2].write(0);
-                a[i * 2 + 1].write(q.extract(i));
-            }
-
-            unsafe { core::mem::transmute(MaybeUninit::array_assume_init(a)) }
+            let q64 = I64x::from_cast(q);
+            q64 << 32
         }
 
         #[inline]
         fn cast_from_upper(q: U64x) -> Ix {
-            Ix::from_cast(q >> 32) // TODO: optimize
+            Ix::from_cast(q >> 32)
         }
 
         #[inline]
@@ -1215,6 +1209,7 @@ macro_rules! impl_math_f64 {
             (d.is_infinite() | d.abs().ge(D1_52X)).select(d, (x - fr).copy_sign(d))
         }
 
+        /// Find the next representable FP value
         pub fn nextafter(x: F64x, y: F64x) -> F64x {
             let x = x.eq(ZERO).select(ZERO.mul_sign(y), x);
             let mut xi2 = I64x::from_bits(x);
@@ -1244,6 +1239,23 @@ macro_rules! impl_math_f64 {
             ret = (x.eq(ZERO) & y.eq(ZERO)).select(y, ret);
 
             (x.is_nan() | y.is_nan()).select(F64x::NAN, ret)
+        }
+
+        #[test]
+        fn test_nextafter() {
+            test_ff_f(
+                nextafter,
+                |mut f, t| {
+                    let prec = f.prec();
+                    f.set_prec(53);
+                    f.next_toward(&t);
+                    f.set_prec(prec);
+                    f
+                },
+                f64::MIN..=f64::MAX,
+                f64::MIN..=f64::MAX,
+                0.1,
+            );
         }
 
         pub fn frfrexp(x: F64x) -> F64x {

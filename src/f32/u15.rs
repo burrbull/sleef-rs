@@ -4,7 +4,7 @@ use super::*;
 
 /// Complementary error function
 ///
-/// The error bound is max(1.5 ULP, f32::MIN_POSITIVE).
+/// The error bound is `max(1.5 ULP, f32::MIN_POSITIVE)`.
 pub fn erfcf(mut a: f32) -> f32 {
     let s = a;
     a = fabsfk(a);

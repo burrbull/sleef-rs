@@ -2,6 +2,9 @@ macro_rules! impl_math_f32_fast {
     () => {
         use super::*;
 
+        /// Fast sine function
+        ///
+        /// The error bounds of the returned value is `min(350 ULP, 2e-6)`.
         pub fn sinf(mut d: F32x) -> F32x {
             let t = d;
 
@@ -32,9 +35,18 @@ macro_rules! impl_math_f32_fast {
 
         #[test]
         fn test_sinf() {
-            test_f_f(sinf, rug::Float::sin, -30.0..=30.0, 350.);
+            test_c_f_f(sinf, rug::Float::sin, -30.0..=30.0, |ulp, o, e| {
+                let ulp_ex = 350.;
+                (
+                    ulp <= ulp_ex || (e.clone() - o).abs() <= 2e-6,
+                    format!("ULP: {ulp} > {ulp_ex}"),
+                )
+            });
         }
 
+        /// Fast sine function
+        ///
+        /// The error bounds of the returned value is `min(350 ULP, 2e-6)`.
         pub fn cosf(mut d: F32x) -> F32x {
             let t = d;
 
@@ -65,9 +77,18 @@ macro_rules! impl_math_f32_fast {
 
         #[test]
         fn test_cosf() {
-            test_f_f(cosf, rug::Float::cos, -30.0..=30.0, 350.);
+            test_c_f_f(cosf, rug::Float::cos, -30.0..=30.0, |ulp, o, e| {
+                let ulp_ex = 350.;
+                (
+                    ulp <= ulp_ex || (e.clone() - o).abs() <= 2e-6,
+                    format!("ULP: {ulp} > {ulp_ex}"),
+                )
+            });
         }
 
+        /// Fast power function
+        ///
+        /// The error bounds of the returned value is `350 ULP`.
         pub fn powf(x: F32x, y: F32x) -> F32x {
             let mut result = expk3f(logk3f(x.abs()) * y);
             let yisint = y.trunc().eq(y) | y.abs().gt(F1_24X);

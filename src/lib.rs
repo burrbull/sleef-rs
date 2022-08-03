@@ -93,7 +93,7 @@ pub trait Sleef: Sized {
 
     /// Natural logarithmic function
     fn ln(self) -> Self;
-    
+
     /// Cube root function
     fn cbrt(self) -> Self;
 
@@ -150,7 +150,7 @@ pub trait Sleef: Sized {
 
     /// Square root function
     fn sqrt(self) -> Self;
-    
+
     /// Absolute value
     fn abs(self) -> Self;
 
@@ -165,13 +165,13 @@ pub trait Sleef: Sized {
 
     /// Positive difference
     fn fdim(self, other: Self) -> Self;
-    
+
     /// Round to integer towards zero
     fn truncate(self) -> Self;
 
     /// Round to integer towards minus infinity
     fn floor(self) -> Self;
-    
+
     /// Round to integer towards plus infinity
     fn ceil(self) -> Self;
 

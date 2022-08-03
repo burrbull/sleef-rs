@@ -466,13 +466,8 @@ macro_rules! impl_math_f64 {
         }
 
         #[inline]
-        fn swap_upper_lower(mut i: I64x) -> I64x {
-            const L: usize = I64x::lanes();
-            let r = unsafe { &mut *(&mut i as *mut I64x as *mut [i32; L * 2]) };
-            for j in 0..4 {
-                r.swap(j * 2, j * 2 + 1);
-            }
-            i
+        fn swap_upper_lower(i: I64x) -> I64x {
+            i.rotate_left(I64x::splat(32))
         }
 
         impl Round for F64x {

@@ -182,6 +182,14 @@ macro_rules! impl_math_f64 {
                 trunc(self)
             }
             #[inline]
+            fn floor(self) -> Self {
+                floor(self)
+            }
+            #[inline]
+            fn ceil(self) -> Self {
+                ceil(self)
+            }
+            #[inline]
             fn round(self) -> Self {
                 rint(self)
             }
@@ -220,6 +228,10 @@ macro_rules! impl_math_f64 {
             #[inline]
             fn hypot(self, other: Self) -> Self {
                 u35::hypot(self, other)
+            }
+            #[inline]
+            fn gamma(self) -> Self {
+                u10::tgamma(self)
             }
             #[inline]
             fn lgamma(self) -> Self {
@@ -694,10 +706,14 @@ macro_rules! impl_math_f64 {
             }
         }
 
+        /// Multiply by integral power of `2`
+        ///
+        /// These functions return the result of multiplying ***m*** by `2` raised to the power ***x***.
         pub fn ldexp(x: F64x, q: Ix) -> F64x {
             ldexpk(x, q)
         }
 
+        /// Integer exponent of an FP number
         pub fn ilogb(d: F64x) -> Ix {
             let mut e = F64x::from_cast(ilogbk(d.abs()));
             e = d.eq(ZERO).select(SLEEF_FP_ILOGB0, e);
@@ -1130,47 +1146,56 @@ macro_rules! impl_math_f64 {
             U64x::splat(((u0 as u64) << 32) + (u1 as u64))
         }
 
+        /// Absolute value
         #[inline]
         pub fn fabs(x: F64x) -> F64x {
             x.abs()
         }
 
+        /// Copy sign of a number
         #[inline]
         pub fn copysign(x: F64x, y: F64x) -> F64x {
             x.copy_sign(y)
         }
 
+        /// Maximum of two numbers
         #[cfg(any(target_arch = "x86", target_arch = "x86_64"))] //  && !defined(ENABLE_VECEXT) && !defined(ENABLE_PUREC)
         pub fn fmax(x: F64x, y: F64x) -> F64x {
             y.is_nan().select(x, x.max(y))
         }
 
+        /// Maximum of two numbers
         #[cfg(all(not(target_arch = "x86"), not(target_arch = "x86_64")))]
         pub fn fmax(x: F64x, y: F64x) -> F64x {
             y.is_nan().select(x, x.gt(y).select(x, y))
         }
 
+        /// Minimum of two numbers
         #[cfg(any(target_arch = "x86", target_arch = "x86_64"))] //  && !defined(ENABLE_VECEXT) && !defined(ENABLE_PUREC)
         pub fn fmin(x: F64x, y: F64x) -> F64x {
             y.is_nan().select(x, x.min(y))
         }
 
+        /// Minimum of two numbers
         #[cfg(all(not(target_arch = "x86"), not(target_arch = "x86_64")))]
         pub fn fmin(x: F64x, y: F64x) -> F64x {
             y.is_nan().select(x, y.gt(x).select(x, y))
         }
 
+        /// Positive difference
         pub fn fdim(x: F64x, y: F64x) -> F64x {
             let ret = x - y;
             (ret.lt(ZERO) | x.eq(y)).select(ZERO, ret)
         }
 
+        /// Round to integer towards zero
         pub fn trunc(x: F64x) -> F64x {
             let mut fr = x - D1_31X * F64x::from_cast((x * (ONE / D1_31X)).trunci());
             fr -= F64x::from_cast(fr.trunci());
             (x.is_infinite() | x.abs().ge(D1_52X)).select(x, (x - fr).copy_sign(x))
         }
 
+        /// Round to integer towards minus infinity
         pub fn floor(x: F64x) -> F64x {
             let mut fr = x - D1_31X * F64x::from_cast((x * (ONE / D1_31X)).trunci());
             fr -= F64x::from_cast(fr.trunci());
@@ -1178,6 +1203,7 @@ macro_rules! impl_math_f64 {
             (x.is_infinite() | x.abs().ge(D1_52X)).select(x, (x - fr).copy_sign(x))
         }
 
+        /// Round to integer towards plus infinity
         pub fn ceil(x: F64x) -> F64x {
             let mut fr = x - D1_31X * F64x::from_cast((x * (ONE / D1_31X)).trunci());
             fr -= F64x::from_cast(fr.trunci());
@@ -1185,6 +1211,7 @@ macro_rules! impl_math_f64 {
             (x.is_infinite() | x.abs().ge(D1_52X)).select(x, (x - fr).copy_sign(x))
         }
 
+        /// Round to integer away from zero
         pub fn round(d: F64x) -> F64x {
             let mut x = d + HALF;
             let mut fr = x - D1_31X * F64x::from_cast((x * (ONE / D1_31X)).trunci());
@@ -1197,6 +1224,7 @@ macro_rules! impl_math_f64 {
             (d.is_infinite() | d.abs().ge(D1_52X)).select(d, (x - fr).copy_sign(d))
         }
 
+        /// Round to integer, ties round to even
         pub fn rint(d: F64x) -> F64x {
             let mut x = d + HALF;
             let mut fr = x - D1_31X * F64x::from_cast((x * (ONE / D1_31X)).trunci());
@@ -1258,6 +1286,7 @@ macro_rules! impl_math_f64 {
             );
         }
 
+        /// Fractional component of an FP number
         pub fn frfrexp(x: F64x) -> F64x {
             let x = x
                 .abs()
@@ -1274,6 +1303,7 @@ macro_rules! impl_math_f64 {
             x.eq(ZERO).select(x, ret)
         }
 
+        /// Exponent of an FP number
         pub fn expfrexp(x: F64x) -> Ix {
             let x = x
                 .abs()
@@ -1286,6 +1316,11 @@ macro_rules! impl_math_f64 {
             (x.eq(ZERO) | x.is_nan() | x.is_infinite()).select(Ix::splat(0), ret)
         }
 
+        /// Fused multiply and accumulate
+        ///
+        /// This function compute (***x*** × ***y*** + ***z***) without rounding, and then return the rounded value of the result.
+        /// This function may return infinity with a correct sign if the absolute value of the correct return value is greater than `1e+300`.
+        /// The error bounds of the returned value is `max(0.500_01 ULP, f64::MIN_POSITIVE)`.
         pub fn fma(mut x: F64x, mut y: F64x, mut z: F64x) -> F64x {
             let mut h2 = x * y + z;
             let mut q = ONE;
@@ -1320,6 +1355,9 @@ macro_rules! impl_math_f64 {
             o.select(h2, ret * q)
         }
 
+        /// Square root function
+        ///
+        /// The error bound of the returned value is `0.5001 ULP`
         //#[cfg(feature = "accurate_sqrt")]
         pub fn sqrt(d: F64x) -> F64x {
             d.sqrt()
@@ -1330,6 +1368,7 @@ macro_rules! impl_math_f64 {
             u05::sqrt(d)
         }*/
 
+        /// FP remainder
         /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
         pub fn fmod(x: F64x, y: F64x) -> F64x {
             #[inline]
@@ -1775,6 +1814,7 @@ macro_rules! impl_math_f64 {
             x
         }
 
+        /// Integral and fractional value of FP number
         pub fn modf(x: F64x) -> (F64x, F64x) {
             let mut fr = x - D1_31X * F64x::from_cast((x * (ONE / D1_31X)).trunci());
             fr -= F64x::from_cast(fr.trunci());

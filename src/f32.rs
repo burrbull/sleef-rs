@@ -389,6 +389,14 @@ impl crate::Sleef for f32 {
         truncf(self)
     }
     #[inline]
+    fn floor(self) -> Self {
+        floorf(self)
+    }
+    #[inline]
+    fn ceil(self) -> Self {
+        ceilf(self)
+    }
+    #[inline]
     fn round(self) -> Self {
         rintf(self)
     }
@@ -427,6 +435,10 @@ impl crate::Sleef for f32 {
     #[inline]
     fn hypot(self, other: Self) -> Self {
         u35::hypotf(self, other)
+    }
+    #[inline]
+    fn gamma(self) -> Self {
+        u10::tgammaf(self)
     }
     #[inline]
     fn lgamma(self) -> Self {
@@ -479,7 +491,7 @@ pub fn mulsignf(x: f32, y: f32) -> f32 {
 }
 
 #[inline]
-pub fn copysignfk(x: f32, y: f32) -> f32 {
+fn copysignfk(x: f32, y: f32) -> f32 {
     f32::from_bits((x.to_bits() & !(1 << 31)) ^ (y.to_bits() & (1 << 31)))
 }
 
@@ -1434,6 +1446,9 @@ pub fn fmaf(mut x: f32, mut y: f32, mut z: f32) -> f32 {
 }
 
 /*
+/// Square root function
+///
+/// The error bound of the returned value is `0.5001 ULP`
 pub fn sqrtf(d: f32) -> f32 {
     SQRTF(d)
 }

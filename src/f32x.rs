@@ -179,6 +179,14 @@ macro_rules! impl_math_f32 {
                 truncf(self)
             }
             #[inline]
+            fn floor(self) -> Self {
+                floorf(self)
+            }
+            #[inline]
+            fn ceil(self) -> Self {
+                ceilf(self)
+            }
+            #[inline]
             fn round(self) -> Self {
                 rintf(self)
             }
@@ -217,6 +225,10 @@ macro_rules! impl_math_f32 {
             #[inline]
             fn hypot(self, other: Self) -> Self {
                 u35::hypotf(self, other)
+            }
+            #[inline]
+            fn gamma(self) -> Self {
+                u10::tgammaf(self)
             }
             #[inline]
             fn lgamma(self) -> Self {
@@ -1054,6 +1066,9 @@ macro_rules! impl_math_f32 {
             o.select(h2, ret * q)
         }
 
+        /// Square root function
+        ///
+        /// The error bound of the returned value is `0.5001 ULP`
         pub fn sqrtf(d: F32x) -> F32x {
             //   if cfg!(feature = "accurate_sqrt") {
             d.sqrt()

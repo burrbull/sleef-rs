@@ -32,7 +32,7 @@ pub fn sinf(mut d: f32) -> f32 {
                 mulsignf(-8.742_277_657_347_585_773_1_e-8 * -0.5, dfidf.0),
             );
         }
-        d = dfidf.0 + dfidf.1;
+        d = f32::from(dfidf);
         if t.is_infinite() || t.is_nan() {
             d = f32::NAN;
         }
@@ -97,7 +97,7 @@ pub fn cosf(mut d: f32) -> f32 {
                 ),
             );
         }
-        d = dfidf.0 + dfidf.1;
+        d = f32::from(dfidf);
         if t.is_infinite() || t.is_nan() {
             d = f32::NAN;
         }
@@ -149,7 +149,7 @@ pub fn sincosf(d: f32) -> (f32, f32) {
     } else {
         let (dfidf, dfii) = rempif(d);
         q = dfii;
-        s = dfidf.0 + dfidf.1;
+        s = f32::from(dfidf);
         if d.is_infinite() || d.is_nan() {
             s = f32::NAN;
         }
@@ -225,7 +225,7 @@ pub fn tanf(d: f32) -> f32 {
     } else {
         let (dfidf, dfii) = rempif(d);
         q = dfii;
-        x = dfidf.0 + dfidf.1;
+        x = f32::from(dfidf);
         if d.is_infinite() || d.is_nan() {
             x = f32::NAN;
         }

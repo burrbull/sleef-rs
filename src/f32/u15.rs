@@ -113,7 +113,7 @@ pub fn erfcf(mut a: f32) -> f32 {
     x = expk2f(x);
     x = if o1 { x } else { x * u };
 
-    let mut r = if o3 { x.0 + x.1 } else { 0. };
+    let mut r = if o3 { f32::from(x) } else { 0. };
     if s < 0. {
         r = 2. - r;
     }

@@ -674,7 +674,7 @@ fn atan2kf(mut y: f32, mut x: f32) -> f32 {
 
 #[inline]
 fn expkf(d: Doubled<f32>) -> f32 {
-    let qf = rintfk((d.0 + d.1) * R_LN2_F);
+    let qf = rintfk(f32::from(d) * R_LN2_F);
 
     let q = qf as i32;
     let mut s = d + qf * -L2U_F;
@@ -695,7 +695,7 @@ fn expkf(d: Doubled<f32>) -> f32 {
     if d.0 < -104. {
         0.
     } else {
-        ldexpkf(t.0 + t.1, q)
+        ldexpkf(f32::from(t), q)
     }
 }
 
@@ -762,7 +762,7 @@ fn logkf(mut d: f32) -> Doubled<f32> {
 
 #[inline]
 fn expk2f(d: Doubled<f32>) -> Doubled<f32> {
-    let qf = rintfk((d.0 + d.1) * R_LN2_F);
+    let qf = rintfk(f32::from(d) * R_LN2_F);
 
     let q = qf as i32;
     let mut s = d + qf * -L2U_F;
@@ -779,8 +779,7 @@ fn expk2f(d: Doubled<f32>) -> Doubled<f32> {
 
     t = 1. + t;
 
-    t.0 = ldexp2kf(t.0, q);
-    t.1 = ldexp2kf(t.1, q);
+    t = Doubled::new(ldexp2kf(t.0, q), ldexp2kf(t.1, q));
 
     if d.0 < -104. {
         df(0., 0.)
@@ -1410,7 +1409,8 @@ pub fn fmodf(x: f32, y: f32) -> f32 {
         }
     }
 
-    let mut ret = if r.0 + r.1 == de { 0. } else { (r.0 + r.1) * s };
+    let r = f32::from(r);
+    let mut ret = if r == de { 0. } else { r * s };
 
     ret = mulsignf(ret, x);
     if de == 0. {
@@ -1449,7 +1449,11 @@ pub fn fmaf(mut x: f32, mut y: f32, mut z: f32) -> f32 {
 
     let mut d = x.mul_as_doubled(y);
     d += z;
-    let ret = if (x == 0.) || (y == 0.) { z } else { d.0 + d.1 };
+    let ret = if (x == 0.) || (y == 0.) {
+        z
+    } else {
+        f32::from(d)
+    };
     if z.is_infinite() && !x.is_infinite() && !x.is_nan() && !y.is_infinite() && !y.is_nan() {
         h2 = z;
     }

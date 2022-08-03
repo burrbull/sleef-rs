@@ -780,8 +780,10 @@ macro_rules! impl_math_f64 {
                 1.224_646_799_147_353_207_2_e-16 * 2.,
             ));
             let o = a.abs().lt(F64x::splat(0.7));
-            x.0 = o.select(a, x.0);
-            x.1 = F64x::from_bits(!U64x::from_bits(o) & U64x::from_bits(x.1));
+            x = Doubled::new(
+                o.select(a, x.0),
+                F64x::from_bits(!U64x::from_bits(o) & U64x::from_bits(x.1))
+            );
             (x, q)
         }
 
@@ -864,8 +866,10 @@ macro_rules! impl_math_f64 {
             x = o.select_doubled(x + ONE, x);
 
             let o = M64x::from_cast((q + Ix::splat(2) & Ix::splat(4)).eq(Ix::splat(4)));
-            x.0 = F64x::from_bits((U64x::from_bits(o) & U64x::from_bits(NEG_ZERO)) ^ U64x::from_bits(x.0));
-            x.1 = F64x::from_bits((U64x::from_bits(o) & U64x::from_bits(NEG_ZERO)) ^ U64x::from_bits(x.1));
+            x = Doubled::new(
+                F64x::from_bits((U64x::from_bits(o) & U64x::from_bits(NEG_ZERO)) ^ U64x::from_bits(x.0)),
+                F64x::from_bits((U64x::from_bits(o) & U64x::from_bits(NEG_ZERO)) ^ U64x::from_bits(x.1))
+            );
 
             x
         }
@@ -1016,7 +1020,7 @@ macro_rules! impl_math_f64 {
 
         #[inline]
         fn expk(d: Doubled<F64x>) -> F64x {
-            let mut u = (d.0 + d.1) * R_LN2;
+            let mut u = F64x::from(d) * R_LN2;
             let dq = u.round();
             let q = dq.roundi();
 
@@ -1049,7 +1053,7 @@ macro_rules! impl_math_f64 {
             let mut t = ONE.add_checked(s);
             t = t.add_checked(s.square() * u);
 
-            u = t.0 + t.1;
+            u = F64x::from(t);
             u = ldexp2k(u, q);
 
             F64x::from_bits(!U64x::from_bits(d.0.lt(F64x::splat(-1000.))) & U64x::from_bits(u))
@@ -1057,7 +1061,7 @@ macro_rules! impl_math_f64 {
 
         #[inline]
         fn expk2(d: Doubled<F64x>) -> Doubled<F64x> {
-            let u = (d.0 + d.1) * R_LN2;
+            let u = F64x::from(d) * R_LN2;
             let dq = u.round();
             let q = dq.roundi();
 
@@ -1089,11 +1093,15 @@ macro_rules! impl_math_f64 {
             t = ONE.add_checked(t * s);
             t = t.add_checked(s4 * u);
 
-            t.0 = ldexp2k(t.0, q);
-            t.1 = ldexp2k(t.1, q);
+            t = Doubled::new(
+                ldexp2k(t.0, q),
+                ldexp2k(t.1, q)
+            );
 
-            t.0 = F64x::from_bits(!U64x::from_bits(d.0.lt(F64x::splat(-1000.))) & U64x::from_bits(t.0));
-            t.1 = F64x::from_bits(!U64x::from_bits(d.0.lt(F64x::splat(-1000.))) & U64x::from_bits(t.1));
+            t = Doubled::new(
+                F64x::from_bits(!U64x::from_bits(d.0.lt(F64x::splat(-1000.))) & U64x::from_bits(t.0)),
+                F64x::from_bits(!U64x::from_bits(d.0.lt(F64x::splat(-1000.))) & U64x::from_bits(t.1))
+            );
             t
         }
 
@@ -1415,7 +1423,7 @@ macro_rules! impl_math_f64 {
             }
 
             let mut ret = r.0 * s;
-            ret = (r.0 + r.1).eq(de).select(ZERO, ret);
+            ret = F64x::from(r).eq(de).select(ZERO, ret);
 
             ret = ret.mul_sign(x);
 

@@ -217,7 +217,7 @@ pub fn sincos(d: f64) -> (f64, f64) {
         * t.0;
 
     let x = t.add_checked(u);
-    let mut rsin = if d.is_neg_zero() { -0. } else { x.0 + x.1 };
+    let mut rsin = if d.is_neg_zero() { -0. } else { f64::from(x) };
 
     let u = (-1.136_153_502_390_974_295_315_23_e-11_f64)
         .mul_add(s.0, 2.087_574_712_070_400_554_793_66_e-9)
@@ -228,7 +228,7 @@ pub fn sincos(d: f64) -> (f64, f64) {
         .mul_add(s.0, -0.5);
 
     let x = (1.).add_checked(s.0.mul_as_doubled(u));
-    let mut rcos = x.0 + x.1;
+    let mut rcos = f64::from(x);
 
     if (ql & 1) != 0 {
         core::mem::swap(&mut rcos, &mut rsin);
@@ -273,7 +273,7 @@ pub fn tan(d: f64) -> f64 {
     } else if fabsk(d) < TRIGRANGEMAX {
         let dqh = trunck(d * (FRAC_2_PI / D1_24)) * D1_24;
         s = dd(M_2_PI_H, M_2_PI_L) * d + ((if d < 0. { -0.5 } else { 0.5 }) - dqh);
-        ql = (s.0 + s.1) as isize;
+        ql = f64::from(s) as isize;
 
         let qlf = ql as f64;
 
@@ -330,7 +330,7 @@ pub fn tan(d: f64) -> f64 {
     if d.is_neg_zero() {
         d
     } else {
-        x.0 + x.1
+        x.into()
     }
 }
 
@@ -341,8 +341,7 @@ fn test_tan() {
 
 fn atan2k_u1(mut y: Doubled<f64>, mut x: Doubled<f64>) -> Doubled<f64> {
     let mut q: isize = if x.0 < 0. {
-        x.0 = -x.0;
-        x.1 = -x.1;
+        x = -x;
         -2
     } else {
         0
@@ -351,8 +350,7 @@ fn atan2k_u1(mut y: Doubled<f64>, mut x: Doubled<f64>) -> Doubled<f64> {
     if y.0 > x.0 {
         let t = x;
         x = y;
-        y.0 = -t.0;
-        y.1 = -t.1;
+        y = -t;
         q += 1;
     }
 
@@ -415,7 +413,7 @@ pub fn atan2(mut y: f64, mut x: f64) -> f64 {
         x *= D1_53;
     } // nexttoward((1.0 / DBL_MAX), 1)
     let d = atan2k_u1(dd(fabsk(y), 0.), dd(x, 0.));
-    let mut r = d.0 + d.1;
+    let mut r = f64::from(d);
 
     r = if y == 0. {
         if sign(x) == -1. {
@@ -501,7 +499,7 @@ pub fn asin(d: f64) -> f64 {
     )
     .sub_checked(x)
     .add_checked(-u);
-    let r = if o { u + x.0 } else { (y.0 + y.1) * 2. };
+    let r = if o { u + x.0 } else { f64::from(y) * 2. };
     mulsign(r, d)
 }
 
@@ -557,7 +555,7 @@ pub fn acos(d: f64) -> f64 {
     if !o && (d < 0.) {
         y = dd(3.141_592_653_589_793_116, 1.224_646_799_147_353_207_2_e-16).sub_checked(y)
     };
-    y.0 + y.1
+    y.into()
 }
 
 #[test]
@@ -574,7 +572,7 @@ pub fn atan(d: f64) -> f64 {
     let r = if d.is_infinite() {
         1.570_796_326_794_896_557_998_982
     } else {
-        d2.0 + d2.1
+        d2.into()
     };
     mulsign(r, d)
 }
@@ -594,7 +592,7 @@ pub fn sinh(x: f64) -> f64 {
     let mut y = fabsk(x);
     let mut d = expk2(dd(y, 0.));
     d = d.sub_checked(d.recpre());
-    y = (d.0 + d.1) * 0.5;
+    y = f64::from(d) * 0.5;
 
     y = if fabsk(x) > 710. { f64::INFINITY } else { y };
     y = if y.is_nan() { f64::INFINITY } else { y };
@@ -621,7 +619,7 @@ pub fn cosh(x: f64) -> f64 {
     let mut y = fabsk(x);
     let mut d = expk2(dd(y, 0.));
     d = d.add_checked(d.recpre());
-    y = (d.0 + d.1) * 0.5;
+    y = f64::from(d) * 0.5;
 
     y = if fabsk(x) > 710. { f64::INFINITY } else { y };
     y = if y.is_nan() { f64::INFINITY } else { y };
@@ -646,7 +644,7 @@ pub fn tanh(x: f64) -> f64 {
     let mut d = expk2(dd(y, 0.));
     let e = d.recpre();
     d = d.sub_checked(e) / d.add_checked(e);
-    y = d.0 + d.1;
+    y = f64::from(d);
 
     y = if fabsk(x) > 18.714_973_875 { 1. } else { y };
     y = if y.is_nan() { 1. } else { y };
@@ -677,7 +675,7 @@ pub fn asinh(x: f64) -> f64 {
     d = if y > 1. { d * y } else { d };
 
     d = logk2(d.add_checked(x).normalize());
-    y = d.0 + d.1;
+    y = f64::from(d);
 
     y = if fabsk(x) > SQRT_DBL_MAX || y.is_nan() {
         mulsign(f64::INFINITY, x)
@@ -705,7 +703,7 @@ fn test_asinh() {
 /// sign or a correct value with `1.0 ULP` error bound is returned.
 pub fn acosh(x: f64) -> f64 {
     let d = logk2(x.add_as_doubled(1.).sqrt() * x.add_as_doubled(-1.).sqrt() + x);
-    let mut y = d.0 + d.1;
+    let mut y = f64::from(d);
 
     y = if (x > SQRT_DBL_MAX) || y.is_nan() {
         f64::INFINITY
@@ -733,12 +731,12 @@ fn test_acosh() {
 pub fn atanh(x: f64) -> f64 {
     let mut y = fabsk(x);
     let d = logk2((1.).add_as_doubled(y) / (1.).add_as_doubled(-y));
-    y = if y > 1.0 {
+    y = if y > 1. {
         f64::NAN
-    } else if y == 1.0 {
+    } else if y == 1. {
         f64::INFINITY
     } else {
-        (d.0 + d.1) * 0.5
+        f64::from(d) * 0.5
     };
 
     y = mulsign(y, x);
@@ -804,7 +802,7 @@ pub fn log(mut d: f64) -> f64 {
     } else if d.is_infinite() {
         f64::INFINITY
     } else {
-        s.0 + s.1
+        s.into()
     }
 }
 
@@ -868,7 +866,7 @@ pub fn log10(mut d: f64) -> f64 {
     } else if d == 0. {
         f64::NEG_INFINITY
     } else {
-        s.0 + s.1
+        s.into()
     }
 }
 
@@ -924,7 +922,7 @@ pub fn log2(mut d: f64) -> f64 {
     } else if d.is_infinite() {
         f64::INFINITY
     } else {
-        s.0 + s.1
+        s.into()
     }
 }
 
@@ -989,7 +987,7 @@ pub fn log1p(d: f64) -> f64 {
     } else if d > 1_e307 {
         f64::INFINITY
     } else {
-        s.0 + s.1
+        s.into()
     }
 }
 
@@ -1097,7 +1095,7 @@ pub fn expm1(a: f64) -> f64 {
     } else if a < -36.736_800_569_677_101_399_113_302_437 {
         -1. // log(1 - nexttoward(1, 0))
     } else {
-        d.0 + d.1
+        d.into()
     }
 }
 
@@ -1249,8 +1247,7 @@ pub fn cbrt(d: f64) -> f64 {
         q2
     };
 
-    q2.0 = mulsign(q2.0, d);
-    q2.1 = mulsign(q2.1, d);
+    q2 = Doubled::new(mulsign(q2.0, d), mulsign(q2.1, d));
     let d = fabsk(d);
 
     let mut x = (-0.640_245_898_480_692_909_870_982_f64)
@@ -1268,7 +1265,7 @@ pub fn cbrt(d: f64) -> f64 {
 
     let mut u = x.mul_as_doubled(x);
     u = u * u * d + (-x);
-    y = u.0 + u.1;
+    y = f64::from(u);
 
     y = -2. / 3. * y * z;
     let v = (z.mul_as_doubled(z) + y) * d * q2;
@@ -1278,7 +1275,7 @@ pub fn cbrt(d: f64) -> f64 {
     } else if d.is_infinite() {
         mulsign(f64::INFINITY, q2.0)
     } else {
-        ldexp2k(v.0 + v.1, (e + 6144) / 3 - 2048)
+        ldexp2k(f64::from(v), (e + 6144) / 3 - 2048)
     }
 }
 
@@ -1293,7 +1290,7 @@ fn test_cbrt() {
 pub fn tgamma(a: f64) -> f64 {
     let (da, db) = gammak(a);
     let y = expk2(da) * db;
-    let r = y.0 + y.1;
+    let r = f64::from(y);
     let r = if (a == f64::NEG_INFINITY)
         || ((a < 0.) && a.is_integer())
         || (a.is_finite() && (a < 0.) && r.is_nan())
@@ -1325,7 +1322,7 @@ fn test_tgamma() {
 pub fn lgamma(a: f64) -> f64 {
     let (da, db) = gammak(a);
     let y = da + logk2(db.abs());
-    let r = y.0 + y.1;
+    let r = f64::from(y);
     if a.is_infinite() || ((a <= 0.) && a.is_integer()) || (a.is_finite() && r.is_nan()) {
         f64::INFINITY
     } else {
@@ -1475,7 +1472,7 @@ pub fn erf(a: f64) -> f64 {
         } else if a.is_infinite() {
             1.
         } else {
-            -t2.0 - t2.1
+            -f64::from(t2)
         },
         a,
     )

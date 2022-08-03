@@ -311,7 +311,7 @@ pub fn erfc(a: f64) -> f64 {
     };
     x = if o1 { x } else { x * u };
 
-    let mut r = if o3 { x.0 + x.1 } else { 0. };
+    let mut r = if o3 { f64::from(x) } else { 0. };
     if s < 0. {
         r = 2. - r;
     }

@@ -41,7 +41,7 @@ macro_rules! impl_math_f64_u35 {
                 );
                 x = ddidd + x;
                 ddidd = M64x::from_cast(o).select_doubled(x, ddidd);
-                d = ddidd.0 + ddidd.1;
+                d = F64x::from(ddidd);
                 d = F64x::from_bits(U64x::from_bits(r.is_infinite() | r.is_nan()) | U64x::from_bits(d));
             }
 
@@ -120,7 +120,7 @@ macro_rules! impl_math_f64_u35 {
                     );
                     x = ddidd + x;
                     ddidd = M64x::from_cast(o).select_doubled(x, ddidd);
-                    let u = ddidd.0 + ddidd.1;
+                    let u = F64x::from(ddidd);
                     ql = Mx::from_cast(g).select(ql, ql2);
                     d = g.select(d, u);
                     d = F64x::from_bits(U64x::from_bits(r.is_infinite() | r.is_nan()) | U64x::from_bits(d));
@@ -208,7 +208,7 @@ macro_rules! impl_math_f64_u35 {
                 );
                 x = ddidd + x;
                 ddidd = M64x::from_cast(o).select_doubled(x, ddidd);
-                d = ddidd.0 + ddidd.1;
+                d = F64x::from(ddidd);
                 d = F64x::from_bits(U64x::from_bits(r.is_infinite() | r.is_nan()) | U64x::from_bits(d));
             }
 
@@ -283,7 +283,7 @@ macro_rules! impl_math_f64_u35 {
                     );
                     x = ddidd + x;
                     ddidd = M64x::from_cast(o).select_doubled(x, ddidd);
-                    let u = ddidd.0 + ddidd.1;
+                    let u = F64x::from(ddidd);
                     ql = Mx::from_cast(g).select(ql, ql2);
                     d = g.select(d, u);
                     d = F64x::from_bits(U64x::from_bits(r.is_infinite() | r.is_nan()) | U64x::from_bits(d));
@@ -357,7 +357,7 @@ macro_rules! impl_math_f64_u35 {
             } else {
                 let (ddidd, ddii) = rempi(d);
                 ql = ddii;
-                s = ddidd.0 + ddidd.1;
+                s = F64x::from(ddidd);
                 s = F64x::from_bits(U64x::from_bits(d.is_infinite() | d.is_nan()) | U64x::from_bits(s));
             }
 
@@ -435,7 +435,7 @@ macro_rules! impl_math_f64_u35 {
 
                 if !g.all() {
                     let (ddidd, ddii) = rempi(d);
-                    let mut u = ddidd.0 + ddidd.1;
+                    let mut u = F64x::from(ddidd);
                     u = F64x::from_bits(U64x::from_bits(d.is_infinite() | d.is_nan()) | U64x::from_bits(u));
 
                     ql = Mx::from_cast(g).select(ql, ddii);
@@ -526,7 +526,7 @@ macro_rules! impl_math_f64_u35 {
             } else {
                 let (ddidd, ddii) = rempi(d);
                 ql = ddii;
-                x = ddidd.0 + ddidd.1;
+                x = F64x::from(ddidd);
                 x = F64x::from_bits(U64x::from_bits(d.is_infinite()) | U64x::from_bits(x));
                 x = F64x::from_bits(U64x::from_bits(d.is_infinite() | d.is_nan()) | U64x::from_bits(x));
             }
@@ -590,7 +590,7 @@ macro_rules! impl_math_f64_u35 {
                 if !g.all() {
                     let (ddidd, ddii) = rempi(d);
                     let ql2 = ddii;
-                    let mut u = ddidd.0 + ddidd.1;
+                    let mut u = F64x::from(ddidd);
                     u = F64x::from_bits(U64x::from_bits(d.is_infinite() | d.is_nan()) | U64x::from_bits(u));
 
                     ql = Mx::from_cast(g).select(ql, ql2);
@@ -1082,7 +1082,7 @@ macro_rules! impl_math_f64_u35 {
                 e.add_checked(x.mul_as_doubled(F64x::splat(2.885_390_081_777_926_774)))
             */ };
 
-            let mut r = t.mul_add(x * x2, (s.0 + s.1));
+            let mut r = t.mul_add(x * x2, F64x::from(s));
 
             //if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {
             r = d.eq(F64x::INFINITY).select(F64x::INFINITY, r);

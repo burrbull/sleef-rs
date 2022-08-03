@@ -38,7 +38,7 @@ macro_rules! impl_math_f64_u05 {
                 ));
 
             x *= t;
-            let rx = x.0 + x.1;
+            let rx = F64x::from(x);
 
             let rx = d.is_neg_zero().select(NEG_ZERO, rx);
 
@@ -62,7 +62,7 @@ macro_rules! impl_math_f64_u05 {
                 ));
 
             x = x * s2 + ONE;
-            let ry = x.0 + x.1;
+            let ry = F64x::from(x);
 
             //
 
@@ -116,7 +116,7 @@ macro_rules! impl_math_f64_u05 {
         /// If ***a*** is a `NaN` or infinity, a NaN is returned.
         pub fn sinpi(d: F64x) -> F64x {
             let x = sinpik(d);
-            let mut r = x.0 + x.1;
+            let mut r = F64x::from(x);
 
             r = d.is_neg_zero().select(NEG_ZERO, r);
             r = F64x::from_bits(
@@ -150,7 +150,7 @@ macro_rules! impl_math_f64_u05 {
         /// If ***a*** is a `NaN` or infinity, a `NaN` is returned.
         pub fn cospi(d: F64x) -> F64x {
             let x = cospik(d);
-            let r = x.0 + x.1;
+            let r = F64x::from(x);
 
             let r = d.abs().gt(TRIGRANGEMAX3 / F64x::splat(4.)).select(ONE, r);
             F64x::from_bits(U64x::from_bits(d.is_infinite()) | U64x::from_bits(r))
@@ -198,7 +198,7 @@ macro_rules! impl_math_f64_u05 {
 
             let d2 = (d + x.mul_as_doubled(x)) * x.recpre_as_doubled();
 
-            x = (d2.0 + d2.1) * q;
+            x = F64x::from(d2) * q;
 
             x = d.eq(F64x::INFINITY).select(F64x::INFINITY, x);
             d.eq(ZERO).select(d, x)
@@ -226,7 +226,7 @@ macro_rules! impl_math_f64_u05 {
 
             let t = Doubled::new(n, ZERO) / Doubled::new(d, ZERO);
             let t = (t.square() + ONE).sqrt() * max;
-            let mut ret = t.0 + t.1;
+            let mut ret = F64x::from(t);
             ret = ret.is_nan().select(F64x::INFINITY, ret);
             ret = min.eq(ZERO).select(max, ret);
             ret = (x.is_nan() | y.is_nan()).select(F64x::NAN, ret);

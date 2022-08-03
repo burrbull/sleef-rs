@@ -306,7 +306,7 @@ macro_rules! impl_math_f64_u15 {
             x = o0.select_doubled(Doubled::from((1., 0.)).sub_checked(x), expk2(x));
             x = o1.select_doubled(x, x * u);
 
-            let mut r = o3.select(x.0 + x.1, ZERO);
+            let mut r = o3.select(F64x::from(x), ZERO);
             r = s.is_sign_negative().select(F64x::splat(2.) - r, r);
             s.is_nan().select(F64x::NAN, r)
         }

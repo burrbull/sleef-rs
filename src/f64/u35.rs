@@ -36,7 +36,7 @@ pub fn sin(mut d: f64) -> f64 {
                     mulsign(1.224_646_799_147_353_207_2_e-16 * -0.5, ddidd.0),
                 );
         }
-        d = ddidd.0 + ddidd.1;
+        d = f64::from(ddidd);
         if t.is_infinite() || t.is_nan() {
             d = f64::NAN;
         }
@@ -120,7 +120,7 @@ pub fn cos(mut d: f64) -> f64 {
                     ),
                 );
         }
-        d = ddidd.0 + ddidd.1;
+        d = f64::from(ddidd);
         if t.is_infinite() || t.is_nan() {
             d = f64::NAN;
         }
@@ -189,7 +189,7 @@ pub fn sincos(d: f64) -> (f64, f64) {
     } else {
         let (ddidd, ddii) = rempi(d);
         ql = ddii as isize;
-        s = ddidd.0 + ddidd.1;
+        s = f64::from(ddidd);
         if d.is_infinite() || d.is_nan() {
             s = f64::NAN;
         }
@@ -273,7 +273,7 @@ pub fn tan(d: f64) -> f64 {
     } else {
         let (ddidd, ddii) = rempi(d);
         ql = ddii as isize;
-        x = ddidd.0 + ddidd.1;
+        x = f64::from(ddidd);
         if d.is_infinite() || d.is_nan() {
             x = f64::NAN;
         }
@@ -761,7 +761,7 @@ pub fn log2(mut d: f64) -> f64 {
         .mul_add(x2, 0.961_796_693_926_080_914_49);
 
     let s = (e as f64).add_checked((2.885_390_081_777_926_774).mul_as_doubled(x));
-    let r = t.mul_add(x * x2, s.0 + s.1);
+    let r = t.mul_add(x * x2, f64::from(s));
 
     if d == 0. {
         f64::NEG_INFINITY

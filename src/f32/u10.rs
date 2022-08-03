@@ -154,7 +154,7 @@ pub fn sincosf(d: f32) -> (f32, f32) {
         * t.0;
 
     let mut x = t.add_checked(u);
-    let mut rsin = if d.is_neg_zero() { -0. } else { x.0 + x.1 };
+    let mut rsin = if d.is_neg_zero() { -0. } else { f32::from(x) };
 
     let u = (-2.718_118_423_672_422_068_193_55_e-7_f32)
         .mul_add(s.0, 2.479_904_469_510_074_704_885_48_e-5)
@@ -163,7 +163,7 @@ pub fn sincosf(d: f32) -> (f32, f32) {
         .mul_add(s.0, -0.5);
 
     x = (1.).add_checked(s.0.mul_as_doubled(u));
-    let mut rcos = x.0 + x.1;
+    let mut rcos = f32::from(x);
 
     if (q & 1) != 0 {
         core::mem::swap(&mut rcos, &mut rsin);
@@ -237,7 +237,7 @@ pub fn tanf(d: f32) -> f32 {
     if d.is_neg_zero() {
         -0.
     } else {
-        x.0 + x.1
+        x.into()
     }
 }
 
@@ -248,8 +248,7 @@ fn test_tanf() {
 
 fn atan2kf_u1(mut y: Doubled<f32>, mut x: Doubled<f32>) -> Doubled<f32> {
     let mut q = if x.0 < 0. {
-        x.0 = -x.0;
-        x.1 = -x.1;
+        x = -x;
         -2
     } else {
         0
@@ -258,8 +257,7 @@ fn atan2kf_u1(mut y: Doubled<f32>, mut x: Doubled<f32>) -> Doubled<f32> {
     if y.0 > x.0 {
         let t = x;
         x = y;
-        y.0 = -t.0;
-        y.1 = -t.1;
+        y = -t;
         q += 1;
     }
 
@@ -296,7 +294,7 @@ pub fn atan2f(mut y: f32, mut x: f32) -> f32 {
         x *= F1_24;
     } // nexttowardf((1. / FLT_MAX), 1)
     let d = atan2kf_u1(df(fabsfk(y), 0.), df(x, 0.));
-    let mut r = d.0 + d.1;
+    let mut r = f32::from(d);
 
     r = mulsignf(r, x);
     r = if y == 0. {
@@ -369,7 +367,7 @@ pub fn asinf(d: f32) -> f32 {
     )
     .sub_checked(x))
     .add_checked(-u);
-    let r = if o { u + x.0 } else { (y.0 + y.1) * 2. };
+    let r = if o { u + x.0 } else { f32::from(y) * 2. };
     mulsignf(r, d)
 }
 
@@ -415,7 +413,7 @@ pub fn acosf(d: f32) -> f32 {
         .sub_checked(y);
     }
 
-    y.0 + y.1
+    f32::from(y)
 }
 
 #[test]
@@ -432,7 +430,7 @@ pub fn atanf(d: f32) -> f32 {
     let r = if d.is_infinite() {
         1.570_796_326_794_896_557_998_982
     } else {
-        d2.0 + d2.1
+        f32::from(d2)
     };
     mulsignf(r, d)
 }
@@ -452,7 +450,7 @@ pub fn sinhf(x: f32) -> f32 {
     let mut y = fabsfk(x);
     let mut d = expk2f(df(y, 0.));
     d = d.sub_checked(d.recpre());
-    y = (d.0 + d.1) * 0.5;
+    y = f32::from(d) * 0.5;
 
     y = if fabsfk(x) > 89. { f32::INFINITY } else { y };
     y = if y.is_nan() { f32::INFINITY } else { y };
@@ -479,7 +477,7 @@ pub fn coshf(x: f32) -> f32 {
     let mut y = fabsfk(x);
     let mut d = expk2f(df(y, 0.));
     d = d.add_checked(d.recpre());
-    y = (d.0 + d.1) * 0.5;
+    y = f32::from(d) * 0.5;
 
     y = if fabsfk(x) > 89. { f32::INFINITY } else { y };
     y = if y.is_nan() { f32::INFINITY } else { y };
@@ -504,7 +502,7 @@ pub fn tanhf(x: f32) -> f32 {
     let mut d = expk2f(df(y, 0.));
     let e = d.recpre();
     d = d.sub_checked(e) / d.add_checked(e);
-    y = d.0 + d.1;
+    y = f32::from(d);
 
     y = if fabsfk(x) > 18.714_973_875 { 1. } else { y }; // TODO: check
     y = if y.is_nan() { 1. } else { y };
@@ -535,7 +533,7 @@ pub fn asinhf(x: f32) -> f32 {
     d = if y > 1. { d * y } else { d };
 
     d = logk2f(d.add_checked(x).normalize());
-    y = d.0 + d.1;
+    y = f32::from(d);
 
     y = if fabsfk(x) > SQRT_FLT_MAX || y.is_nan() {
         mulsignf(f32::INFINITY, x)
@@ -568,7 +566,7 @@ fn test_asinhf() {
 /// sign or a correct value with `1.0 ULP` error bound is returned.
 pub fn acoshf(x: f32) -> f32 {
     let d = logk2f((x.add_as_doubled(1.)).sqrt() * (x.add_as_doubled(-1.)).sqrt() + x);
-    let mut y = d.0 + d.1;
+    let mut y = f32::from(d);
 
     y = if (x > SQRT_FLT_MAX) || y.is_nan() {
         f32::INFINITY
@@ -606,7 +604,7 @@ pub fn atanhf(x: f32) -> f32 {
     } else if y == 1. {
         f32::INFINITY
     } else {
-        (d.0 + d.1) * 0.5
+        f32::from(d) * 0.5
     };
 
     y = if x.is_infinite() || y.is_nan() {
@@ -662,7 +660,7 @@ pub fn logf(mut d: f32) -> f32 {
     } else if d.is_infinite() {
         f32::INFINITY
     } else {
-        s.0 + s.1
+        s.into()
     }
 }
 
@@ -706,7 +704,7 @@ pub fn log10f(mut d: f32) -> f32 {
     } else if d.is_infinite() {
         f32::INFINITY
     } else {
-        s.0 + s.1
+        s.into()
     }
 }
 
@@ -749,7 +747,7 @@ pub fn log2f(mut d: f32) -> f32 {
     } else if d.is_infinite() {
         f32::INFINITY
     } else {
-        s.0 + s.1
+        s.into()
     }
 }
 
@@ -799,7 +797,7 @@ pub fn log1pf(d: f32) -> f32 {
     } else if d > 1e+38 {
         f32::INFINITY
     } else {
-        s.0 + s.1
+        s.into()
     }
 }
 
@@ -888,7 +886,7 @@ pub fn expm1f(a: f32) -> f32 {
     } else if a > 88.722_831_726_074_218_75 {
         f32::INFINITY
     } else {
-        d.0 + d.1
+        d.into()
     }
 }
 
@@ -1012,8 +1010,7 @@ pub fn cbrtf(mut d: f32) -> f32 {
         q2
     };
 
-    q2.0 = mulsignf(q2.0, d);
-    q2.1 = mulsignf(q2.1, d);
+    q2 = Doubled::new(mulsignf(q2.0, d), mulsignf(q2.1, d));
     d = fabsfk(d);
 
     let mut x = (-0.601_564_466_953_277_587_890_625_f32)
@@ -1031,7 +1028,7 @@ pub fn cbrtf(mut d: f32) -> f32 {
 
     let mut u = x.mul_as_doubled(x);
     u = u * u * d + (-x);
-    y = u.0 + u.1;
+    y = f32::from(u);
 
     y = -2. / 3. * y * z;
     let v = (z.mul_as_doubled(z) + y) * d * q2;
@@ -1041,7 +1038,7 @@ pub fn cbrtf(mut d: f32) -> f32 {
     } else if d.is_infinite() {
         mulsignf(f32::INFINITY, q2.0)
     } else {
-        ldexp2kf(v.0 + v.1, (e + 6144) / 3 - 2048)
+        ldexp2kf(f32::from(v), (e + 6144) / 3 - 2048)
     }
 }
 
@@ -1056,7 +1053,7 @@ fn test_cbrtf() {
 pub fn tgammaf(a: f32) -> f32 {
     let (da, db) = gammafk(a);
     let y = expk2f(da) * db;
-    let mut r = y.0 + y.1;
+    let mut r = f32::from(y);
     r = if ((a == f32::NEG_INFINITY) || ((a < 0.) && a.is_integer()))
         || (a.is_finite() && (a < 0.) && r.is_nan())
     {
@@ -1087,7 +1084,7 @@ fn test_tgammaf() {
 pub fn lgammaf(a: f32) -> f32 {
     let (da, db) = gammafk(a);
     let y = da + logk2f(db.abs());
-    let r = y.0 + y.1;
+    let r = f32::from(y);
     if a.is_infinite() || (a <= 0. && a.is_integer()) || (a.is_finite() && r.is_nan()) {
         f32::INFINITY
     } else {
@@ -1205,7 +1202,7 @@ pub fn erff(a: f32) -> f32 {
         } else if a.is_infinite() {
             1.
         } else {
-            -t2.0 - t2.1
+            -f32::from(t2)
         },
         a,
     )

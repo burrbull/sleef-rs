@@ -803,8 +803,7 @@ fn sinpik(d: f64) -> Doubled<f64> {
     //
 
     if (q & 4) != 0 {
-        x.0 = -x.0;
-        x.1 = -x.1;
+        x = -x;
     }
 
     x
@@ -899,8 +898,7 @@ fn cospik(d: f64) -> Doubled<f64> {
     //
 
     if ((q + 2) & 4) != 0 {
-        x.0 = -x.0;
-        x.1 = -x.1;
+        x = -x;
     }
 
     x
@@ -998,7 +996,7 @@ fn logk(mut d: f64) -> Doubled<f64> {
 
 #[inline]
 fn expk(d: Doubled<f64>) -> f64 {
-    let q = rintk((d.0 + d.1) * R_LN2);
+    let q = rintk(f64::from(d) * R_LN2);
 
     let s = d + q * (-L2U) + q * (-L2L);
 
@@ -1032,13 +1030,13 @@ fn expk(d: Doubled<f64>) -> f64 {
     if d.0 < -1000. {
         0.
     } else {
-        ldexpk(t.0 + t.1, q as i32)
+        ldexpk(f64::from(t), q as i32)
     }
 }
 
 #[inline]
 fn expk2(d: Doubled<f64>) -> Doubled<f64> {
-    let qf = rintk((d.0 + d.1) * R_LN2);
+    let qf = rintk(f64::from(d) * R_LN2);
     let q = qf as i32;
 
     let s = d + qf * (-L2U) + qf * (-L2L);
@@ -1495,7 +1493,11 @@ pub fn fma(mut x: f64, mut y: f64, mut z: f64) -> f64 {
     };
 
     let d = x.mul_as_doubled(y) + z;
-    let ret = if (x == 0.) || (y == 0.) { z } else { d.0 + d.1 };
+    let ret = if (x == 0.) || (y == 0.) {
+        z
+    } else {
+        f64::from(d)
+    };
     if z.is_infinite() && !x.is_infinite() && !x.is_nan() && !y.is_infinite() && !y.is_nan() {
         h2 = z;
     }
@@ -1758,7 +1760,7 @@ pub fn fmod(x: f64, y: f64) -> f64 {
         }
     }
 
-    let mut ret = if r.0 + r.1 == de { 0. } else { r.0 * s };
+    let mut ret = if f64::from(r) == de { 0. } else { r.0 * s };
     ret = mulsign(ret, x);
     if de == 0. {
         f64::NAN

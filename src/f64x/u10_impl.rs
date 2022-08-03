@@ -374,8 +374,10 @@ macro_rules! impl_math_f64_u10 {
                 ql = ddii;
                 s = ddidd;
                 let o = d.is_infinite() | d.is_nan();
-                s.0 = F64x::from_bits(U64x::from_bits(o) | U64x::from_bits(s.0));
-                s.1 = F64x::from_bits(U64x::from_bits(o) | U64x::from_bits(s.1));
+                s = Doubled::new(
+                    F64x::from_bits(U64x::from_bits(o) | U64x::from_bits(s.0)),
+                    F64x::from_bits(U64x::from_bits(o) | U64x::from_bits(s.1))
+                );
             }
 
             let t = s;
@@ -391,7 +393,7 @@ macro_rules! impl_math_f64_u10 {
                 * (s.0 * t.0);
 
             let x = t.add_checked(u);
-            let rx = x.0 + x.1;
+            let rx = F64x::from(x);
 
             let rx = d.is_neg_zero().select(NEG_ZERO, rx);
 
@@ -404,7 +406,7 @@ macro_rules! impl_math_f64_u10 {
                 .mul_add(s.0, F64x::splat(-0.5));
 
             let x = ONE.add_checked(s.0.mul_as_doubled(u));
-            let ry = x.0 + x.1;
+            let ry = F64x::from(x);
 
             let o = M64x::from_cast((ql & Ix::splat(1)).eq(Ix::splat(0)));
             let mut rsin = o.select(rx, ry);
@@ -459,8 +461,10 @@ macro_rules! impl_math_f64_u10 {
                     let (ddidd, ddii) = rempi(d);
                     x = ddidd;
                     let o = d.is_infinite() | d.is_nan();
-                    x.0 = F64x::from_bits(U64x::from_bits(o) | U64x::from_bits(x.0));
-                    x.1 = F64x::from_bits(U64x::from_bits(o) | U64x::from_bits(x.1));
+                    x = Doubled::new(
+                        F64x::from_bits(U64x::from_bits(o) | U64x::from_bits(x.0)),
+                        F64x::from_bits(U64x::from_bits(o) | U64x::from_bits(x.1))
+                    );
 
                     ql = Mx::from_cast(g).select(ql, ddii);
                     s = g.select_doubled(s, x);
@@ -480,7 +484,7 @@ macro_rules! impl_math_f64_u10 {
                 * (s.0 * t.0);
 
             let x = t.add_checked(u);
-            let mut rx = x.0 + x.1;
+            let mut rx = F64x::from(x);
 
             rx = d.is_neg_zero().select(NEG_ZERO, rx);
 
@@ -493,7 +497,7 @@ macro_rules! impl_math_f64_u10 {
                 .mul_add(s.0, F64x::splat(-0.5));
 
             let x = ONE.add_checked(s.0.mul_as_doubled(u));
-            let ry = x.0 + x.1;
+            let ry = F64x::from(x);
 
             let o = M64x::from_cast((ql & Ix::splat(1)).eq(Ix::splat(0)));
             let mut rsin = o.select(rx, ry);
@@ -545,7 +549,7 @@ macro_rules! impl_math_f64_u10 {
                 let dqh = dqh * D1_24X;
                 s = Doubled::new(M_2_PI_H, M_2_PI_L) * d
                     + (d.lt(ZERO).select(F64x::splat(-0.5), HALF) - dqh);
-                let dql = (s.0 + s.1).trunc();
+                let dql = F64x::from(s).trunc();
                 ql = dql.roundi();
 
                 let u = dqh.mul_add(-PI_A * HALF, d);
@@ -560,8 +564,10 @@ macro_rules! impl_math_f64_u10 {
                 ql = ddii;
                 s = ddidd;
                 let o = d.is_infinite() | d.is_nan();
-                s.0 = F64x::from_bits(U64x::from_bits(o) | U64x::from_bits(s.0));
-                s.1 = F64x::from_bits(U64x::from_bits(o) | U64x::from_bits(s.1));
+                s = Doubled::new(
+                    F64x::from_bits(U64x::from_bits(o) | U64x::from_bits(s.0)),
+                    F64x::from_bits(U64x::from_bits(o) | U64x::from_bits(s.1))
+                );
             }
 
             let t = s.scale(F64x::splat(0.5));
@@ -588,7 +594,7 @@ macro_rules! impl_math_f64_u10 {
 
             x = o.select_doubled(-y, x) / o.select_doubled(x, y);
 
-            let u = x.0 + x.1;
+            let u = F64x::from(x);
 
             d.eq(ZERO).select(d, u)
         }
@@ -610,7 +616,7 @@ macro_rules! impl_math_f64_u10 {
                 dqh *= D1_24X;
                 let mut x = Doubled::new(M_2_PI_H, M_2_PI_L) * d
                     + (d.lt(ZERO).select(F64x::splat(-0.5), HALF) - dqh);
-                let dql = (x.0 + x.1).trunc();
+                let dql = F64x::from(x).trunc();
 
                 let u = dqh.mul_add(-PI_A * HALF, d);
                 x = u.add_checked_as_doubled(dql * (-PI_A * HALF));
@@ -628,8 +634,10 @@ macro_rules! impl_math_f64_u10 {
                     let (ddidd, ddii) = rempi(d);
                     x = ddidd;
                     let o = d.is_infinite() | d.is_nan();
-                    x.0 = F64x::from_bits(U64x::from_bits(o) | U64x::from_bits(x.0));
-                    x.1 = F64x::from_bits(U64x::from_bits(o) | U64x::from_bits(x.1));
+                    x = Doubled::new(
+                        F64x::from_bits(U64x::from_bits(o) | U64x::from_bits(x.0)),
+                        F64x::from_bits(U64x::from_bits(o) | U64x::from_bits(x.1))
+                    );
 
                     ql = Mx::from_cast(g).select(ql, ddii);
                     s = g.select_doubled(s, x);
@@ -660,7 +668,7 @@ macro_rules! impl_math_f64_u10 {
 
             x = o.select_doubled(-y, x) / o.select_doubled(x, y);
 
-            let u = x.0 + x.1;
+            let u = F64x::from(x);
 
             d.eq(ZERO).select(d, u)
         }
@@ -680,8 +688,10 @@ macro_rules! impl_math_f64_u10 {
             let q = vsel_vi_vd_vi(x.0, Ix::splat(-2));
             let p = x.0.lt(ZERO);
             let b = U64x::from_bits(p) & U64x::from_bits(NEG_ZERO);
-            x.0 = F64x::from_bits(b ^ U64x::from_bits(x.0));
-            x.1 = F64x::from_bits(b ^ U64x::from_bits(x.1));
+            x = Doubled::new(
+                F64x::from_bits(b ^ U64x::from_bits(x.0)),
+                F64x::from_bits(b ^ U64x::from_bits(x.1))
+            );
 
             let q = vsel_vi_vd_vd_vi_vi(x.0, y.0, q + Ix::splat(1), q);
             let p = x.0.lt(y.0);
@@ -738,7 +748,7 @@ macro_rules! impl_math_f64_u10 {
             let y = o.select(y * D1_23X, y);
 
             let d = atan2k_u1(Doubled::new(y.abs(), ZERO), Doubled::new(x, ZERO));
-            let mut r = d.0 + d.1;
+            let mut r = F64x::from(d);
 
             r = r.mul_sign(x);
             r = (x.is_infinite() | x.eq(ZERO)).select(
@@ -805,7 +815,7 @@ macro_rules! impl_math_f64_u10 {
             .sub_checked(x)
             .sub_checked(u);
 
-            let r = o.select(u + x.0, (y.0 + y.1) * F64x::splat(2.));
+            let r = o.select(u + x.0, F64x::from(y) * F64x::splat(2.));
             r.mul_sign(d)
         }
 
@@ -863,7 +873,7 @@ macro_rules! impl_math_f64_u10 {
                 y,
             );
 
-            y.0 + y.1
+            y.into()
         }
 
         #[test]
@@ -882,7 +892,7 @@ macro_rules! impl_math_f64_u10 {
         /// The error bound of the returned value is `1.0 ULP`.
         pub fn atan(d: F64x) -> F64x {
             let d2 = atan2k_u1(Doubled::new(d.abs(), ZERO), Doubled::from((1., 0.)));
-            let mut r = d2.0 + d2.1;
+            let mut r = F64x::from(d2);
             r = d
                 .is_infinite()
                 .select(F64x::splat(1.570_796_326_794_896_557_998_982), r);
@@ -909,7 +919,7 @@ macro_rules! impl_math_f64_u10 {
             let mut y = x.abs();
             let mut d = expk2(Doubled::new(y, ZERO));
             d = d.sub_checked(d.recpre());
-            y = (d.0 + d.1) * HALF;
+            y = F64x::from(d) * HALF;
 
             y = (x.abs().gt(F64x::splat(710.)) | y.is_nan()).select(F64x::INFINITY, y);
             y = y.mul_sign(x);
@@ -936,7 +946,7 @@ macro_rules! impl_math_f64_u10 {
             let mut y = x.abs();
             let mut d = expk2(Doubled::new(y, ZERO));
             d = d.add_checked(d.recpre());
-            y = (d.0 + d.1) * HALF;
+            y = F64x::from(d) * HALF;
 
             y = (x.abs().gt(F64x::splat(710.)) | y.is_nan()).select(F64x::INFINITY, y);
             F64x::from_bits(U64x::from_bits(x.is_nan()) | U64x::from_bits(y))
@@ -961,7 +971,7 @@ macro_rules! impl_math_f64_u10 {
             let mut d = expk2(Doubled::new(y, ZERO));
             let e = d.recpre();
             d = (d + (-e)) / (d + e);
-            y = d.0 + d.1;
+            y = F64x::from(d);
 
             y = (x.abs().gt(F64x::splat(18.714_973_875)) | y.is_nan()).select(ONE, y);
             y = y.mul_sign(x);
@@ -993,7 +1003,7 @@ macro_rules! impl_math_f64_u10 {
             d = o.select_doubled(d * y, d);
 
             d = logk2((d + x).normalize());
-            y = d.0 + d.1;
+            y = F64x::from(d);
 
             y = (x.abs().gt(SQRT_DBL_MAX) | y.is_nan()).select(F64x::INFINITY.mul_sign(x), y);
 
@@ -1019,7 +1029,7 @@ macro_rules! impl_math_f64_u10 {
         /// sign or a correct value with `1.0 ULP` error bound is returned.
         pub fn acosh(x: F64x) -> F64x {
             let d = logk2(x.add_as_doubled(ONE).sqrt() * x.add_as_doubled(F64x::splat(-1.)).sqrt() + x);
-            let mut y = d.0 + d.1;
+            let mut y = F64x::from(d);
 
             y = (x.abs().gt(SQRT_DBL_MAX) | y.is_nan()).select(F64x::INFINITY, y);
             y = F64x::from_bits(!U64x::from_bits(x.eq(ONE)) & U64x::from_bits(y));
@@ -1101,7 +1111,7 @@ macro_rules! impl_math_f64_u10 {
             s = s.add_checked(x.scale(F64x::splat(2.)));
             s = s.add_checked(x2 * x.0 * t);
 
-            let r = s.0 + s.1;
+            let r = F64x::from(s);
 
             /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
             let r = d.eq(F64x::INFINITY).select(F64x::INFINITY, r);
@@ -1172,7 +1182,7 @@ macro_rules! impl_math_f64_u10 {
             );
             s = s.add_checked(x2 * x.0 * t);
 
-            let r = s.0 + s.1;
+            let r = F64x::from(s);
 
             /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
             let r = d.eq(F64x::INFINITY).select(F64x::INFINITY, r);
@@ -1237,7 +1247,7 @@ macro_rules! impl_math_f64_u10 {
                 ef + x * Doubled::from((2.885_390_081_777_926_774, 6.056_160_499_551_673_643_4_e-18));
             s += x2 * x.0 * t;
 
-            let r = s.0 + s.1;
+            let r = F64x::from(s);
 
             /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
             let r = d.eq(F64x::INFINITY).select(F64x::INFINITY, r);
@@ -1307,7 +1317,7 @@ macro_rules! impl_math_f64_u10 {
             s = s.add_checked(x.scale(F64x::splat(2.)));
             s = s.add_checked(x2 * x.0 * t);
 
-            let mut r = s.0 + s.1;
+            let mut r = F64x::from(s);
 
             r = d.gt(F64x::splat(1e+307)).select(F64x::INFINITY, r);
             r = (d.lt(F64x::splat(-1.)) | d.is_nan()).select(F64x::NAN, r);
@@ -1466,7 +1476,7 @@ macro_rules! impl_math_f64_u10 {
         /// The error bound of the returned value is `1.0 ULP`.
         pub fn expm1(a: F64x) -> F64x {
             let d = expk2(Doubled::new(a, ZERO)) + F64x::splat(-1.);
-            let mut x = d.0 + d.1;
+            let mut x = F64x::from(d);
             x = a
                 .gt(F64x::splat(709.782_712_893_383_996_732_223))
                 .select(F64x::INFINITY, x);
@@ -1648,13 +1658,13 @@ macro_rules! impl_math_f64_u10 {
             u = u * u;
             u *= d;
             u += -x;
-            y = u.0 + u.1;
+            y = F64x::from(u);
 
             y = F64x::splat(-2. / 3.) * y * z;
             let mut v = z.mul_as_doubled(z) + y;
             v *= d;
             v *= q2;
-            z = ldexp2k(v.0 + v.1, qu - Ix::splat(2048));
+            z = ldexp2k(F64x::from(v), qu - Ix::splat(2048));
 
             /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
             z = d.is_infinite().select(F64x::INFINITY.mul_sign(q2.0), z);
@@ -1682,7 +1692,7 @@ macro_rules! impl_math_f64_u10 {
         pub fn tgamma(a: F64x) -> F64x {
             let (da, db) = gammak(a);
             let y = expk2(da) * db;
-            let r = y.0 + y.1;
+            let r = F64x::from(y);
             let o = a.eq(F64x::NEG_INFINITY)
                 | (a.lt(ZERO) & a.is_integer())
                 | (a.is_finite() & a.lt(ZERO) & r.is_nan());
@@ -1711,7 +1721,7 @@ macro_rules! impl_math_f64_u10 {
         pub fn lgamma(a: F64x) -> F64x {
             let (da, db) = gammak(a);
             let y = da + logk2(db.abs());
-            let r = y.0 + y.1;
+            let r = F64x::from(y);
 
             let o = a.is_infinite() | (a.le(ZERO) & a.is_integer()) | (a.is_finite() & r.is_nan());
             o.select(F64x::INFINITY, r)
@@ -1834,7 +1844,7 @@ macro_rules! impl_math_f64_u10 {
 
             t2 += F64x::splat(-1.);
 
-            let mut z = -(t2.0 + t2.1);
+            let mut z = -F64x::from(t2);
             z = x.lt(F64x::splat(1e-8)).select(x * F64x::splat(1.128_379_167_095_512_627_562_454_759_59), z);
             z = x.ge(F64x::splat(6.)).select(ONE, z);
             z = a.is_infinite().select(ONE, z);

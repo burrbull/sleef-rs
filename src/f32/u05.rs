@@ -34,7 +34,7 @@ pub fn sincospif(d: f32) -> (f32, f32) {
         );
 
     x *= t;
-    let mut rsin = if d.is_neg_zero() { -0. } else { x.0 + x.1 };
+    let mut rsin = if d.is_neg_zero() { -0. } else { f32::from(x) };
 
     let u = (-0.243_061_180_1_e-7_f32)
         .mul_add(s, 0.359_057_708_e-5)
@@ -51,7 +51,7 @@ pub fn sincospif(d: f32) -> (f32, f32) {
         );
 
     x = x * s2 + 1.;
-    let mut rcos = x.0 + x.1;
+    let mut rcos = f32::from(x);
 
     if (q & 2) != 0 {
         core::mem::swap(&mut rcos, &mut rsin)
@@ -107,7 +107,7 @@ pub fn sinpif(d: f32) -> f32 {
     } else if d.is_neg_zero() {
         -0.
     } else {
-        x.0 + x.1
+        f32::from(x)
     }
 }
 
@@ -141,7 +141,7 @@ pub fn cospif(d: f32) -> f32 {
     } else if fabsfk(d) > TRIGRANGEMAX4_F {
         1.
     } else {
-        x.0 + x.1
+        f32::from(x)
     }
 }
 
@@ -190,7 +190,7 @@ pub fn sqrtf(mut d: f32) -> f32 {
     if (d == 0.) || (d == f32::INFINITY) {
         d
     } else {
-        (d2.0 + d2.1) * q
+        f32::from(d2) * q
     }
 }
 
@@ -217,7 +217,7 @@ pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
     let mut t = df(n, 0.) / df(d, 0.);
     t = (t.square() + 1.).sqrt() * max;
 
-    let ret = t.0 + t.1;
+    let ret = f32::from(t);
     if (x == f32::INFINITY) || (y == f32::INFINITY) {
         f32::INFINITY
     } else if x.is_nan() || y.is_nan() {

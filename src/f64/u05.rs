@@ -37,7 +37,7 @@ pub fn sincospi(d: f64) -> (f64, f64) {
         );
 
     x *= t;
-    let mut rsin = if d.is_neg_zero() { -0. } else { x.0 + x.1 };
+    let mut rsin = if d.is_neg_zero() { -0. } else { f64::from(x) };
 
     //
 
@@ -59,7 +59,7 @@ pub fn sincospi(d: f64) -> (f64, f64) {
         );
 
     x = x * s2 + 1.;
-    let mut rcos = x.0 + x.1;
+    let mut rcos = f64::from(x);
 
     //
 
@@ -117,7 +117,7 @@ pub fn sinpi(d: f64) -> f64 {
     } else if d.is_neg_zero() {
         -0.
     } else {
-        x.0 + x.1
+        x.into()
     }
 }
 
@@ -152,7 +152,7 @@ pub fn cospi(d: f64) -> f64 {
     } else if fabsk(d) > TRIGRANGEMAX3 / 4. {
         1.
     } else {
-        x.0 + x.1
+        x.into()
     }
 }
 
@@ -199,7 +199,7 @@ pub fn sqrt(mut d: f64) -> f64 {
 
     let d2 = (d + x.mul_as_doubled(x)) * x.recpre();
 
-    let ret = (d2.0 + d2.1) * q;
+    let ret = f64::from(d2) * q;
 
     let ret = if d == f64::INFINITY {
         f64::INFINITY
@@ -235,7 +235,7 @@ pub fn hypot(mut x: f64, mut y: f64) -> f64 {
     }
     let mut t = dd(n, 0.) / dd(d, 0.);
     t = (t.square() + 1.).sqrt() * max;
-    let ret = t.0 + t.1;
+    let ret = f64::from(t);
 
     if (x == f64::INFINITY) || (y == f64::INFINITY) {
         f64::INFINITY

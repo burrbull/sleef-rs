@@ -114,7 +114,7 @@ macro_rules! impl_math_f32_u15 {
             x = expk2f(x);
             x = o1.select_doubled(x, x * u);
 
-            let mut r = o3.select(x.0 + x.1, ZERO);
+            let mut r = o3.select(F32x::from(x), ZERO);
             r = s.is_sign_negative().select(F32x::splat(2.) - r, r);
             s.is_nan().select(F32x::NAN, r)
         }

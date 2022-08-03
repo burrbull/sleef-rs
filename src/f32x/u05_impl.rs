@@ -34,7 +34,7 @@ macro_rules! impl_math_f32_u05 {
                 ));
 
             x *= t;
-            let rx = x.0 + x.1;
+            let rx = F32x::from(x);
 
             let rx = d.is_neg_zero().select(NEG_ZERO, rx);
 
@@ -53,7 +53,7 @@ macro_rules! impl_math_f32_u05 {
                 ));
 
             x = x * s2 + ONE;
-            let ry = x.0 + x.1;
+            let ry = F32x::from(x);
 
             let o = (q & I32x::splat(2)).eq(I32x::splat(0));
             let mut rsin = o.select(rx, ry);
@@ -122,7 +122,7 @@ macro_rules! impl_math_f32_u05 {
 
             let d2 = (d + x.mul_as_doubled(x)) * x.recpre_as_doubled();
 
-            x = (d2.0 + d2.1) * q;
+            x = F32x::from(d2) * q;
 
             x = d.eq(F32x::INFINITY).select(F32x::INFINITY, x);
             d.eq(ZERO).select(d, x)
@@ -150,7 +150,7 @@ macro_rules! impl_math_f32_u05 {
 
             let t = Doubled::new(n, ZERO) / Doubled::new(d, ZERO);
             let t = (t.square() + ONE).sqrt() * max;
-            let mut ret = t.0 + t.1;
+            let mut ret = F32x::from(t);
             ret = ret.is_nan().select(F32x::INFINITY, ret);
             ret = min.eq(ZERO).select(max, ret);
             ret = (x.is_nan() | y.is_nan()).select(F32x::NAN, ret);
@@ -177,7 +177,7 @@ macro_rules! impl_math_f32_u05 {
         /// If ***a*** is a `NaN` or infinity, a NaN is returned.
         pub fn sinpif(d: F32x) -> F32x {
             let x = sinpifk(d);
-            let mut r = x.0 + x.1;
+            let mut r = F32x::from(x);
 
             r = d.is_neg_zero().select(NEG_ZERO, r);
             r = F32x::from_bits(!U32x::from_bits(d.abs().gt(TRIGRANGEMAX4_F)) & U32x::from_bits(r));
@@ -209,7 +209,7 @@ macro_rules! impl_math_f32_u05 {
         /// If ***a*** is a `NaN` or infinity, a `NaN` is returned.
         pub fn cospif(d: F32x) -> F32x {
             let x = cospifk(d);
-            let r = x.0 + x.1;
+            let r = F32x::from(x);
 
             let r = d.abs().gt(TRIGRANGEMAX4_F).select(ONE, r);
             F32x::from_bits(U32x::from_bits(d.is_infinite()) | U32x::from_bits(r))

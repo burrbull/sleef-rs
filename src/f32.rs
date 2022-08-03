@@ -508,6 +508,7 @@ fn copysignfk(x: f32, y: f32) -> f32 {
     f32::from_bits((x.to_bits() & !(1 << 31)) ^ (y.to_bits() & (1 << 31)))
 }
 
+/// Sign of a number
 #[inline]
 pub fn signf(d: f32) -> f32 {
     mulsignf(1., d)

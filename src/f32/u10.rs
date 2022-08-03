@@ -2,37 +2,6 @@
 
 use super::*;
 
-/// Base-2 exponential function
-///
-/// This function returns `2` raised to ***a***.
-/// The error bound of the returned value is `1.0 ULP`.
-pub fn exp2f(d: f32) -> f32 {
-    let qf = rintfk(d);
-    let q = qf as i32;
-    let s = d - qf;
-
-    let mut u = 0.153_592_089_2_e-3_f32
-        .mul_add(s, 0.133_926_270_1_e-2)
-        .mul_add(s, 0.961_838_476_4_e-2)
-        .mul_add(s, 0.555_034_726_9_e-1)
-        .mul_add(s, 0.240_226_447_6)
-        .mul_add(s, 0.693_147_182_5);
-    u = (1.).add_checked(u.mul_as_doubled(s)).normalize().0;
-
-    if d >= 128. {
-        f32::INFINITY
-    } else if d < -150. {
-        0.
-    } else {
-        ldexp2kf(u, q)
-    }
-}
-
-#[test]
-fn test_exp2f() {
-    test_f_f(exp2f, rug::Float::exp2, -150.0..=128.0, 1.);
-}
-
 /// Sine function
 ///
 /// This function evaluates the sine function of a value in ***a***.
@@ -473,6 +442,191 @@ fn test_atanf() {
     test_f_f(atanf, rug::Float::atan, f32::MIN..=f32::MAX, 1.);
 }
 
+/// Hyperbolic sine function
+///
+/// This function evaluates the hyperbolic sine function of a value in ***a***.
+/// The error bound of the returned value is `1.0 ULP` if ***a*** is in `[-88.5, 88.5]`.
+/// If ***a*** is a finite value out of this range, infinity with a correct
+/// sign or a correct value with `1.0 ULP` error bound is returned.
+pub fn sinhf(x: f32) -> f32 {
+    let mut y = fabsfk(x);
+    let mut d = expk2f(df(y, 0.));
+    d = d.sub_checked(d.recpre());
+    y = (d.0 + d.1) * 0.5;
+
+    y = if fabsfk(x) > 89. { f32::INFINITY } else { y };
+    y = if y.is_nan() { f32::INFINITY } else { y };
+    y = mulsignf(y, x);
+    if x.is_nan() {
+        f32::NAN
+    } else {
+        y
+    }
+}
+
+#[test]
+fn test_sinhf() {
+    test_f_f(sinhf, rug::Float::sinh, -88.5..=88.5, 1.);
+}
+
+/// Hyperbolic cosine function
+///
+/// This function evaluates the hyperbolic cosine function of a value in ***a***.
+/// The error bound of the returned value is `1.0 ULP` if ***a** is in `[-88.5, 88.5]`.
+/// If a is a finite value out of this range, infinity with a correct
+/// sign or a correct value with `1.0 ULP` error bound is returned.
+pub fn coshf(x: f32) -> f32 {
+    let mut y = fabsfk(x);
+    let mut d = expk2f(df(y, 0.));
+    d = d.add_checked(d.recpre());
+    y = (d.0 + d.1) * 0.5;
+
+    y = if fabsfk(x) > 89. { f32::INFINITY } else { y };
+    y = if y.is_nan() { f32::INFINITY } else { y };
+    if x.is_nan() {
+        f32::NAN
+    } else {
+        y
+    }
+}
+
+#[test]
+fn test_coshf() {
+    test_f_f(coshf, rug::Float::cosh, -88.5..=88.5, 1.);
+}
+
+/// Hyperbolic tangent function
+///
+/// This function evaluates the hyperbolic tangent function of a value in ***a***.
+/// The error bound of the returned value is `1.0001 ULP`.
+pub fn tanhf(x: f32) -> f32 {
+    let mut y = fabsfk(x);
+    let mut d = expk2f(df(y, 0.));
+    let e = d.recpre();
+    d = d.sub_checked(e) / d.add_checked(e);
+    y = d.0 + d.1;
+
+    y = if fabsfk(x) > 18.714_973_875 { 1. } else { y }; // TODO: check
+    y = if y.is_nan() { 1. } else { y };
+    y = mulsignf(y, x);
+    if x.is_nan() {
+        f32::NAN
+    } else {
+        y
+    }
+}
+
+#[test]
+fn test_tanhf() {
+    test_f_f(tanhf, rug::Float::tanh, -8.7..=8.7, 1.0001);
+}
+
+/// Inverse hyperbolic sine function
+///
+/// This function evaluates the inverse hyperbolic sine function of a value in ***a***.
+/// The error bound of the returned value is `1.001 ULP` if ***a*** is in `[-1.84e+19, 1.84e+19]`.
+/// If ***a*** is a finite value out of this range, infinity with a correct
+/// sign or a correct value with `1.0 ULP` error bound is returned.
+pub fn asinhf(x: f32) -> f32 {
+    let mut y = fabsfk(x);
+
+    let mut d = if y > 1. { x.recpre() } else { df(y, 0.) };
+    d = (d.square() + 1.).sqrt();
+    d = if y > 1. { d * y } else { d };
+
+    d = logk2f(d.add_checked(x).normalize());
+    y = d.0 + d.1;
+
+    y = if fabsfk(x) > SQRT_FLT_MAX || y.is_nan() {
+        mulsignf(f32::INFINITY, x)
+    } else {
+        y
+    };
+    y = if x.is_nan() { f32::NAN } else { y };
+    if x.is_neg_zero() {
+        -0.
+    } else {
+        y
+    }
+}
+
+#[test]
+fn test_asinhf() {
+    test_f_f(
+        asinhf,
+        rug::Float::asinh,
+        -SQRT_FLT_MAX..=SQRT_FLT_MAX,
+        1.0001,
+    );
+}
+
+/// Inverse hyperbolic cosine function
+///
+/// This function evaluates the inverse hyperbolic cosine function of a value in ***a***.
+/// The error bound of the returned value is `1.001 ULP` if ***a*** is in `[-1.84e+19, 1.84e+19]`.
+/// If ***a*** is a finite value out of this range, infinity with a correct
+/// sign or a correct value with `1.0 ULP` error bound is returned.
+pub fn acoshf(x: f32) -> f32 {
+    let d = logk2f((x.add_as_doubled(1.)).sqrt() * (x.add_as_doubled(-1.)).sqrt() + x);
+    let mut y = d.0 + d.1;
+
+    y = if (x > SQRT_FLT_MAX) || y.is_nan() {
+        f32::INFINITY
+    } else {
+        y
+    };
+    y = if x == 1. { 0. } else { y };
+    y = if x < 1. { f32::NAN } else { y };
+    if x.is_nan() {
+        f32::NAN
+    } else {
+        y
+    }
+}
+
+#[test]
+fn test_acoshf() {
+    test_f_f(
+        acoshf,
+        rug::Float::acosh,
+        -SQRT_FLT_MAX..=SQRT_FLT_MAX,
+        1.0001,
+    );
+}
+
+/// Inverse hyperbolic tangent function
+///
+/// This function evaluates the inverse hyperbolic tangent function of a value in ***a***.
+/// The error bound of the returned value is `1.0001 ULP`.
+pub fn atanhf(x: f32) -> f32 {
+    let mut y = fabsfk(x);
+    let d = logk2f((1.).add_as_doubled(y) / (1.).add_as_doubled(-y));
+    y = if y > 1. {
+        f32::NAN
+    } else if y == 1. {
+        f32::INFINITY
+    } else {
+        (d.0 + d.1) * 0.5
+    };
+
+    y = if x.is_infinite() || y.is_nan() {
+        f32::NAN
+    } else {
+        y
+    };
+    y = mulsignf(y, x);
+    if x.is_nan() {
+        f32::NAN
+    } else {
+        y
+    }
+}
+
+#[test]
+fn test_atanhf() {
+    test_f_f(atanhf, rug::Float::atanh, f32::MIN..=f32::MAX, 1.0001);
+}
+
 /// Natural logarithmic function
 ///
 /// This function returns the natural logarithm of ***a***.
@@ -515,6 +669,325 @@ pub fn logf(mut d: f32) -> f32 {
 #[test]
 fn test_logf() {
     test_f_f(logf, rug::Float::ln, 0.0..=f32::MAX, 1.);
+}
+
+/// Base-10 logarithmic function
+///
+/// This function returns the base-10 logarithm of ***a***.
+/// The error bound of the returned value is `1.0 ULP`.
+pub fn log10f(mut d: f32) -> f32 {
+    let o = d < f32::MIN_POSITIVE;
+    if o {
+        d *= F1_32 * F1_32;
+    }
+
+    let mut e = ilogb2kf(d * (1. / 0.75));
+    let m = ldexp3kf(d, -e);
+
+    if o {
+        e -= 64;
+    }
+
+    let x = (-1.).add_as_doubled(m) / (1.).add_as_doubled(m);
+    let x2 = x.0 * x.0;
+
+    let t = 0.131_428_986_8_f32
+        .mul_add(x2, 0.173_549_354_1)
+        .mul_add(x2, 0.289_530_962_7);
+
+    let s = (df(0.301_030_01, -1.432_098_889_e-8) * (e as f32))
+        .add_checked(x * df(0.868_588_984, -2.170_757_285_e-8))
+        .add_checked(x2 * x.0 * t);
+
+    if d == 0. {
+        f32::NEG_INFINITY
+    } else if (d < 0.) || d.is_nan() {
+        f32::NAN
+    } else if d.is_infinite() {
+        f32::INFINITY
+    } else {
+        s.0 + s.1
+    }
+}
+
+#[test]
+fn test_log10f() {
+    test_f_f(log10f, rug::Float::log10, 0.0..=f32::MAX, 1.);
+}
+
+/// Base-2 logarithmic function
+///
+/// This function returns the base-2 logarithm of ***a***.
+/// The error bound of the returned value is `1.0 ULP`.
+pub fn log2f(mut d: f32) -> f32 {
+    let o = d < f32::MIN_POSITIVE;
+    if o {
+        d *= F1_32 * F1_32;
+    }
+
+    let mut e = ilogb2kf(d * (1. / 0.75));
+    let m = ldexp3kf(d, -e);
+
+    if o {
+        e -= 64;
+    }
+
+    let x = (-1.).add_as_doubled(m) / (1.).add_as_doubled(m);
+    let x2 = x.0 * x.0;
+
+    let t = 0.437_455_028_3_f32
+        .mul_add(x2, 0.576_479_017_7)
+        .mul_add(x2, 0.961_801_290_512);
+
+    let mut s = (e as f32) + x * df(2.885_390_043_258_666_992_2, 3.273_447_448_356_848_861_6_e-8);
+    s += x2 * x.0 * t;
+
+    if d == 0. {
+        f32::NEG_INFINITY
+    } else if (d < 0.) || d.is_nan() {
+        f32::NAN
+    } else if d.is_infinite() {
+        f32::INFINITY
+    } else {
+        s.0 + s.1
+    }
+}
+
+#[test]
+fn test_log2f() {
+    test_f_f(log2f, rug::Float::log2, 0.0..=f32::MAX, 1.);
+}
+
+/// Logarithm of one plus argument
+///
+/// This function returns the natural logarithm of (1+***a***).
+/// The error bound of the returned value is `1.0 ULP`.
+pub fn log1pf(d: f32) -> f32 {
+    let mut dp1 = d + 1.;
+
+    let o = dp1 < f32::MIN_POSITIVE;
+    if o {
+        dp1 *= F1_32 * F1_32;
+    }
+
+    let mut e = ilogb2kf(dp1 * (1. / 0.75));
+
+    let t = ldexp3kf(1., -e);
+    let m = d.mul_add(t, t - 1.);
+
+    if o {
+        e -= 64;
+    }
+
+    let x = df(m, 0.) / (2.).add_checked_as_doubled(m);
+    let x2 = x.0 * x.0;
+
+    let t = 0.302_729_487_4_f32
+        .mul_add(x2, 0.399_610_817_4)
+        .mul_add(x2, 0.666_669_488);
+
+    let s = (df(0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9) * (e as f32))
+        .add_checked(x.scale(2.))
+        .add_checked(x2 * x.0 * t);
+
+    if d.is_neg_zero() {
+        -0.
+    } else if d == -1. {
+        f32::NEG_INFINITY
+    } else if d < -1. {
+        f32::NAN
+    } else if d > 1e+38 {
+        f32::INFINITY
+    } else {
+        s.0 + s.1
+    }
+}
+
+#[test]
+fn test_log1pf() {
+    test_f_f(log1pf, rug::Float::ln_1p, -1.0..=1e+38, 1.);
+}
+
+/// Base-*e* exponential function
+///
+/// This function returns the value of *e* raised to ***a***.
+/// The error bound of the returned value is `1.0 ULP`.
+pub fn expf(d: f32) -> f32 {
+    let qf = rintfk(d * R_LN2_F);
+    let q = qf as i32;
+    let s = qf.mul_add(-L2U_F, d);
+    let s = qf.mul_add(-L2L_F, s);
+
+    let mut u = 0.000_198_527_617_612_853_646_278_381_f32
+        .mul_add(s, 0.001_393_043_552_525_341_510_772_71)
+        .mul_add(s, 0.008_333_360_776_305_198_669_433_59)
+        .mul_add(s, 0.041_666_485_369_205_474_853_515_6)
+        .mul_add(s, 0.166_666_671_633_720_397_949_219)
+        .mul_add(s, 0.5);
+
+    u = s * s * u + s + 1.;
+
+    if d < -104. {
+        0.
+    } else if d > 104. {
+        f32::INFINITY
+    } else {
+        ldexp2kf(u, q)
+    }
+}
+
+#[test]
+fn test_expf() {
+    test_f_f(expf, rug::Float::exp, -104.0..=100.0, 1.);
+}
+
+/// Base-10 exponential function
+///
+/// This function returns 10 raised to ***a***.
+/// The error bound of the returned value is `1.09 ULP`.
+pub fn exp10f(d: f32) -> f32 {
+    let qf = rintfk(d * LOG10_2_F);
+
+    let q = qf as i32;
+    let s = qf.mul_add(-L10U_F, d);
+    let s = qf.mul_add(-L10L_F, s);
+
+    let mut u = 0.680_255_591_9_e-1
+        .mul_add(s, 0.207_808_032_6)
+        .mul_add(s, 0.539_390_385_2)
+        .mul_add(s, 0.117_124_533_7_e+1)
+        .mul_add(s, 0.203_467_869_8_e+1)
+        .mul_add(s, 0.265_094_900_1_e+1);
+    let x = df(2.3025851249694824219, -3.1705172516493593157e-08).add_checked(u * s);
+    u = (1.).add_checked(x * s).normalize().0;
+
+    if d > 38.531_839_419_103_623_894_138_7 {
+        f32::INFINITY // log10(FLT_MAX)
+    } else if d < -50. {
+        0.
+    } else {
+        ldexp2kf(u, q)
+    }
+}
+
+#[test]
+fn test_exp10f() {
+    test_f_f(exp10f, rug::Float::exp10, -50.0..=38.54, 1.);
+}
+
+/// Base-*e* exponential function minus 1
+///
+/// This function returns the value one less than *e* raised to ***a***.
+/// The error bound of the returned value is `1.0 ULP`.
+pub fn expm1f(a: f32) -> f32 {
+    let d = expk2f(df(a, 0.)) + (-1.);
+    if a.is_neg_zero() {
+        -0.
+    } else if a < -16.635_532_333_438_687_426_013_570 {
+        -1.
+    } else if a > 88.722_831_726_074_218_75 {
+        f32::INFINITY
+    } else {
+        d.0 + d.1
+    }
+}
+
+#[test]
+fn test_expm1f() {
+    test_f_f(expm1f, rug::Float::exp_m1, -16.64..=88.73, 1.);
+}
+
+/// Base-2 exponential function
+///
+/// This function returns `2` raised to ***a***.
+/// The error bound of the returned value is `1.0 ULP`.
+pub fn exp2f(d: f32) -> f32 {
+    let qf = rintfk(d);
+    let q = qf as i32;
+    let s = d - qf;
+
+    let mut u = 0.153_592_089_2_e-3_f32
+        .mul_add(s, 0.133_926_270_1_e-2)
+        .mul_add(s, 0.961_838_476_4_e-2)
+        .mul_add(s, 0.555_034_726_9_e-1)
+        .mul_add(s, 0.240_226_447_6)
+        .mul_add(s, 0.693_147_182_5);
+    u = (1.).add_checked(u.mul_as_doubled(s)).normalize().0;
+
+    if d >= 128. {
+        f32::INFINITY
+    } else if d < -150. {
+        0.
+    } else {
+        ldexp2kf(u, q)
+    }
+}
+
+#[test]
+fn test_exp2f() {
+    test_f_f(exp2f, rug::Float::exp2, -150.0..=128.0, 1.);
+}
+
+/// Power function
+///
+/// This function returns the value of ***x*** raised to the power of ***y***.
+/// The error bound of the returned value is `1.0 ULP`.
+pub fn powf(x: f32, y: f32) -> f32 {
+    let yisint = (y == (y as i32 as f32)) || (fabsfk(y) >= F1_24);
+    let yisodd = ((1 & (y as i32)) != 0) && yisint && (fabsfk(y) < F1_24);
+
+    let mut result = expkf(logkf(fabsfk(x)) * y);
+
+    result = if result.is_nan() {
+        f32::INFINITY
+    } else {
+        result
+    };
+    result *= if x >= 0. {
+        1.
+    } else if !yisint {
+        f32::NAN
+    } else if yisodd {
+        -1.
+    } else {
+        1.
+    };
+
+    let efx = mulsignf(fabsfk(x) - 1., y);
+    if (y == 0.) || (x == 1.) {
+        1.
+    } else if x.is_nan() || y.is_nan() {
+        f32::NAN
+    } else if x.is_infinite() || (x == 0.) {
+        (if yisodd { signf(x) } else { 1. })
+            * (if (if x == 0. { -y } else { y }) < 0. {
+                0.
+            } else {
+                f32::INFINITY
+            })
+    } else if y.is_infinite() {
+        if efx < 0. {
+            0.
+        } else if efx == 0. {
+            1.
+        } else {
+            f32::INFINITY
+        }
+    } else {
+        result
+    }
+}
+
+#[test]
+fn test_powf() {
+    use rug::{ops::Pow, Float};
+    test_ff_f(
+        powf,
+        |in1, in2| Float::with_val(in1.prec(), in1.pow(in2)),
+        f32::MIN..=f32::MAX,
+        f32::MIN..=f32::MAX,
+        1.,
+    );
 }
 
 /// Cube root function
@@ -741,481 +1214,4 @@ pub fn erff(a: f32) -> f32 {
 #[test]
 fn test_erff() {
     test_f_f(erff, rug::Float::erf, f32::MIN..=f32::MAX, 0.75);
-}
-
-/// Base-*e* exponential function
-///
-/// This function returns the value of *e* raised to ***a***.
-/// The error bound of the returned value is `1.0 ULP`.
-pub fn expf(d: f32) -> f32 {
-    let qf = rintfk(d * R_LN2_F);
-    let q = qf as i32;
-    let s = qf.mul_add(-L2U_F, d);
-    let s = qf.mul_add(-L2L_F, s);
-
-    let mut u = 0.000_198_527_617_612_853_646_278_381_f32
-        .mul_add(s, 0.001_393_043_552_525_341_510_772_71)
-        .mul_add(s, 0.008_333_360_776_305_198_669_433_59)
-        .mul_add(s, 0.041_666_485_369_205_474_853_515_6)
-        .mul_add(s, 0.166_666_671_633_720_397_949_219)
-        .mul_add(s, 0.5);
-
-    u = s * s * u + s + 1.;
-
-    if d < -104. {
-        0.
-    } else if d > 104. {
-        f32::INFINITY
-    } else {
-        ldexp2kf(u, q)
-    }
-}
-
-#[test]
-fn test_expf() {
-    test_f_f(expf, rug::Float::exp, -104.0..=100.0, 1.);
-}
-
-/// Power function
-///
-/// This function returns the value of ***x*** raised to the power of ***y***.
-/// The error bound of the returned value is `1.0 ULP`.
-pub fn powf(x: f32, y: f32) -> f32 {
-    let yisint = (y == (y as i32 as f32)) || (fabsfk(y) >= F1_24);
-    let yisodd = ((1 & (y as i32)) != 0) && yisint && (fabsfk(y) < F1_24);
-
-    let mut result = expkf(logkf(fabsfk(x)) * y);
-
-    result = if result.is_nan() {
-        f32::INFINITY
-    } else {
-        result
-    };
-    result *= if x >= 0. {
-        1.
-    } else if !yisint {
-        f32::NAN
-    } else if yisodd {
-        -1.
-    } else {
-        1.
-    };
-
-    let efx = mulsignf(fabsfk(x) - 1., y);
-    if (y == 0.) || (x == 1.) {
-        1.
-    } else if x.is_nan() || y.is_nan() {
-        f32::NAN
-    } else if x.is_infinite() || (x == 0.) {
-        (if yisodd { signf(x) } else { 1. })
-            * (if (if x == 0. { -y } else { y }) < 0. {
-                0.
-            } else {
-                f32::INFINITY
-            })
-    } else if y.is_infinite() {
-        if efx < 0. {
-            0.
-        } else if efx == 0. {
-            1.
-        } else {
-            f32::INFINITY
-        }
-    } else {
-        result
-    }
-}
-
-#[test]
-fn test_powf() {
-    use rug::{ops::Pow, Float};
-    test_ff_f(
-        powf,
-        |in1, in2| Float::with_val(in1.prec(), in1.pow(in2)),
-        f32::MIN..=f32::MAX,
-        f32::MIN..=f32::MAX,
-        1.,
-    );
-}
-
-/// Hyperbolic sine function
-///
-/// This function evaluates the hyperbolic sine function of a value in ***a***.
-/// The error bound of the returned value is `1.0 ULP` if ***a*** is in
-/// `[-709, 709]` for the double-precision function or `[-88.5, 88.5]`
-/// for the single-precision function.
-/// If ***a*** is a finite value out of this range, infinity with a correct
-/// sign or a correct value with `1.0 ULP` error bound is returned.
-pub fn sinhf(x: f32) -> f32 {
-    let mut y = fabsfk(x);
-    let mut d = expk2f(df(y, 0.));
-    d = d.sub_checked(d.recpre());
-    y = (d.0 + d.1) * 0.5;
-
-    y = if fabsfk(x) > 89. { f32::INFINITY } else { y };
-    y = if y.is_nan() { f32::INFINITY } else { y };
-    y = mulsignf(y, x);
-    if x.is_nan() {
-        f32::NAN
-    } else {
-        y
-    }
-}
-
-#[test]
-fn test_sinhf() {
-    test_f_f(sinhf, rug::Float::sinh, -88.5..=88.5, 1.);
-}
-
-/// Hyperbolic cosine function
-///
-/// This function evaluates the hyperbolic cosine function of a value in ***a***.
-/// The error bound of the returned value is `1.0 ULP` if ***a** is in
-/// `[-709, 709]` for the double-precision function or `[-88.5, 88.5]`
-/// for the single-precision function.
-/// If a is a finite value out of this range, infinity with a correct
-/// sign or a correct value with `1.0 ULP` error bound is returned.
-pub fn coshf(x: f32) -> f32 {
-    let mut y = fabsfk(x);
-    let mut d = expk2f(df(y, 0.));
-    d = d.add_checked(d.recpre());
-    y = (d.0 + d.1) * 0.5;
-
-    y = if fabsfk(x) > 89. { f32::INFINITY } else { y };
-    y = if y.is_nan() { f32::INFINITY } else { y };
-    if x.is_nan() {
-        f32::NAN
-    } else {
-        y
-    }
-}
-
-#[test]
-fn test_coshf() {
-    test_f_f(coshf, rug::Float::cosh, -88.5..=88.5, 1.);
-}
-
-/// Hyperbolic tangent function
-///
-/// This function evaluates the hyperbolic tangent function of a value in ***a***.
-/// The error bound of the returned value is `1.0001 ULP`.
-pub fn tanhf(x: f32) -> f32 {
-    let mut y = fabsfk(x);
-    let mut d = expk2f(df(y, 0.));
-    let e = d.recpre();
-    d = d.sub_checked(e) / d.add_checked(e);
-    y = d.0 + d.1;
-
-    y = if fabsfk(x) > 18.714_973_875 { 1. } else { y }; // TODO: check
-    y = if y.is_nan() { 1. } else { y };
-    y = mulsignf(y, x);
-    if x.is_nan() {
-        f32::NAN
-    } else {
-        y
-    }
-}
-
-#[test]
-fn test_tanhf() {
-    test_f_f(tanhf, rug::Float::tanh, -8.7..=8.7, 1.0001);
-}
-
-/// Inverse hyperbolic sine function
-///
-/// This function evaluates the inverse hyperbolic sine function of a value in ***a***.
-/// The error bound of the returned value is `1.001 ULP` if ***a*** is in `[-1.84e+19, 1.84e+19]`.
-/// If ***a*** is a finite value out of this range, infinity with a correct
-/// sign or a correct value with `1.0 ULP` error bound is returned.
-pub fn asinhf(x: f32) -> f32 {
-    let mut y = fabsfk(x);
-
-    let mut d = if y > 1. { x.recpre() } else { df(y, 0.) };
-    d = (d.square() + 1.).sqrt();
-    d = if y > 1. { d * y } else { d };
-
-    d = logk2f(d.add_checked(x).normalize());
-    y = d.0 + d.1;
-
-    y = if fabsfk(x) > SQRT_FLT_MAX || y.is_nan() {
-        mulsignf(f32::INFINITY, x)
-    } else {
-        y
-    };
-    y = if x.is_nan() { f32::NAN } else { y };
-    if x.is_neg_zero() {
-        -0.
-    } else {
-        y
-    }
-}
-
-#[test]
-fn test_asinhf() {
-    test_f_f(
-        asinhf,
-        rug::Float::asinh,
-        -SQRT_FLT_MAX..=SQRT_FLT_MAX,
-        1.0001,
-    );
-}
-
-/// Inverse hyperbolic cosine function
-///
-/// This function evaluates the inverse hyperbolic cosine function of a value in ***a***.
-/// The error bound of the returned value is `1.001 ULP` if ***a*** is in `[-1.84e+19, 1.84e+19]`.
-/// If ***a*** is a finite value out of this range, infinity with a correct
-/// sign or a correct value with `1.0 ULP` error bound is returned.
-pub fn acoshf(x: f32) -> f32 {
-    let d = logk2f((x.add_as_doubled(1.)).sqrt() * (x.add_as_doubled(-1.)).sqrt() + x);
-    let mut y = d.0 + d.1;
-
-    y = if (x > SQRT_FLT_MAX) || y.is_nan() {
-        f32::INFINITY
-    } else {
-        y
-    };
-    y = if x == 1. { 0. } else { y };
-    y = if x < 1. { f32::NAN } else { y };
-    if x.is_nan() {
-        f32::NAN
-    } else {
-        y
-    }
-}
-
-#[test]
-fn test_acoshf() {
-    test_f_f(
-        acoshf,
-        rug::Float::acosh,
-        -SQRT_FLT_MAX..=SQRT_FLT_MAX,
-        1.0001,
-    );
-}
-
-/// Inverse hyperbolic tangent function
-///
-/// This function evaluates the inverse hyperbolic tangent function of a value in ***a***.
-/// The error bound of the returned value is `1.0001 ULP`.
-pub fn atanhf(x: f32) -> f32 {
-    let mut y = fabsfk(x);
-    let d = logk2f((1.).add_as_doubled(y) / (1.).add_as_doubled(-y));
-    y = if y > 1. {
-        f32::NAN
-    } else if y == 1. {
-        f32::INFINITY
-    } else {
-        (d.0 + d.1) * 0.5
-    };
-
-    y = if x.is_infinite() || y.is_nan() {
-        f32::NAN
-    } else {
-        y
-    };
-    y = mulsignf(y, x);
-    if x.is_nan() {
-        f32::NAN
-    } else {
-        y
-    }
-}
-
-#[test]
-fn test_atanhf() {
-    test_f_f(atanhf, rug::Float::atanh, f32::MIN..=f32::MAX, 1.0001);
-}
-
-/// Base-10 exponential function
-///
-/// This function returns 10 raised to ***a***.
-/// The error bound of the returned value is `1.09 ULP`.
-pub fn exp10f(d: f32) -> f32 {
-    let qf = rintfk(d * LOG10_2_F);
-
-    let q = qf as i32;
-    let s = qf.mul_add(-L10U_F, d);
-    let s = qf.mul_add(-L10L_F, s);
-
-    let mut u = 0.680_255_591_9_e-1
-        .mul_add(s, 0.207_808_032_6)
-        .mul_add(s, 0.539_390_385_2)
-        .mul_add(s, 0.117_124_533_7_e+1)
-        .mul_add(s, 0.203_467_869_8_e+1)
-        .mul_add(s, 0.265_094_900_1_e+1);
-    let x = df(2.3025851249694824219, -3.1705172516493593157e-08).add_checked(u * s);
-    u = (1.).add_checked(x * s).normalize().0;
-
-    if d > 38.531_839_419_103_623_894_138_7 {
-        f32::INFINITY // log10(FLT_MAX)
-    } else if d < -50. {
-        0.
-    } else {
-        ldexp2kf(u, q)
-    }
-}
-
-#[test]
-fn test_exp10f() {
-    test_f_f(exp10f, rug::Float::exp10, -50.0..=38.54, 1.);
-}
-
-/// Base-*e* exponential function minus 1
-///
-/// This function returns the value one less than *e* raised to ***a***.
-/// The error bound of the returned value is `1.0 ULP`.
-pub fn expm1f(a: f32) -> f32 {
-    let d = expk2f(df(a, 0.)) + (-1.);
-    if a.is_neg_zero() {
-        -0.
-    } else if a < -16.635_532_333_438_687_426_013_570 {
-        -1.
-    } else if a > 88.722_831_726_074_218_75 {
-        f32::INFINITY
-    } else {
-        d.0 + d.1
-    }
-}
-
-#[test]
-fn test_expm1f() {
-    test_f_f(expm1f, rug::Float::exp_m1, -16.64..=88.73, 1.);
-}
-
-/// Base-10 logarithmic function
-///
-/// This function returns the base-10 logarithm of ***a***.
-/// The error bound of the returned value is `1.0 ULP`.
-pub fn log10f(mut d: f32) -> f32 {
-    let o = d < f32::MIN_POSITIVE;
-    if o {
-        d *= F1_32 * F1_32;
-    }
-
-    let mut e = ilogb2kf(d * (1. / 0.75));
-    let m = ldexp3kf(d, -e);
-
-    if o {
-        e -= 64;
-    }
-
-    let x = (-1.).add_as_doubled(m) / (1.).add_as_doubled(m);
-    let x2 = x.0 * x.0;
-
-    let t = 0.131_428_986_8_f32
-        .mul_add(x2, 0.173_549_354_1)
-        .mul_add(x2, 0.289_530_962_7);
-
-    let s = (df(0.301_030_01, -1.432_098_889_e-8) * (e as f32))
-        .add_checked(x * df(0.868_588_984, -2.170_757_285_e-8))
-        .add_checked(x2 * x.0 * t);
-
-    if d == 0. {
-        f32::NEG_INFINITY
-    } else if (d < 0.) || d.is_nan() {
-        f32::NAN
-    } else if d.is_infinite() {
-        f32::INFINITY
-    } else {
-        s.0 + s.1
-    }
-}
-
-#[test]
-fn test_log10f() {
-    test_f_f(log10f, rug::Float::log10, 0.0..=f32::MAX, 1.);
-}
-
-/// Base-2 logarithmic function
-///
-/// This function returns the base-2 logarithm of ***a***.
-/// The error bound of the returned value is `1.0 ULP`.
-pub fn log2f(mut d: f32) -> f32 {
-    let o = d < f32::MIN_POSITIVE;
-    if o {
-        d *= F1_32 * F1_32;
-    }
-
-    let mut e = ilogb2kf(d * (1. / 0.75));
-    let m = ldexp3kf(d, -e);
-
-    if o {
-        e -= 64;
-    }
-
-    let x = (-1.).add_as_doubled(m) / (1.).add_as_doubled(m);
-    let x2 = x.0 * x.0;
-
-    let t = 0.437_455_028_3_f32
-        .mul_add(x2, 0.576_479_017_7)
-        .mul_add(x2, 0.961_801_290_512);
-
-    let mut s = (e as f32) + x * df(2.885_390_043_258_666_992_2, 3.273_447_448_356_848_861_6_e-8);
-    s += x2 * x.0 * t;
-
-    if d == 0. {
-        f32::NEG_INFINITY
-    } else if (d < 0.) || d.is_nan() {
-        f32::NAN
-    } else if d.is_infinite() {
-        f32::INFINITY
-    } else {
-        s.0 + s.1
-    }
-}
-
-#[test]
-fn test_log2f() {
-    test_f_f(log2f, rug::Float::log2, 0.0..=f32::MAX, 1.);
-}
-
-/// Logarithm of one plus argument
-///
-/// This function returns the natural logarithm of (1+***a***).
-/// The error bound of the returned value is `1.0 ULP`.
-pub fn log1pf(d: f32) -> f32 {
-    let mut dp1 = d + 1.;
-
-    let o = dp1 < f32::MIN_POSITIVE;
-    if o {
-        dp1 *= F1_32 * F1_32;
-    }
-
-    let mut e = ilogb2kf(dp1 * (1. / 0.75));
-
-    let t = ldexp3kf(1., -e);
-    let m = d.mul_add(t, t - 1.);
-
-    if o {
-        e -= 64;
-    }
-
-    let x = df(m, 0.) / (2.).add_checked_as_doubled(m);
-    let x2 = x.0 * x.0;
-
-    let t = 0.302_729_487_4_f32
-        .mul_add(x2, 0.399_610_817_4)
-        .mul_add(x2, 0.666_669_488);
-
-    let s = (df(0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9) * (e as f32))
-        .add_checked(x.scale(2.))
-        .add_checked(x2 * x.0 * t);
-
-    if d.is_neg_zero() {
-        -0.
-    } else if d == -1. {
-        f32::NEG_INFINITY
-    } else if d < -1. {
-        f32::NAN
-    } else if d > 1e+38 {
-        f32::INFINITY
-    } else {
-        s.0 + s.1
-    }
-}
-
-#[test]
-fn test_log1pf() {
-    test_f_f(log1pf, rug::Float::ln_1p, -1.0..=1e+38, 1.);
 }

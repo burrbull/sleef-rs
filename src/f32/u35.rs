@@ -2,307 +2,6 @@
 
 use super::*;
 
-/// Arc tangent function of two variables
-///
-/// These functions evaluates the arc tangent function of (***y*** / ***x***).
-/// The quadrant of the result is determined according to the signs of ***x*** and ***y***.
-/// The error bound of the returned value is `3.5 ULP`.
-pub fn atan2f(y: f32, x: f32) -> f32 {
-    let mut r = atan2kf(fabsfk(y), x);
-
-    r = if x.is_infinite() || (x == 0.) {
-        FRAC_PI_2
-            - (if x.is_infinite() {
-                signf(x) * FRAC_PI_2
-            } else {
-                0.
-            })
-    } else if y.is_infinite() {
-        FRAC_PI_2
-            - (if x.is_infinite() {
-                signf(x) * FRAC_PI_4
-            } else {
-                0.
-            })
-    } else if y == 0. {
-        if signf(x) == -1. {
-            PI
-        } else {
-            0.
-        }
-    } else {
-        mulsignf(r, x)
-    };
-
-    if x.is_nan() || y.is_nan() {
-        f32::NAN
-    } else {
-        mulsignf(r, y)
-    }
-}
-
-#[test]
-fn test_atan2f() {
-    test_ff_f(
-        atan2f,
-        rug::Float::atan2,
-        f32::MIN..=f32::MAX,
-        f32::MIN..=f32::MAX,
-        3.5,
-    );
-}
-
-/// Natural logarithmic function
-///
-/// These functions return the natural logarithm of ***a***.
-/// The error bound of the returned value is `3.5 ULP`.
-pub fn logf(mut d: f32) -> f32 {
-    let o = d < f32::MIN_POSITIVE;
-    if o {
-        d *= F1_32 * F1_32;
-    }
-
-    let mut e = ilogb2kf(d * (1. / 0.75));
-    let m = ldexp3kf(d, -e);
-
-    if o {
-        e -= 64;
-    }
-
-    let x = (m - 1.) / (m + 1.);
-    let x2 = x * x;
-
-    let t = 0.239_282_846_450_805_664_062_5_f32
-        .mul_add(x2, 0.285_182_118_415_832_519_531_25)
-        .mul_add(x2, 0.400_005_877_017_974_853_515_625)
-        .mul_add(x2, 0.666_666_686_534_881_591_796_875)
-        .mul_add(x2, 2.);
-
-    if d == 0. {
-        f32::NEG_INFINITY
-    } else if (d < 0.) || d.is_nan() {
-        f32::NAN
-    } else if d.is_infinite() {
-        f32::INFINITY
-    } else {
-        x * t + 0.693_147_180_559_945_286_226_764 * (e as f32)
-    }
-}
-
-#[test]
-fn test_logf() {
-    test_f_f(logf, rug::Float::ln, 0.0..=f32::MAX, 3.5);
-}
-
-/// Evaluate sin( π**a** ) and cos( π**a** ) for given **a** simultaneously
-///
-/// Evaluates the sine and cosine functions of π**a** at a time,
-/// and store the two values in *first* and *second* position in the returned value, respectively.
-/// The error bound of the returned values is `3.5 ULP` if ***a*** is in `[-1e+7, 1e+7]`.
-/// If a is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
-/// If a is a `NaN` or `infinity`, a `NaN` is returned.
-pub fn sincospif(d: f32) -> (f32, f32) {
-    let u = d * 4.;
-    let q = ceilfk(u) & !1_i32;
-
-    let s = u - (q as f32);
-    let t = s;
-    let s = s * s;
-
-    let mut rsin = (-0.360_092_526_5_e-4_f32)
-        .mul_add(s, 0.249_008_811_1_e-2)
-        .mul_add(s, -0.807_455_107_6_e-1)
-        .mul_add(s, 0.785_398_185_3)
-        * t;
-
-    let mut rcos = 0.353_981_522_5_e-5_f32
-        .mul_add(s, -0.325_957_400_5_e-3)
-        .mul_add(s, 0.158_543_158_3_e-1)
-        .mul_add(s, -0.308_425_128_5)
-        .mul_add(s, 1.);
-
-    if (q & 2) != 0 {
-        core::mem::swap(&mut rcos, &mut rsin);
-    }
-    if (q & 4) != 0 {
-        rsin = -rsin;
-    }
-    if ((q + 2) & 4) != 0 {
-        rcos = -rcos;
-    }
-
-    if fabsfk(d) > 1e+7 {
-        rsin = 0.;
-        rcos = 1.;
-    }
-    if d.is_infinite() {
-        rsin = f32::NAN;
-        rcos = f32::NAN;
-    }
-
-    (rsin, rcos)
-}
-
-#[test]
-fn test_sincospif() {
-    use rug::{float::Constant, Float};
-    let rangemax2 = 1e+7 / 4.;
-    test_f_ff(
-        sincospif,
-        |mut in1| {
-            let prec = in1.prec();
-            in1.set_prec(prec * 2);
-            (in1 * Float::with_val(prec * 2, Constant::Pi)).sin_cos(Float::new(prec))
-        },
-        -rangemax2..=rangemax2,
-        2.,
-    );
-}
-
-/// Hyperbolic sine function
-///
-/// These functions evaluates the hyperbolic sine function of a value in ***a***.
-/// The error bound of the returned value is `3.5 ULP` if ***a*** is in `[-88, 88]`.
-/// If ***a*** is a finite value out of this range, infinity with a correct sign
-/// or a correct value with `3.5 ULP` error bound is returned.
-pub fn sinhf(x: f32) -> f32 {
-    let e = expm1kf(fabsfk(x));
-    let mut y = (e + 2.) / (e + 1.) * (0.5 * e);
-
-    y = if fabsfk(x) > 88. { f32::INFINITY } else { y };
-    y = if y.is_nan() { f32::INFINITY } else { y };
-    y = mulsignf(y, x);
-    if x.is_nan() {
-        f32::NAN
-    } else {
-        y
-    }
-}
-
-#[test]
-fn test_sinhf() {
-    test_f_f(sinhf, rug::Float::sinh, -88.0..=88.0, 3.5);
-}
-
-/// Hyperbolic cosine function
-///
-/// These functions evaluates the hyperbolic cosine function of a value in ***a***.
-/// The error bound of the returned value is `3.5 ULP` if a is in `[-88, 88]`.
-/// If ***a*** is a finite value out of this range, infinity with a correct sign
-/// or a correct value with `3.5 ULP` error bound is returned.
-pub fn coshf(x: f32) -> f32 {
-    let e = u10::expf(fabsfk(x));
-    let mut y = 0.5 * e + 0.5 / e;
-
-    y = if fabsfk(x) > 88. { f32::INFINITY } else { y };
-    y = if y.is_nan() { f32::INFINITY } else { y };
-    if x.is_nan() {
-        f32::NAN
-    } else {
-        y
-    }
-}
-
-#[test]
-fn test_coshf() {
-    test_f_f(coshf, rug::Float::cosh, -88.0..=88.0, 3.5);
-}
-
-/// Hyperbolic tangent function
-///
-/// These functions evaluates the hyperbolic tangent function of a value in ***a***.
-/// The error bound of the returned value is `3.5 ULP` for the double-precision
-/// function or `3.5 ULP` for the single-precision function.
-pub fn tanhf(x: f32) -> f32 {
-    let mut y = fabsfk(x);
-    let d = expm1kf(2. * y);
-    y = d / (d + 2.);
-
-    y = if fabsfk(x) > 18.714_973_875 { 1. } else { y };
-    y = if y.is_nan() { 1. } else { y };
-    y = mulsignf(y, x);
-    if x.is_nan() {
-        f32::NAN
-    } else {
-        y
-    }
-}
-
-#[test]
-fn test_tanhf() {
-    test_f_f(tanhf, rug::Float::tanh, -8.7..=8.7, 3.5);
-}
-
-/// 2D Euclidian distance function
-///
-/// The error bound of the returned value is `3.5 ULP`.
-pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
-    x = fabsfk(x);
-    y = fabsfk(y);
-    let min = x.min(y);
-    let max = x.max(y);
-
-    let t = min / max;
-    if (x == f32::INFINITY) || (y == f32::INFINITY) {
-        f32::INFINITY
-    } else if x.is_nan() || y.is_nan() {
-        f32::NAN
-    } else if min == 0. {
-        max
-    } else {
-        max * (1. + t * t).sqrt()
-    }
-}
-
-#[test]
-fn test_hypotf() {
-    test_ff_f(
-        hypotf,
-        rug::Float::hypot,
-        f32::MIN..=f32::MAX,
-        f32::MIN..=f32::MAX,
-        3.5,
-    );
-}
-
-/// Square root function
-///
-/// The error bound of the returned value is `3.5 ULP`.
-pub fn sqrtf(mut d: f32) -> f32 {
-    let mut q = 1.;
-
-    d = if d < 0. { f32::NAN } else { d };
-
-    if d < 5.293_955_920_339_377_e-23 {
-        d *= 1.888_946_593_147_858_e+22;
-        q = 7.275_957_614_183_426_e-12;
-    }
-
-    if d > 1.844_674_407_370_955_2_e+19 {
-        d *= 5.421_010_862_427_522_e-20;
-        q = 4_294_967_296.;
-    }
-
-    // http://en.wikipedia.org/wiki/Fast_inverse_square_root
-    let mut x = f32::from_bits(0x_5f37_5a86 - ((d + 1e-45).to_bits() >> 1));
-
-    x *= 1.5 - 0.5 * d * x * x;
-    x *= 1.5 - 0.5 * d * x * x;
-    x *= 1.5 - 0.5 * d * x * x;
-    x *= 1.5 - 0.5 * d * x * x;
-
-    if d == f32::INFINITY {
-        f32::INFINITY
-    } else {
-        x * d * q
-    }
-}
-
-#[test]
-fn test_sqrtf() {
-    test_f_f(sqrtf, rug::Float::sqrt, 0.0..=f32::MAX, 3.5);
-}
-
 /// Sine function
 ///
 /// These functions evaluates the sine function of a value in ***a***.
@@ -567,56 +266,119 @@ fn test_tanf() {
     test_f_f(tanf, rug::Float::tan, f32::MIN..=f32::MAX, 3.5);
 }
 
-/// Arc tangent function
+/// Evaluate sin( π**a** ) and cos( π**a** ) for given **a** simultaneously
 ///
-/// These functions evaluates the arc tangent function of a value in ***a***.
+/// Evaluates the sine and cosine functions of π**a** at a time,
+/// and store the two values in *first* and *second* position in the returned value, respectively.
+/// The error bound of the returned values is `3.5 ULP` if ***a*** is in `[-1e+7, 1e+7]`.
+/// If a is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
+/// If a is a `NaN` or `infinity`, a `NaN` is returned.
+pub fn sincospif(d: f32) -> (f32, f32) {
+    let u = d * 4.;
+    let q = ceilfk(u) & !1_i32;
+
+    let s = u - (q as f32);
+    let t = s;
+    let s = s * s;
+
+    let mut rsin = (-0.360_092_526_5_e-4_f32)
+        .mul_add(s, 0.249_008_811_1_e-2)
+        .mul_add(s, -0.807_455_107_6_e-1)
+        .mul_add(s, 0.785_398_185_3)
+        * t;
+
+    let mut rcos = 0.353_981_522_5_e-5_f32
+        .mul_add(s, -0.325_957_400_5_e-3)
+        .mul_add(s, 0.158_543_158_3_e-1)
+        .mul_add(s, -0.308_425_128_5)
+        .mul_add(s, 1.);
+
+    if (q & 2) != 0 {
+        core::mem::swap(&mut rcos, &mut rsin);
+    }
+    if (q & 4) != 0 {
+        rsin = -rsin;
+    }
+    if ((q + 2) & 4) != 0 {
+        rcos = -rcos;
+    }
+
+    if fabsfk(d) > 1e+7 {
+        rsin = 0.;
+        rcos = 1.;
+    }
+    if d.is_infinite() {
+        rsin = f32::NAN;
+        rcos = f32::NAN;
+    }
+
+    (rsin, rcos)
+}
+
+#[test]
+fn test_sincospif() {
+    use rug::{float::Constant, Float};
+    let rangemax2 = 1e+7 / 4.;
+    test_f_ff(
+        sincospif,
+        |mut in1| {
+            let prec = in1.prec();
+            in1.set_prec(prec * 2);
+            (in1 * Float::with_val(prec * 2, Constant::Pi)).sin_cos(Float::new(prec))
+        },
+        -rangemax2..=rangemax2,
+        2.,
+    );
+}
+
+/// Arc tangent function of two variables
+///
+/// These functions evaluates the arc tangent function of (***y*** / ***x***).
+/// The quadrant of the result is determined according to the signs of ***x*** and ***y***.
 /// The error bound of the returned value is `3.5 ULP`.
-pub fn atanf(mut s: f32) -> f32 {
-    let mut q = if signf(s) == -1. {
-        s = -s;
-        2
+pub fn atan2f(y: f32, x: f32) -> f32 {
+    let mut r = atan2kf(fabsfk(y), x);
+
+    r = if x.is_infinite() || (x == 0.) {
+        FRAC_PI_2
+            - (if x.is_infinite() {
+                signf(x) * FRAC_PI_2
+            } else {
+                0.
+            })
+    } else if y.is_infinite() {
+        FRAC_PI_2
+            - (if x.is_infinite() {
+                signf(x) * FRAC_PI_4
+            } else {
+                0.
+            })
+    } else if y == 0. {
+        if signf(x) == -1. {
+            PI
+        } else {
+            0.
+        }
     } else {
-        0
+        mulsignf(r, x)
     };
 
-    if s > 1. {
-        s = 1. / s;
-        q |= 1;
-    }
-
-    let mut t = s * s;
-    let t2 = t * t;
-    let t4 = t2 * t2;
-
-    let u = f32::poly8(
-        t,
-        t2,
-        t4,
-        0.002_823_638_962_581_753_730_773_93,
-        -0.015_956_902_876_496_315_002_441_4,
-        0.042_504_988_610_744_476_318_359_4,
-        -0.074_890_092_015_266_418_457_031_2,
-        0.106_347_933_411_598_205_566_406,
-        -0.142_027_363_181_114_196_777_344,
-        0.199_926_957_488_059_997_558_594,
-        -0.333_331_018_686_294_555_664_062,
-    );
-
-    t = s + s * (t * u);
-
-    if (q & 1) != 0 {
-        t = 1.570_796_326_794_896_557_998_982 - t;
-    }
-    if (q & 2) != 0 {
-        -t
+    if x.is_nan() || y.is_nan() {
+        f32::NAN
     } else {
-        t
+        mulsignf(r, y)
     }
 }
 
 #[test]
-fn test_atanf() {
-    test_f_f(atanf, rug::Float::atan, f32::MIN..=f32::MAX, 3.5);
+fn test_atan2f() {
+    test_ff_f(
+        atan2f,
+        rug::Float::atan2,
+        f32::MIN..=f32::MAX,
+        f32::MIN..=f32::MAX,
+        3.5,
+    );
 }
 
 /// Arc sine function
@@ -682,108 +444,172 @@ fn test_acosf() {
     test_f_f(acosf, rug::Float::acos, -1.0..=1.0, 3.5);
 }
 
-/// Cube root function
+/// Arc tangent function
 ///
-/// These functions return the real cube root of ***a***.
+/// These functions evaluates the arc tangent function of a value in ***a***.
 /// The error bound of the returned value is `3.5 ULP`.
-pub fn cbrtf(mut d: f32) -> f32 {
-    let e = ilogbkf(fabsfk(d)) + 1;
-    d = ldexp2kf(d, -e);
-    let r = (e + 6144) % 3;
-    let mut q = if r == 1 {
-        1.259_921_049_894_873_164_767_210_6
+pub fn atanf(mut s: f32) -> f32 {
+    let mut q = if signf(s) == -1. {
+        s = -s;
+        2
     } else {
-        1.
+        0
     };
-    q = if r == 2 {
-        1.587_401_051_968_199_474_751_705_6
+
+    if s > 1. {
+        s = 1. / s;
+        q |= 1;
+    }
+
+    let mut t = s * s;
+    let t2 = t * t;
+    let t4 = t2 * t2;
+
+    let u = f32::poly8(
+        t,
+        t2,
+        t4,
+        0.002_823_638_962_581_753_730_773_93,
+        -0.015_956_902_876_496_315_002_441_4,
+        0.042_504_988_610_744_476_318_359_4,
+        -0.074_890_092_015_266_418_457_031_2,
+        0.106_347_933_411_598_205_566_406,
+        -0.142_027_363_181_114_196_777_344,
+        0.199_926_957_488_059_997_558_594,
+        -0.333_331_018_686_294_555_664_062,
+    );
+
+    t = s + s * (t * u);
+
+    if (q & 1) != 0 {
+        t = 1.570_796_326_794_896_557_998_982 - t;
+    }
+    if (q & 2) != 0 {
+        -t
     } else {
-        q
-    };
-    q = ldexp2kf(q, (e + 6144) / 3 - 2048);
-
-    q = mulsignf(q, d);
-    d = fabsfk(d);
-
-    let x = (-0.601_564_466_953_277_587_890_625_f32)
-        .mul_add(d, 2.820_889_234_542_846_679_687_5)
-        .mul_add(d, -5.532_182_216_644_287_109_375)
-        .mul_add(d, 5.898_262_500_762_939_453_125)
-        .mul_add(d, -3.809_541_702_270_507_812_5)
-        .mul_add(d, 2.224_125_623_703_002_929_687_5);
-
-    let y = d * x * x;
-    (y - (2. / 3.) * y * (y * x - 1.)) * q
+        t
+    }
 }
 
 #[test]
-fn test_cbrtf() {
-    test_f_f(cbrtf, rug::Float::cbrt, f32::MIN..=f32::MAX, 3.5);
+fn test_atanf() {
+    test_f_f(atanf, rug::Float::atan, f32::MIN..=f32::MAX, 3.5);
 }
 
-/// Base-2 exponential function
+/// Hyperbolic sine function
 ///
-/// This function returns `2` raised to ***a***.
-pub fn exp2f(d: f32) -> f32 {
-    let q = rintfk(d);
+/// These functions evaluates the hyperbolic sine function of a value in ***a***.
+/// The error bound of the returned value is `3.5 ULP` if ***a*** is in `[-88, 88]`.
+/// If ***a*** is a finite value out of this range, infinity with a correct sign
+/// or a correct value with `3.5 ULP` error bound is returned.
+pub fn sinhf(x: f32) -> f32 {
+    let e = expm1kf(fabsfk(x));
+    let mut y = (e + 2.) / (e + 1.) * (0.5 * e);
 
-    let s = d - q;
+    y = if fabsfk(x) > 88. { f32::INFINITY } else { y };
+    y = if y.is_nan() { f32::INFINITY } else { y };
+    y = mulsignf(y, x);
+    if x.is_nan() {
+        f32::NAN
+    } else {
+        y
+    }
+}
 
-    let mut u = 0.153_592_089_2_e-3
-        .mul_add(s, 0.133_926_270_1_e-2)
-        .mul_add(s, 0.961_838_476_4_e-2)
-        .mul_add(s, 0.555_034_726_9_e-1)
-        .mul_add(s, 0.240_226_447_6)
-        .mul_add(s, 0.693_147_182_5)
-        .mul_add(s, 0.1_e+1);
+#[test]
+fn test_sinhf() {
+    test_f_f(sinhf, rug::Float::sinh, -88.0..=88.0, 3.5);
+}
 
-    u = ldexp2kf(u, q as i32);
+/// Hyperbolic cosine function
+///
+/// These functions evaluates the hyperbolic cosine function of a value in ***a***.
+/// The error bound of the returned value is `3.5 ULP` if a is in `[-88, 88]`.
+/// If ***a*** is a finite value out of this range, infinity with a correct sign
+/// or a correct value with `3.5 ULP` error bound is returned.
+pub fn coshf(x: f32) -> f32 {
+    let e = u10::expf(fabsfk(x));
+    let mut y = 0.5 * e + 0.5 / e;
 
-    if d < -150. {
-        0.
-    } else if d >= 128. {
+    y = if fabsfk(x) > 88. { f32::INFINITY } else { y };
+    y = if y.is_nan() { f32::INFINITY } else { y };
+    if x.is_nan() {
+        f32::NAN
+    } else {
+        y
+    }
+}
+
+#[test]
+fn test_coshf() {
+    test_f_f(coshf, rug::Float::cosh, -88.0..=88.0, 3.5);
+}
+
+/// Hyperbolic tangent function
+///
+/// These functions evaluates the hyperbolic tangent function of a value in ***a***.
+/// The error bound of the returned value is `3.5 ULP` for the double-precision
+/// function or `3.5 ULP` for the single-precision function.
+pub fn tanhf(x: f32) -> f32 {
+    let mut y = fabsfk(x);
+    let d = expm1kf(2. * y);
+    y = d / (d + 2.);
+
+    y = if fabsfk(x) > 18.714_973_875 { 1. } else { y };
+    y = if y.is_nan() { 1. } else { y };
+    y = mulsignf(y, x);
+    if x.is_nan() {
+        f32::NAN
+    } else {
+        y
+    }
+}
+
+#[test]
+fn test_tanhf() {
+    test_f_f(tanhf, rug::Float::tanh, -8.7..=8.7, 3.5);
+}
+
+/// Natural logarithmic function
+///
+/// These functions return the natural logarithm of ***a***.
+/// The error bound of the returned value is `3.5 ULP`.
+pub fn logf(mut d: f32) -> f32 {
+    let o = d < f32::MIN_POSITIVE;
+    if o {
+        d *= F1_32 * F1_32;
+    }
+
+    let mut e = ilogb2kf(d * (1. / 0.75));
+    let m = ldexp3kf(d, -e);
+
+    if o {
+        e -= 64;
+    }
+
+    let x = (m - 1.) / (m + 1.);
+    let x2 = x * x;
+
+    let t = 0.239_282_846_450_805_664_062_5_f32
+        .mul_add(x2, 0.285_182_118_415_832_519_531_25)
+        .mul_add(x2, 0.400_005_877_017_974_853_515_625)
+        .mul_add(x2, 0.666_666_686_534_881_591_796_875)
+        .mul_add(x2, 2.);
+
+    if d == 0. {
+        f32::NEG_INFINITY
+    } else if (d < 0.) || d.is_nan() {
+        f32::NAN
+    } else if d.is_infinite() {
         f32::INFINITY
     } else {
-        u
+        x * t + 0.693_147_180_559_945_286_226_764 * (e as f32)
     }
 }
 
 #[test]
-fn test_exp2f() {
-    test_f_f(exp2f, rug::Float::exp2, -150.0..=128.0, 3.5);
-}
-
-/// Base-10 exponential function
-///
-/// This function returns 10 raised to ***a***.
-pub fn exp10f(d: f32) -> f32 {
-    let q = rintfk(d * LOG10_2_F);
-
-    let mut s = q.mul_add(-L10U_F, d);
-    s = q.mul_add(-L10L_F, s);
-
-    let mut u = 0.206_400_498_7
-        .mul_add(s, 0.541_787_743_6)
-        .mul_add(s, 0.117_128_682_1_e+1)
-        .mul_add(s, 0.203_465_604_8_e+1)
-        .mul_add(s, 0.265_094_876_3_e+1)
-        .mul_add(s, 0.230_258_512_5_e+1)
-        .mul_add(s, 0.1_e+1);
-
-    u = ldexp2kf(u, q as i32);
-
-    if d < -50. {
-        0.
-    } else if d > 38.531_839_419_103_623_894_138_7 {
-        f32::INFINITY // log10(FLT_MAX)
-    } else {
-        u
-    }
-}
-
-#[test]
-fn test_exp10f() {
-    test_f_f(exp10f, rug::Float::exp10, -38.54..=38.54, 3.5);
+fn test_logf() {
+    test_f_f(logf, rug::Float::ln, 0.0..=f32::MAX, 3.5);
 }
 
 /// Base-10 logarithmic function
@@ -825,4 +651,178 @@ pub fn log2f(mut d: f32) -> f32 {
 #[test]
 fn test_log2f() {
     test_f_f(log2f, rug::Float::log2, 0.0..=f32::MAX, 3.5);
+}
+
+/// Base-10 exponential function
+///
+/// This function returns 10 raised to ***a***.
+pub fn exp10f(d: f32) -> f32 {
+    let q = rintfk(d * LOG10_2_F);
+
+    let mut s = q.mul_add(-L10U_F, d);
+    s = q.mul_add(-L10L_F, s);
+
+    let mut u = 0.206_400_498_7
+        .mul_add(s, 0.541_787_743_6)
+        .mul_add(s, 0.117_128_682_1_e+1)
+        .mul_add(s, 0.203_465_604_8_e+1)
+        .mul_add(s, 0.265_094_876_3_e+1)
+        .mul_add(s, 0.230_258_512_5_e+1)
+        .mul_add(s, 0.1_e+1);
+
+    u = ldexp2kf(u, q as i32);
+
+    if d < -50. {
+        0.
+    } else if d > 38.531_839_419_103_623_894_138_7 {
+        f32::INFINITY // log10(FLT_MAX)
+    } else {
+        u
+    }
+}
+
+#[test]
+fn test_exp10f() {
+    test_f_f(exp10f, rug::Float::exp10, -38.54..=38.54, 3.5);
+}
+
+/// Base-2 exponential function
+///
+/// This function returns `2` raised to ***a***.
+pub fn exp2f(d: f32) -> f32 {
+    let q = rintfk(d);
+
+    let s = d - q;
+
+    let mut u = 0.153_592_089_2_e-3
+        .mul_add(s, 0.133_926_270_1_e-2)
+        .mul_add(s, 0.961_838_476_4_e-2)
+        .mul_add(s, 0.555_034_726_9_e-1)
+        .mul_add(s, 0.240_226_447_6)
+        .mul_add(s, 0.693_147_182_5)
+        .mul_add(s, 0.1_e+1);
+
+    u = ldexp2kf(u, q as i32);
+
+    if d < -150. {
+        0.
+    } else if d >= 128. {
+        f32::INFINITY
+    } else {
+        u
+    }
+}
+
+#[test]
+fn test_exp2f() {
+    test_f_f(exp2f, rug::Float::exp2, -150.0..=128.0, 3.5);
+}
+
+/// Square root function
+///
+/// The error bound of the returned value is `3.5 ULP`.
+pub fn sqrtf(mut d: f32) -> f32 {
+    let mut q = 1.;
+
+    d = if d < 0. { f32::NAN } else { d };
+
+    if d < 5.293_955_920_339_377_e-23 {
+        d *= 1.888_946_593_147_858_e+22;
+        q = 7.275_957_614_183_426_e-12;
+    }
+
+    if d > 1.844_674_407_370_955_2_e+19 {
+        d *= 5.421_010_862_427_522_e-20;
+        q = 4_294_967_296.;
+    }
+
+    // http://en.wikipedia.org/wiki/Fast_inverse_square_root
+    let mut x = f32::from_bits(0x_5f37_5a86 - ((d + 1e-45).to_bits() >> 1));
+
+    x *= 1.5 - 0.5 * d * x * x;
+    x *= 1.5 - 0.5 * d * x * x;
+    x *= 1.5 - 0.5 * d * x * x;
+    x *= 1.5 - 0.5 * d * x * x;
+
+    if d == f32::INFINITY {
+        f32::INFINITY
+    } else {
+        x * d * q
+    }
+}
+
+#[test]
+fn test_sqrtf() {
+    test_f_f(sqrtf, rug::Float::sqrt, 0.0..=f32::MAX, 3.5);
+}
+
+/// Cube root function
+///
+/// These functions return the real cube root of ***a***.
+/// The error bound of the returned value is `3.5 ULP`.
+pub fn cbrtf(mut d: f32) -> f32 {
+    let e = ilogbkf(fabsfk(d)) + 1;
+    d = ldexp2kf(d, -e);
+    let r = (e + 6144) % 3;
+    let mut q = if r == 1 {
+        1.259_921_049_894_873_164_767_210_6
+    } else {
+        1.
+    };
+    q = if r == 2 {
+        1.587_401_051_968_199_474_751_705_6
+    } else {
+        q
+    };
+    q = ldexp2kf(q, (e + 6144) / 3 - 2048);
+
+    q = mulsignf(q, d);
+    d = fabsfk(d);
+
+    let x = (-0.601_564_466_953_277_587_890_625_f32)
+        .mul_add(d, 2.820_889_234_542_846_679_687_5)
+        .mul_add(d, -5.532_182_216_644_287_109_375)
+        .mul_add(d, 5.898_262_500_762_939_453_125)
+        .mul_add(d, -3.809_541_702_270_507_812_5)
+        .mul_add(d, 2.224_125_623_703_002_929_687_5);
+
+    let y = d * x * x;
+    (y - (2. / 3.) * y * (y * x - 1.)) * q
+}
+
+#[test]
+fn test_cbrtf() {
+    test_f_f(cbrtf, rug::Float::cbrt, f32::MIN..=f32::MAX, 3.5);
+}
+
+/// 2D Euclidian distance function
+///
+/// The error bound of the returned value is `3.5 ULP`.
+pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
+    x = fabsfk(x);
+    y = fabsfk(y);
+    let min = x.min(y);
+    let max = x.max(y);
+
+    let t = min / max;
+    if (x == f32::INFINITY) || (y == f32::INFINITY) {
+        f32::INFINITY
+    } else if x.is_nan() || y.is_nan() {
+        f32::NAN
+    } else if min == 0. {
+        max
+    } else {
+        max * (1. + t * t).sqrt()
+    }
+}
+
+#[test]
+fn test_hypotf() {
+    test_ff_f(
+        hypotf,
+        rug::Float::hypot,
+        f32::MIN..=f32::MAX,
+        f32::MIN..=f32::MAX,
+        3.5,
+    );
 }

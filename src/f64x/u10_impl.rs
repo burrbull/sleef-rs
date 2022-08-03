@@ -2,6 +2,10 @@ macro_rules! impl_math_f64_u10 {
     () => {
         use super::*;
 
+        /// Sine function
+        ///
+        /// This function evaluates the sine function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         #[cfg(not(feature = "deterministic"))]
         pub fn sin(d: F64x) -> F64x {
             let mut s;
@@ -72,6 +76,10 @@ macro_rules! impl_math_f64_u10 {
             d.eq(ZERO).select(d, u)
         }
 
+        /// Sine function
+        ///
+        /// This function evaluates the sine function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         #[cfg(feature = "deterministic")]
         pub fn sin(d: F64x) -> F64x {
             let mut s;
@@ -161,6 +169,10 @@ macro_rules! impl_math_f64_u10 {
             );
         }
 
+        /// Cosine function
+        ///
+        /// This function evaluates the cosine function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         #[cfg(not(feature = "deterministic"))]
         pub fn cos(d: F64x) -> F64x {
             let mut s;
@@ -235,6 +247,10 @@ macro_rules! impl_math_f64_u10 {
             )
         }
 
+        /// Cosine function
+        ///
+        /// This function evaluates the cosine function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         #[cfg(feature = "deterministic")]
         pub fn cos(d: F64x) -> F64x {
             let g = d.abs().lt(TRIGRANGEMAX2);
@@ -323,6 +339,13 @@ macro_rules! impl_math_f64_u10 {
             );
         }
 
+        /// Evaluate sine and cosine functions simultaneously
+        ///
+        /// Evaluates the sine and cosine functions of a value in a at a time,
+        /// and store the two values in *first* and *second* position in the returned value, respectively.
+        /// returned value, respectively.
+        /// The error bound of the returned values is `1.0 ULP`.
+        /// If ***a*** is a `NaN` or `infinity`, a `NaN` is returned.
         #[cfg(not(feature = "deterministic"))]
         pub fn sincos(d: F64x) -> (F64x, F64x) {
             let mut s;
@@ -400,6 +423,13 @@ macro_rules! impl_math_f64_u10 {
             (rsin, rcos)
         }
 
+        /// Evaluate sine and cosine functions simultaneously
+        ///
+        /// Evaluates the sine and cosine functions of a value in a at a time,
+        /// and store the two values in *first* and *second* position in the returned value, respectively.
+        /// returned value, respectively.
+        /// The error bound of the returned values is `1.0 ULP`.
+        /// If ***a*** is a `NaN` or `infinity`, a `NaN` is returned.
         #[cfg(feature = "deterministic")]
         pub fn sincos(d: F64x) -> (F64x, F64x) {
             let dql = (d * F64x::FRAC_2_PI).round();
@@ -496,6 +526,10 @@ macro_rules! impl_math_f64_u10 {
             );
         }
 
+        /// Tangent function
+        ///
+        /// This function evaluates the tangent function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         #[cfg(not(feature = "deterministic"))]
         pub fn tan(d: F64x) -> F64x {
             let mut s;
@@ -559,6 +593,10 @@ macro_rules! impl_math_f64_u10 {
             d.eq(ZERO).select(d, u)
         }
 
+        /// Tangent function
+        ///
+        /// This function evaluates the tangent function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         #[cfg(feature = "deterministic")]
         pub fn tan(d: F64x) -> F64x {
             let dql = (d * F64x::FRAC_2_PI).round();
@@ -688,6 +726,12 @@ macro_rules! impl_math_f64_u10 {
             .add_checked(t)
         }
 
+        /// Arc tangent function of two variables
+        ///
+        /// This function evaluates the arc tangent function of (***y*** / ***x***).
+        /// The quadrant of the result is determined according to the signs
+        /// of ***x*** and ***y***.
+        /// The error bound of the returned values is `max(1.0 ULP, f64::MIN_POSITIVE)`.
         pub fn atan2(y: F64x, x: F64x) -> F64x {
             let o = x.abs().lt(F64x::splat(5.562_684_646_268_008_398_4_e-309)); // nexttoward((1.0 / DBL_MAX), 1)
             let x = o.select(x * D1_53X, x);
@@ -724,6 +768,10 @@ macro_rules! impl_math_f64_u10 {
             );
         }
 
+        /// Arc sine function
+        ///
+        /// This function evaluates the arc sine function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         pub fn asin(d: F64x) -> F64x {
             let o = d.abs().lt(HALF);
             let x2 = o.select(d * d, (ONE - d.abs()) * HALF);
@@ -771,6 +819,10 @@ macro_rules! impl_math_f64_u10 {
             );
         }
 
+        /// Arc cosine function
+        ///
+        /// This function evaluates the arc cosine function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         pub fn acos(d: F64x) -> F64x {
             let o = d.abs().lt(HALF);
             let x2 = o.select(d * d, (ONE - d.abs()) * HALF);
@@ -824,6 +876,10 @@ macro_rules! impl_math_f64_u10 {
             );
         }
 
+        /// Arc tangent function
+        ///
+        /// This function evaluates the arc tangent function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         pub fn atan(d: F64x) -> F64x {
             let d2 = atan2k_u1(Doubled::new(d.abs(), ZERO), Doubled::from((1., 0.)));
             let mut r = d2.0 + d2.1;
@@ -843,6 +899,436 @@ macro_rules! impl_math_f64_u10 {
             );
         }
 
+        /// Hyperbolic sine function
+        ///
+        /// This function evaluates the hyperbolic sine function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP` if ***a*** is in `[-709, 709]`.
+        /// If ***a*** is a finite value out of this range, infinity with a correct
+        /// sign or a correct value with `1.0 ULP` error bound is returned.
+        pub fn sinh(x: F64x) -> F64x {
+            let mut y = x.abs();
+            let mut d = expk2(Doubled::new(y, ZERO));
+            d = d.sub_checked(d.recpre());
+            y = (d.0 + d.1) * HALF;
+
+            y = (x.abs().gt(F64x::splat(710.)) | y.is_nan()).select(F64x::INFINITY, y);
+            y = y.mul_sign(x);
+            F64x::from_bits(U64x::from_bits(x.is_nan()) | U64x::from_bits(y))
+        }
+
+        #[test]
+        fn test_sinh() {
+            test_f_f(
+                sinh,
+                rug::Float::sinh,
+                -709.0..=709.0,
+                1.
+            );
+        }
+
+        /// Hyperbolic cosine function
+        ///
+        /// This function evaluates the hyperbolic cosine function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP` if ***a** is in `[-709, 709]`.
+        /// If a is a finite value out of this range, infinity with a correct
+        /// sign or a correct value with `1.0 ULP` error bound is returned.
+        pub fn cosh(x: F64x) -> F64x {
+            let mut y = x.abs();
+            let mut d = expk2(Doubled::new(y, ZERO));
+            d = d.add_checked(d.recpre());
+            y = (d.0 + d.1) * HALF;
+
+            y = (x.abs().gt(F64x::splat(710.)) | y.is_nan()).select(F64x::INFINITY, y);
+            F64x::from_bits(U64x::from_bits(x.is_nan()) | U64x::from_bits(y))
+        }
+
+        #[test]
+        fn test_cosh() {
+            test_f_f(
+                cosh,
+                rug::Float::cosh,
+                -709.0..=709.0,
+                1.
+            );
+        }
+
+        /// Hyperbolic tangent function
+        ///
+        /// This function evaluates the hyperbolic tangent function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
+        pub fn tanh(x: F64x) -> F64x {
+            let mut y = x.abs();
+            let mut d = expk2(Doubled::new(y, ZERO));
+            let e = d.recpre();
+            d = (d + (-e)) / (d + e);
+            y = d.0 + d.1;
+
+            y = (x.abs().gt(F64x::splat(18.714_973_875)) | y.is_nan()).select(ONE, y);
+            y = y.mul_sign(x);
+            F64x::from_bits(U64x::from_bits(x.is_nan()) | U64x::from_bits(y))
+        }
+
+        #[test]
+        fn test_tanh() {
+            test_f_f(
+                tanh,
+                rug::Float::tanh,
+                -19.0..=19.0,
+                1.
+            );
+        }
+
+        /// Inverse hyperbolic sine function
+        ///
+        /// This function evaluates the inverse hyperbolic sine function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP` if ***a*** is in `[-1.34e+154, 1.34e+154]`.
+        /// If ***a*** is a finite value out of this range, infinity with a correct
+        /// sign or a correct value with `1.0 ULP` error bound is returned.
+        pub fn asinh(x: F64x) -> F64x {
+            let mut y = x.abs();
+            let o = y.gt(ONE);
+
+            let mut d = o.select_doubled(x.recpre_as_doubled(), Doubled::new(y, ZERO));
+            d = (d.square() + ONE).sqrt();
+            d = o.select_doubled(d * y, d);
+
+            d = logk2((d + x).normalize());
+            y = d.0 + d.1;
+
+            y = (x.abs().gt(SQRT_DBL_MAX) | y.is_nan()).select(F64x::INFINITY.mul_sign(x), y);
+
+            y = F64x::from_bits(U64x::from_bits(x.is_nan()) | U64x::from_bits(y));
+            x.is_neg_zero().select(NEG_ZERO, y)
+        }
+
+        #[test]
+        fn test_asinh() {
+            test_f_f(
+                asinh,
+                rug::Float::asinh,
+                -crate::f64::SQRT_DBL_MAX..=crate::f64::SQRT_DBL_MAX,
+                1.
+            );
+        }
+
+        /// Inverse hyperbolic cosine function
+        ///
+        /// This function evaluates the inverse hyperbolic cosine function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP` if ***a*** is in `[-1.34e+154, 1.34e+154]`.
+        /// If ***a*** is a finite value out of this range, infinity with a correct
+        /// sign or a correct value with `1.0 ULP` error bound is returned.
+        pub fn acosh(x: F64x) -> F64x {
+            let d = logk2(x.add_as_doubled(ONE).sqrt() * x.add_as_doubled(F64x::splat(-1.)).sqrt() + x);
+            let mut y = d.0 + d.1;
+
+            y = (x.abs().gt(SQRT_DBL_MAX) | y.is_nan()).select(F64x::INFINITY, y);
+            y = F64x::from_bits(!U64x::from_bits(x.eq(ONE)) & U64x::from_bits(y));
+
+            y = F64x::from_bits(U64x::from_bits(x.lt(ONE)) | U64x::from_bits(y));
+            F64x::from_bits(U64x::from_bits(x.is_nan()) | U64x::from_bits(y))
+        }
+
+        #[test]
+        fn test_acosh() {
+            test_f_f(
+                acosh,
+                rug::Float::acosh,
+                -crate::f64::SQRT_DBL_MAX..=crate::f64::SQRT_DBL_MAX,
+                1.
+            );
+        }
+
+        /// Inverse hyperbolic tangent function
+        ///
+        /// This function evaluates the inverse hyperbolic tangent function of a value in ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
+        pub fn atanh(x: F64x) -> F64x {
+            let mut y = x.abs();
+            let d = logk2(ONE.add_as_doubled(y) / ONE.add_as_doubled(-y));
+            y = F64x::from_bits(
+                U64x::from_bits(y.gt(ONE))
+                    | U64x::from_bits(y.eq(ONE).select(F64x::INFINITY, (d.0 + d.1) * HALF)),
+            );
+
+            y = y.mul_sign(x);
+            y = F64x::from_bits(U64x::from_bits(x.is_infinite() | y.is_nan()) | U64x::from_bits(y));
+            F64x::from_bits(U64x::from_bits(x.is_nan()) | U64x::from_bits(y))
+        }
+
+        #[test]
+        fn test_atanh() {
+            test_f_f(
+                atanh,
+                rug::Float::atanh,
+                f64::MIN..=f64::MAX,
+                1.
+            );
+        }
+
+        /// Natural logarithmic function
+        ///
+        /// This function returns the natural logarithm of ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
+        pub fn log(mut d: F64x) -> F64x {
+            let m: F64x;
+            let mut s =
+                /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
+                    let o = d.lt(F64x::splat(f64::MIN_POSITIVE));
+                    d = o.select(d * (D1_32X * D1_32X), d);
+                    let mut e = ilogb2k(d * F64x::splat(1. / 0.75));
+                    m = ldexp3k(d, -e);
+                    e = Mx::from_cast(o).select(e - Ix::splat(64), e);
+                    Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17))
+                        * F64x::from_cast(e)
+                }/* else {
+                    let mut e = vgetexp_vd_vd(d * F64x::splat(1. / 0.75));
+                    e = e.eq(F64x::INFINITY).select(F64x::splat(1024.), e);
+                    m = vgetmant_vd_vd(d);
+                    Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17)) * e
+                }*/;
+
+            let x = F64x::splat(-1.).add_as_doubled(m) / ONE.add_as_doubled(m);
+            let x2 = x.0 * x.0;
+
+            let t = F64x::splat(0.153_207_698_850_270_135_3)
+                .mul_add(x2, F64x::splat(0.152_562_905_100_342_871_6))
+                .mul_add(x2, F64x::splat(0.181_860_593_293_778_599_6))
+                .mul_add(x2, F64x::splat(0.222_221_451_983_938_000_9))
+                .mul_add(x2, F64x::splat(0.285_714_293_279_429_931_7))
+                .mul_add(x2, F64x::splat(0.399_999_999_963_525_199))
+                .mul_add(x2, F64x::splat(0.666_666_666_666_733_354_1));
+
+            s = s.add_checked(x.scale(F64x::splat(2.)));
+            s = s.add_checked(x2 * x.0 * t);
+
+            let r = s.0 + s.1;
+
+            /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
+            let r = d.eq(F64x::INFINITY).select(F64x::INFINITY, r);
+            let r = (d.lt(ZERO) | d.is_nan()).select(F64x::NAN, r);
+            d.eq(ZERO).select(F64x::NEG_INFINITY, r)
+            /*} else {
+                vfixup_vd_vd_vd_vi2_i(
+                    r,
+                    d,
+                    I64x::splat((4 << (2 * 4)) | (3 << (4 * 4)) | (5 << (5 * 4)) | (2 << (6 * 4))),
+                    0,
+                )
+            }*/
+        }
+
+        #[test]
+        fn test_log() {
+            test_f_f(
+                log,
+                rug::Float::ln,
+                0.0..=f64::MAX,
+                1.
+            );
+        }
+
+        /// Base-10 logarithmic function
+        ///
+        /// This function returns the base-10 logarithm of ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
+        pub fn log10(mut d: F64x) -> F64x {
+            let m: F64x;
+
+            let mut s = /*if !cfg!(feature = "enable_avx512f")
+                        && !cfg!(feature = "enable_avx512fnofma")*/
+                    {
+                        let o = d.lt(F64x::splat(f64::MIN_POSITIVE));
+                        d = o.select(d * (D1_32X * D1_32X), d);
+                        let mut e = ilogb2k(d * F64x::splat(1. / 0.75));
+                        m = ldexp3k(d, -e);
+                        e = Mx::from_cast(o).select(e - Ix::splat(64), e);
+                        Doubled::from((0.301_029_995_663_981_198_02, -2.803_728_127_785_170_339_e-18)) * F64x::from_cast(e)
+                    }/* else {
+                        let mut e = vgetexp_vd_vd(d * F64x::splat(1. / 0.75));
+                        e = e.eq(F64x::INFINITY).select(F64x::splat(1024.), e);
+                        m = vgetmant_vd_vd(d);
+                        Doubled::from((0.301_029_995_663_981_198_02, -2.803_728_127_785_170_339_e-18)) * e
+                    }*/;
+
+            let x = F64x::splat(-1.).add_as_doubled(m) / ONE.add_as_doubled(m);
+            let x2 = x.0 * x.0;
+            let x4 = x2 * x2;
+            let x8 = x4 * x4;
+
+            let t = F64x::poly7(x2, x4, x8,
+                0.665_372_581_957_675_846_e-1,
+                0.662_572_278_282_083_371_2_e-1,
+                0.789_810_521_431_394_407_8_e-1,
+                0.965_095_503_571_527_513_2_e-1,
+                0.124_084_140_972_144_499_3,
+                0.173_717_792_745_460_508_6,
+                0.289_529_654_602_197_261_7);
+
+            s = s.add_checked(
+                x * Doubled::from((
+                    0.868_588_963_806_503_633_34,
+                    1.143_005_969_409_638_931_1_e-17,
+                )),
+            );
+            s = s.add_checked(x2 * x.0 * t);
+
+            let r = s.0 + s.1;
+
+            /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
+            let r = d.eq(F64x::INFINITY).select(F64x::INFINITY, r);
+            let r = (d.lt(ZERO) | d.is_nan()).select(F64x::NAN, r);
+            d.eq(ZERO).select(F64x::NEG_INFINITY, r)
+            /*} else {
+                vfixup_vd_vd_vd_vi2_i(
+                    r,
+                    d,
+                    I64x::splat((4 << (2 * 4)) | (3 << (4 * 4)) | (5 << (5 * 4)) | (2 << (6 * 4))),
+                    0,
+                )
+            }*/
+        }
+
+        #[test]
+        fn test_log10() {
+            test_f_f(
+                log10,
+                rug::Float::log10,
+                0.0..=f64::MAX,
+                1.
+            );
+        }
+
+        /// Base-2 logarithmic function
+        ///
+        /// This function returns the base-2 logarithm of ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
+        pub fn log2(mut d: F64x) -> F64x {
+            let m: F64x;
+            let ef =
+            /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
+                let o = d.lt(F64x::splat(f64::MIN_POSITIVE));
+                d = o.select(d * (D1_32X * D1_32X), d);
+                let mut e = ilogb2k(d * F64x::splat(1. / 0.75));
+                m = ldexp3k(d, -e);
+                e = Mx::from_cast(o).select(e - Ix::splat(64), e);
+                F64x::from_cast(e)
+            }/* else {
+                let e = vgetexp_vd_vd(d * F64x::splat(1.0 / 0.75));
+                e = e.eq(F64x::INFINITY).select(F64x::splat(1024.), e);
+                m = vgetmant_vd_vd(d);
+                e
+            }*/;
+
+            let x = F64x::splat(-1.).add_as_doubled(m) / ONE.add_as_doubled(m);
+            let x2 = x.0 * x.0;
+            let x4 = x2 * x2;
+            let x8 = x4 * x4;
+
+            let t = F64x::poly7(x2, x4, x8,
+                0.221_194_175_045_608_149,
+                0.220_076_869_315_227_768_9,
+                0.262_370_805_748_851_465_6,
+                0.320_597_747_794_449_550_2,
+                0.412_198_594_548_532_470_9,
+                0.577_078_016_299_705_898_2,
+                0.961_796_693_926_080_914_49);
+
+            let mut s =
+                ef + x * Doubled::from((2.885_390_081_777_926_774, 6.056_160_499_551_673_643_4_e-18));
+            s += x2 * x.0 * t;
+
+            let r = s.0 + s.1;
+
+            /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
+            let r = d.eq(F64x::INFINITY).select(F64x::INFINITY, r);
+            let r = (d.lt(ZERO) | d.is_nan()).select(F64x::NAN, r);
+            d.eq(ZERO).select(F64x::NEG_INFINITY, r)
+            /*} else {
+                vfixup_vd_vd_vd_vi2_i(
+                    r,
+                    d,
+                    I64x::splat((4 << (2 * 4)) | (3 << (4 * 4)) | (5 << (5 * 4)) | (2 << (6 * 4))),
+                    0,
+                )
+            }*/
+        }
+
+        #[test]
+        fn test_log2() {
+            test_f_f(
+                log2,
+                rug::Float::log2,
+                0.0..=f64::MAX,
+                1.
+            );
+        }
+
+        /// Logarithm of one plus argument
+        ///
+        /// This function returns the natural logarithm of (1+***a***).
+        /// The error bound of the returned value is `1.0 ULP`.
+        pub fn log1p(d: F64x) -> F64x {
+            let m: F64x;
+
+            let mut dp1 = d + ONE;
+
+            let mut s =
+            /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
+                let o = dp1.lt(F64x::splat(f64::MIN_POSITIVE));
+                dp1 = o.select(dp1 * (D1_32X * D1_32X), dp1);
+                let mut e = ilogb2k(dp1 * F64x::splat(1. / 0.75));
+                let t = ldexp3k(ONE, -e);
+                m = d.mul_add(t, t - ONE);
+                e = Mx::from_cast(o).select(e - Ix::splat(64), e);
+                Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17))
+                    * F64x::from_cast(e)
+            }/* else {
+                let e = vgetexp_vd_vd(dp1, F64x::splat(1. / 0.75));
+                e = e.eq(F64x::INFINITY).select(F64x::splat(1024.), e);
+                let t = ldexp3k(ONE, -e.roundi());
+                m = d.mul_add(t, t - ONE);
+                Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17)) * e
+            }*/;
+
+            let x = Doubled::new(m, ZERO) / F64x::splat(2.).add_checked_as_doubled(m);
+            let x2 = x.0 * x.0;
+            let x4 = x2 * x2;
+            let x8 = x4 * x4;
+
+            let t = F64x::poly7(x2, x4, x8,
+                0.153_207_698_850_270_135_3,
+                0.152_562_905_100_342_871_6,
+                0.181_860_593_293_778_599_6,
+                0.222_221_451_983_938_000_9,
+                0.285_714_293_279_429_931_7,
+                0.399_999_999_963_525_199,
+                0.666_666_666_666_733_354_1);
+
+            s = s.add_checked(x.scale(F64x::splat(2.)));
+            s = s.add_checked(x2 * x.0 * t);
+
+            let mut r = s.0 + s.1;
+
+            r = d.gt(F64x::splat(1e+307)).select(F64x::INFINITY, r);
+            r = (d.lt(F64x::splat(-1.)) | d.is_nan()).select(F64x::NAN, r);
+            r = d.eq(F64x::splat(-1.)).select(F64x::NEG_INFINITY, r);
+            d.is_neg_zero().select(NEG_ZERO, r)
+        }
+
+        #[test]
+        fn test_log1p() {
+            test_f_f(
+                log1p,
+                rug::Float::ln_1p,
+                -1.0..=1e+307,
+                1.
+            );
+        }
+
+        /// Base-*e* exponential function
+        ///
+        /// This function returns the value of *e* raised to ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         pub fn exp(d: F64x) -> F64x {
             let mut u = (d * R_LN2).round();
             let q = u.roundi();
@@ -927,64 +1413,132 @@ macro_rules! impl_math_f64_u10 {
             );
         }
 
-        pub fn log(mut d: F64x) -> F64x {
-            let m: F64x;
-            let mut s =
-                /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
-                    let o = d.lt(F64x::splat(f64::MIN_POSITIVE));
-                    d = o.select(d * (D1_32X * D1_32X), d);
-                    let mut e = ilogb2k(d * F64x::splat(1. / 0.75));
-                    m = ldexp3k(d, -e);
-                    e = Mx::from_cast(o).select(e - Ix::splat(64), e);
-                    Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17))
-                        * F64x::from_cast(e)
-                }/* else {
-                    let mut e = vgetexp_vd_vd(d * F64x::splat(1. / 0.75));
-                    e = e.eq(F64x::INFINITY).select(F64x::splat(1024.), e);
-                    m = vgetmant_vd_vd(d);
-                    Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17)) * e
-                }*/;
+        /// Base-10 exponential function
+        ///
+        /// This function returns 10 raised to ***a***.
+        /// The error bound of the returned value is `1.09 ULP`.
+        pub fn exp10(d: F64x) -> F64x {
+            let mut u = (d * LOG10_2).round();
+            let q = u.roundi();
 
-            let x = F64x::splat(-1.).add_as_doubled(m) / ONE.add_as_doubled(m);
-            let x2 = x.0 * x.0;
+            let s = u.mul_add(-L10U, d);
+            let s = u.mul_add(-L10L, s);
 
-            let t = F64x::splat(0.153_207_698_850_270_135_3)
-                .mul_add(x2, F64x::splat(0.152_562_905_100_342_871_6))
-                .mul_add(x2, F64x::splat(0.181_860_593_293_778_599_6))
-                .mul_add(x2, F64x::splat(0.222_221_451_983_938_000_9))
-                .mul_add(x2, F64x::splat(0.285_714_293_279_429_931_7))
-                .mul_add(x2, F64x::splat(0.399_999_999_963_525_199))
-                .mul_add(x2, F64x::splat(0.666_666_666_666_733_354_1));
+            u = F64x::splat(0.241_146_349_833_426_765_2_e-3)
+                .mul_add(s, F64x::splat(0.115_748_841_521_718_737_5_e-2))
+                .mul_add(s, F64x::splat(0.501_397_554_678_973_365_9_e-2))
+                .mul_add(s, F64x::splat(0.195_976_232_072_053_308_e-1))
+                .mul_add(s, F64x::splat(0.680_893_639_944_678_413_8_e-1))
+                .mul_add(s, F64x::splat(0.206_995_849_472_267_623_4))
+                .mul_add(s, F64x::splat(0.539_382_929_205_853_622_9))
+                .mul_add(s, F64x::splat(0.117_125_514_890_854_165_5_e+1))
+                .mul_add(s, F64x::splat(0.203_467_859_229_343_295_3_e+1))
+                .mul_add(s, F64x::splat(0.265_094_905_523_920_587_6_e+1))
+                .mul_add(s, F64x::splat(0.230_258_509_299_404_590_1_e+1));
 
-            s = s.add_checked(x.scale(F64x::splat(2.)));
-            s = s.add_checked(x2 * x.0 * t);
+            if cfg!(target_feature = "fma") {
+                u = u.mul_adde(s, ONE);
+            } else {
+                u = ONE.add_checked(u.mul_as_doubled(s)).normalize().0;
+            }
 
-            let r = s.0 + s.1;
+            u = ldexp2k(u, q);
 
-            /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
-            let r = d.eq(F64x::INFINITY).select(F64x::INFINITY, r);
-            let r = (d.lt(ZERO) | d.is_nan()).select(F64x::NAN, r);
-            d.eq(ZERO).select(F64x::NEG_INFINITY, r)
-            /*} else {
-                vfixup_vd_vd_vd_vi2_i(
-                    r,
-                    d,
-                    I64x::splat((4 << (2 * 4)) | (3 << (4 * 4)) | (5 << (5 * 4)) | (2 << (6 * 4))),
-                    0,
-                )
-            }*/
+            u = d
+                .gt(F64x::splat(308.254_715_559_916_71))
+                .select(F64x::INFINITY, u);
+            F64x::from_bits(!U64x::from_bits(d.lt(F64x::splat(-350.))) & U64x::from_bits(u))
         }
 
         #[test]
-        fn test_log() {
+        fn test_exp10() {
             test_f_f(
-                log,
-                rug::Float::ln,
-                0.0..=f64::MAX,
+                exp10,
+                rug::Float::exp10,
+                -350.0..=308.26,
+                1.09
+            );
+        }
+
+        /// Base-*e* exponential function minus 1
+        ///
+        /// This function returns the value one less than *e* raised to ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
+        pub fn expm1(a: F64x) -> F64x {
+            let d = expk2(Doubled::new(a, ZERO)) + F64x::splat(-1.);
+            let mut x = d.0 + d.1;
+            x = a
+                .gt(F64x::splat(709.782_712_893_383_996_732_223))
+                .select(F64x::INFINITY, x);
+            x = a
+                .lt(F64x::splat(-36.736_800_569_677_101_399_113_302_437))
+                .select(F64x::splat(-1.), x);
+            a.is_neg_zero().select(NEG_ZERO, x)
+        }
+
+        #[test]
+        fn test_expm1() {
+            test_f_f(
+                expm1,
+                rug::Float::exp_m1,
+                -37.0..=710.0,
                 1.
             );
         }
 
+        /// Base-2 exponential function
+        ///
+        /// This function returns `2` raised to ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
+        pub fn exp2(d: F64x) -> F64x {
+            let mut u = d.round();
+            let q = u.roundi();
+
+            let s = d - u;
+
+            let s2 = s * s;
+            let s4 = s2 * s2;
+            let s8 = s4 * s4;
+
+            u = F64x::poly10(s, s2, s4, s8,
+                0.443_435_908_292_652_945_4_e-9,
+                0.707_316_459_808_570_742_5_e-8,
+                0.101_781_926_092_176_045_1_e-6,
+                0.132_154_387_251_132_761_5_e-5,
+                0.152_527_335_351_758_473_e-4,
+                0.154_035_304_510_114_780_8_e-3,
+                0.133_335_581_467_049_907_3_e-2,
+                0.961_812_910_759_760_053_6_e-2,
+                0.555_041_086_648_204_659_6_e-1,
+                0.240_226_506_959_101_221_4)
+                .mul_add(s, F64x::splat(0.693_147_180_559_945_286_2));
+
+            if cfg!(target_feature = "fma") {
+                u = u.mul_adde(s, ONE);
+            } else {
+                u = ONE.add_checked(u.mul_as_doubled(s)).normalize().0;
+            }
+
+            u = ldexp2k(u, q);
+
+            u = d.ge(F64x::splat(1024.)).select(F64x::INFINITY, u);
+            F64x::from_bits(!U64x::from_bits(d.lt(F64x::splat(-2000.))) & U64x::from_bits(u))
+        }
+
+        #[test]
+        fn test_exp2() {
+            test_f_f(
+                exp2,
+                rug::Float::exp2,
+                -2000.0..=1024.0,
+                1.
+            );
+        }
+
+        /// Power function
+        ///
+        /// This function returns the value of ***x*** raised to the power of ***y***.
+        /// The error bound of the returned value is `1.0 ULP`.
         pub fn pow(x: F64x, y: F64x) -> F64x {
             if true {
                 let yisint = y.is_integer();
@@ -1041,140 +1595,10 @@ macro_rules! impl_math_f64_u10 {
             );
         }
 
-        pub fn sinh(x: F64x) -> F64x {
-            let mut y = x.abs();
-            let mut d = expk2(Doubled::new(y, ZERO));
-            d = d.sub_checked(d.recpre());
-            y = (d.0 + d.1) * HALF;
-
-            y = (x.abs().gt(F64x::splat(710.)) | y.is_nan()).select(F64x::INFINITY, y);
-            y = y.mul_sign(x);
-            F64x::from_bits(U64x::from_bits(x.is_nan()) | U64x::from_bits(y))
-        }
-
-        #[test]
-        fn test_sinh() {
-            test_f_f(
-                sinh,
-                rug::Float::sinh,
-                -709.0..=709.0,
-                1.
-            );
-        }
-
-        pub fn cosh(x: F64x) -> F64x {
-            let mut y = x.abs();
-            let mut d = expk2(Doubled::new(y, ZERO));
-            d = d.add_checked(d.recpre());
-            y = (d.0 + d.1) * HALF;
-
-            y = (x.abs().gt(F64x::splat(710.)) | y.is_nan()).select(F64x::INFINITY, y);
-            F64x::from_bits(U64x::from_bits(x.is_nan()) | U64x::from_bits(y))
-        }
-
-        #[test]
-        fn test_cosh() {
-            test_f_f(
-                cosh,
-                rug::Float::cosh,
-                -709.0..=709.0,
-                1.
-            );
-        }
-
-        pub fn tanh(x: F64x) -> F64x {
-            let mut y = x.abs();
-            let mut d = expk2(Doubled::new(y, ZERO));
-            let e = d.recpre();
-            d = (d + (-e)) / (d + e);
-            y = d.0 + d.1;
-
-            y = (x.abs().gt(F64x::splat(18.714_973_875)) | y.is_nan()).select(ONE, y);
-            y = y.mul_sign(x);
-            F64x::from_bits(U64x::from_bits(x.is_nan()) | U64x::from_bits(y))
-        }
-
-        #[test]
-        fn test_tanh() {
-            test_f_f(
-                tanh,
-                rug::Float::tanh,
-                -19.0..=19.0,
-                1.
-            );
-        }
-
-        pub fn asinh(x: F64x) -> F64x {
-            let mut y = x.abs();
-            let o = y.gt(ONE);
-
-            let mut d = o.select_doubled(x.recpre_as_doubled(), Doubled::new(y, ZERO));
-            d = (d.square() + ONE).sqrt();
-            d = o.select_doubled(d * y, d);
-
-            d = logk2((d + x).normalize());
-            y = d.0 + d.1;
-
-            y = (x.abs().gt(SQRT_DBL_MAX) | y.is_nan()).select(F64x::INFINITY.mul_sign(x), y);
-
-            y = F64x::from_bits(U64x::from_bits(x.is_nan()) | U64x::from_bits(y));
-            x.is_neg_zero().select(NEG_ZERO, y)
-        }
-
-        #[test]
-        fn test_asinh() {
-            test_f_f(
-                asinh,
-                rug::Float::asinh,
-                -crate::f64::SQRT_DBL_MAX..=crate::f64::SQRT_DBL_MAX,
-                1.
-            );
-        }
-
-        pub fn acosh(x: F64x) -> F64x {
-            let d = logk2(x.add_as_doubled(ONE).sqrt() * x.add_as_doubled(F64x::splat(-1.)).sqrt() + x);
-            let mut y = d.0 + d.1;
-
-            y = (x.abs().gt(SQRT_DBL_MAX) | y.is_nan()).select(F64x::INFINITY, y);
-            y = F64x::from_bits(!U64x::from_bits(x.eq(ONE)) & U64x::from_bits(y));
-
-            y = F64x::from_bits(U64x::from_bits(x.lt(ONE)) | U64x::from_bits(y));
-            F64x::from_bits(U64x::from_bits(x.is_nan()) | U64x::from_bits(y))
-        }
-
-        #[test]
-        fn test_acosh() {
-            test_f_f(
-                acosh,
-                rug::Float::acosh,
-                -crate::f64::SQRT_DBL_MAX..=crate::f64::SQRT_DBL_MAX,
-                1.
-            );
-        }
-
-        pub fn atanh(x: F64x) -> F64x {
-            let mut y = x.abs();
-            let d = logk2(ONE.add_as_doubled(y) / ONE.add_as_doubled(-y));
-            y = F64x::from_bits(
-                U64x::from_bits(y.gt(ONE))
-                    | U64x::from_bits(y.eq(ONE).select(F64x::INFINITY, (d.0 + d.1) * HALF)),
-            );
-
-            y = y.mul_sign(x);
-            y = F64x::from_bits(U64x::from_bits(x.is_infinite() | y.is_nan()) | U64x::from_bits(y));
-            F64x::from_bits(U64x::from_bits(x.is_nan()) | U64x::from_bits(y))
-        }
-
-        #[test]
-        fn test_atanh() {
-            test_f_f(
-                atanh,
-                rug::Float::atanh,
-                f64::MIN..=f64::MAX,
-                1.
-            );
-        }
-
+        /// Cube root function
+        ///
+        /// This function returns the real cube root of ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
         pub fn cbrt(mut d: F64x) -> F64x {
             let mut q2 = Doubled::from((1., 0.));
 
@@ -1252,302 +1676,9 @@ macro_rules! impl_math_f64_u10 {
             );
         }
 
-        pub fn exp2(d: F64x) -> F64x {
-            let mut u = d.round();
-            let q = u.roundi();
-
-            let s = d - u;
-
-            let s2 = s * s;
-            let s4 = s2 * s2;
-            let s8 = s4 * s4;
-
-            u = F64x::poly10(s, s2, s4, s8,
-                0.443_435_908_292_652_945_4_e-9,
-                0.707_316_459_808_570_742_5_e-8,
-                0.101_781_926_092_176_045_1_e-6,
-                0.132_154_387_251_132_761_5_e-5,
-                0.152_527_335_351_758_473_e-4,
-                0.154_035_304_510_114_780_8_e-3,
-                0.133_335_581_467_049_907_3_e-2,
-                0.961_812_910_759_760_053_6_e-2,
-                0.555_041_086_648_204_659_6_e-1,
-                0.240_226_506_959_101_221_4)
-                .mul_add(s, F64x::splat(0.693_147_180_559_945_286_2));
-
-            if cfg!(target_feature = "fma") {
-                u = u.mul_adde(s, ONE);
-            } else {
-                u = ONE.add_checked(u.mul_as_doubled(s)).normalize().0;
-            }
-
-            u = ldexp2k(u, q);
-
-            u = d.ge(F64x::splat(1024.)).select(F64x::INFINITY, u);
-            F64x::from_bits(!U64x::from_bits(d.lt(F64x::splat(-2000.))) & U64x::from_bits(u))
-        }
-
-        #[test]
-        fn test_exp2() {
-            test_f_f(
-                exp2,
-                rug::Float::exp2,
-                -2000.0..=1024.0,
-                1.
-            );
-        }
-
-        pub fn exp10(d: F64x) -> F64x {
-            let mut u = (d * LOG10_2).round();
-            let q = u.roundi();
-
-            let s = u.mul_add(-L10U, d);
-            let s = u.mul_add(-L10L, s);
-
-            u = F64x::splat(0.241_146_349_833_426_765_2_e-3)
-                .mul_add(s, F64x::splat(0.115_748_841_521_718_737_5_e-2))
-                .mul_add(s, F64x::splat(0.501_397_554_678_973_365_9_e-2))
-                .mul_add(s, F64x::splat(0.195_976_232_072_053_308_e-1))
-                .mul_add(s, F64x::splat(0.680_893_639_944_678_413_8_e-1))
-                .mul_add(s, F64x::splat(0.206_995_849_472_267_623_4))
-                .mul_add(s, F64x::splat(0.539_382_929_205_853_622_9))
-                .mul_add(s, F64x::splat(0.117_125_514_890_854_165_5_e+1))
-                .mul_add(s, F64x::splat(0.203_467_859_229_343_295_3_e+1))
-                .mul_add(s, F64x::splat(0.265_094_905_523_920_587_6_e+1))
-                .mul_add(s, F64x::splat(0.230_258_509_299_404_590_1_e+1));
-
-            if cfg!(target_feature = "fma") {
-                u = u.mul_adde(s, ONE);
-            } else {
-                u = ONE.add_checked(u.mul_as_doubled(s)).normalize().0;
-            }
-
-            u = ldexp2k(u, q);
-
-            u = d
-                .gt(F64x::splat(308.254_715_559_916_71))
-                .select(F64x::INFINITY, u);
-            F64x::from_bits(!U64x::from_bits(d.lt(F64x::splat(-350.))) & U64x::from_bits(u))
-        }
-
-        #[test]
-        fn test_exp10() {
-            test_f_f(
-                exp10,
-                rug::Float::exp10,
-                -350.0..=308.26,
-                1.09
-            );
-        }
-
-        pub fn expm1(a: F64x) -> F64x {
-            let d = expk2(Doubled::new(a, ZERO)) + F64x::splat(-1.);
-            let mut x = d.0 + d.1;
-            x = a
-                .gt(F64x::splat(709.782_712_893_383_996_732_223))
-                .select(F64x::INFINITY, x);
-            x = a
-                .lt(F64x::splat(-36.736_800_569_677_101_399_113_302_437))
-                .select(F64x::splat(-1.), x);
-            a.is_neg_zero().select(NEG_ZERO, x)
-        }
-
-        #[test]
-        fn test_expm1() {
-            test_f_f(
-                expm1,
-                rug::Float::exp_m1,
-                -37.0..=710.0,
-                1.
-            );
-        }
-
-        pub fn log10(mut d: F64x) -> F64x {
-            let m: F64x;
-
-            let mut s = /*if !cfg!(feature = "enable_avx512f")
-                        && !cfg!(feature = "enable_avx512fnofma")*/
-                    {
-                        let o = d.lt(F64x::splat(f64::MIN_POSITIVE));
-                        d = o.select(d * (D1_32X * D1_32X), d);
-                        let mut e = ilogb2k(d * F64x::splat(1. / 0.75));
-                        m = ldexp3k(d, -e);
-                        e = Mx::from_cast(o).select(e - Ix::splat(64), e);
-                        Doubled::from((0.301_029_995_663_981_198_02, -2.803_728_127_785_170_339_e-18)) * F64x::from_cast(e)
-                    }/* else {
-                        let mut e = vgetexp_vd_vd(d * F64x::splat(1. / 0.75));
-                        e = e.eq(F64x::INFINITY).select(F64x::splat(1024.), e);
-                        m = vgetmant_vd_vd(d);
-                        Doubled::from((0.301_029_995_663_981_198_02, -2.803_728_127_785_170_339_e-18)) * e
-                    }*/;
-
-            let x = F64x::splat(-1.).add_as_doubled(m) / ONE.add_as_doubled(m);
-            let x2 = x.0 * x.0;
-            let x4 = x2 * x2;
-            let x8 = x4 * x4;
-
-            let t = F64x::poly7(x2, x4, x8,
-                0.665_372_581_957_675_846_e-1,
-                0.662_572_278_282_083_371_2_e-1,
-                0.789_810_521_431_394_407_8_e-1,
-                0.965_095_503_571_527_513_2_e-1,
-                0.124_084_140_972_144_499_3,
-                0.173_717_792_745_460_508_6,
-                0.289_529_654_602_197_261_7);
-
-            s = s.add_checked(
-                x * Doubled::from((
-                    0.868_588_963_806_503_633_34,
-                    1.143_005_969_409_638_931_1_e-17,
-                )),
-            );
-            s = s.add_checked(x2 * x.0 * t);
-
-            let r = s.0 + s.1;
-
-            /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
-            let r = d.eq(F64x::INFINITY).select(F64x::INFINITY, r);
-            let r = (d.lt(ZERO) | d.is_nan()).select(F64x::NAN, r);
-            d.eq(ZERO).select(F64x::NEG_INFINITY, r)
-            /*} else {
-                vfixup_vd_vd_vd_vi2_i(
-                    r,
-                    d,
-                    I64x::splat((4 << (2 * 4)) | (3 << (4 * 4)) | (5 << (5 * 4)) | (2 << (6 * 4))),
-                    0,
-                )
-            }*/
-        }
-
-        #[test]
-        fn test_log10() {
-            test_f_f(
-                log10,
-                rug::Float::log10,
-                0.0..=f64::MAX,
-                1.
-            );
-        }
-
-        pub fn log2(mut d: F64x) -> F64x {
-            let m: F64x;
-            let ef =
-            /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
-                let o = d.lt(F64x::splat(f64::MIN_POSITIVE));
-                d = o.select(d * (D1_32X * D1_32X), d);
-                let mut e = ilogb2k(d * F64x::splat(1. / 0.75));
-                m = ldexp3k(d, -e);
-                e = Mx::from_cast(o).select(e - Ix::splat(64), e);
-                F64x::from_cast(e)
-            }/* else {
-                let e = vgetexp_vd_vd(d * F64x::splat(1.0 / 0.75));
-                e = e.eq(F64x::INFINITY).select(F64x::splat(1024.), e);
-                m = vgetmant_vd_vd(d);
-                e
-            }*/;
-
-            let x = F64x::splat(-1.).add_as_doubled(m) / ONE.add_as_doubled(m);
-            let x2 = x.0 * x.0;
-            let x4 = x2 * x2;
-            let x8 = x4 * x4;
-
-            let t = F64x::poly7(x2, x4, x8,
-                0.221_194_175_045_608_149,
-                0.220_076_869_315_227_768_9,
-                0.262_370_805_748_851_465_6,
-                0.320_597_747_794_449_550_2,
-                0.412_198_594_548_532_470_9,
-                0.577_078_016_299_705_898_2,
-                0.961_796_693_926_080_914_49);
-
-            let mut s =
-                ef + x * Doubled::from((2.885_390_081_777_926_774, 6.056_160_499_551_673_643_4_e-18));
-            s += x2 * x.0 * t;
-
-            let r = s.0 + s.1;
-
-            /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
-            let r = d.eq(F64x::INFINITY).select(F64x::INFINITY, r);
-            let r = (d.lt(ZERO) | d.is_nan()).select(F64x::NAN, r);
-            d.eq(ZERO).select(F64x::NEG_INFINITY, r)
-            /*} else {
-                vfixup_vd_vd_vd_vi2_i(
-                    r,
-                    d,
-                    I64x::splat((4 << (2 * 4)) | (3 << (4 * 4)) | (5 << (5 * 4)) | (2 << (6 * 4))),
-                    0,
-                )
-            }*/
-        }
-
-        #[test]
-        fn test_log2() {
-            test_f_f(
-                log2,
-                rug::Float::log2,
-                0.0..=f64::MAX,
-                1.
-            );
-        }
-
-        pub fn log1p(d: F64x) -> F64x {
-            let m: F64x;
-
-            let mut dp1 = d + ONE;
-
-            let mut s =
-            /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
-                let o = dp1.lt(F64x::splat(f64::MIN_POSITIVE));
-                dp1 = o.select(dp1 * (D1_32X * D1_32X), dp1);
-                let mut e = ilogb2k(dp1 * F64x::splat(1. / 0.75));
-                let t = ldexp3k(ONE, -e);
-                m = d.mul_add(t, t - ONE);
-                e = Mx::from_cast(o).select(e - Ix::splat(64), e);
-                Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17))
-                    * F64x::from_cast(e)
-            }/* else {
-                let e = vgetexp_vd_vd(dp1, F64x::splat(1. / 0.75));
-                e = e.eq(F64x::INFINITY).select(F64x::splat(1024.), e);
-                let t = ldexp3k(ONE, -e.roundi());
-                m = d.mul_add(t, t - ONE);
-                Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17)) * e
-            }*/;
-
-            let x = Doubled::new(m, ZERO) / F64x::splat(2.).add_checked_as_doubled(m);
-            let x2 = x.0 * x.0;
-            let x4 = x2 * x2;
-            let x8 = x4 * x4;
-
-            let t = F64x::poly7(x2, x4, x8,
-                0.153_207_698_850_270_135_3,
-                0.152_562_905_100_342_871_6,
-                0.181_860_593_293_778_599_6,
-                0.222_221_451_983_938_000_9,
-                0.285_714_293_279_429_931_7,
-                0.399_999_999_963_525_199,
-                0.666_666_666_666_733_354_1);
-
-            s = s.add_checked(x.scale(F64x::splat(2.)));
-            s = s.add_checked(x2 * x.0 * t);
-
-            let mut r = s.0 + s.1;
-
-            r = d.gt(F64x::splat(1e+307)).select(F64x::INFINITY, r);
-            r = (d.lt(F64x::splat(-1.)) | d.is_nan()).select(F64x::NAN, r);
-            r = d.eq(F64x::splat(-1.)).select(F64x::NEG_INFINITY, r);
-            d.is_neg_zero().select(NEG_ZERO, r)
-        }
-
-        #[test]
-        fn test_log1p() {
-            test_f_f(
-                log1p,
-                rug::Float::ln_1p,
-                -1.0..=1e+307,
-                1.
-            );
-        }
-
+        /// Gamma function
+        ///
+        /// The error bound of the returned value is `1.0 ULP`.
         pub fn tgamma(a: F64x) -> F64x {
             let (da, db) = gammak(a);
             let y = expk2(da) * db;
@@ -1572,6 +1703,11 @@ macro_rules! impl_math_f64_u10 {
             );
         }
 
+        /// Log gamma function
+        ///
+        /// The error bound of the returned value is `1.0 ULP` if the argument is positive.
+        /// If the argument is larger than `2e+305`, it may return infinity instead of the correct value.
+        /// The error bound is `max(1 ULP and 1e-15)`, if the argument is negative.
         pub fn lgamma(a: F64x) -> F64x {
             let (da, db) = gammak(a);
             let y = da + logk2(db.abs());
@@ -1604,6 +1740,9 @@ macro_rules! impl_math_f64_u10 {
             ddmla(x*x, poly2dd(x, c3, c2), poly2dd_b(x, c1, c0))
         }
 
+        /// Error function
+        ///
+        /// The error bound of the returned value is `1.0 ULP`.
         pub fn erf(a: F64x) -> F64x {
             let x = a.abs();
             let x2 = x * x;

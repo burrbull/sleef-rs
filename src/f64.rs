@@ -530,6 +530,7 @@ fn copysignk(x: f64, y: f64) -> f64 {
     f64::from_bits((x.to_bits() & !(1 << 63)) ^ (y.to_bits() & (1 << 63)))
 }
 
+/// Sign of a number
 #[inline]
 pub fn sign(d: f64) -> f64 {
     mulsign(1., d)

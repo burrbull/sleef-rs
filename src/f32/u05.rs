@@ -2,45 +2,6 @@
 
 use super::*;
 
-/// Square root function
-///
-/// The error bound of the returned value is `0.5001 ULP`.
-pub fn sqrtf(mut d: f32) -> f32 {
-    let mut q = 0.5;
-
-    d = if d < 0. { f32::NAN } else { d };
-
-    if d < 5.293_955_920_339_377_e-23 {
-        d *= 1.888_946_593_147_858_e+22;
-        q = 7.275_957_614_183_426_e-12 * 0.5;
-    }
-
-    if d > 1.844_674_407_370_955_2_e+19 {
-        d *= 5.421_010_862_427_522_e-20;
-        q = 4_294_967_296. * 0.5;
-    }
-
-    // http://en.wikipedia.org/wiki/Fast_inverse_square_root
-    let mut x = f32::from_bits(0x_5f37_5a86 - ((d + 1e-45).to_bits() >> 1));
-
-    x *= 1.5 - 0.5 * d * x * x;
-    x *= 1.5 - 0.5 * d * x * x;
-    x *= (1.5 - 0.5 * d * x * x) * d;
-
-    let d2 = (d + x.mul_as_doubled(x)) * x.recpre();
-
-    if (d == 0.) || (d == f32::INFINITY) {
-        d
-    } else {
-        (d2.0 + d2.1) * q
-    }
-}
-
-#[test]
-fn test_sqrtf() {
-    test_f_f(sqrtf, rug::Float::sqrt, f32::MIN..=f32::MAX, 0.5);
-}
-
 /// Evaluate sin( π***a*** ) and cos( π***a*** ) for given ***a*** simultaneously
 ///
 /// Evaluates the sine and cosine functions of π***a*** at a time, and store the two values in a tuple.
@@ -129,49 +90,6 @@ fn test_sincospif() {
     );
 }
 
-/// 2D Euclidian distance function
-///
-/// The error bound of the returned value is `0.5001 ULP`.
-pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
-    x = fabsfk(x);
-    y = fabsfk(y);
-    let min = x.min(y);
-    let mut n = min;
-    let max = x.max(y);
-    let mut d = max;
-
-    if max < f32::MIN_POSITIVE {
-        n *= F1_24;
-        d *= F1_24;
-    }
-    let mut t = df(n, 0.) / df(d, 0.);
-    t = (t.square() + 1.).sqrt() * max;
-
-    let ret = t.0 + t.1;
-    if (x == f32::INFINITY) || (y == f32::INFINITY) {
-        f32::INFINITY
-    } else if x.is_nan() || y.is_nan() {
-        f32::NAN
-    } else if min == 0. {
-        max
-    } else if ret.is_nan() {
-        f32::INFINITY
-    } else {
-        ret
-    }
-}
-
-#[test]
-fn test_hypotf() {
-    test_ff_f(
-        hypotf,
-        rug::Float::hypot,
-        f32::MIN..=f32::MAX,
-        f32::MIN..=f32::MAX,
-        0.5001,
-    );
-}
-
 /// Evaluate sin( π***a*** ) for given ***a***
 ///
 /// This function evaluates the sine function of π***a***.
@@ -239,5 +157,87 @@ fn test_cospif() {
         },
         -rangemax2..=rangemax2,
         0.506,
+    );
+}
+
+/// Square root function
+///
+/// The error bound of the returned value is `0.5001 ULP`.
+pub fn sqrtf(mut d: f32) -> f32 {
+    let mut q = 0.5;
+
+    d = if d < 0. { f32::NAN } else { d };
+
+    if d < 5.293_955_920_339_377_e-23 {
+        d *= 1.888_946_593_147_858_e+22;
+        q = 7.275_957_614_183_426_e-12 * 0.5;
+    }
+
+    if d > 1.844_674_407_370_955_2_e+19 {
+        d *= 5.421_010_862_427_522_e-20;
+        q = 4_294_967_296. * 0.5;
+    }
+
+    // http://en.wikipedia.org/wiki/Fast_inverse_square_root
+    let mut x = f32::from_bits(0x_5f37_5a86 - ((d + 1e-45).to_bits() >> 1));
+
+    x *= 1.5 - 0.5 * d * x * x;
+    x *= 1.5 - 0.5 * d * x * x;
+    x *= (1.5 - 0.5 * d * x * x) * d;
+
+    let d2 = (d + x.mul_as_doubled(x)) * x.recpre();
+
+    if (d == 0.) || (d == f32::INFINITY) {
+        d
+    } else {
+        (d2.0 + d2.1) * q
+    }
+}
+
+#[test]
+fn test_sqrtf() {
+    test_f_f(sqrtf, rug::Float::sqrt, f32::MIN..=f32::MAX, 0.5);
+}
+
+/// 2D Euclidian distance function
+///
+/// The error bound of the returned value is `0.5001 ULP`.
+pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
+    x = fabsfk(x);
+    y = fabsfk(y);
+    let min = x.min(y);
+    let mut n = min;
+    let max = x.max(y);
+    let mut d = max;
+
+    if max < f32::MIN_POSITIVE {
+        n *= F1_24;
+        d *= F1_24;
+    }
+    let mut t = df(n, 0.) / df(d, 0.);
+    t = (t.square() + 1.).sqrt() * max;
+
+    let ret = t.0 + t.1;
+    if (x == f32::INFINITY) || (y == f32::INFINITY) {
+        f32::INFINITY
+    } else if x.is_nan() || y.is_nan() {
+        f32::NAN
+    } else if min == 0. {
+        max
+    } else if ret.is_nan() {
+        f32::INFINITY
+    } else {
+        ret
+    }
+}
+
+#[test]
+fn test_hypotf() {
+    test_ff_f(
+        hypotf,
+        rug::Float::hypot,
+        f32::MIN..=f32::MAX,
+        f32::MIN..=f32::MAX,
+        0.5001,
     );
 }

@@ -1,359 +1,10 @@
 //! Functions with 3.5 ULP error bound
 use super::*;
 
-pub fn sincospi(d: f64) -> (f64, f64) {
-    let u = d * 4.;
-    let q = ceilk(u) & !1_isize;
-
-    let s = u - (q as f64);
-    let t = s;
-    let s = s * s;
-
-    //
-
-    let u = 0.688_063_889_476_606_013_6_e-11_f64
-        .mul_add(s, -0.175_715_956_454_231_019_9_e-8)
-        .mul_add(s, 0.313_361_632_725_786_731_1_e-6)
-        .mul_add(s, -0.365_762_041_638_848_645_2_e-4)
-        .mul_add(s, 0.249_039_457_018_993_210_3_e-2)
-        .mul_add(s, -0.807_455_121_882_805_632_e-1)
-        .mul_add(s, 0.785_398_163_397_448_279);
-
-    let mut rsin = u * t;
-
-    //
-
-    let u = (-0.386_014_121_368_379_435_2_e-12_f64)
-        .mul_add(s, 0.115_005_788_802_968_141_5_e-9)
-        .mul_add(s, -0.246_113_649_300_666_355_3_e-7)
-        .mul_add(s, 0.359_086_044_662_351_671_3_e-5)
-        .mul_add(s, -0.325_991_886_926_943_594_2_e-3)
-        .mul_add(s, 0.158_543_442_438_154_116_9_e-1)
-        .mul_add(s, -0.308_425_137_534_042_437_3)
-        .mul_add(s, 1.);
-
-    let mut rcos = u;
-
-    //
-
-    if (q & 2) != 0 {
-        core::mem::swap(&mut rcos, &mut rsin);
-    }
-    if (q & 4) != 0 {
-        rsin = -rsin;
-    }
-    if ((q + 2) & 4) != 0 {
-        rcos = -rcos;
-    }
-
-    if fabsk(d) > TRIGRANGEMAX3 / 4. {
-        rsin = 0.;
-        rcos = 1.;
-    }
-    if d.is_infinite() {
-        rsin = f64::NAN;
-        rcos = f64::NAN;
-    }
-
-    (rsin, rcos)
-}
-
-#[test]
-fn test_sincospi() {
-    use rug::{float::Constant, Float};
-    let rangemax2 = 1e+9 / 4.;
-    test_f_ff(
-        sincospi,
-        |mut in1| {
-            let prec = in1.prec();
-            in1.set_prec(prec * 2);
-            (in1 * Float::with_val(prec * 2, Constant::Pi)).sin_cos(Float::new(prec))
-        },
-        -rangemax2..=rangemax2,
-        1.5,
-    );
-}
-
-pub fn sinh(x: f64) -> f64 {
-    let e = expm1k(fabsk(x));
-    let mut y = (e + 2.) / (e + 1.) * (0.5 * e);
-
-    y = if fabsk(x) > 709. { f64::INFINITY } else { y };
-    y = if y.is_nan() { f64::INFINITY } else { y };
-    y = mulsign(y, x);
-    if x.is_nan() {
-        f64::NAN
-    } else {
-        y
-    }
-}
-#[test]
-fn test_sinh() {
-    test_f_f(sinh, rug::Float::sinh, -709.0..=709.0, 3.5);
-}
-
-pub fn cosh(x: f64) -> f64 {
-    let e = u10::exp(fabsk(x));
-    let mut y = 0.5 / e + 0.5 * e;
-
-    y = if fabsk(x) > 709. { f64::INFINITY } else { y };
-    y = if y.is_nan() { f64::INFINITY } else { y };
-    if x.is_nan() {
-        f64::NAN
-    } else {
-        y
-    }
-}
-
-#[test]
-fn test_cosh() {
-    test_f_f(cosh, rug::Float::cosh, -709.0..=709.0, 3.5);
-}
-
-pub fn tanh(x: f64) -> f64 {
-    let mut y = fabsk(x);
-    let d = expm1k(2. * y);
-    y = d / (d + 2.);
-
-    y = if fabsk(x) > 18.714_973_875 { 1. } else { y };
-    y = if y.is_nan() { 1. } else { y };
-    y = mulsign(y, x);
-    if x.is_nan() {
-        f64::NAN
-    } else {
-        y
-    }
-}
-
-#[test]
-fn test_tanh() {
-    test_f_f(tanh, rug::Float::tanh, -19.0..=19.0, 3.5);
-}
-
-pub fn sqrt(d: f64) -> f64 {
-    u05::sqrt(d)
-}
-
-pub fn hypot(mut x: f64, mut y: f64) -> f64 {
-    x = fabsk(x);
-    y = fabsk(y);
-    let min = x.min(y);
-    let max = x.max(y);
-
-    let t = min / max;
-    if (x == f64::INFINITY) || (y == f64::INFINITY) {
-        f64::INFINITY
-    } else if x.is_nan() || y.is_nan() {
-        f64::NAN
-    } else if min == 0. {
-        max
-    } else {
-        max * (1. + t * t).sqrt()
-    }
-}
-
-#[test]
-fn test_hypot() {
-    test_ff_f(
-        hypot,
-        rug::Float::hypot,
-        -1e307..=1e307,
-        -1e307..=1e307,
-        3.5,
-    );
-}
-
-pub fn atan2(y: f64, x: f64) -> f64 {
-    let mut r = atan2k(fabsk(y), x);
-
-    r = if y == 0. {
-        if sign(x) == -1. {
-            PI
-        } else {
-            0.
-        }
-    } else if y.is_infinite() {
-        FRAC_PI_2
-            - (if x.is_infinite() {
-                sign(x) * FRAC_PI_4
-            } else {
-                0.
-            })
-    } else if x.is_infinite() || (x == 0.) {
-        FRAC_PI_2
-            - (if x.is_infinite() {
-                sign(x) * FRAC_PI_2
-            } else {
-                0.
-            })
-    } else {
-        mulsign(r, x)
-    };
-    if x.is_nan() || y.is_nan() {
-        f64::NAN
-    } else {
-        mulsign(r, y)
-    }
-}
-
-#[test]
-fn test_atan2() {
-    test_ff_f(
-        atan2,
-        rug::Float::atan2,
-        f64::MIN..=f64::MAX,
-        f64::MIN..=f64::MAX,
-        3.5,
-    );
-}
-
-pub fn asin(d: f64) -> f64 {
-    let o = fabsk(d) < 0.5;
-    let x2 = if o { d * d } else { (1. - fabsk(d)) * 0.5 };
-    let x = if o { fabsk(d) } else { x2.sqrt() };
-
-    let x4 = x2 * x2;
-    let x8 = x4 * x4;
-    let x16 = x8 * x8;
-
-    let u = f64::poly12(
-        x2,
-        x4,
-        x8,
-        x16,
-        0.316_158_765_065_393_462_8_e-1,
-        -0.158_191_824_332_999_664_3_e-1,
-        0.192_904_547_726_791_067_4_e-1,
-        0.660_607_747_627_717_061_e-2,
-        0.121_536_052_557_737_733_1_e-1,
-        0.138_871_518_450_160_921_8_e-1,
-        0.173_595_699_122_361_460_4_e-1,
-        0.223_717_618_193_204_834_1_e-1,
-        0.303_819_592_803_813_223_7_e-1,
-        0.446_428_568_137_710_243_8_e-1,
-        0.750_000_000_037_858_161_1_e-1,
-        0.166_666_666_666_649_754_3,
-    )
-    .mul_add(x * x2, x);
-
-    let r = if o { u } else { FRAC_PI_2 - 2. * u };
-    mulsign(r, d)
-}
-
-#[test]
-fn test_asin() {
-    test_f_f(asin, rug::Float::asin, -1.0..=1.0, 3.5);
-}
-
-pub fn acos(d: f64) -> f64 {
-    let o = fabsk(d) < 0.5;
-    let x2 = if o { d * d } else { (1. - fabsk(d)) * 0.5 };
-    let mut x = if o { fabsk(d) } else { x2.sqrt() };
-    x = if fabsk(d) == 1. { 0. } else { x };
-
-    let x4 = x2 * x2;
-    let x8 = x4 * x4;
-    let x16 = x8 * x8;
-
-    let u = f64::poly12(
-        x2,
-        x4,
-        x8,
-        x16,
-        0.316_158_765_065_393_462_8_e-1,
-        -0.158_191_824_332_999_664_3_e-1,
-        0.192_904_547_726_791_067_4_e-1,
-        0.660_607_747_627_717_061_e-2,
-        0.121_536_052_557_737_733_1_e-1,
-        0.138_871_518_450_160_921_8_e-1,
-        0.173_595_699_122_361_460_4_e-1,
-        0.223_717_618_193_204_834_1_e-1,
-        0.303_819_592_803_813_223_7_e-1,
-        0.446_428_568_137_710_243_8_e-1,
-        0.750_000_000_037_858_161_1_e-1,
-        0.166_666_666_666_649_754_3,
-    ) * (x * x2);
-
-    let y = 3.141_592_653_589_793_2 / 2. - (mulsign(x, d) + mulsign(u, d));
-    x += u;
-    let r = if o { y } else { x * 2. };
-    if !o && (d < 0.) {
-        dd(3.141_592_653_589_793_116, 1.224_646_799_147_353_207_2_e-16)
-            .add_checked(-r)
-            .0
-    } else {
-        r
-    }
-}
-
-#[test]
-fn test_acos() {
-    test_f_f(acos, rug::Float::acos, -1.0..=1.0, 3.5);
-}
-
-pub fn atan(mut s: f64) -> f64 {
-    let mut q = if sign(s) == -1. {
-        s = -s;
-        2
-    } else {
-        0
-    };
-
-    if s > 1. {
-        s = 1. / s;
-        q |= 1;
-    }
-
-    let t = s * s;
-
-    let t2 = t * t;
-    let t4 = t2 * t2;
-    let t8 = t4 * t4;
-    let t16 = t8 * t8;
-
-    let u = f64::poly19(
-        t,
-        t2,
-        t4,
-        t8,
-        t16,
-        -1.887_960_084_630_734_965_637_46_e-5,
-        0.000_209_850_076_645_816_976_906_797,
-        -0.001_106_118_314_866_724_825_634_71,
-        0.003_700_267_441_887_131_192_324_03,
-        -0.008_898_961_958_876_554_917_408_09,
-        0.016_599_329_773_529_201_970_117,
-        -0.025_451_762_493_231_264_161_686_1,
-        0.033_785_258_000_135_306_999_389_7,
-        -0.040_762_919_127_683_650_000_193_4,
-        0.046_666_715_007_784_062_563_267_5,
-        -0.052_367_485_230_348_245_761_611_3,
-        0.058_766_639_292_667_358_085_431_3,
-        -0.066_657_357_936_108_052_598_456_2,
-        0.076_921_953_831_176_961_835_502_9,
-        -0.090_908_995_008_245_008_229_153,
-        0.111_111_105_648_261_418_443_745,
-        -0.142_857_142_667_713_293_837_65,
-        0.199_999_999_996_591_265_594_148,
-        -0.333_333_333_333_311_110_369_124,
-    );
-
-    let mut t = s + s * (t * u);
-
-    if (q & 1) != 0 {
-        t = 1.570796326794896557998982 - t;
-    }
-    if (q & 2) != 0 {
-        t = -t;
-    }
-    t
-}
-
-#[test]
-fn test_atan() {
-    test_f_f(atan, rug::Float::atan, f64::MIN..=f64::MAX, 3.5);
-}
-
+/// Sine function
+///
+/// These functions evaluates the sine function of a value in ***a***.
+/// The error bound of the returned value is `3.5 ULP`.
 pub fn sin(mut d: f64) -> f64 {
     let t = d;
     let ql: isize;
@@ -427,6 +78,10 @@ fn test_sin() {
     super::test_f_f(sin, rug::Float::sin, f64::MIN..=f64::MAX, 3.5);
 }
 
+/// Cosine function
+///
+/// These functions evaluates the cosine function of a value in ***a***.
+/// The error bound of the returned value is `3.5 ULP`.
 pub fn cos(mut d: f64) -> f64 {
     let t = d;
     let ql: isize;
@@ -503,6 +158,12 @@ fn test_cos() {
     super::test_f_f(cos, rug::Float::cos, f64::MIN..=f64::MAX, 3.5);
 }
 
+/// Evaluate sine and cosine function simultaneously
+///
+/// Evaluates the sine and cosine functions of a value in ***a*** at a time,
+/// and store the two values in *first* and *second* position in the returned value, respectively.
+/// The error bound of the returned values is `3.5 ULP`.
+/// If ***a*** is a `NaN` or `infinity`, a `NaN` is returned.
 pub fn sincos(d: f64) -> (f64, f64) {
     let ql: isize;
 
@@ -584,6 +245,10 @@ fn test_sincos() {
     );
 }
 
+/// Tangent function
+///
+/// These functions evaluates the tangent function of a value in ***a***.
+/// The error bound of the returned value is `3.5 ULP`.
 pub fn tan(d: f64) -> f64 {
     let mut x: f64;
     let ql: isize;
@@ -653,6 +318,371 @@ fn test_tan() {
     test_f_f(tan, rug::Float::tan, f64::MIN..=f64::MAX, 3.5);
 }
 
+/// Evaluate sin( π**a** ) and cos( π**a** ) for given **a** simultaneously
+///
+/// Evaluates the sine and cosine functions of π**a** at a time,
+/// and store the two values in *first* and *second* position in the returned value, respectively.
+/// The error bound of the returned values is `3.5 ULP` if ***a*** is in `[-1e+7, 1e+7]`.
+/// If a is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
+/// If a is a `NaN` or `infinity`, a `NaN` is returned.
+pub fn sincospi(d: f64) -> (f64, f64) {
+    let u = d * 4.;
+    let q = ceilk(u) & !1_isize;
+
+    let s = u - (q as f64);
+    let t = s;
+    let s = s * s;
+
+    //
+
+    let u = 0.688_063_889_476_606_013_6_e-11_f64
+        .mul_add(s, -0.175_715_956_454_231_019_9_e-8)
+        .mul_add(s, 0.313_361_632_725_786_731_1_e-6)
+        .mul_add(s, -0.365_762_041_638_848_645_2_e-4)
+        .mul_add(s, 0.249_039_457_018_993_210_3_e-2)
+        .mul_add(s, -0.807_455_121_882_805_632_e-1)
+        .mul_add(s, 0.785_398_163_397_448_279);
+
+    let mut rsin = u * t;
+
+    //
+
+    let u = (-0.386_014_121_368_379_435_2_e-12_f64)
+        .mul_add(s, 0.115_005_788_802_968_141_5_e-9)
+        .mul_add(s, -0.246_113_649_300_666_355_3_e-7)
+        .mul_add(s, 0.359_086_044_662_351_671_3_e-5)
+        .mul_add(s, -0.325_991_886_926_943_594_2_e-3)
+        .mul_add(s, 0.158_543_442_438_154_116_9_e-1)
+        .mul_add(s, -0.308_425_137_534_042_437_3)
+        .mul_add(s, 1.);
+
+    let mut rcos = u;
+
+    //
+
+    if (q & 2) != 0 {
+        core::mem::swap(&mut rcos, &mut rsin);
+    }
+    if (q & 4) != 0 {
+        rsin = -rsin;
+    }
+    if ((q + 2) & 4) != 0 {
+        rcos = -rcos;
+    }
+
+    if fabsk(d) > TRIGRANGEMAX3 / 4. {
+        rsin = 0.;
+        rcos = 1.;
+    }
+    if d.is_infinite() {
+        rsin = f64::NAN;
+        rcos = f64::NAN;
+    }
+
+    (rsin, rcos)
+}
+
+#[test]
+fn test_sincospi() {
+    use rug::{float::Constant, Float};
+    let rangemax2 = 1e+9 / 4.;
+    test_f_ff(
+        sincospi,
+        |mut in1| {
+            let prec = in1.prec();
+            in1.set_prec(prec * 2);
+            (in1 * Float::with_val(prec * 2, Constant::Pi)).sin_cos(Float::new(prec))
+        },
+        -rangemax2..=rangemax2,
+        1.5,
+    );
+}
+
+/// Arc tangent function of two variables
+///
+/// These functions evaluates the arc tangent function of (***y*** / ***x***).
+/// The quadrant of the result is determined according to the signs of ***x*** and ***y***.
+/// The error bound of the returned value is `3.5 ULP`.
+pub fn atan2(y: f64, x: f64) -> f64 {
+    let mut r = atan2k(fabsk(y), x);
+
+    r = if y == 0. {
+        if sign(x) == -1. {
+            PI
+        } else {
+            0.
+        }
+    } else if y.is_infinite() {
+        FRAC_PI_2
+            - (if x.is_infinite() {
+                sign(x) * FRAC_PI_4
+            } else {
+                0.
+            })
+    } else if x.is_infinite() || (x == 0.) {
+        FRAC_PI_2
+            - (if x.is_infinite() {
+                sign(x) * FRAC_PI_2
+            } else {
+                0.
+            })
+    } else {
+        mulsign(r, x)
+    };
+    if x.is_nan() || y.is_nan() {
+        f64::NAN
+    } else {
+        mulsign(r, y)
+    }
+}
+
+#[test]
+fn test_atan2() {
+    test_ff_f(
+        atan2,
+        rug::Float::atan2,
+        f64::MIN..=f64::MAX,
+        f64::MIN..=f64::MAX,
+        3.5,
+    );
+}
+
+/// Arc sine function
+///
+/// These functions evaluates the arc sine function of a value in ***a***.
+/// The error bound of the returned value is `3.5 ULP`.
+pub fn asin(d: f64) -> f64 {
+    let o = fabsk(d) < 0.5;
+    let x2 = if o { d * d } else { (1. - fabsk(d)) * 0.5 };
+    let x = if o { fabsk(d) } else { x2.sqrt() };
+
+    let x4 = x2 * x2;
+    let x8 = x4 * x4;
+    let x16 = x8 * x8;
+
+    let u = f64::poly12(
+        x2,
+        x4,
+        x8,
+        x16,
+        0.316_158_765_065_393_462_8_e-1,
+        -0.158_191_824_332_999_664_3_e-1,
+        0.192_904_547_726_791_067_4_e-1,
+        0.660_607_747_627_717_061_e-2,
+        0.121_536_052_557_737_733_1_e-1,
+        0.138_871_518_450_160_921_8_e-1,
+        0.173_595_699_122_361_460_4_e-1,
+        0.223_717_618_193_204_834_1_e-1,
+        0.303_819_592_803_813_223_7_e-1,
+        0.446_428_568_137_710_243_8_e-1,
+        0.750_000_000_037_858_161_1_e-1,
+        0.166_666_666_666_649_754_3,
+    )
+    .mul_add(x * x2, x);
+
+    let r = if o { u } else { FRAC_PI_2 - 2. * u };
+    mulsign(r, d)
+}
+
+#[test]
+fn test_asin() {
+    test_f_f(asin, rug::Float::asin, -1.0..=1.0, 3.5);
+}
+
+/// Arc cosine function
+///
+/// These functions evaluates the arc cosine function of a value in ***a***.
+/// The error bound of the returned value is `3.5 ULP`.
+pub fn acos(d: f64) -> f64 {
+    let o = fabsk(d) < 0.5;
+    let x2 = if o { d * d } else { (1. - fabsk(d)) * 0.5 };
+    let mut x = if o { fabsk(d) } else { x2.sqrt() };
+    x = if fabsk(d) == 1. { 0. } else { x };
+
+    let x4 = x2 * x2;
+    let x8 = x4 * x4;
+    let x16 = x8 * x8;
+
+    let u = f64::poly12(
+        x2,
+        x4,
+        x8,
+        x16,
+        0.316_158_765_065_393_462_8_e-1,
+        -0.158_191_824_332_999_664_3_e-1,
+        0.192_904_547_726_791_067_4_e-1,
+        0.660_607_747_627_717_061_e-2,
+        0.121_536_052_557_737_733_1_e-1,
+        0.138_871_518_450_160_921_8_e-1,
+        0.173_595_699_122_361_460_4_e-1,
+        0.223_717_618_193_204_834_1_e-1,
+        0.303_819_592_803_813_223_7_e-1,
+        0.446_428_568_137_710_243_8_e-1,
+        0.750_000_000_037_858_161_1_e-1,
+        0.166_666_666_666_649_754_3,
+    ) * (x * x2);
+
+    let y = 3.141_592_653_589_793_2 / 2. - (mulsign(x, d) + mulsign(u, d));
+    x += u;
+    let r = if o { y } else { x * 2. };
+    if !o && (d < 0.) {
+        dd(3.141_592_653_589_793_116, 1.224_646_799_147_353_207_2_e-16)
+            .add_checked(-r)
+            .0
+    } else {
+        r
+    }
+}
+
+#[test]
+fn test_acos() {
+    test_f_f(acos, rug::Float::acos, -1.0..=1.0, 3.5);
+}
+
+/// Arc tangent function
+///
+/// These functions evaluates the arc tangent function of a value in ***a***.
+/// The error bound of the returned value is `3.5 ULP`.
+pub fn atan(mut s: f64) -> f64 {
+    let mut q = if sign(s) == -1. {
+        s = -s;
+        2
+    } else {
+        0
+    };
+
+    if s > 1. {
+        s = 1. / s;
+        q |= 1;
+    }
+
+    let t = s * s;
+
+    let t2 = t * t;
+    let t4 = t2 * t2;
+    let t8 = t4 * t4;
+    let t16 = t8 * t8;
+
+    let u = f64::poly19(
+        t,
+        t2,
+        t4,
+        t8,
+        t16,
+        -1.887_960_084_630_734_965_637_46_e-5,
+        0.000_209_850_076_645_816_976_906_797,
+        -0.001_106_118_314_866_724_825_634_71,
+        0.003_700_267_441_887_131_192_324_03,
+        -0.008_898_961_958_876_554_917_408_09,
+        0.016_599_329_773_529_201_970_117,
+        -0.025_451_762_493_231_264_161_686_1,
+        0.033_785_258_000_135_306_999_389_7,
+        -0.040_762_919_127_683_650_000_193_4,
+        0.046_666_715_007_784_062_563_267_5,
+        -0.052_367_485_230_348_245_761_611_3,
+        0.058_766_639_292_667_358_085_431_3,
+        -0.066_657_357_936_108_052_598_456_2,
+        0.076_921_953_831_176_961_835_502_9,
+        -0.090_908_995_008_245_008_229_153,
+        0.111_111_105_648_261_418_443_745,
+        -0.142_857_142_667_713_293_837_65,
+        0.199_999_999_996_591_265_594_148,
+        -0.333_333_333_333_311_110_369_124,
+    );
+
+    let mut t = s + s * (t * u);
+
+    if (q & 1) != 0 {
+        t = 1.570796326794896557998982 - t;
+    }
+    if (q & 2) != 0 {
+        t = -t;
+    }
+    t
+}
+
+#[test]
+fn test_atan() {
+    test_f_f(atan, rug::Float::atan, f64::MIN..=f64::MAX, 3.5);
+}
+
+/// Hyperbolic sine function
+///
+/// These functions evaluates the hyperbolic sine function of a value in ***a***.
+/// The error bound of the returned value is `3.5 ULP` if ***a*** is in `[-709, 709]`.
+/// If ***a*** is a finite value out of this range, infinity with a correct sign
+/// or a correct value with `3.5 ULP` error bound is returned.
+pub fn sinh(x: f64) -> f64 {
+    let e = expm1k(fabsk(x));
+    let mut y = (e + 2.) / (e + 1.) * (0.5 * e);
+
+    y = if fabsk(x) > 709. { f64::INFINITY } else { y };
+    y = if y.is_nan() { f64::INFINITY } else { y };
+    y = mulsign(y, x);
+    if x.is_nan() {
+        f64::NAN
+    } else {
+        y
+    }
+}
+#[test]
+fn test_sinh() {
+    test_f_f(sinh, rug::Float::sinh, -709.0..=709.0, 3.5);
+}
+
+/// Hyperbolic cosine function
+///
+/// These functions evaluates the hyperbolic cosine function of a value in ***a***.
+/// The error bound of the returned value is `3.5 ULP` if a is in `[-709, 709]`.
+/// If ***a*** is a finite value out of this range, infinity with a correct sign
+/// or a correct value with `3.5 ULP` error bound is returned.
+pub fn cosh(x: f64) -> f64 {
+    let e = u10::exp(fabsk(x));
+    let mut y = 0.5 / e + 0.5 * e;
+
+    y = if fabsk(x) > 709. { f64::INFINITY } else { y };
+    y = if y.is_nan() { f64::INFINITY } else { y };
+    if x.is_nan() {
+        f64::NAN
+    } else {
+        y
+    }
+}
+
+#[test]
+fn test_cosh() {
+    test_f_f(cosh, rug::Float::cosh, -709.0..=709.0, 3.5);
+}
+
+/// Hyperbolic tangent function
+///
+/// These functions evaluates the hyperbolic tangent function of a value in ***a***.
+/// The error bound of the returned value is `3.5 ULP` for the double-precision
+/// function or `3.5 ULP` for the single-precision function.
+pub fn tanh(x: f64) -> f64 {
+    let mut y = fabsk(x);
+    let d = expm1k(2. * y);
+    y = d / (d + 2.);
+
+    y = if fabsk(x) > 18.714_973_875 { 1. } else { y };
+    y = if y.is_nan() { 1. } else { y };
+    y = mulsign(y, x);
+    if x.is_nan() {
+        f64::NAN
+    } else {
+        y
+    }
+}
+
+#[test]
+fn test_tanh() {
+    test_f_f(tanh, rug::Float::tanh, -19.0..=19.0, 3.5);
+}
+
+/// Natural logarithmic function
+///
+/// These functions return the natural logarithm of ***a***.
+/// The error bound of the returned value is `3.5 ULP`.
 pub fn log(mut d: f64) -> f64 {
     let o = d < f64::MIN_POSITIVE;
     if o {
@@ -703,115 +733,9 @@ fn test_log() {
     test_f_f(log, rug::Float::ln, 0.0..=f64::MAX, 3.5);
 }
 
-pub fn cbrt(mut d: f64) -> f64 {
-    // max error : 2 ulps
-    let mut q = 1.;
-    let e = ilogbk(fabsk(d)) + 1;
-    d = ldexp2k(d, -e);
-    let r = (e + 6144) % 3;
-    q = if r == 1 {
-        1.259_921_049_894_873_164_767_210_6
-    } else {
-        q
-    };
-    q = if r == 2 {
-        1.587_401_051_968_199_474_751_705_6
-    } else {
-        q
-    };
-    q = ldexp2k(q, (e + 6144) / 3 - 2048);
-
-    q = mulsign(q, d);
-    d = fabsk(d);
-
-    let mut x = (-0.640_245_898_480_692_909_870_982_f64)
-        .mul_add(d, 2.961_551_030_200_395_118_185_95)
-        .mul_add(d, -5.733_530_609_229_478_436_361_66)
-        .mul_add(d, 6.039_903_689_894_587_479_614_07)
-        .mul_add(d, -3.858_419_355_104_449_888_216_32)
-        .mul_add(d, 2.230_727_530_249_660_972_572_2);
-
-    let mut y = x * x;
-    y = y * y;
-    x -= (d * y - x) * (1. / 3.);
-    y = d * x * x;
-    (y - (2. / 3.) * y * (y * x - 1.)) * q
-}
-
-#[test]
-fn test_cbrt() {
-    test_f_f(cbrt, rug::Float::cbrt, f64::MIN..=f64::MAX, 3.5);
-}
-
-pub fn exp2(d: f64) -> f64 {
-    let q = rintk(d);
-
-    let s = d - q;
-
-    let mut u = 0.443_435_908_292_652_945_4_e-9
-        .mul_add(s, 0.707_316_459_808_570_742_5_e-8)
-        .mul_add(s, 0.101_781_926_092_176_045_1_e-6)
-        .mul_add(s, 0.132_154_387_251_132_761_5_e-5)
-        .mul_add(s, 0.152_527_335_351_758_473_e-4)
-        .mul_add(s, 0.154_035_304_510_114_780_8_e-3)
-        .mul_add(s, 0.133_335_581_467_049_907_3_e-2)
-        .mul_add(s, 0.961_812_910_759_760_053_6_e-2)
-        .mul_add(s, 0.555_041_086_648_204_659_6_e-1)
-        .mul_add(s, 0.240_226_506_959_101_221_4)
-        .mul_add(s, 0.693_147_180_559_945_286_2)
-        .mul_add(s, 0.1_e+1);
-
-    u = ldexp2k(u, q as i32);
-
-    if d < -2000. {
-        0.
-    } else if d >= 1024. {
-        f64::INFINITY
-    } else {
-        u
-    }
-}
-
-#[test]
-fn test_exp2() {
-    test_f_f(exp2, rug::Float::exp2, -2000.0..=1024.0, 3.5);
-}
-
-pub fn exp10(d: f64) -> f64 {
-    let q = rintk(d * LOG10_2);
-
-    let mut s = q.mul_add(-L10U, d);
-    s = q.mul_add(-L10L, s);
-
-    let mut u = 0.241_146_349_833_426_765_2_e-3
-        .mul_add(s, 0.115_748_841_521_718_737_5_e-2)
-        .mul_add(s, 0.501_397_554_678_973_365_9_e-2)
-        .mul_add(s, 0.195_976_232_072_053_308_e-1)
-        .mul_add(s, 0.680_893_639_944_678_413_8_e-1)
-        .mul_add(s, 0.206_995_849_472_267_623_4)
-        .mul_add(s, 0.539_382_929_205_853_622_9)
-        .mul_add(s, 0.117_125_514_890_854_165_5_e+1)
-        .mul_add(s, 0.203_467_859_229_343_295_3_e+1)
-        .mul_add(s, 0.265_094_905_523_920_587_6_e+1)
-        .mul_add(s, 0.230_258_509_299_404_590_1_e+1)
-        .mul_add(s, 0.1_e+1);
-
-    u = ldexp2k(u, q as i32);
-
-    if d < -350. {
-        0.
-    } else if d > 308.254_715_559_916_71 {
-        f64::INFINITY
-    } else {
-        u
-    }
-}
-
-#[test]
-fn test_exp10() {
-    test_f_f(exp10, rug::Float::exp10, -350.0..=308.26, 3.5);
-}
-
+/// Base-10 logarithmic function
+///
+/// This function returns the base-10 logarithm of ***a***.
 pub fn log2(mut d: f64) -> f64 {
     let o = d < f64::MIN_POSITIVE;
     if o {
@@ -853,4 +777,162 @@ pub fn log2(mut d: f64) -> f64 {
 #[test]
 fn test_log2() {
     test_f_f(log2, rug::Float::log2, 0.0..=f64::MAX, 3.5);
+}
+
+/// Base-10 exponential function
+///
+/// This function returns 10 raised to ***a***.
+pub fn exp10(d: f64) -> f64 {
+    let q = rintk(d * LOG10_2);
+
+    let mut s = q.mul_add(-L10U, d);
+    s = q.mul_add(-L10L, s);
+
+    let mut u = 0.241_146_349_833_426_765_2_e-3
+        .mul_add(s, 0.115_748_841_521_718_737_5_e-2)
+        .mul_add(s, 0.501_397_554_678_973_365_9_e-2)
+        .mul_add(s, 0.195_976_232_072_053_308_e-1)
+        .mul_add(s, 0.680_893_639_944_678_413_8_e-1)
+        .mul_add(s, 0.206_995_849_472_267_623_4)
+        .mul_add(s, 0.539_382_929_205_853_622_9)
+        .mul_add(s, 0.117_125_514_890_854_165_5_e+1)
+        .mul_add(s, 0.203_467_859_229_343_295_3_e+1)
+        .mul_add(s, 0.265_094_905_523_920_587_6_e+1)
+        .mul_add(s, 0.230_258_509_299_404_590_1_e+1)
+        .mul_add(s, 0.1_e+1);
+
+    u = ldexp2k(u, q as i32);
+
+    if d < -350. {
+        0.
+    } else if d > 308.254_715_559_916_71 {
+        f64::INFINITY
+    } else {
+        u
+    }
+}
+
+#[test]
+fn test_exp10() {
+    test_f_f(exp10, rug::Float::exp10, -350.0..=308.26, 3.5);
+}
+
+/// Base-2 exponential function
+///
+/// This function returns `2` raised to ***a***.
+pub fn exp2(d: f64) -> f64 {
+    let q = rintk(d);
+
+    let s = d - q;
+
+    let mut u = 0.443_435_908_292_652_945_4_e-9
+        .mul_add(s, 0.707_316_459_808_570_742_5_e-8)
+        .mul_add(s, 0.101_781_926_092_176_045_1_e-6)
+        .mul_add(s, 0.132_154_387_251_132_761_5_e-5)
+        .mul_add(s, 0.152_527_335_351_758_473_e-4)
+        .mul_add(s, 0.154_035_304_510_114_780_8_e-3)
+        .mul_add(s, 0.133_335_581_467_049_907_3_e-2)
+        .mul_add(s, 0.961_812_910_759_760_053_6_e-2)
+        .mul_add(s, 0.555_041_086_648_204_659_6_e-1)
+        .mul_add(s, 0.240_226_506_959_101_221_4)
+        .mul_add(s, 0.693_147_180_559_945_286_2)
+        .mul_add(s, 0.1_e+1);
+
+    u = ldexp2k(u, q as i32);
+
+    if d < -2000. {
+        0.
+    } else if d >= 1024. {
+        f64::INFINITY
+    } else {
+        u
+    }
+}
+
+#[test]
+fn test_exp2() {
+    test_f_f(exp2, rug::Float::exp2, -2000.0..=1024.0, 3.5);
+}
+
+/// Square root function
+///
+/// The error bound of the returned value is `3.5 ULP`.
+pub fn sqrt(d: f64) -> f64 {
+    u05::sqrt(d)
+}
+
+/// Cube root function
+///
+/// These functions return the real cube root of ***a***.
+/// The error bound of the returned value is `3.5 ULP`.
+pub fn cbrt(mut d: f64) -> f64 {
+    // max error : 2 ulps
+    let mut q = 1.;
+    let e = ilogbk(fabsk(d)) + 1;
+    d = ldexp2k(d, -e);
+    let r = (e + 6144) % 3;
+    q = if r == 1 {
+        1.259_921_049_894_873_164_767_210_6
+    } else {
+        q
+    };
+    q = if r == 2 {
+        1.587_401_051_968_199_474_751_705_6
+    } else {
+        q
+    };
+    q = ldexp2k(q, (e + 6144) / 3 - 2048);
+
+    q = mulsign(q, d);
+    d = fabsk(d);
+
+    let mut x = (-0.640_245_898_480_692_909_870_982_f64)
+        .mul_add(d, 2.961_551_030_200_395_118_185_95)
+        .mul_add(d, -5.733_530_609_229_478_436_361_66)
+        .mul_add(d, 6.039_903_689_894_587_479_614_07)
+        .mul_add(d, -3.858_419_355_104_449_888_216_32)
+        .mul_add(d, 2.230_727_530_249_660_972_572_2);
+
+    let mut y = x * x;
+    y = y * y;
+    x -= (d * y - x) * (1. / 3.);
+    y = d * x * x;
+    (y - (2. / 3.) * y * (y * x - 1.)) * q
+}
+
+#[test]
+fn test_cbrt() {
+    test_f_f(cbrt, rug::Float::cbrt, f64::MIN..=f64::MAX, 3.5);
+}
+
+/// 2D Euclidian distance function
+///
+/// The error bound of the returned value is `3.5 ULP`.
+pub fn hypot(mut x: f64, mut y: f64) -> f64 {
+    x = fabsk(x);
+    y = fabsk(y);
+    let min = x.min(y);
+    let max = x.max(y);
+
+    let t = min / max;
+    if (x == f64::INFINITY) || (y == f64::INFINITY) {
+        f64::INFINITY
+    } else if x.is_nan() || y.is_nan() {
+        f64::NAN
+    } else if min == 0. {
+        max
+    } else {
+        max * (1. + t * t).sqrt()
+    }
+}
+
+#[test]
+fn test_hypot() {
+    test_ff_f(
+        hypot,
+        rug::Float::hypot,
+        -1e307..=1e307,
+        -1e307..=1e307,
+        3.5,
+    );
 }

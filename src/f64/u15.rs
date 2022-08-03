@@ -2,6 +2,10 @@
 
 use super::*;
 
+/// Complementary error function
+///
+/// The error bound of the returned value is `max(1.5 ULP, f64::MIN_POSITIVE)`
+/// if the argument is less than `26.2`, and `max(2.5 ULP, f64::MIN_POSITIVE)` otherwise.
 pub fn erfc(a: f64) -> f64 {
     let s = a;
     let a = fabsk(a);
@@ -321,4 +325,5 @@ pub fn erfc(a: f64) -> f64 {
 #[test]
 fn test_erfc() {
     test_f_f(erfc, rug::Float::erfc, f64::MIN..=26.2, 1.5);
+    test_f_f(erfc, rug::Float::erfc, 26.2..=f64::MAX, 2.5);
 }

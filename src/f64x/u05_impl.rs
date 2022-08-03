@@ -2,6 +2,12 @@ macro_rules! impl_math_f64_u05 {
     () => {
         use super::*;
 
+        /// Evaluate sin( π***a*** ) and cos( π***a*** ) for given ***a*** simultaneously
+        ///
+        /// Evaluates the sine and cosine functions of π***a*** at a time, and store the two values in a tuple.
+        /// The error bound of the returned value are `max(0.506 ULP, f64::MIN_POSITIVE)` if `[-1e+9, 1e+9]`.
+        /// If ***a*** is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
+        /// If ***a*** is a `NaN` or infinity, a `NaN` is returned.
         pub fn sincospi(d: F64x) -> (F64x, F64x) {
             let u = d * F64x::splat(4.);
             let mut q = u.trunci();
@@ -101,6 +107,13 @@ macro_rules! impl_math_f64_u05 {
             );
         }
 
+        /// Evaluate sin( π***a*** ) for given ***a***
+        ///
+        /// This function evaluates the sine function of π***a***.
+        /// The error bound of the returned value is `max(0.506 ULP, f64::MIN_POSITIVE)`
+        /// if `[-1e+9, 1e+9]` for the single-precision function.
+        /// If ***a*** is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
+        /// If ***a*** is a `NaN` or infinity, a NaN is returned.
         pub fn sinpi(d: F64x) -> F64x {
             let x = sinpik(d);
             let mut r = x.0 + x.1;
@@ -128,6 +141,13 @@ macro_rules! impl_math_f64_u05 {
             );
         }
 
+        /// Evaluate cos( π***a*** ) for given ***a***
+        ///
+        /// This function evaluates the cosine function of π***a***.
+        /// The error bound of the returned value is `max(0.506 ULP, f64::MIN_POSITIVE)`
+        /// if `[-1e+9, 1e+9]` for the single-precision function.
+        /// If ***a*** is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
+        /// If ***a*** is a `NaN` or infinity, a `NaN` is returned.
         pub fn cospi(d: F64x) -> F64x {
             let x = cospik(d);
             let r = x.0 + x.1;
@@ -152,6 +172,9 @@ macro_rules! impl_math_f64_u05 {
             );
         }
 
+        /// Square root function
+        ///
+        /// The error bound of the returned value is `0.5001 ULP`.
         pub fn sqrt(d: F64x) -> F64x {
             let d = d.lt(ZERO).select(F64x::NAN, d);
 
@@ -186,6 +209,9 @@ macro_rules! impl_math_f64_u05 {
             test_f_f(sqrt, rug::Float::sqrt, f64::MIN..=f64::MAX, 0.50001);
         }
 
+        /// 2D Euclidian distance function
+        ///
+        /// The error bound of the returned value is `0.5001 ULP`.
         pub fn hypot(x: F64x, y: F64x) -> F64x {
             let x = x.abs();
             let y = y.abs();

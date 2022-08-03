@@ -843,204 +843,6 @@ macro_rules! impl_math_f64_u10 {
             );
         }
 
-        pub fn exp(d: F64x) -> F64x {
-            let mut u = (d * R_LN2).round();
-            let q = u.roundi();
-
-            let s = u.mul_add(-L2U, d);
-            let s = u.mul_add(-L2L, s);
-
-            if cfg!(target_feature = "fma") {
-/*                if cfg!(feature = "split_kernel") {
-                    let s2 = s * s;
-
-                    u = F64x::splat(0.208_127_637_823_716_445_7_e-8)
-                        .mul_adde(s2, F64x::splat(0.275_576_262_816_949_119_2_e-6))
-                        .mul_adde(s2, F64x::splat(0.248_015_868_747_968_626_4_e-4))
-                        .mul_adde(s2, F64x::splat(0.138_888_888_891_449_779_7_e-2))
-                        .mul_adde(s2, F64x::splat(0.416_666_666_666_660_259_8_e-1))
-                        .mul_adde(s2, HALF);
-
-                    let v = F64x::splat(0.251_121_070_304_228_802_2_e-7)
-                        .mul_adde(s2, F64x::splat(0.275_572_340_202_538_823_9_e-5))
-                        .mul_adde(s2, F64x::splat(0.198_412_698_985_586_585_e-3))
-                        .mul_adde(s2, F64x::splat(0.833_333_333_331_493_821_e-2))
-                        .mul_adde(s2, F64x::splat(0.166_666_666_666_666_907_2));
-
-                    u = v.mul_add(s, u).mul_adde(s, ONE).mul_adde(s, ONE);
-                } else {
-                */
-                let s2 = s * s;
-                let s4 = s2 * s2;
-                let s8 = s4 * s4;
-                u = F64x::poly10(s, s2, s4, s8,
-                    0.208_127_637_823_716_445_7_e-8,
-                        0.251_121_070_304_228_802_2_e-7,
-                        0.275_576_262_816_949_119_2_e-6,
-                        0.275_572_340_202_538_823_9_e-5,
-                        0.248_015_868_747_968_626_4_e-4,
-                        0.198_412_698_985_586_585_e-3,
-                        0.138_888_888_891_449_779_7_e-2,
-                        0.833_333_333_331_493_821_e-2,
-                        0.416_666_666_666_660_259_8_e-1,
-                        0.166_666_666_666_666_907_2)
-                        .mul_adde(s, HALF)
-                        .mul_adde(s, ONE)
-                        .mul_adde(s, ONE);
-
-            } else {
-                let s2 = s * s;
-                let s4 = s2 * s2;
-                let s8 = s4 * s4;
-
-                u = F64x::poly10(s, s2, s4, s8,
-                  2.088_606_211_072_836_875_363_41_e-9,
-                    2.511_129_308_928_765_186_106_61_e-8,
-                    2.755_739_112_349_004_718_933_38_e-7,
-                    2.755_723_629_119_288_276_294_23_e-6,
-                    2.480_158_715_923_547_299_879_1_e-5,
-                    0.000_198_412_698_960_509_205_564_975,
-                    0.001_388_888_888_897_744_922_079_62,
-                    0.008_333_333_333_316_527_216_649_84,
-                    0.041_666_666_666_666_504_759_142_2,
-                    0.166_666_666_666_666_851_703_837)
-                    .mul_add(s, HALF);
-
-                u = ONE + (s * s).mul_add(u, s);
-            }
-
-            u = ldexp2k(u, q);
-
-            u = d
-                .gt(F64x::splat(709.782_711_149_557_429_092_172_174_26))
-                .select(F64x::INFINITY, u);
-            F64x::from_bits(!U64x::from_bits(d.lt(F64x::splat(-1000.))) & U64x::from_bits(u))
-        }
-
-        #[test]
-        fn test_exp() {
-            test_f_f(
-                exp,
-                rug::Float::exp,
-                -1000.0..=710.0,
-                1.
-            );
-        }
-
-        pub fn log(mut d: F64x) -> F64x {
-            let m: F64x;
-            let mut s =
-                /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
-                    let o = d.lt(F64x::splat(f64::MIN_POSITIVE));
-                    d = o.select(d * (D1_32X * D1_32X), d);
-                    let mut e = ilogb2k(d * F64x::splat(1. / 0.75));
-                    m = ldexp3k(d, -e);
-                    e = Mx::from_cast(o).select(e - Ix::splat(64), e);
-                    Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17))
-                        * F64x::from_cast(e)
-                }/* else {
-                    let mut e = vgetexp_vd_vd(d * F64x::splat(1. / 0.75));
-                    e = e.eq(F64x::INFINITY).select(F64x::splat(1024.), e);
-                    m = vgetmant_vd_vd(d);
-                    Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17)) * e
-                }*/;
-
-            let x = F64x::splat(-1.).add_as_doubled(m) / ONE.add_as_doubled(m);
-            let x2 = x.0 * x.0;
-
-            let t = F64x::splat(0.153_207_698_850_270_135_3)
-                .mul_add(x2, F64x::splat(0.152_562_905_100_342_871_6))
-                .mul_add(x2, F64x::splat(0.181_860_593_293_778_599_6))
-                .mul_add(x2, F64x::splat(0.222_221_451_983_938_000_9))
-                .mul_add(x2, F64x::splat(0.285_714_293_279_429_931_7))
-                .mul_add(x2, F64x::splat(0.399_999_999_963_525_199))
-                .mul_add(x2, F64x::splat(0.666_666_666_666_733_354_1));
-
-            s = s.add_checked(x.scale(F64x::splat(2.)));
-            s = s.add_checked(x2 * x.0 * t);
-
-            let r = s.0 + s.1;
-
-            /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
-            let r = d.eq(F64x::INFINITY).select(F64x::INFINITY, r);
-            let r = (d.lt(ZERO) | d.is_nan()).select(F64x::NAN, r);
-            d.eq(ZERO).select(F64x::NEG_INFINITY, r)
-            /*} else {
-                vfixup_vd_vd_vd_vi2_i(
-                    r,
-                    d,
-                    I64x::splat((4 << (2 * 4)) | (3 << (4 * 4)) | (5 << (5 * 4)) | (2 << (6 * 4))),
-                    0,
-                )
-            }*/
-        }
-
-        #[test]
-        fn test_log() {
-            test_f_f(
-                log,
-                rug::Float::ln,
-                0.0..=f64::MAX,
-                1.
-            );
-        }
-
-        pub fn pow(x: F64x, y: F64x) -> F64x {
-            if true {
-                let yisint = y.is_integer();
-                let yisodd = y.is_odd() & yisint;
-
-                let d = logk(x.abs()) * y;
-                let mut result = expk(d);
-                result =
-                    d.0.gt(F64x::splat(709.782_711_149_557_429_092_172_174_26))
-                        .select(F64x::INFINITY, result);
-
-                result *= x.gt(ZERO).select(
-                    ONE,
-                    yisint.select(yisodd.select(F64x::splat(-1.), ONE), F64x::NAN),
-                );
-
-                let efx = (x.abs() - ONE).mul_sign(y);
-
-                result = y.is_infinite().select(
-                    F64x::from_bits(
-                        !U64x::from_bits(efx.lt(ZERO))
-                            & U64x::from_bits(efx.eq(ZERO).select(ONE, F64x::INFINITY)),
-                    ),
-                    result,
-                );
-
-                result = (x.is_infinite() | x.eq(ZERO)).select(
-                    yisodd.select(x.sign(), ONE)
-                        * F64x::from_bits(
-                            !U64x::from_bits(x.eq(ZERO).select(-y, y).lt(ZERO))
-                                & U64x::from_bits(F64x::INFINITY),
-                        ),
-                    result,
-                );
-
-                result =
-                    F64x::from_bits(U64x::from_bits(x.is_nan() | y.is_nan()) | U64x::from_bits(result));
-
-                (y.eq(ZERO) | x.eq(ONE)).select(ONE, result)
-            } else {
-                expk(logk(x) * y)
-            }
-        }
-
-        #[test]
-        fn test_pow() {
-            use rug::{ops::Pow, Float};
-            test_ff_f(
-                pow,
-                |in1, in2| Float::with_val(in1.prec(), in1.pow(in2)),
-                f64::MIN..=f64::MAX,
-                f64::MIN..=f64::MAX,
-                1.
-            );
-        }
-
         pub fn sinh(x: F64x) -> F64x {
             let mut y = x.abs();
             let mut d = expk2(Doubled::new(y, ZERO));
@@ -1175,193 +977,63 @@ macro_rules! impl_math_f64_u10 {
             );
         }
 
-        pub fn cbrt(mut d: F64x) -> F64x {
-            let mut q2 = Doubled::from((1., 0.));
+        pub fn log(mut d: F64x) -> F64x {
+            let m: F64x;
+            let mut s =
+                /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
+                    let o = d.lt(F64x::splat(f64::MIN_POSITIVE));
+                    d = o.select(d * (D1_32X * D1_32X), d);
+                    let mut e = ilogb2k(d * F64x::splat(1. / 0.75));
+                    m = ldexp3k(d, -e);
+                    e = Mx::from_cast(o).select(e - Ix::splat(64), e);
+                    Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17))
+                        * F64x::from_cast(e)
+                }/* else {
+                    let mut e = vgetexp_vd_vd(d * F64x::splat(1. / 0.75));
+                    e = e.eq(F64x::INFINITY).select(F64x::splat(1024.), e);
+                    m = vgetmant_vd_vd(d);
+                    Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17)) * e
+                }*/;
 
-            /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
-                let s = d;
-            }*/
-            let e = ilogbk(d.abs()) + Ix::splat(1);
-            d = ldexp2k(d, -e);
+            let x = F64x::splat(-1.).add_as_doubled(m) / ONE.add_as_doubled(m);
+            let x2 = x.0 * x.0;
 
-            let t = F64x::from_cast(e) + F64x::splat(6144.);
-            let qu = (t * F64x::splat(1. / 3.)).trunci();
-            let re = (t - F64x::from_cast(qu) * F64x::splat(3.)).trunci();
+            let t = F64x::splat(0.153_207_698_850_270_135_3)
+                .mul_add(x2, F64x::splat(0.152_562_905_100_342_871_6))
+                .mul_add(x2, F64x::splat(0.181_860_593_293_778_599_6))
+                .mul_add(x2, F64x::splat(0.222_221_451_983_938_000_9))
+                .mul_add(x2, F64x::splat(0.285_714_293_279_429_931_7))
+                .mul_add(x2, F64x::splat(0.399_999_999_963_525_199))
+                .mul_add(x2, F64x::splat(0.666_666_666_666_733_354_1));
 
-            q2 = M64x::from_cast(re.eq(Ix::splat(1))).select_doubled(
-                Doubled::from((
-                    1.259_921_049_894_873_190_7,
-                    -2.589_933_375_300_506_917_7_e-17,
-                )),
-                q2,
-            );
-            q2 = M64x::from_cast(re.eq(Ix::splat(2))).select_doubled(
-                Doubled::from((
-                    1.587_401_051_968_199_583_4,
-                    -1.086_900_819_419_782_298_6_e-16,
-                )),
-                q2,
-            );
+            s = s.add_checked(x.scale(F64x::splat(2.)));
+            s = s.add_checked(x2 * x.0 * t);
 
-            q2.0 = q2.0.mul_sign(d);
-            q2.1 = q2.1.mul_sign(d);
-            d = d.abs();
-
-            let mut x = F64x::splat(-0.640_245_898_480_692_909_870_982)
-                .mul_add(d, F64x::splat(2.961_551_030_200_395_118_185_95))
-                .mul_add(d, F64x::splat(-5.733_530_609_229_478_436_361_66))
-                .mul_add(d, F64x::splat(6.039_903_689_894_587_479_614_07))
-                .mul_add(d, F64x::splat(-3.858_419_355_104_449_888_216_32))
-                .mul_add(d, F64x::splat(2.230_727_530_249_660_972_572_2));
-
-            let mut y = x * x;
-            y = y * y;
-            x -= d.mul_sub(y, x) * F64x::splat(1. / 3.);
-
-            let mut z = x;
-
-            let mut u = x.mul_as_doubled(x);
-            u = u * u;
-            u *= d;
-            u += -x;
-            y = u.0 + u.1;
-
-            y = F64x::splat(-2. / 3.) * y * z;
-            let mut v = z.mul_as_doubled(z) + y;
-            v *= d;
-            v *= q2;
-            z = ldexp2k(v.0 + v.1, qu - Ix::splat(2048));
+            let r = s.0 + s.1;
 
             /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
-            z = d.is_infinite().select(F64x::INFINITY.mul_sign(q2.0), z);
-            d.eq(ZERO).select(F64x::from_bits(q2.0.sign_bit()), z)
+            let r = d.eq(F64x::INFINITY).select(F64x::INFINITY, r);
+            let r = (d.lt(ZERO) | d.is_nan()).select(F64x::NAN, r);
+            d.eq(ZERO).select(F64x::NEG_INFINITY, r)
             /*} else {
-                z = s.is_infinite().select(F64x::INFINITY.mul_sign(s), z);
-                s.eq(ZERO)
-                    .select(ZERO.mul_sign(s), z)
+                vfixup_vd_vd_vd_vi2_i(
+                    r,
+                    d,
+                    I64x::splat((4 << (2 * 4)) | (3 << (4 * 4)) | (5 << (5 * 4)) | (2 << (6 * 4))),
+                    0,
+                )
             }*/
         }
 
         #[test]
-        fn test_cbrt() {
+        fn test_log() {
             test_f_f(
-                cbrt,
-                rug::Float::cbrt,
-                f64::MIN..=f64::MAX,
+                log,
+                rug::Float::ln,
+                0.0..=f64::MAX,
                 1.
             );
         }
-
-        pub fn exp2(d: F64x) -> F64x {
-            let mut u = d.round();
-            let q = u.roundi();
-
-            let s = d - u;
-
-            let s2 = s * s;
-            let s4 = s2 * s2;
-            let s8 = s4 * s4;
-
-            u = F64x::poly10(s, s2, s4, s8,
-                0.443_435_908_292_652_945_4_e-9,
-                0.707_316_459_808_570_742_5_e-8,
-                0.101_781_926_092_176_045_1_e-6,
-                0.132_154_387_251_132_761_5_e-5,
-                0.152_527_335_351_758_473_e-4,
-                0.154_035_304_510_114_780_8_e-3,
-                0.133_335_581_467_049_907_3_e-2,
-                0.961_812_910_759_760_053_6_e-2,
-                0.555_041_086_648_204_659_6_e-1,
-                0.240_226_506_959_101_221_4)
-                .mul_add(s, F64x::splat(0.693_147_180_559_945_286_2));
-
-            if cfg!(target_feature = "fma") {
-                u = u.mul_adde(s, ONE);
-            } else {
-                u = ONE.add_checked(u.mul_as_doubled(s)).normalize().0;
-            }
-
-            u = ldexp2k(u, q);
-
-            u = d.ge(F64x::splat(1024.)).select(F64x::INFINITY, u);
-            F64x::from_bits(!U64x::from_bits(d.lt(F64x::splat(-2000.))) & U64x::from_bits(u))
-        }
-
-        #[test]
-        fn test_exp2() {
-            test_f_f(
-                exp2,
-                rug::Float::exp2,
-                -2000.0..=1024.0,
-                1.
-            );
-        }
-
-        pub fn exp10(d: F64x) -> F64x {
-            let mut u = (d * LOG10_2).round();
-            let q = u.roundi();
-
-            let s = u.mul_add(-L10U, d);
-            let s = u.mul_add(-L10L, s);
-
-            u = F64x::splat(0.241_146_349_833_426_765_2_e-3)
-                .mul_add(s, F64x::splat(0.115_748_841_521_718_737_5_e-2))
-                .mul_add(s, F64x::splat(0.501_397_554_678_973_365_9_e-2))
-                .mul_add(s, F64x::splat(0.195_976_232_072_053_308_e-1))
-                .mul_add(s, F64x::splat(0.680_893_639_944_678_413_8_e-1))
-                .mul_add(s, F64x::splat(0.206_995_849_472_267_623_4))
-                .mul_add(s, F64x::splat(0.539_382_929_205_853_622_9))
-                .mul_add(s, F64x::splat(0.117_125_514_890_854_165_5_e+1))
-                .mul_add(s, F64x::splat(0.203_467_859_229_343_295_3_e+1))
-                .mul_add(s, F64x::splat(0.265_094_905_523_920_587_6_e+1))
-                .mul_add(s, F64x::splat(0.230_258_509_299_404_590_1_e+1));
-
-            if cfg!(target_feature = "fma") {
-                u = u.mul_adde(s, ONE);
-            } else {
-                u = ONE.add_checked(u.mul_as_doubled(s)).normalize().0;
-            }
-
-            u = ldexp2k(u, q);
-
-            u = d
-                .gt(F64x::splat(308.254_715_559_916_71))
-                .select(F64x::INFINITY, u);
-            F64x::from_bits(!U64x::from_bits(d.lt(F64x::splat(-350.))) & U64x::from_bits(u))
-        }
-
-        #[test]
-        fn test_exp10() {
-            test_f_f(
-                exp10,
-                rug::Float::exp10,
-                -350.0..=308.26,
-                1.09
-            );
-        }
-
-        pub fn expm1(a: F64x) -> F64x {
-            let d = expk2(Doubled::new(a, ZERO)) + F64x::splat(-1.);
-            let mut x = d.0 + d.1;
-            x = a
-                .gt(F64x::splat(709.782_712_893_383_996_732_223))
-                .select(F64x::INFINITY, x);
-            x = a
-                .lt(F64x::splat(-36.736_800_569_677_101_399_113_302_437))
-                .select(F64x::splat(-1.), x);
-            a.is_neg_zero().select(NEG_ZERO, x)
-        }
-
-        #[test]
-        fn test_expm1() {
-            test_f_f(
-                expm1,
-                rug::Float::exp_m1,
-                -37.0..=710.0,
-                1.
-            );
-        }
-
         pub fn log10(mut d: F64x) -> F64x {
             let m: F64x;
 
@@ -1544,6 +1216,333 @@ macro_rules! impl_math_f64_u10 {
                 log1p,
                 rug::Float::ln_1p,
                 -1.0..=1e+307,
+                1.
+            );
+        }
+
+        pub fn exp(d: F64x) -> F64x {
+            let mut u = (d * R_LN2).round();
+            let q = u.roundi();
+
+            let s = u.mul_add(-L2U, d);
+            let s = u.mul_add(-L2L, s);
+
+            if cfg!(target_feature = "fma") {
+/*                if cfg!(feature = "split_kernel") {
+                    let s2 = s * s;
+
+                    u = F64x::splat(0.208_127_637_823_716_445_7_e-8)
+                        .mul_adde(s2, F64x::splat(0.275_576_262_816_949_119_2_e-6))
+                        .mul_adde(s2, F64x::splat(0.248_015_868_747_968_626_4_e-4))
+                        .mul_adde(s2, F64x::splat(0.138_888_888_891_449_779_7_e-2))
+                        .mul_adde(s2, F64x::splat(0.416_666_666_666_660_259_8_e-1))
+                        .mul_adde(s2, HALF);
+
+                    let v = F64x::splat(0.251_121_070_304_228_802_2_e-7)
+                        .mul_adde(s2, F64x::splat(0.275_572_340_202_538_823_9_e-5))
+                        .mul_adde(s2, F64x::splat(0.198_412_698_985_586_585_e-3))
+                        .mul_adde(s2, F64x::splat(0.833_333_333_331_493_821_e-2))
+                        .mul_adde(s2, F64x::splat(0.166_666_666_666_666_907_2));
+
+                    u = v.mul_add(s, u).mul_adde(s, ONE).mul_adde(s, ONE);
+                } else {
+                */
+                let s2 = s * s;
+                let s4 = s2 * s2;
+                let s8 = s4 * s4;
+                u = F64x::poly10(s, s2, s4, s8,
+                    0.208_127_637_823_716_445_7_e-8,
+                        0.251_121_070_304_228_802_2_e-7,
+                        0.275_576_262_816_949_119_2_e-6,
+                        0.275_572_340_202_538_823_9_e-5,
+                        0.248_015_868_747_968_626_4_e-4,
+                        0.198_412_698_985_586_585_e-3,
+                        0.138_888_888_891_449_779_7_e-2,
+                        0.833_333_333_331_493_821_e-2,
+                        0.416_666_666_666_660_259_8_e-1,
+                        0.166_666_666_666_666_907_2)
+                        .mul_adde(s, HALF)
+                        .mul_adde(s, ONE)
+                        .mul_adde(s, ONE);
+
+            } else {
+                let s2 = s * s;
+                let s4 = s2 * s2;
+                let s8 = s4 * s4;
+
+                u = F64x::poly10(s, s2, s4, s8,
+                  2.088_606_211_072_836_875_363_41_e-9,
+                    2.511_129_308_928_765_186_106_61_e-8,
+                    2.755_739_112_349_004_718_933_38_e-7,
+                    2.755_723_629_119_288_276_294_23_e-6,
+                    2.480_158_715_923_547_299_879_1_e-5,
+                    0.000_198_412_698_960_509_205_564_975,
+                    0.001_388_888_888_897_744_922_079_62,
+                    0.008_333_333_333_316_527_216_649_84,
+                    0.041_666_666_666_666_504_759_142_2,
+                    0.166_666_666_666_666_851_703_837)
+                    .mul_add(s, HALF);
+
+                u = ONE + (s * s).mul_add(u, s);
+            }
+
+            u = ldexp2k(u, q);
+
+            u = d
+                .gt(F64x::splat(709.782_711_149_557_429_092_172_174_26))
+                .select(F64x::INFINITY, u);
+            F64x::from_bits(!U64x::from_bits(d.lt(F64x::splat(-1000.))) & U64x::from_bits(u))
+        }
+
+        #[test]
+        fn test_exp() {
+            test_f_f(
+                exp,
+                rug::Float::exp,
+                -1000.0..=710.0,
+                1.
+            );
+        }
+
+        pub fn exp10(d: F64x) -> F64x {
+            let mut u = (d * LOG10_2).round();
+            let q = u.roundi();
+
+            let s = u.mul_add(-L10U, d);
+            let s = u.mul_add(-L10L, s);
+
+            u = F64x::splat(0.241_146_349_833_426_765_2_e-3)
+                .mul_add(s, F64x::splat(0.115_748_841_521_718_737_5_e-2))
+                .mul_add(s, F64x::splat(0.501_397_554_678_973_365_9_e-2))
+                .mul_add(s, F64x::splat(0.195_976_232_072_053_308_e-1))
+                .mul_add(s, F64x::splat(0.680_893_639_944_678_413_8_e-1))
+                .mul_add(s, F64x::splat(0.206_995_849_472_267_623_4))
+                .mul_add(s, F64x::splat(0.539_382_929_205_853_622_9))
+                .mul_add(s, F64x::splat(0.117_125_514_890_854_165_5_e+1))
+                .mul_add(s, F64x::splat(0.203_467_859_229_343_295_3_e+1))
+                .mul_add(s, F64x::splat(0.265_094_905_523_920_587_6_e+1))
+                .mul_add(s, F64x::splat(0.230_258_509_299_404_590_1_e+1));
+
+            if cfg!(target_feature = "fma") {
+                u = u.mul_adde(s, ONE);
+            } else {
+                u = ONE.add_checked(u.mul_as_doubled(s)).normalize().0;
+            }
+
+            u = ldexp2k(u, q);
+
+            u = d
+                .gt(F64x::splat(308.254_715_559_916_71))
+                .select(F64x::INFINITY, u);
+            F64x::from_bits(!U64x::from_bits(d.lt(F64x::splat(-350.))) & U64x::from_bits(u))
+        }
+
+        #[test]
+        fn test_exp10() {
+            test_f_f(
+                exp10,
+                rug::Float::exp10,
+                -350.0..=308.26,
+                1.09
+            );
+        }
+
+        pub fn expm1(a: F64x) -> F64x {
+            let d = expk2(Doubled::new(a, ZERO)) + F64x::splat(-1.);
+            let mut x = d.0 + d.1;
+            x = a
+                .gt(F64x::splat(709.782_712_893_383_996_732_223))
+                .select(F64x::INFINITY, x);
+            x = a
+                .lt(F64x::splat(-36.736_800_569_677_101_399_113_302_437))
+                .select(F64x::splat(-1.), x);
+            a.is_neg_zero().select(NEG_ZERO, x)
+        }
+
+        #[test]
+        fn test_expm1() {
+            test_f_f(
+                expm1,
+                rug::Float::exp_m1,
+                -37.0..=710.0,
+                1.
+            );
+        }
+
+        pub fn exp2(d: F64x) -> F64x {
+            let mut u = d.round();
+            let q = u.roundi();
+
+            let s = d - u;
+
+            let s2 = s * s;
+            let s4 = s2 * s2;
+            let s8 = s4 * s4;
+
+            u = F64x::poly10(s, s2, s4, s8,
+                0.443_435_908_292_652_945_4_e-9,
+                0.707_316_459_808_570_742_5_e-8,
+                0.101_781_926_092_176_045_1_e-6,
+                0.132_154_387_251_132_761_5_e-5,
+                0.152_527_335_351_758_473_e-4,
+                0.154_035_304_510_114_780_8_e-3,
+                0.133_335_581_467_049_907_3_e-2,
+                0.961_812_910_759_760_053_6_e-2,
+                0.555_041_086_648_204_659_6_e-1,
+                0.240_226_506_959_101_221_4)
+                .mul_add(s, F64x::splat(0.693_147_180_559_945_286_2));
+
+            if cfg!(target_feature = "fma") {
+                u = u.mul_adde(s, ONE);
+            } else {
+                u = ONE.add_checked(u.mul_as_doubled(s)).normalize().0;
+            }
+
+            u = ldexp2k(u, q);
+
+            u = d.ge(F64x::splat(1024.)).select(F64x::INFINITY, u);
+            F64x::from_bits(!U64x::from_bits(d.lt(F64x::splat(-2000.))) & U64x::from_bits(u))
+        }
+
+        #[test]
+        fn test_exp2() {
+            test_f_f(
+                exp2,
+                rug::Float::exp2,
+                -2000.0..=1024.0,
+                1.
+            );
+        }
+
+        pub fn pow(x: F64x, y: F64x) -> F64x {
+            if true {
+                let yisint = y.is_integer();
+                let yisodd = y.is_odd() & yisint;
+
+                let d = logk(x.abs()) * y;
+                let mut result = expk(d);
+                result =
+                    d.0.gt(F64x::splat(709.782_711_149_557_429_092_172_174_26))
+                        .select(F64x::INFINITY, result);
+
+                result *= x.gt(ZERO).select(
+                    ONE,
+                    yisint.select(yisodd.select(F64x::splat(-1.), ONE), F64x::NAN),
+                );
+
+                let efx = (x.abs() - ONE).mul_sign(y);
+
+                result = y.is_infinite().select(
+                    F64x::from_bits(
+                        !U64x::from_bits(efx.lt(ZERO))
+                            & U64x::from_bits(efx.eq(ZERO).select(ONE, F64x::INFINITY)),
+                    ),
+                    result,
+                );
+
+                result = (x.is_infinite() | x.eq(ZERO)).select(
+                    yisodd.select(x.sign(), ONE)
+                        * F64x::from_bits(
+                            !U64x::from_bits(x.eq(ZERO).select(-y, y).lt(ZERO))
+                                & U64x::from_bits(F64x::INFINITY),
+                        ),
+                    result,
+                );
+
+                result =
+                    F64x::from_bits(U64x::from_bits(x.is_nan() | y.is_nan()) | U64x::from_bits(result));
+
+                (y.eq(ZERO) | x.eq(ONE)).select(ONE, result)
+            } else {
+                expk(logk(x) * y)
+            }
+        }
+
+        #[test]
+        fn test_pow() {
+            use rug::{ops::Pow, Float};
+            test_ff_f(
+                pow,
+                |in1, in2| Float::with_val(in1.prec(), in1.pow(in2)),
+                f64::MIN..=f64::MAX,
+                f64::MIN..=f64::MAX,
+                1.
+            );
+        }
+
+        pub fn cbrt(mut d: F64x) -> F64x {
+            let mut q2 = Doubled::from((1., 0.));
+
+            /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
+                let s = d;
+            }*/
+            let e = ilogbk(d.abs()) + Ix::splat(1);
+            d = ldexp2k(d, -e);
+
+            let t = F64x::from_cast(e) + F64x::splat(6144.);
+            let qu = (t * F64x::splat(1. / 3.)).trunci();
+            let re = (t - F64x::from_cast(qu) * F64x::splat(3.)).trunci();
+
+            q2 = M64x::from_cast(re.eq(Ix::splat(1))).select_doubled(
+                Doubled::from((
+                    1.259_921_049_894_873_190_7,
+                    -2.589_933_375_300_506_917_7_e-17,
+                )),
+                q2,
+            );
+            q2 = M64x::from_cast(re.eq(Ix::splat(2))).select_doubled(
+                Doubled::from((
+                    1.587_401_051_968_199_583_4,
+                    -1.086_900_819_419_782_298_6_e-16,
+                )),
+                q2,
+            );
+
+            q2.0 = q2.0.mul_sign(d);
+            q2.1 = q2.1.mul_sign(d);
+            d = d.abs();
+
+            let mut x = F64x::splat(-0.640_245_898_480_692_909_870_982)
+                .mul_add(d, F64x::splat(2.961_551_030_200_395_118_185_95))
+                .mul_add(d, F64x::splat(-5.733_530_609_229_478_436_361_66))
+                .mul_add(d, F64x::splat(6.039_903_689_894_587_479_614_07))
+                .mul_add(d, F64x::splat(-3.858_419_355_104_449_888_216_32))
+                .mul_add(d, F64x::splat(2.230_727_530_249_660_972_572_2));
+
+            let mut y = x * x;
+            y = y * y;
+            x -= d.mul_sub(y, x) * F64x::splat(1. / 3.);
+
+            let mut z = x;
+
+            let mut u = x.mul_as_doubled(x);
+            u = u * u;
+            u *= d;
+            u += -x;
+            y = u.0 + u.1;
+
+            y = F64x::splat(-2. / 3.) * y * z;
+            let mut v = z.mul_as_doubled(z) + y;
+            v *= d;
+            v *= q2;
+            z = ldexp2k(v.0 + v.1, qu - Ix::splat(2048));
+
+            /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
+            z = d.is_infinite().select(F64x::INFINITY.mul_sign(q2.0), z);
+            d.eq(ZERO).select(F64x::from_bits(q2.0.sign_bit()), z)
+            /*} else {
+                z = s.is_infinite().select(F64x::INFINITY.mul_sign(s), z);
+                s.eq(ZERO)
+                    .select(ZERO.mul_sign(s), z)
+            }*/
+        }
+
+        #[test]
+        fn test_cbrt() {
+            test_f_f(
+                cbrt,
+                rug::Float::cbrt,
+                f64::MIN..=f64::MAX,
                 1.
             );
         }

@@ -696,246 +696,6 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
-        /// Base-*e* exponential function
-        ///
-        /// This function returns the value of *e* raised to ***a***.
-        /// The error bound of the returned value is `1.0 ULP`.
-        pub fn expf(d: F32x) -> F32x {
-            let q = (d * R_LN2_F).roundi();
-
-            let s = F32x::from_cast(q).mul_add(-L2U_F, d);
-            let s = F32x::from_cast(q).mul_add(-L2L_F, s);
-
-            let mut u = F32x::splat(0.000_198_527_617_612_853_646_278_381)
-                .mul_add(s, F32x::splat(0.001_393_043_552_525_341_510_772_71))
-                .mul_add(s, F32x::splat(0.008_333_360_776_305_198_669_433_59))
-                .mul_add(s, F32x::splat(0.041_666_485_369_205_474_853_515_6))
-                .mul_add(s, F32x::splat(0.166_666_671_633_720_397_949_219))
-                .mul_add(s, HALF);
-
-            u = ONE + (s * s).mul_add(u, s);
-
-            u = ldexp2kf(u, q);
-
-            u = F32x::from_bits(!U32x::from_bits(d.lt(F32x::splat(-104.))) & U32x::from_bits(u));
-            F32x::splat(100.).lt(d).select(F32x::INFINITY, u)
-        }
-
-        #[test]
-        fn test_expf() {
-            test_f_f(
-                expf,
-                rug::Float::exp,
-                -104.0..=100.0,
-                1.
-            );
-        }
-
-        /// Cube root function
-        ///
-        /// This function returns the real cube root of ***a***.
-        /// The error bound of the returned value is `1.0 ULP`.
-        pub fn cbrtf(mut d: F32x) -> F32x {
-            let mut q2 = Doubled::from((1., 0.));
-
-            /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
-                let s = d;
-            }*/
-            let e = ilogbkf(d.abs()) + I32x::splat(1);
-            d = ldexp2kf(d, -e);
-
-            let t = F32x::from_cast(e) + F32x::splat(6144.);
-            let qu = (t * F32x::splat(1. / 3.)).trunci();
-            let re = (t - F32x::from_cast(qu) * F32x::splat(3.)).trunci();
-
-            q2 = re.eq(I32x::splat(1)).select_doubled(
-                Doubled::from((
-                    1.259_921_073_913_574_218_8,
-                    -2.401_870_169_421_727_041_5_e-8,
-                )),
-                q2,
-            );
-            q2 = re.eq(I32x::splat(2)).select_doubled(
-                Doubled::from((1.587_401_032_447_814_941_4, 1.952_038_530_816_935_235_6_e-8)),
-                q2,
-            );
-
-            q2.0 = q2.0.mul_sign(d);
-            q2.1 = q2.1.mul_sign(d);
-            d = d.abs();
-
-            let mut x = F32x::splat(-0.601_564_466_953_277_587_890_625)
-                .mul_add(d, F32x::splat(2.820_889_234_542_846_679_687_5))
-                .mul_add(d, F32x::splat(-5.532_182_216_644_287_109_375))
-                .mul_add(d, F32x::splat(5.898_262_500_762_939_453_125))
-                .mul_add(d, F32x::splat(-3.809_541_702_270_507_812_5))
-                .mul_add(d, F32x::splat(2.224_125_623_703_002_929_687_5));
-
-            let mut y = x * x;
-            y = y * y;
-            x -= d.neg_mul_add(y, x) * F32x::splat(-1. / 3.);
-
-            let mut z = x;
-
-            let mut u = x.mul_as_doubled(x);
-            u = u * u;
-            u *= d;
-            u += -x;
-            y = u.0 + u.1;
-
-            y = F32x::splat(-2. / 3.) * y * z;
-            let mut v = z.mul_as_doubled(z) + y;
-            v *= d;
-            v *= q2;
-            z = ldexp2kf(v.0 + v.1, qu - I32x::splat(2048));
-
-            z = d.is_infinite().select(F32x::INFINITY.mul_sign(q2.0), z);
-            z = d.eq(ZERO).select(F32x::from_bits(q2.0.sign_bit()), z);
-
-            /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
-                z = s.is_infinite().select(F32x::INFINITY.mul_sign(s), z);
-                z = s
-                    .eq(ZERO)
-                    .select((ZERO, s).mul_sign(z);
-            }*/
-
-            z
-        }
-
-        #[test]
-        fn test_cbrtf() {
-            test_f_f(
-                cbrtf,
-                rug::Float::cbrt,
-                f32::MIN..=f32::MAX,
-                1.
-            );
-        }
-
-        /// Natural logarithmic function
-        ///
-        /// This function returns the natural logarithm of ***a***.
-        /// The error bound of the returned value is `1.0 ULP`.
-        pub fn logf(mut d: F32x) -> F32x {
-            let m: F32x;
-
-            let mut s = /*if !cfg!(feature = "enable_avx512f")
-                && !cfg!(feature = "enable_avx512fnofma")*/
-            {
-                let o = d.lt(F32x::splat(f32::MIN_POSITIVE));
-                d = o.select(d * (F1_32X * F1_32X), d);
-                let mut e = ilogb2kf(d * F32x::splat(1. / 0.75));
-                m = ldexp3kf(d, -e);
-                e = o.select(e - I32x::splat(64), e);
-                Doubled::from((0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9)) * F32x::from_cast(e)
-            }/* else {
-                let mut e = vgetexp_vf_vf(d * F32x::splat(1. / 0.75));
-                e = e.eq(F32x::INFINITY).select(F32x::splat(128.), e);
-                m = vgetmant_vf_vf(d);
-                Doubled::from((0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9)) * e
-            }*/;
-
-            let x = F32x::splat(-1.).add_as_doubled(m) / ONE.add_as_doubled(m);
-            let x2 = x.0 * x.0;
-
-            let t = F32x::splat(0.302_729_487_4)
-                .mul_add(x2, F32x::splat(0.399_610_817_4))
-                .mul_add(x2, F32x::splat(0.666_669_488));
-
-            s = s.add_checked(x.scale(F32x::splat(2.)));
-            s = s.add_checked(x2 * x.0 * t);
-
-            let r = s.0 + s.1;
-
-            /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
-            let r = d.eq(F32x::INFINITY).select(F32x::INFINITY, r);
-            let r = (d.lt(ZERO) | d.is_nan()).select(F32x::NAN, r);
-            d.eq(ZERO).select(F32x::NEG_INFINITY, r)
-            /*} else {
-                vfixup_vf_vf_vf_vi2_i(
-                    r,
-                    d,
-                    I32x::splat((4 << (2 * 4)) | (3 << (4 * 4)) | (5 << (5 * 4)) | (2 << (6 * 4))),
-                    0,
-                )
-            }*/
-        }
-
-        #[test]
-        fn test_logf() {
-            test_f_f(
-                logf,
-                rug::Float::ln,
-                0.0..=f32::MAX,
-                1.
-            );
-        }
-
-        /// Power function
-        ///
-        /// This function returns the value of ***x*** raised to the power of ***y***.
-        /// The error bound of the returned value is `1.0 ULP`.
-        pub fn powf(x: F32x, y: F32x) -> F32x {
-            if true {
-                let yisint = y.trunc().eq(y) | y.abs().gt(F1_24X);
-                let yisodd =
-                    (y.trunci() & I32x::splat(1)).eq(I32x::splat(1)) & yisint & y.abs().lt(F1_24X);
-
-                #[cfg(any(feature = "enable_neon32", feature = "enable_neon32vfpv4"))]
-                {
-                    let yisodd = !U32x::from_bits(y.is_infinite()) & yisodd;
-                }
-
-                let mut result = expkf(logkf(x.abs()) * y);
-
-                result = result.is_nan().select(F32x::INFINITY, result);
-
-                result *= x.gt(ZERO).select(
-                    ONE,
-                    yisint.select(yisodd.select(F32x::splat(-1.), ONE), F32x::NAN),
-                );
-
-                let efx = (x.abs() - ONE).mul_sign(y);
-
-                result = y.is_infinite().select(
-                    F32x::from_bits(
-                        !U32x::from_bits(efx.lt(ZERO))
-                            & U32x::from_bits(efx.eq(ZERO).select(ONE, F32x::INFINITY)),
-                    ),
-                    result,
-                );
-
-                result = (x.is_infinite() | x.eq(ZERO)).select(
-                    yisodd.select(x.sign(), ONE)
-                        * F32x::from_bits(
-                            !U32x::from_bits(x.eq(ZERO).select(-y, y).lt(ZERO))
-                                & U32x::from_bits(F32x::INFINITY),
-                        ),
-                    result,
-                );
-
-                result = F32x::from_bits(
-                    U32x::from_bits(x.is_nan() | y.is_nan()) | U32x::from_bits(result),
-                );
-
-                (y.eq(ZERO) | x.eq(ONE)).select(ONE, result)
-            } else {
-                expkf(logkf(x) * y)
-            }
-        }
-
-        #[test]
-        fn test_powf() {
-            use rug::{ops::Pow, Float};
-            test_ff_f(
-                powf,
-                |in1, in2| Float::with_val(in1.prec(), in1.pow(in2)),
-                f32::MIN..=f32::MAX,
-                f32::MIN..=f32::MAX,
-                1.
-            );
-        }
-
         /// Hyperbolic sine function
         ///
         /// This function evaluates the hyperbolic sine function of a value in ***a***.
@@ -1109,69 +869,61 @@ macro_rules! impl_math_f32_u10 {
             );
         }
 
-        /// Base-10 exponential function
+        /// Natural logarithmic function
         ///
-        /// This function returns 10 raised to ***a***.
-        /// The error bound of the returned value is `1.09 ULP`.
-        pub fn exp10f(d: F32x) -> F32x {
-            let mut u = (d * LOG10_2_F).round();
-            let q = u.roundi();
-
-            let s = u.mul_add(-L10U_F, d);
-            let s = u.mul_add(-L10L_F, s);
-
-            u = F32x::splat(0.680_255_591_9_e-1)
-                .mul_add(s, F32x::splat(0.207_808_032_6))
-                .mul_add(s, F32x::splat(0.539_390_385_2))
-                .mul_add(s, F32x::splat(0.117_124_533_7_e+1))
-                .mul_add(s, F32x::splat(0.203_467_869_8_e+1))
-                .mul_add(s, F32x::splat(0.265_094_900_1_e+1));
-            let x = Doubled::new(
-                F32x::splat(2.302_585_124_969_482_421_9),
-                F32x::splat(-3.170_517_251_649_359_315_7_e-08)
-            ).add_checked(u * s);
-            u = ONE.add_checked(x * s).normalize().0;
-
-            u = ldexp2kf(u, q);
-
-            u = d
-                .gt(F32x::splat(38.531_839_419_103_623_894_138_7))
-                .select(F32x::INFINITY, u);
-            F32x::from_bits(!U32x::from_bits(d.lt(F32x::splat(-50.))) & U32x::from_bits(u))
-        }
-
-        #[test]
-        fn test_exp10f() {
-            test_f_f(
-                exp10f,
-                rug::Float::exp10,
-                -50.0..=38.54,
-                1.
-            );
-        }
-
-        /// Base-*e* exponential function minus 1
-        ///
-        /// This function returns the value one less than *e* raised to ***a***.
+        /// This function returns the natural logarithm of ***a***.
         /// The error bound of the returned value is `1.0 ULP`.
-        pub fn expm1f(a: F32x) -> F32x {
-            let d = expk2f(Doubled::new(a, ZERO)) + F32x::splat(-1.);
-            let mut x = d.0 + d.1;
-            x = a
-                .gt(F32x::splat(88.722_831_726_074_218_75))
-                .select(F32x::INFINITY, x);
-            x = a
-                .lt(F32x::splat(-16.635_532_333_438_687_426_013_570))
-                .select(F32x::splat(-1.), x);
-            a.is_neg_zero().select(NEG_ZERO, x)
+        pub fn logf(mut d: F32x) -> F32x {
+            let m: F32x;
+
+            let mut s = /*if !cfg!(feature = "enable_avx512f")
+                && !cfg!(feature = "enable_avx512fnofma")*/
+            {
+                let o = d.lt(F32x::splat(f32::MIN_POSITIVE));
+                d = o.select(d * (F1_32X * F1_32X), d);
+                let mut e = ilogb2kf(d * F32x::splat(1. / 0.75));
+                m = ldexp3kf(d, -e);
+                e = o.select(e - I32x::splat(64), e);
+                Doubled::from((0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9)) * F32x::from_cast(e)
+            }/* else {
+                let mut e = vgetexp_vf_vf(d * F32x::splat(1. / 0.75));
+                e = e.eq(F32x::INFINITY).select(F32x::splat(128.), e);
+                m = vgetmant_vf_vf(d);
+                Doubled::from((0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9)) * e
+            }*/;
+
+            let x = F32x::splat(-1.).add_as_doubled(m) / ONE.add_as_doubled(m);
+            let x2 = x.0 * x.0;
+
+            let t = F32x::splat(0.302_729_487_4)
+                .mul_add(x2, F32x::splat(0.399_610_817_4))
+                .mul_add(x2, F32x::splat(0.666_669_488));
+
+            s = s.add_checked(x.scale(F32x::splat(2.)));
+            s = s.add_checked(x2 * x.0 * t);
+
+            let r = s.0 + s.1;
+
+            /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
+            let r = d.eq(F32x::INFINITY).select(F32x::INFINITY, r);
+            let r = (d.lt(ZERO) | d.is_nan()).select(F32x::NAN, r);
+            d.eq(ZERO).select(F32x::NEG_INFINITY, r)
+            /*} else {
+                vfixup_vf_vf_vf_vi2_i(
+                    r,
+                    d,
+                    I32x::splat((4 << (2 * 4)) | (3 << (4 * 4)) | (5 << (5 * 4)) | (2 << (6 * 4))),
+                    0,
+                )
+            }*/
         }
 
         #[test]
-        fn test_expm1f() {
+        fn test_logf() {
             test_f_f(
-                expm1f,
-                rug::Float::exp_m1,
-                -16.64..=88.73,
+                logf,
+                rug::Float::ln,
+                0.0..=f32::MAX,
                 1.
             );
         }
@@ -1288,6 +1040,347 @@ macro_rules! impl_math_f32_u10 {
                 log2f,
                 rug::Float::log2,
                 0.0..=f32::MAX,
+                1.
+            );
+        }
+
+        /// Logarithm of one plus argument
+        ///
+        /// This function returns the natural logarithm of (1+***a***).
+        /// The error bound of the returned value is `1.0 ULP`.
+        pub fn log1pf(d: F32x) -> F32x {
+            let m: F32x;
+
+            let dp1 = d + ONE;
+
+            let mut s =
+            /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
+                let o = dp1.lt(F32x::splat(f32::MIN_POSITIVE));
+                let dp1 = o.select(dp1 * (F1_32X * F1_32X), dp1);
+                let e = ilogb2kf(dp1 * F32x::splat(1. / 0.75));
+                let t = ldexp3kf(ONE, -e);
+                m = d.mul_add(t, t - ONE);
+                let e = o.select(e - I32x::splat(64), e);
+                Doubled::from((0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9)) * F32x::from_cast(e)
+            }/* else {
+                let e = vgetexp_vf_vf(dp1, F32x::splat(1. / 0.75));
+                let e = e.eq(F32x::INFINITY).select(F32x::splat(128.), e);
+                let t = ldexp3kf(ONE, -e.roundi());
+                m = d.mul_add(t, t - ONE);
+                Doubled::from((0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9)) * e
+            }*/;
+
+            let x = Doubled::new(m, ZERO) / F32x::splat(2.).add_checked_as_doubled(m);
+            let x2 = x.0 * x.0;
+
+            let t = F32x::splat(0.302_729_487_4)
+                .mul_add(x2, F32x::splat(0.399_610_817_4))
+                .mul_add(x2, F32x::splat(0.666_669_488));
+
+            s = s.add_checked(x.scale(F32x::splat(2.)));
+            s = s.add_checked(x2 * x.0 * t);
+
+            let mut r = s.0 + s.1;
+
+            r = d.gt(F32x::splat(1e+38)).select(F32x::INFINITY, r);
+            r = F32x::from_bits(U32x::from_bits(F32x::splat(-1.).gt(d)) | U32x::from_bits(r));
+            r = d.eq(F32x::splat(-1.)).select(F32x::NEG_INFINITY, r);
+            d.is_neg_zero().select(NEG_ZERO, r)
+        }
+
+        #[test]
+        fn test_log1pf() {
+            test_f_f(
+                log1pf,
+                rug::Float::ln_1p,
+                -1.0..=1e+38,
+                1.
+            );
+        }
+
+        /// Base-*e* exponential function
+        ///
+        /// This function returns the value of *e* raised to ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
+        pub fn expf(d: F32x) -> F32x {
+            let q = (d * R_LN2_F).roundi();
+
+            let s = F32x::from_cast(q).mul_add(-L2U_F, d);
+            let s = F32x::from_cast(q).mul_add(-L2L_F, s);
+
+            let mut u = F32x::splat(0.000_198_527_617_612_853_646_278_381)
+                .mul_add(s, F32x::splat(0.001_393_043_552_525_341_510_772_71))
+                .mul_add(s, F32x::splat(0.008_333_360_776_305_198_669_433_59))
+                .mul_add(s, F32x::splat(0.041_666_485_369_205_474_853_515_6))
+                .mul_add(s, F32x::splat(0.166_666_671_633_720_397_949_219))
+                .mul_add(s, HALF);
+
+            u = ONE + (s * s).mul_add(u, s);
+
+            u = ldexp2kf(u, q);
+
+            u = F32x::from_bits(!U32x::from_bits(d.lt(F32x::splat(-104.))) & U32x::from_bits(u));
+            F32x::splat(100.).lt(d).select(F32x::INFINITY, u)
+        }
+
+        #[test]
+        fn test_expf() {
+            test_f_f(
+                expf,
+                rug::Float::exp,
+                -104.0..=100.0,
+                1.
+            );
+        }
+
+        /// Base-10 exponential function
+        ///
+        /// This function returns 10 raised to ***a***.
+        /// The error bound of the returned value is `1.09 ULP`.
+        pub fn exp10f(d: F32x) -> F32x {
+            let mut u = (d * LOG10_2_F).round();
+            let q = u.roundi();
+
+            let s = u.mul_add(-L10U_F, d);
+            let s = u.mul_add(-L10L_F, s);
+
+            u = F32x::splat(0.680_255_591_9_e-1)
+                .mul_add(s, F32x::splat(0.207_808_032_6))
+                .mul_add(s, F32x::splat(0.539_390_385_2))
+                .mul_add(s, F32x::splat(0.117_124_533_7_e+1))
+                .mul_add(s, F32x::splat(0.203_467_869_8_e+1))
+                .mul_add(s, F32x::splat(0.265_094_900_1_e+1));
+            let x = Doubled::new(
+                F32x::splat(2.302_585_124_969_482_421_9),
+                F32x::splat(-3.170_517_251_649_359_315_7_e-08)
+            ).add_checked(u * s);
+            u = ONE.add_checked(x * s).normalize().0;
+
+            u = ldexp2kf(u, q);
+
+            u = d
+                .gt(F32x::splat(38.531_839_419_103_623_894_138_7))
+                .select(F32x::INFINITY, u);
+            F32x::from_bits(!U32x::from_bits(d.lt(F32x::splat(-50.))) & U32x::from_bits(u))
+        }
+
+        #[test]
+        fn test_exp10f() {
+            test_f_f(
+                exp10f,
+                rug::Float::exp10,
+                -50.0..=38.54,
+                1.
+            );
+        }
+
+        /// Base-*e* exponential function minus 1
+        ///
+        /// This function returns the value one less than *e* raised to ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
+        pub fn expm1f(a: F32x) -> F32x {
+            let d = expk2f(Doubled::new(a, ZERO)) + F32x::splat(-1.);
+            let mut x = d.0 + d.1;
+            x = a
+                .gt(F32x::splat(88.722_831_726_074_218_75))
+                .select(F32x::INFINITY, x);
+            x = a
+                .lt(F32x::splat(-16.635_532_333_438_687_426_013_570))
+                .select(F32x::splat(-1.), x);
+            a.is_neg_zero().select(NEG_ZERO, x)
+        }
+
+        #[test]
+        fn test_expm1f() {
+            test_f_f(
+                expm1f,
+                rug::Float::exp_m1,
+                -16.64..=88.73,
+                1.
+            );
+        }
+
+        /// Base-2 exponential function
+        ///
+        /// This function returns `2` raised to ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
+        pub fn exp2f(d: F32x) -> F32x {
+            let mut u = d.round();
+            let q = u.roundi();
+
+            let s = d - u;
+
+            u = F32x::splat(0.153_592_089_2_e-3)
+                .mul_add(s, F32x::splat(0.133_926_270_1_e-2))
+                .mul_add(s, F32x::splat(0.961_838_476_4_e-2))
+                .mul_add(s, F32x::splat(0.555_034_726_9_e-1))
+                .mul_add(s, F32x::splat(0.240_226_447_6))
+                .mul_add(s, F32x::splat(0.693_147_182_5));
+
+            if cfg!(target_feature = "fma") {
+                u = u.mul_adde(s, ONE);
+            } else {
+                u = ONE.add_checked(u.mul_as_doubled(s)).normalize().0;
+            }
+
+            u = ldexp2kf(u, q);
+
+            u = d.ge(F32x::splat(128.)).select(F32x::INFINITY, u);
+            F32x::from_bits(!U32x::from_bits(d.lt(F32x::splat(-150.))) & U32x::from_bits(u))
+        }
+
+        #[test]
+        fn test_exp2f() {
+            test_f_f(
+                exp2f,
+                rug::Float::exp2,
+                -150.0..=128.0,
+                1.
+            );
+        }
+
+        /// Power function
+        ///
+        /// This function returns the value of ***x*** raised to the power of ***y***.
+        /// The error bound of the returned value is `1.0 ULP`.
+        pub fn powf(x: F32x, y: F32x) -> F32x {
+            if true {
+                let yisint = y.trunc().eq(y) | y.abs().gt(F1_24X);
+                let yisodd =
+                    (y.trunci() & I32x::splat(1)).eq(I32x::splat(1)) & yisint & y.abs().lt(F1_24X);
+
+                #[cfg(any(feature = "enable_neon32", feature = "enable_neon32vfpv4"))]
+                {
+                    let yisodd = !U32x::from_bits(y.is_infinite()) & yisodd;
+                }
+
+                let mut result = expkf(logkf(x.abs()) * y);
+
+                result = result.is_nan().select(F32x::INFINITY, result);
+
+                result *= x.gt(ZERO).select(
+                    ONE,
+                    yisint.select(yisodd.select(F32x::splat(-1.), ONE), F32x::NAN),
+                );
+
+                let efx = (x.abs() - ONE).mul_sign(y);
+
+                result = y.is_infinite().select(
+                    F32x::from_bits(
+                        !U32x::from_bits(efx.lt(ZERO))
+                            & U32x::from_bits(efx.eq(ZERO).select(ONE, F32x::INFINITY)),
+                    ),
+                    result,
+                );
+
+                result = (x.is_infinite() | x.eq(ZERO)).select(
+                    yisodd.select(x.sign(), ONE)
+                        * F32x::from_bits(
+                            !U32x::from_bits(x.eq(ZERO).select(-y, y).lt(ZERO))
+                                & U32x::from_bits(F32x::INFINITY),
+                        ),
+                    result,
+                );
+
+                result = F32x::from_bits(
+                    U32x::from_bits(x.is_nan() | y.is_nan()) | U32x::from_bits(result),
+                );
+
+                (y.eq(ZERO) | x.eq(ONE)).select(ONE, result)
+            } else {
+                expkf(logkf(x) * y)
+            }
+        }
+
+        #[test]
+        fn test_powf() {
+            use rug::{ops::Pow, Float};
+            test_ff_f(
+                powf,
+                |in1, in2| Float::with_val(in1.prec(), in1.pow(in2)),
+                f32::MIN..=f32::MAX,
+                f32::MIN..=f32::MAX,
+                1.
+            );
+        }
+
+        /// Cube root function
+        ///
+        /// This function returns the real cube root of ***a***.
+        /// The error bound of the returned value is `1.0 ULP`.
+        pub fn cbrtf(mut d: F32x) -> F32x {
+            let mut q2 = Doubled::from((1., 0.));
+
+            /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
+                let s = d;
+            }*/
+            let e = ilogbkf(d.abs()) + I32x::splat(1);
+            d = ldexp2kf(d, -e);
+
+            let t = F32x::from_cast(e) + F32x::splat(6144.);
+            let qu = (t * F32x::splat(1. / 3.)).trunci();
+            let re = (t - F32x::from_cast(qu) * F32x::splat(3.)).trunci();
+
+            q2 = re.eq(I32x::splat(1)).select_doubled(
+                Doubled::from((
+                    1.259_921_073_913_574_218_8,
+                    -2.401_870_169_421_727_041_5_e-8,
+                )),
+                q2,
+            );
+            q2 = re.eq(I32x::splat(2)).select_doubled(
+                Doubled::from((1.587_401_032_447_814_941_4, 1.952_038_530_816_935_235_6_e-8)),
+                q2,
+            );
+
+            q2.0 = q2.0.mul_sign(d);
+            q2.1 = q2.1.mul_sign(d);
+            d = d.abs();
+
+            let mut x = F32x::splat(-0.601_564_466_953_277_587_890_625)
+                .mul_add(d, F32x::splat(2.820_889_234_542_846_679_687_5))
+                .mul_add(d, F32x::splat(-5.532_182_216_644_287_109_375))
+                .mul_add(d, F32x::splat(5.898_262_500_762_939_453_125))
+                .mul_add(d, F32x::splat(-3.809_541_702_270_507_812_5))
+                .mul_add(d, F32x::splat(2.224_125_623_703_002_929_687_5));
+
+            let mut y = x * x;
+            y = y * y;
+            x -= d.neg_mul_add(y, x) * F32x::splat(-1. / 3.);
+
+            let mut z = x;
+
+            let mut u = x.mul_as_doubled(x);
+            u = u * u;
+            u *= d;
+            u += -x;
+            y = u.0 + u.1;
+
+            y = F32x::splat(-2. / 3.) * y * z;
+            let mut v = z.mul_as_doubled(z) + y;
+            v *= d;
+            v *= q2;
+            z = ldexp2kf(v.0 + v.1, qu - I32x::splat(2048));
+
+            z = d.is_infinite().select(F32x::INFINITY.mul_sign(q2.0), z);
+            z = d.eq(ZERO).select(F32x::from_bits(q2.0.sign_bit()), z);
+
+            /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
+                z = s.is_infinite().select(F32x::INFINITY.mul_sign(s), z);
+                z = s
+                    .eq(ZERO)
+                    .select((ZERO, s).mul_sign(z);
+            }*/
+
+            z
+        }
+
+        #[test]
+        fn test_cbrtf() {
+            test_f_f(
+                cbrtf,
+                rug::Float::cbrt,
+                f32::MIN..=f32::MAX,
                 1.
             );
         }
@@ -1437,99 +1530,6 @@ macro_rules! impl_math_f32_u10 {
                 rug::Float::erf,
                 f32::MIN..=f32::MAX,
                 0.75
-            );
-        }
-
-        /// Logarithm of one plus argument
-        ///
-        /// This function returns the natural logarithm of (1+***a***).
-        /// The error bound of the returned value is `1.0 ULP`.
-        pub fn log1pf(d: F32x) -> F32x {
-            let m: F32x;
-
-            let dp1 = d + ONE;
-
-            let mut s =
-            /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
-                let o = dp1.lt(F32x::splat(f32::MIN_POSITIVE));
-                let dp1 = o.select(dp1 * (F1_32X * F1_32X), dp1);
-                let e = ilogb2kf(dp1 * F32x::splat(1. / 0.75));
-                let t = ldexp3kf(ONE, -e);
-                m = d.mul_add(t, t - ONE);
-                let e = o.select(e - I32x::splat(64), e);
-                Doubled::from((0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9)) * F32x::from_cast(e)
-            }/* else {
-                let e = vgetexp_vf_vf(dp1, F32x::splat(1. / 0.75));
-                let e = e.eq(F32x::INFINITY).select(F32x::splat(128.), e);
-                let t = ldexp3kf(ONE, -e.roundi());
-                m = d.mul_add(t, t - ONE);
-                Doubled::from((0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9)) * e
-            }*/;
-
-            let x = Doubled::new(m, ZERO) / F32x::splat(2.).add_checked_as_doubled(m);
-            let x2 = x.0 * x.0;
-
-            let t = F32x::splat(0.302_729_487_4)
-                .mul_add(x2, F32x::splat(0.399_610_817_4))
-                .mul_add(x2, F32x::splat(0.666_669_488));
-
-            s = s.add_checked(x.scale(F32x::splat(2.)));
-            s = s.add_checked(x2 * x.0 * t);
-
-            let mut r = s.0 + s.1;
-
-            r = d.gt(F32x::splat(1e+38)).select(F32x::INFINITY, r);
-            r = F32x::from_bits(U32x::from_bits(F32x::splat(-1.).gt(d)) | U32x::from_bits(r));
-            r = d.eq(F32x::splat(-1.)).select(F32x::NEG_INFINITY, r);
-            d.is_neg_zero().select(NEG_ZERO, r)
-        }
-
-        #[test]
-        fn test_log1pf() {
-            test_f_f(
-                log1pf,
-                rug::Float::ln_1p,
-                -1.0..=1e+38,
-                1.
-            );
-        }
-
-        /// Base-2 exponential function
-        ///
-        /// This function returns `2` raised to ***a***.
-        /// The error bound of the returned value is `1.0 ULP`.
-        pub fn exp2f(d: F32x) -> F32x {
-            let mut u = d.round();
-            let q = u.roundi();
-
-            let s = d - u;
-
-            u = F32x::splat(0.153_592_089_2_e-3)
-                .mul_add(s, F32x::splat(0.133_926_270_1_e-2))
-                .mul_add(s, F32x::splat(0.961_838_476_4_e-2))
-                .mul_add(s, F32x::splat(0.555_034_726_9_e-1))
-                .mul_add(s, F32x::splat(0.240_226_447_6))
-                .mul_add(s, F32x::splat(0.693_147_182_5));
-
-            if cfg!(target_feature = "fma") {
-                u = u.mul_adde(s, ONE);
-            } else {
-                u = ONE.add_checked(u.mul_as_doubled(s)).normalize().0;
-            }
-
-            u = ldexp2kf(u, q);
-
-            u = d.ge(F32x::splat(128.)).select(F32x::INFINITY, u);
-            F32x::from_bits(!U32x::from_bits(d.lt(F32x::splat(-150.))) & U32x::from_bits(u))
-        }
-
-        #[test]
-        fn test_exp2f() {
-            test_f_f(
-                exp2f,
-                rug::Float::exp2,
-                -150.0..=128.0,
-                1.
             );
         }
     };

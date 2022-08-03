@@ -2,233 +2,6 @@
 
 use super::*;
 
-pub fn acos(d: f64) -> f64 {
-    let o = fabsk(d) < 0.5;
-    let x2 = if o { d * d } else { (1. - fabsk(d)) * 0.5 };
-    let mut x = if o {
-        dd(fabsk(d), 0.)
-    } else {
-        x2.sqrt_as_doubled()
-    };
-    x = if fabsk(d) == 1. { dd(0., 0.) } else { x };
-
-    let x4 = x2 * x2;
-    let x8 = x4 * x4;
-    let x16 = x8 * x8;
-
-    let u = f64::poly12(
-        x2,
-        x4,
-        x8,
-        x16,
-        0.316_158_765_065_393_462_8_e-1,
-        -0.158_191_824_332_999_664_3_e-1,
-        0.192_904_547_726_791_067_4_e-1,
-        0.660_607_747_627_717_061_e-2,
-        0.121_536_052_557_737_733_1_e-1,
-        0.138_871_518_450_160_921_8_e-1,
-        0.173_595_699_122_361_460_4_e-1,
-        0.223_717_618_193_204_834_1_e-1,
-        0.303_819_592_803_813_223_7_e-1,
-        0.446_428_568_137_710_243_8_e-1,
-        0.750_000_000_037_858_161_1_e-1,
-        0.166_666_666_666_649_754_3,
-    ) * (x.0 * x2);
-
-    let mut y = dd(
-        3.141_592_653_589_793_116 / 2.,
-        1.224_646_799_147_353_207_2_e-16 / 2.,
-    )
-    .sub_checked(mulsign(x.0, d).add_checked_as_doubled(mulsign(u, d)));
-    x.add_checked_assign(u);
-    y = if o { y } else { x.scale(2.) };
-    if !o && (d < 0.) {
-        y = dd(3.141_592_653_589_793_116, 1.224_646_799_147_353_207_2_e-16).sub_checked(y)
-    };
-    y.0 + y.1
-}
-
-#[test]
-fn test_acos() {
-    test_f_f(acos, rug::Float::acos, -1.0..=1.0, 1.);
-}
-
-pub fn atan(d: f64) -> f64 {
-    let d2 = atan2k_u1(dd(fabsk(d), 0.), dd(1., 0.));
-    let r = if d.is_infinite() {
-        1.570_796_326_794_896_557_998_982
-    } else {
-        d2.0 + d2.1
-    };
-    mulsign(r, d)
-}
-
-#[test]
-fn test_atan() {
-    test_f_f(atan, rug::Float::atan, f64::MIN..=f64::MAX, 1.);
-}
-
-fn atan2k_u1(mut y: Doubled<f64>, mut x: Doubled<f64>) -> Doubled<f64> {
-    let mut q: isize = if x.0 < 0. {
-        x.0 = -x.0;
-        x.1 = -x.1;
-        -2
-    } else {
-        0
-    };
-
-    if y.0 > x.0 {
-        let t = x;
-        x = y;
-        y.0 = -t.0;
-        y.1 = -t.1;
-        q += 1;
-    }
-
-    let s = y / x;
-    let mut t = s.square();
-    t = t.normalize();
-
-    let t2 = t.0 * t.0;
-    let t4 = t2 * t2;
-    let t8 = t4 * t4;
-
-    let u = f64::poly16(
-        t.0,
-        t2,
-        t4,
-        t8,
-        1.062_984_841_914_487_466_074_15_e-5,
-        -0.000_125_620_649_967_286_867_384_336,
-        0.000_705_576_642_963_934_123_897_74,
-        -0.002_518_656_144_987_133_603_529_99,
-        0.006_462_628_990_369_911_723_135_04,
-        -0.012_828_133_366_339_903_101_427_4,
-        0.020_802_479_992_414_579_790_249_7,
-        -0.028_900_234_478_474_031_568_628_9,
-        0.035_978_500_503_510_459_085_365_6,
-        -0.041_848_579_703_592_507_506_027,
-        0.047_084_301_165_328_398_819_376_3,
-        -0.052_491_421_058_844_842_106_871_9,
-        0.058_794_659_096_958_100_386_043_4,
-        -0.066_662_088_477_879_549_719_418_2,
-        0.076_922_533_029_620_376_865_409_5,
-        -0.090_909_044_277_338_757_478_190_7,
-    )
-    .mul_add(t.0, 0.111_111_108_376_896_236_538_123)
-    .mul_add(t.0, -0.142_857_142_756_268_568_062_339)
-    .mul_add(t.0, 0.199_999_999_997_977_351_284_817)
-    .mul_add(t.0, -0.333_333_333_333_317_605_173_818);
-
-    t *= u;
-    t = s * (1.).add_checked(t);
-    if fabsk(s.0) < 1e-200 {
-        t = s;
-    }
-    dd(
-        1.570_796_326_794_896_557_998_982,
-        6.123_233_995_736_766_035_868_82_e-17,
-    ) * (q as f64)
-        + t
-}
-
-pub fn atan2(mut y: f64, mut x: f64) -> f64 {
-    if fabsk(x) < 5.562_684_646_268_008_398_4_e-309 {
-        y *= D1_53;
-        x *= D1_53;
-    } // nexttoward((1.0 / DBL_MAX), 1)
-    let d = atan2k_u1(dd(fabsk(y), 0.), dd(x, 0.));
-    let mut r = d.0 + d.1;
-
-    r = if y == 0. {
-        if sign(x) == -1. {
-            PI
-        } else {
-            0.
-        }
-    } else if y.is_infinite() {
-        FRAC_PI_2
-            - (if x.is_infinite() {
-                sign(x) * FRAC_PI_4
-            } else {
-                0.
-            })
-    } else if x.is_infinite() || (x == 0.) {
-        FRAC_PI_2
-            - (if x.is_infinite() {
-                sign(x) * FRAC_PI_2
-            } else {
-                0.
-            })
-    } else {
-        mulsign(r, x)
-    };
-    if x.is_nan() || y.is_nan() {
-        f64::NAN
-    } else {
-        mulsign(r, y)
-    }
-}
-
-#[test]
-fn test_atan2() {
-    test_ff_f(
-        atan2,
-        rug::Float::atan2,
-        f64::MIN..=f64::MAX,
-        f64::MIN..=f64::MAX,
-        1.,
-    );
-}
-
-pub fn asin(d: f64) -> f64 {
-    let o = fabsk(d) < 0.5;
-    let x2 = if o { d * d } else { (1. - fabsk(d)) * 0.5 };
-    let mut x = if o {
-        dd(fabsk(d), 0.)
-    } else {
-        x2.sqrt_as_doubled()
-    };
-    x = if fabsk(d) == 1.0 { dd(0., 0.) } else { x };
-
-    let x4 = x2 * x2;
-    let x8 = x4 * x4;
-    let x16 = x8 * x8;
-
-    let u = f64::poly12(
-        x2,
-        x4,
-        x8,
-        x16,
-        0.316_158_765_065_393_462_8_e-1,
-        -0.158_191_824_332_999_664_3_e-1,
-        0.192_904_547_726_791_067_4_e-1,
-        0.660_607_747_627_717_061_e-2,
-        0.121_536_052_557_737_733_1_e-1,
-        0.138_871_518_450_160_921_8_e-1,
-        0.173_595_699_122_361_460_4_e-1,
-        0.223_717_618_193_204_834_1_e-1,
-        0.303_819_592_803_813_223_7_e-1,
-        0.446_428_568_137_710_243_8_e-1,
-        0.750_000_000_037_858_161_1_e-1,
-        0.166_666_666_666_649_754_3,
-    ) * (x2 * x.0);
-
-    let y = dd(
-        3.141_592_653_589_793_116 / 4.,
-        1.224_646_799_147_353_207_2_e-16 / 4.,
-    )
-    .sub_checked(x)
-    .add_checked(-u);
-    let r = if o { u + x.0 } else { (y.0 + y.1) * 2. };
-    mulsign(r, d)
-}
-
-#[test]
-fn test_asin() {
-    test_f_f(asin, rug::Float::asin, -1.0..=1.0, 1.);
-}
-
 pub fn sin(d: f64) -> f64 {
     let mut s: Doubled<f64>;
     let ql: isize;
@@ -547,6 +320,371 @@ fn test_tan() {
     test_f_f(tan, rug::Float::tan, f64::MIN..=f64::MAX, 1.);
 }
 
+fn atan2k_u1(mut y: Doubled<f64>, mut x: Doubled<f64>) -> Doubled<f64> {
+    let mut q: isize = if x.0 < 0. {
+        x.0 = -x.0;
+        x.1 = -x.1;
+        -2
+    } else {
+        0
+    };
+
+    if y.0 > x.0 {
+        let t = x;
+        x = y;
+        y.0 = -t.0;
+        y.1 = -t.1;
+        q += 1;
+    }
+
+    let s = y / x;
+    let mut t = s.square();
+    t = t.normalize();
+
+    let t2 = t.0 * t.0;
+    let t4 = t2 * t2;
+    let t8 = t4 * t4;
+
+    let u = f64::poly16(
+        t.0,
+        t2,
+        t4,
+        t8,
+        1.062_984_841_914_487_466_074_15_e-5,
+        -0.000_125_620_649_967_286_867_384_336,
+        0.000_705_576_642_963_934_123_897_74,
+        -0.002_518_656_144_987_133_603_529_99,
+        0.006_462_628_990_369_911_723_135_04,
+        -0.012_828_133_366_339_903_101_427_4,
+        0.020_802_479_992_414_579_790_249_7,
+        -0.028_900_234_478_474_031_568_628_9,
+        0.035_978_500_503_510_459_085_365_6,
+        -0.041_848_579_703_592_507_506_027,
+        0.047_084_301_165_328_398_819_376_3,
+        -0.052_491_421_058_844_842_106_871_9,
+        0.058_794_659_096_958_100_386_043_4,
+        -0.066_662_088_477_879_549_719_418_2,
+        0.076_922_533_029_620_376_865_409_5,
+        -0.090_909_044_277_338_757_478_190_7,
+    )
+    .mul_add(t.0, 0.111_111_108_376_896_236_538_123)
+    .mul_add(t.0, -0.142_857_142_756_268_568_062_339)
+    .mul_add(t.0, 0.199_999_999_997_977_351_284_817)
+    .mul_add(t.0, -0.333_333_333_333_317_605_173_818);
+
+    t *= u;
+    t = s * (1.).add_checked(t);
+    if fabsk(s.0) < 1e-200 {
+        t = s;
+    }
+    dd(
+        1.570_796_326_794_896_557_998_982,
+        6.123_233_995_736_766_035_868_82_e-17,
+    ) * (q as f64)
+        + t
+}
+
+pub fn atan2(mut y: f64, mut x: f64) -> f64 {
+    if fabsk(x) < 5.562_684_646_268_008_398_4_e-309 {
+        y *= D1_53;
+        x *= D1_53;
+    } // nexttoward((1.0 / DBL_MAX), 1)
+    let d = atan2k_u1(dd(fabsk(y), 0.), dd(x, 0.));
+    let mut r = d.0 + d.1;
+
+    r = if y == 0. {
+        if sign(x) == -1. {
+            PI
+        } else {
+            0.
+        }
+    } else if y.is_infinite() {
+        FRAC_PI_2
+            - (if x.is_infinite() {
+                sign(x) * FRAC_PI_4
+            } else {
+                0.
+            })
+    } else if x.is_infinite() || (x == 0.) {
+        FRAC_PI_2
+            - (if x.is_infinite() {
+                sign(x) * FRAC_PI_2
+            } else {
+                0.
+            })
+    } else {
+        mulsign(r, x)
+    };
+    if x.is_nan() || y.is_nan() {
+        f64::NAN
+    } else {
+        mulsign(r, y)
+    }
+}
+
+#[test]
+fn test_atan2() {
+    test_ff_f(
+        atan2,
+        rug::Float::atan2,
+        f64::MIN..=f64::MAX,
+        f64::MIN..=f64::MAX,
+        1.,
+    );
+}
+
+pub fn asin(d: f64) -> f64 {
+    let o = fabsk(d) < 0.5;
+    let x2 = if o { d * d } else { (1. - fabsk(d)) * 0.5 };
+    let mut x = if o {
+        dd(fabsk(d), 0.)
+    } else {
+        x2.sqrt_as_doubled()
+    };
+    x = if fabsk(d) == 1.0 { dd(0., 0.) } else { x };
+
+    let x4 = x2 * x2;
+    let x8 = x4 * x4;
+    let x16 = x8 * x8;
+
+    let u = f64::poly12(
+        x2,
+        x4,
+        x8,
+        x16,
+        0.316_158_765_065_393_462_8_e-1,
+        -0.158_191_824_332_999_664_3_e-1,
+        0.192_904_547_726_791_067_4_e-1,
+        0.660_607_747_627_717_061_e-2,
+        0.121_536_052_557_737_733_1_e-1,
+        0.138_871_518_450_160_921_8_e-1,
+        0.173_595_699_122_361_460_4_e-1,
+        0.223_717_618_193_204_834_1_e-1,
+        0.303_819_592_803_813_223_7_e-1,
+        0.446_428_568_137_710_243_8_e-1,
+        0.750_000_000_037_858_161_1_e-1,
+        0.166_666_666_666_649_754_3,
+    ) * (x2 * x.0);
+
+    let y = dd(
+        3.141_592_653_589_793_116 / 4.,
+        1.224_646_799_147_353_207_2_e-16 / 4.,
+    )
+    .sub_checked(x)
+    .add_checked(-u);
+    let r = if o { u + x.0 } else { (y.0 + y.1) * 2. };
+    mulsign(r, d)
+}
+
+#[test]
+fn test_asin() {
+    test_f_f(asin, rug::Float::asin, -1.0..=1.0, 1.);
+}
+
+pub fn acos(d: f64) -> f64 {
+    let o = fabsk(d) < 0.5;
+    let x2 = if o { d * d } else { (1. - fabsk(d)) * 0.5 };
+    let mut x = if o {
+        dd(fabsk(d), 0.)
+    } else {
+        x2.sqrt_as_doubled()
+    };
+    x = if fabsk(d) == 1. { dd(0., 0.) } else { x };
+
+    let x4 = x2 * x2;
+    let x8 = x4 * x4;
+    let x16 = x8 * x8;
+
+    let u = f64::poly12(
+        x2,
+        x4,
+        x8,
+        x16,
+        0.316_158_765_065_393_462_8_e-1,
+        -0.158_191_824_332_999_664_3_e-1,
+        0.192_904_547_726_791_067_4_e-1,
+        0.660_607_747_627_717_061_e-2,
+        0.121_536_052_557_737_733_1_e-1,
+        0.138_871_518_450_160_921_8_e-1,
+        0.173_595_699_122_361_460_4_e-1,
+        0.223_717_618_193_204_834_1_e-1,
+        0.303_819_592_803_813_223_7_e-1,
+        0.446_428_568_137_710_243_8_e-1,
+        0.750_000_000_037_858_161_1_e-1,
+        0.166_666_666_666_649_754_3,
+    ) * (x.0 * x2);
+
+    let mut y = dd(
+        3.141_592_653_589_793_116 / 2.,
+        1.224_646_799_147_353_207_2_e-16 / 2.,
+    )
+    .sub_checked(mulsign(x.0, d).add_checked_as_doubled(mulsign(u, d)));
+    x.add_checked_assign(u);
+    y = if o { y } else { x.scale(2.) };
+    if !o && (d < 0.) {
+        y = dd(3.141_592_653_589_793_116, 1.224_646_799_147_353_207_2_e-16).sub_checked(y)
+    };
+    y.0 + y.1
+}
+
+#[test]
+fn test_acos() {
+    test_f_f(acos, rug::Float::acos, -1.0..=1.0, 1.);
+}
+
+pub fn atan(d: f64) -> f64 {
+    let d2 = atan2k_u1(dd(fabsk(d), 0.), dd(1., 0.));
+    let r = if d.is_infinite() {
+        1.570_796_326_794_896_557_998_982
+    } else {
+        d2.0 + d2.1
+    };
+    mulsign(r, d)
+}
+
+#[test]
+fn test_atan() {
+    test_f_f(atan, rug::Float::atan, f64::MIN..=f64::MAX, 1.);
+}
+
+pub fn sinh(x: f64) -> f64 {
+    let mut y = fabsk(x);
+    let mut d = expk2(dd(y, 0.));
+    d = d.sub_checked(d.recpre());
+    y = (d.0 + d.1) * 0.5;
+
+    y = if fabsk(x) > 710. { f64::INFINITY } else { y };
+    y = if y.is_nan() { f64::INFINITY } else { y };
+    y = mulsign(y, x);
+    if x.is_nan() {
+        f64::NAN
+    } else {
+        y
+    }
+}
+
+#[test]
+fn test_sinh() {
+    test_f_f(sinh, rug::Float::sinh, -709.0..=709.0, 1.);
+}
+
+pub fn cosh(x: f64) -> f64 {
+    let mut y = fabsk(x);
+    let mut d = expk2(dd(y, 0.));
+    d = d.add_checked(d.recpre());
+    y = (d.0 + d.1) * 0.5;
+
+    y = if fabsk(x) > 710. { f64::INFINITY } else { y };
+    y = if y.is_nan() { f64::INFINITY } else { y };
+    if x.is_nan() {
+        f64::NAN
+    } else {
+        y
+    }
+}
+
+#[test]
+fn test_cosh() {
+    test_f_f(cosh, rug::Float::cosh, -709.0..=709.0, 1.);
+}
+
+pub fn tanh(x: f64) -> f64 {
+    let mut y = fabsk(x);
+    let mut d = expk2(dd(y, 0.));
+    let e = d.recpre();
+    d = d.sub_checked(e) / d.add_checked(e);
+    y = d.0 + d.1;
+
+    y = if fabsk(x) > 18.714_973_875 { 1. } else { y };
+    y = if y.is_nan() { 1. } else { y };
+    y = mulsign(y, x);
+    if x.is_nan() {
+        f64::NAN
+    } else {
+        y
+    }
+}
+
+#[test]
+fn test_tanh() {
+    test_f_f(tanh, rug::Float::tanh, -19.0..=19.0, 1.);
+}
+
+pub fn asinh(x: f64) -> f64 {
+    let mut y = fabsk(x);
+
+    let mut d = if y > 1. { x.recpre() } else { dd(y, 0.) };
+    d = (d.square() + 1.).sqrt();
+    d = if y > 1. { d * y } else { d };
+
+    d = logk2(d.add_checked(x).normalize());
+    y = d.0 + d.1;
+
+    y = if fabsk(x) > SQRT_DBL_MAX || y.is_nan() {
+        mulsign(f64::INFINITY, x)
+    } else {
+        y
+    };
+    y = if x.is_nan() { f64::NAN } else { y };
+    if x.is_neg_zero() {
+        -0.
+    } else {
+        y
+    }
+}
+
+#[test]
+fn test_asinh() {
+    test_f_f(asinh, rug::Float::asinh, -SQRT_DBL_MAX..=SQRT_DBL_MAX, 1.);
+}
+
+pub fn acosh(x: f64) -> f64 {
+    let d = logk2(x.add_as_doubled(1.).sqrt() * x.add_as_doubled(-1.).sqrt() + x);
+    let mut y = d.0 + d.1;
+
+    y = if (x > SQRT_DBL_MAX) || y.is_nan() {
+        f64::INFINITY
+    } else {
+        y
+    };
+    y = if x == 1. { 0. } else { y };
+    y = if x < 1. { f64::NAN } else { y };
+    if x.is_nan() {
+        f64::NAN
+    } else {
+        y
+    }
+}
+
+#[test]
+fn test_acosh() {
+    test_f_f(acosh, rug::Float::acosh, -SQRT_DBL_MAX..=SQRT_DBL_MAX, 1.);
+}
+
+pub fn atanh(x: f64) -> f64 {
+    let mut y = fabsk(x);
+    let d = logk2((1.).add_as_doubled(y) / (1.).add_as_doubled(-y));
+    y = if y > 1.0 {
+        f64::NAN
+    } else if y == 1.0 {
+        f64::INFINITY
+    } else {
+        (d.0 + d.1) * 0.5
+    };
+
+    y = mulsign(y, x);
+    if x.is_infinite() || y.is_nan() {
+        f64::NAN
+    } else {
+        y
+    }
+}
+
+#[test]
+fn test_atanh() {
+    test_f_f(atanh, rug::Float::atanh, f64::MIN..=f64::MAX, 1.);
+}
+
 pub fn log(mut d: f64) -> f64 {
     let o = d < f64::MIN_POSITIVE;
     if o {
@@ -602,9 +740,382 @@ fn test_log() {
     test_f_f(log, rug::Float::ln, 0.0..=f64::MAX, 1.);
 }
 
+pub fn log10(mut d: f64) -> f64 {
+    let o = d < f64::MIN_POSITIVE;
+    if o {
+        d *= D1_32 * D1_32;
+    }
+
+    let mut e = ilogb2k(d * (1. / 0.75));
+    let m = ldexp3k(d, -e);
+
+    if o {
+        e -= 64;
+    }
+
+    let x = (-1.).add_as_doubled(m) / (1.).add_as_doubled(m);
+    let x2 = x.0 * x.0;
+
+    let x4 = x2 * x2;
+    let x8 = x4 * x4;
+
+    let t = f64::poly7(
+        x2,
+        x4,
+        x8,
+        0.665_372_581_957_675_846_e-1,
+        0.662_572_278_282_083_371_2_e-1,
+        0.789_810_521_431_394_407_8_e-1,
+        0.965_095_503_571_527_513_2_e-1,
+        0.124_084_140_972_144_499_3,
+        0.173_717_792_745_460_508_6,
+        0.289_529_654_602_197_261_7,
+    );
+
+    let s = (dd(
+        0.301_029_995_663_981_198_02,
+        -2.803_728_127_785_170_339_e-18,
+    ) * (e as f64))
+        .add_checked(
+            x * dd(
+                0.868_588_963_806_503_633_34,
+                1.143_005_969_409_638_931_1_e-17,
+            ),
+        )
+        .add_checked(x2 * x.0 * t);
+
+    if d.is_infinite() {
+        f64::INFINITY
+    } else if (d < 0.) || d.is_nan() {
+        f64::NAN
+    } else if d == 0. {
+        f64::NEG_INFINITY
+    } else {
+        s.0 + s.1
+    }
+}
+
+#[test]
+fn test_log10() {
+    test_f_f(log10, rug::Float::log10, 0.0..=f64::MAX, 1.);
+}
+
+pub fn log2(mut d: f64) -> f64 {
+    let o = d < f64::MIN_POSITIVE;
+    if o {
+        d *= D1_32 * D1_32;
+    }
+
+    let mut e = ilogb2k(d * (1. / 0.75));
+    let m = ldexp3k(d, -e);
+
+    if o {
+        e -= 64;
+    }
+
+    let x = (-1.).add_as_doubled(m) / (1.).add_as_doubled(m);
+    let x2 = x.0 * x.0;
+
+    let x4 = x2 * x2;
+    let x8 = x4 * x4;
+
+    let t = f64::poly7(
+        x2,
+        x4,
+        x8,
+        0.221_194_175_045_608_149,
+        0.220_076_869_315_227_768_9,
+        0.262_370_805_748_851_465_6,
+        0.320_597_747_794_449_550_2,
+        0.412_198_594_548_532_470_9,
+        0.577_078_016_299_705_898_2,
+        0.961_796_693_926_080_914_49,
+    );
+
+    let s = (e as f64)
+        + x * dd(2.885_390_081_777_926_774, 6.056_160_499_551_673_643_4_e-18)
+        + x2 * x.0 * t;
+
+    if d == 0. {
+        f64::NEG_INFINITY
+    } else if (d < 0.) || d.is_nan() {
+        f64::NAN
+    } else if d.is_infinite() {
+        f64::INFINITY
+    } else {
+        s.0 + s.1
+    }
+}
+
 #[test]
 fn test_log2() {
     test_f_f(log2, rug::Float::log2, 0.0..=f64::MAX, 1.);
+}
+
+pub fn log1p(d: f64) -> f64 {
+    let mut dp1 = d + 1.;
+
+    let o = dp1 < f64::MIN_POSITIVE;
+    if o {
+        dp1 *= D1_32 * D1_32
+    };
+
+    let mut e = ilogb2k(dp1 * (1. / 0.75));
+
+    let t = ldexp3k(1., -e);
+    let m = d.mul_add(t, t - 1.);
+
+    if o {
+        e -= 64;
+    }
+
+    let x = dd(m, 0.) / (2.).add_checked_as_doubled(m);
+    let x2 = x.0 * x.0;
+
+    let x4 = x2 * x2;
+    let x8 = x4 * x4;
+
+    let t = f64::poly7(
+        x2,
+        x4,
+        x8,
+        0.153_207_698_850_270_135_3,
+        0.152_562_905_100_342_871_6,
+        0.181_860_593_293_778_599_6,
+        0.222_221_451_983_938_000_9,
+        0.285_714_293_279_429_931_7,
+        0.399_999_999_963_525_199,
+        0.666_666_666_666_733_354_1,
+    );
+
+    let s = (dd(
+        0.693_147_180_559_945_286_226_764,
+        2.319_046_813_846_299_558_417_771_e-17,
+    ) * (e as f64))
+        .add_checked(x.scale(2.))
+        .add_checked(x2 * x.0 * t);
+
+    if d.is_neg_zero() {
+        -0.
+    } else if d == -1. {
+        f64::NEG_INFINITY
+    } else if (d < -1.) || d.is_nan() {
+        f64::NAN
+    } else if d > 1_e307 {
+        f64::INFINITY
+    } else {
+        s.0 + s.1
+    }
+}
+
+#[test]
+fn test_log1p() {
+    test_f_f(log1p, rug::Float::ln_1p, -1.0..=1e+307, 1.);
+}
+
+pub fn exp(d: f64) -> f64 {
+    let qf = rintk(d * R_LN2);
+    let q = qf as i32;
+
+    let s = qf.mul_add(-L2U, d);
+    let s = qf.mul_add(-L2L, s);
+
+    let s2 = s * s;
+    let s4 = s2 * s2;
+    let s8 = s4 * s4;
+
+    let mut u = f64::poly10(
+        s,
+        s2,
+        s4,
+        s8,
+        2.088_606_211_072_836_875_363_41_e-9,
+        2.511_129_308_928_765_186_106_61_e-8,
+        2.755_739_112_349_004_718_933_38_e-7,
+        2.755_723_629_119_288_276_294_23_e-6,
+        2.480_158_715_923_547_299_879_1_e-5,
+        0.000_198_412_698_960_509_205_564_975,
+        0.001_388_888_888_897_744_922_079_62,
+        0.008_333_333_333_316_527_216_649_84,
+        0.041_666_666_666_666_504_759_142_2,
+        0.166_666_666_666_666_851_703_837,
+    )
+    .mul_add(s, 0.5);
+
+    u = s * s * u + s + 1.;
+
+    if d > 709.782_711_149_557_429_092_172_174_26 {
+        f64::INFINITY
+    } else if d < -1000. {
+        0.
+    } else {
+        ldexp2k(u, q)
+    }
+}
+
+#[test]
+fn test_exp() {
+    test_f_f(exp, rug::Float::exp, -1000.0..=710.0, 1.);
+}
+
+pub fn exp10(d: f64) -> f64 {
+    let q = rintk(d * LOG10_2) as i32;
+    let qf = q as f64;
+    let s = qf.mul_add(-L10U, d);
+    let s = qf.mul_add(-L10L, s);
+
+    let mut u = 0.241_146_349_833_426_765_2_e-3_f64
+        .mul_add(s, 0.115_748_841_521_718_737_5_e-2)
+        .mul_add(s, 0.501_397_554_678_973_365_9_e-2)
+        .mul_add(s, 0.195_976_232_072_053_308_e-1)
+        .mul_add(s, 0.680_893_639_944_678_413_8_e-1)
+        .mul_add(s, 0.206_995_849_472_267_623_4)
+        .mul_add(s, 0.539_382_929_205_853_622_9)
+        .mul_add(s, 0.117_125_514_890_854_165_5_e+1)
+        .mul_add(s, 0.203_467_859_229_343_295_3_e+1)
+        .mul_add(s, 0.265_094_905_523_920_587_6_e+1)
+        .mul_add(s, 0.230_258_509_299_404_590_1_e+1);
+    u = (1.).add_checked(u.mul_as_doubled(s)).normalize().0;
+
+    if d > 308.254_715_559_916_71 {
+        f64::INFINITY // log10(DBL_MAX)
+    } else if d < -350. {
+        0.
+    } else {
+        ldexp2k(u, q)
+    }
+}
+
+#[test]
+fn test_exp10() {
+    test_f_f(exp10, rug::Float::exp10, -350.0..=308.26, 1.09);
+}
+
+pub fn expm1(a: f64) -> f64 {
+    let d = expk2(dd(a, 0.)) + (-1.0);
+    if a.is_neg_zero() {
+        -0.
+    } else if a > 709.782_712_893_383_996_732_223 {
+        f64::INFINITY // log(DBL_MAX)
+    } else if a < -36.736_800_569_677_101_399_113_302_437 {
+        -1. // log(1 - nexttoward(1, 0))
+    } else {
+        d.0 + d.1
+    }
+}
+
+#[test]
+fn test_expm1() {
+    test_f_f(expm1, rug::Float::exp_m1, -37.0..=710.0, 1.);
+}
+
+pub fn exp2(d: f64) -> f64 {
+    let q = rintk(d) as i32;
+
+    let s = d - (q as f64);
+
+    let s2 = s * s;
+    let s4 = s2 * s2;
+    let s8 = s4 * s4;
+
+    let mut u = f64::poly10(
+        s,
+        s2,
+        s4,
+        s8,
+        0.443_435_908_292_652_945_4_e-9,
+        0.707_316_459_808_570_742_5_e-8,
+        0.101_781_926_092_176_045_1_e-6,
+        0.132_154_387_251_132_761_5_e-5,
+        0.152_527_335_351_758_473_e-4,
+        0.154_035_304_510_114_780_8_e-3,
+        0.133_335_581_467_049_907_3_e-2,
+        0.961_812_910_759_760_053_6_e-2,
+        0.555_041_086_648_204_659_6_e-1,
+        0.240_226_506_959_101_221_4,
+    )
+    .mul_add(s, 0.693_147_180_559_945_286_2);
+
+    u = (1.).add_checked(u.mul_as_doubled(s)).normalize().0;
+
+    u = ldexp2k(u, q);
+
+    if d >= 1024. {
+        f64::INFINITY
+    } else if d < -2000. {
+        0.
+    } else {
+        u
+    }
+}
+
+#[test]
+fn test_exp2() {
+    test_f_f(exp2, rug::Float::exp2, -2000.0..=1024.0, 1.);
+}
+
+
+pub fn pow(x: f64, y: f64) -> f64 {
+    let yisint = y.is_integer();
+    let yisodd = yisint && y.is_odd();
+
+    let d = logk(fabsk(x)) * y;
+    let mut result = if d.0 > 709.782_711_149_557_429_092_172_174_26 {
+        f64::INFINITY
+    } else {
+        expk(d)
+    };
+
+    result = if result.is_nan() {
+        f64::INFINITY
+    } else {
+        result
+    };
+    result *= if x > 0. {
+        1.
+    } else if !yisint {
+        f64::NAN
+    } else if yisodd {
+        -1.
+    } else {
+        1.
+    };
+
+    let efx = mulsign(fabsk(x) - 1., y);
+    if (y == 0.) || (x == 1.) {
+        1.
+    } else if y.is_infinite() {
+        if efx < 0. {
+            0.
+        } else if efx == 0. {
+            1.
+        } else {
+            f64::INFINITY
+        }
+    } else if x.is_infinite() || (x == 0.) {
+        (if yisodd { sign(x) } else { 1. })
+            * (if (if x == 0. { -y } else { y }) < 0. {
+                0.
+            } else {
+                f64::INFINITY
+            })
+    } else if x.is_nan() || y.is_nan() {
+        f64::NAN
+    } else {
+        result
+    }
+}
+
+#[test]
+fn test_pow() {
+    use rug::{ops::Pow, Float};
+    test_ff_f(
+        pow,
+        |in1, in2| Float::with_val(in1.prec(), in1.pow(in2)),
+        f64::MIN..=f64::MAX,
+        f64::MIN..=f64::MAX,
+        1.,
+    );
 }
 
 pub fn cbrt(d: f64) -> f64 {
@@ -668,10 +1179,6 @@ fn test_cbrt() {
     test_f_f(cbrt, rug::Float::cbrt, f64::MIN..=f64::MAX, 1.);
 }
 
-#[test]
-fn test_log1p() {
-    test_f_f(log1p, rug::Float::ln_1p, -1.0..=1e+307, 1.);
-}
 
 pub fn tgamma(a: f64) -> f64 {
     let (da, db) = gammak(a);
@@ -859,509 +1366,4 @@ pub fn erf(a: f64) -> f64 {
 #[test]
 fn test_erf() {
     test_f_f(erf, rug::Float::erf, f64::MIN..=f64::MAX, 0.75);
-}
-
-pub fn exp(d: f64) -> f64 {
-    let qf = rintk(d * R_LN2);
-    let q = qf as i32;
-
-    let s = qf.mul_add(-L2U, d);
-    let s = qf.mul_add(-L2L, s);
-
-    let s2 = s * s;
-    let s4 = s2 * s2;
-    let s8 = s4 * s4;
-
-    let mut u = f64::poly10(
-        s,
-        s2,
-        s4,
-        s8,
-        2.088_606_211_072_836_875_363_41_e-9,
-        2.511_129_308_928_765_186_106_61_e-8,
-        2.755_739_112_349_004_718_933_38_e-7,
-        2.755_723_629_119_288_276_294_23_e-6,
-        2.480_158_715_923_547_299_879_1_e-5,
-        0.000_198_412_698_960_509_205_564_975,
-        0.001_388_888_888_897_744_922_079_62,
-        0.008_333_333_333_316_527_216_649_84,
-        0.041_666_666_666_666_504_759_142_2,
-        0.166_666_666_666_666_851_703_837,
-    )
-    .mul_add(s, 0.5);
-
-    u = s * s * u + s + 1.;
-
-    if d > 709.782_711_149_557_429_092_172_174_26 {
-        f64::INFINITY
-    } else if d < -1000. {
-        0.
-    } else {
-        ldexp2k(u, q)
-    }
-}
-
-#[test]
-fn test_exp() {
-    test_f_f(exp, rug::Float::exp, -1000.0..=710.0, 1.);
-}
-
-pub fn pow(x: f64, y: f64) -> f64 {
-    let yisint = y.is_integer();
-    let yisodd = yisint && y.is_odd();
-
-    let d = logk(fabsk(x)) * y;
-    let mut result = if d.0 > 709.782_711_149_557_429_092_172_174_26 {
-        f64::INFINITY
-    } else {
-        expk(d)
-    };
-
-    result = if result.is_nan() {
-        f64::INFINITY
-    } else {
-        result
-    };
-    result *= if x > 0. {
-        1.
-    } else if !yisint {
-        f64::NAN
-    } else if yisodd {
-        -1.
-    } else {
-        1.
-    };
-
-    let efx = mulsign(fabsk(x) - 1., y);
-    if (y == 0.) || (x == 1.) {
-        1.
-    } else if y.is_infinite() {
-        if efx < 0. {
-            0.
-        } else if efx == 0. {
-            1.
-        } else {
-            f64::INFINITY
-        }
-    } else if x.is_infinite() || (x == 0.) {
-        (if yisodd { sign(x) } else { 1. })
-            * (if (if x == 0. { -y } else { y }) < 0. {
-                0.
-            } else {
-                f64::INFINITY
-            })
-    } else if x.is_nan() || y.is_nan() {
-        f64::NAN
-    } else {
-        result
-    }
-}
-
-#[test]
-fn test_pow() {
-    use rug::{ops::Pow, Float};
-    test_ff_f(
-        pow,
-        |in1, in2| Float::with_val(in1.prec(), in1.pow(in2)),
-        f64::MIN..=f64::MAX,
-        f64::MIN..=f64::MAX,
-        1.,
-    );
-}
-
-pub fn sinh(x: f64) -> f64 {
-    let mut y = fabsk(x);
-    let mut d = expk2(dd(y, 0.));
-    d = d.sub_checked(d.recpre());
-    y = (d.0 + d.1) * 0.5;
-
-    y = if fabsk(x) > 710. { f64::INFINITY } else { y };
-    y = if y.is_nan() { f64::INFINITY } else { y };
-    y = mulsign(y, x);
-    if x.is_nan() {
-        f64::NAN
-    } else {
-        y
-    }
-}
-
-#[test]
-fn test_sinh() {
-    test_f_f(sinh, rug::Float::sinh, -709.0..=709.0, 1.);
-}
-
-pub fn cosh(x: f64) -> f64 {
-    let mut y = fabsk(x);
-    let mut d = expk2(dd(y, 0.));
-    d = d.add_checked(d.recpre());
-    y = (d.0 + d.1) * 0.5;
-
-    y = if fabsk(x) > 710. { f64::INFINITY } else { y };
-    y = if y.is_nan() { f64::INFINITY } else { y };
-    if x.is_nan() {
-        f64::NAN
-    } else {
-        y
-    }
-}
-
-#[test]
-fn test_cosh() {
-    test_f_f(cosh, rug::Float::cosh, -709.0..=709.0, 1.);
-}
-
-pub fn asinh(x: f64) -> f64 {
-    let mut y = fabsk(x);
-
-    let mut d = if y > 1. { x.recpre() } else { dd(y, 0.) };
-    d = (d.square() + 1.).sqrt();
-    d = if y > 1. { d * y } else { d };
-
-    d = logk2(d.add_checked(x).normalize());
-    y = d.0 + d.1;
-
-    y = if fabsk(x) > SQRT_DBL_MAX || y.is_nan() {
-        mulsign(f64::INFINITY, x)
-    } else {
-        y
-    };
-    y = if x.is_nan() { f64::NAN } else { y };
-    if x.is_neg_zero() {
-        -0.
-    } else {
-        y
-    }
-}
-
-#[test]
-fn test_asinh() {
-    test_f_f(asinh, rug::Float::asinh, -SQRT_DBL_MAX..=SQRT_DBL_MAX, 1.);
-}
-
-pub fn acosh(x: f64) -> f64 {
-    let d = logk2(x.add_as_doubled(1.).sqrt() * x.add_as_doubled(-1.).sqrt() + x);
-    let mut y = d.0 + d.1;
-
-    y = if (x > SQRT_DBL_MAX) || y.is_nan() {
-        f64::INFINITY
-    } else {
-        y
-    };
-    y = if x == 1. { 0. } else { y };
-    y = if x < 1. { f64::NAN } else { y };
-    if x.is_nan() {
-        f64::NAN
-    } else {
-        y
-    }
-}
-
-#[test]
-fn test_acosh() {
-    test_f_f(acosh, rug::Float::acosh, -SQRT_DBL_MAX..=SQRT_DBL_MAX, 1.);
-}
-
-pub fn atanh(x: f64) -> f64 {
-    let mut y = fabsk(x);
-    let d = logk2((1.).add_as_doubled(y) / (1.).add_as_doubled(-y));
-    y = if y > 1.0 {
-        f64::NAN
-    } else if y == 1.0 {
-        f64::INFINITY
-    } else {
-        (d.0 + d.1) * 0.5
-    };
-
-    y = mulsign(y, x);
-    if x.is_infinite() || y.is_nan() {
-        f64::NAN
-    } else {
-        y
-    }
-}
-
-#[test]
-fn test_atanh() {
-    test_f_f(atanh, rug::Float::atanh, f64::MIN..=f64::MAX, 1.);
-}
-
-pub fn exp2(d: f64) -> f64 {
-    let q = rintk(d) as i32;
-
-    let s = d - (q as f64);
-
-    let s2 = s * s;
-    let s4 = s2 * s2;
-    let s8 = s4 * s4;
-
-    let mut u = f64::poly10(
-        s,
-        s2,
-        s4,
-        s8,
-        0.443_435_908_292_652_945_4_e-9,
-        0.707_316_459_808_570_742_5_e-8,
-        0.101_781_926_092_176_045_1_e-6,
-        0.132_154_387_251_132_761_5_e-5,
-        0.152_527_335_351_758_473_e-4,
-        0.154_035_304_510_114_780_8_e-3,
-        0.133_335_581_467_049_907_3_e-2,
-        0.961_812_910_759_760_053_6_e-2,
-        0.555_041_086_648_204_659_6_e-1,
-        0.240_226_506_959_101_221_4,
-    )
-    .mul_add(s, 0.693_147_180_559_945_286_2);
-
-    u = (1.).add_checked(u.mul_as_doubled(s)).normalize().0;
-
-    u = ldexp2k(u, q);
-
-    if d >= 1024. {
-        f64::INFINITY
-    } else if d < -2000. {
-        0.
-    } else {
-        u
-    }
-}
-
-#[test]
-fn test_exp2() {
-    test_f_f(exp2, rug::Float::exp2, -2000.0..=1024.0, 1.);
-}
-
-pub fn exp10(d: f64) -> f64 {
-    let q = rintk(d * LOG10_2) as i32;
-    let qf = q as f64;
-    let s = qf.mul_add(-L10U, d);
-    let s = qf.mul_add(-L10L, s);
-
-    let mut u = 0.241_146_349_833_426_765_2_e-3_f64
-        .mul_add(s, 0.115_748_841_521_718_737_5_e-2)
-        .mul_add(s, 0.501_397_554_678_973_365_9_e-2)
-        .mul_add(s, 0.195_976_232_072_053_308_e-1)
-        .mul_add(s, 0.680_893_639_944_678_413_8_e-1)
-        .mul_add(s, 0.206_995_849_472_267_623_4)
-        .mul_add(s, 0.539_382_929_205_853_622_9)
-        .mul_add(s, 0.117_125_514_890_854_165_5_e+1)
-        .mul_add(s, 0.203_467_859_229_343_295_3_e+1)
-        .mul_add(s, 0.265_094_905_523_920_587_6_e+1)
-        .mul_add(s, 0.230_258_509_299_404_590_1_e+1);
-    u = (1.).add_checked(u.mul_as_doubled(s)).normalize().0;
-
-    if d > 308.254_715_559_916_71 {
-        f64::INFINITY // log10(DBL_MAX)
-    } else if d < -350. {
-        0.
-    } else {
-        ldexp2k(u, q)
-    }
-}
-
-#[test]
-fn test_exp10() {
-    test_f_f(exp10, rug::Float::exp10, -350.0..=308.26, 1.09);
-}
-
-pub fn expm1(a: f64) -> f64 {
-    let d = expk2(dd(a, 0.)) + (-1.0);
-    if a.is_neg_zero() {
-        -0.
-    } else if a > 709.782_712_893_383_996_732_223 {
-        f64::INFINITY // log(DBL_MAX)
-    } else if a < -36.736_800_569_677_101_399_113_302_437 {
-        -1. // log(1 - nexttoward(1, 0))
-    } else {
-        d.0 + d.1
-    }
-}
-
-#[test]
-fn test_expm1() {
-    test_f_f(expm1, rug::Float::exp_m1, -37.0..=710.0, 1.);
-}
-
-pub fn log2(mut d: f64) -> f64 {
-    let o = d < f64::MIN_POSITIVE;
-    if o {
-        d *= D1_32 * D1_32;
-    }
-
-    let mut e = ilogb2k(d * (1. / 0.75));
-    let m = ldexp3k(d, -e);
-
-    if o {
-        e -= 64;
-    }
-
-    let x = (-1.).add_as_doubled(m) / (1.).add_as_doubled(m);
-    let x2 = x.0 * x.0;
-
-    let x4 = x2 * x2;
-    let x8 = x4 * x4;
-
-    let t = f64::poly7(
-        x2,
-        x4,
-        x8,
-        0.221_194_175_045_608_149,
-        0.220_076_869_315_227_768_9,
-        0.262_370_805_748_851_465_6,
-        0.320_597_747_794_449_550_2,
-        0.412_198_594_548_532_470_9,
-        0.577_078_016_299_705_898_2,
-        0.961_796_693_926_080_914_49,
-    );
-
-    let s = (e as f64)
-        + x * dd(2.885_390_081_777_926_774, 6.056_160_499_551_673_643_4_e-18)
-        + x2 * x.0 * t;
-
-    if d == 0. {
-        f64::NEG_INFINITY
-    } else if (d < 0.) || d.is_nan() {
-        f64::NAN
-    } else if d.is_infinite() {
-        f64::INFINITY
-    } else {
-        s.0 + s.1
-    }
-}
-
-pub fn log1p(d: f64) -> f64 {
-    let mut dp1 = d + 1.;
-
-    let o = dp1 < f64::MIN_POSITIVE;
-    if o {
-        dp1 *= D1_32 * D1_32
-    };
-
-    let mut e = ilogb2k(dp1 * (1. / 0.75));
-
-    let t = ldexp3k(1., -e);
-    let m = d.mul_add(t, t - 1.);
-
-    if o {
-        e -= 64;
-    }
-
-    let x = dd(m, 0.) / (2.).add_checked_as_doubled(m);
-    let x2 = x.0 * x.0;
-
-    let x4 = x2 * x2;
-    let x8 = x4 * x4;
-
-    let t = f64::poly7(
-        x2,
-        x4,
-        x8,
-        0.153_207_698_850_270_135_3,
-        0.152_562_905_100_342_871_6,
-        0.181_860_593_293_778_599_6,
-        0.222_221_451_983_938_000_9,
-        0.285_714_293_279_429_931_7,
-        0.399_999_999_963_525_199,
-        0.666_666_666_666_733_354_1,
-    );
-
-    let s = (dd(
-        0.693_147_180_559_945_286_226_764,
-        2.319_046_813_846_299_558_417_771_e-17,
-    ) * (e as f64))
-        .add_checked(x.scale(2.))
-        .add_checked(x2 * x.0 * t);
-
-    if d.is_neg_zero() {
-        -0.
-    } else if d == -1. {
-        f64::NEG_INFINITY
-    } else if (d < -1.) || d.is_nan() {
-        f64::NAN
-    } else if d > 1_e307 {
-        f64::INFINITY
-    } else {
-        s.0 + s.1
-    }
-}
-
-pub fn tanh(x: f64) -> f64 {
-    let mut y = fabsk(x);
-    let mut d = expk2(dd(y, 0.));
-    let e = d.recpre();
-    d = d.sub_checked(e) / d.add_checked(e);
-    y = d.0 + d.1;
-
-    y = if fabsk(x) > 18.714_973_875 { 1. } else { y };
-    y = if y.is_nan() { 1. } else { y };
-    y = mulsign(y, x);
-    if x.is_nan() {
-        f64::NAN
-    } else {
-        y
-    }
-}
-
-#[test]
-fn test_tanh() {
-    test_f_f(tanh, rug::Float::tanh, -19.0..=19.0, 1.);
-}
-
-pub fn log10(mut d: f64) -> f64 {
-    let o = d < f64::MIN_POSITIVE;
-    if o {
-        d *= D1_32 * D1_32;
-    }
-
-    let mut e = ilogb2k(d * (1. / 0.75));
-    let m = ldexp3k(d, -e);
-
-    if o {
-        e -= 64;
-    }
-
-    let x = (-1.).add_as_doubled(m) / (1.).add_as_doubled(m);
-    let x2 = x.0 * x.0;
-
-    let x4 = x2 * x2;
-    let x8 = x4 * x4;
-
-    let t = f64::poly7(
-        x2,
-        x4,
-        x8,
-        0.665_372_581_957_675_846_e-1,
-        0.662_572_278_282_083_371_2_e-1,
-        0.789_810_521_431_394_407_8_e-1,
-        0.965_095_503_571_527_513_2_e-1,
-        0.124_084_140_972_144_499_3,
-        0.173_717_792_745_460_508_6,
-        0.289_529_654_602_197_261_7,
-    );
-
-    let s = (dd(
-        0.301_029_995_663_981_198_02,
-        -2.803_728_127_785_170_339_e-18,
-    ) * (e as f64))
-        .add_checked(
-            x * dd(
-                0.868_588_963_806_503_633_34,
-                1.143_005_969_409_638_931_1_e-17,
-            ),
-        )
-        .add_checked(x2 * x.0 * t);
-
-    if d.is_infinite() {
-        f64::INFINITY
-    } else if (d < 0.) || d.is_nan() {
-        f64::NAN
-    } else if d == 0. {
-        f64::NEG_INFINITY
-    } else {
-        s.0 + s.1
-    }
-}
-
-#[test]
-fn test_log10() {
-    test_f_f(log10, rug::Float::log10, 0.0..=f64::MAX, 1.);
 }

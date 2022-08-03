@@ -264,142 +264,6 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
-        /// Tangent function
-        ///
-        /// These functions evaluates the tangent function of a value in ***a***.
-        /// The error bound of the returned value is `3.5 ULP`.
-        #[cfg(not(feature = "deterministic"))]
-        pub fn tanf(d: F32x) -> F32x {
-            let q: I32x;
-
-            let mut x = d;
-
-            if d.abs().lt(TRIGRANGEMAX2_F * HALF).all() {
-                q = (d * F32x::FRAC_2_PI).roundi();
-                let u = F32x::from_cast(q);
-                x = u.mul_add(-PI_A2_F * HALF, x);
-                x = u.mul_add(-PI_B2_F * HALF, x);
-                x = u.mul_add(-PI_C2_F * HALF, x);
-            } else if d.abs().lt(TRIGRANGEMAX_F).all() {
-                q = (d * (2. * F32x::FRAC_1_PI)).roundi();
-                let u = F32x::from_cast(q);
-                x = u.mul_add(-PI_A_F * HALF, x);
-                x = u.mul_add(-PI_B_F * HALF, x);
-                x = u.mul_add(-PI_C_F * HALF, x);
-                x = u.mul_add(-PI_D_F * HALF, x);
-            } else {
-                let (dfidf, dfii) = rempif(d);
-                q = dfii;
-                x = dfidf.0 + dfidf.1;
-                x = F32x::from_bits(U32x::from_bits(d.is_infinite() | d.is_nan()) | U32x::from_bits(x));
-                x = d.is_neg_zero().select(d, x);
-            }
-
-            let s = x * x;
-
-            let o = (q & I32x::splat(1)).eq(I32x::splat(1));
-            x = F32x::from_bits((U32x::from_bits(o) & U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(x));
-
-            let mut u = if cfg!(feature = "enable_neon32") {
-                F32x::splat(0.009_272_458_031_773_567_199_707_03)
-                    .mul_add(s, F32x::splat(0.003_319_849_958_643_317_222_595_21))
-                    .mul_add(s, F32x::splat(0.024_299_807_846_546_173_095_703_1))
-                    .mul_add(s, F32x::splat(0.053_449_530_154_466_629_028_320_3))
-                    .mul_add(s, F32x::splat(0.133_383_005_857_467_651_367_188))
-                    .mul_add(s, F32x::splat(0.333_331_853_151_321_411_132_812))
-            } else {
-                let s2 = s * s;
-                let s4 = s2 * s2;
-
-                F32x::poly6(s, s2, s4,
-                    0.009_272_458_031_773_567_199_707_03,
-                    0.003_319_849_958_643_317_222_595_21,
-                    0.024_299_807_846_546_173_095_703_1,
-                    0.053_449_530_154_466_629_028_320_3,
-                    0.133_383_005_857_467_651_367_188,
-                    0.333_331_853_151_321_411_132_812)
-            };
-
-            u = s.mul_add(u * x, x);
-
-            o.select(u.recpre(), u)
-        }
-
-        /// Tangent function
-        ///
-        /// These functions evaluates the tangent function of a value in ***a***.
-        /// The error bound of the returned value is `3.5 ULP`.
-        #[cfg(feature = "deterministic")]
-        pub fn tanf(d: F32x) -> F32x {
-            let mut q = (d * F32x::FRAC_2_PI).roundi();
-            let u = F32x::from_cast(q);
-            let mut x = u.mul_add(-PI_A2_F * HALF, d);
-            x = u.mul_add(-PI_B2_F * HALF, x);
-            x = u.mul_add(-PI_C2_F * HALF, x);
-            let g = d.abs().lt(TRIGRANGEMAX2_F * HALF);
-
-            if !g.all() {
-                let q2 = (d * F32x::FRAC_2_PI).roundi();
-                let s = F32x::from_cast(q);
-                let mut u = s.mul_add(-PI_A_F * HALF, d);
-                u = s.mul_add(-PI_B_F * HALF, u);
-                u = s.mul_add(-PI_C_F * HALF, u);
-                u = s.mul_add(-PI_D_F * HALF, u);
-
-                q = g.select(q, q2);
-                x = g.select(x, u);
-                let g = d.abs().lt(TRIGRANGEMAX_F);
-
-                if !g.all() {
-                    let (dfidf, dfii) = rempif(d);
-                    u = dfidf.0 + dfidf.1;
-                    u = F32x::from_bits(U32x::from_bits(d.is_infinite() | d.is_nan()) | U32x::from_bits(u));
-                    u = d.is_neg_zero().select(d, u);
-                    q = g.select(q, dfii);
-                    x = g.select(x, u);
-                }
-            }
-
-            let s = x * x;
-
-            let o = (q & I32x::splat(1)).eq(I32x::splat(1));
-            x = F32x::from_bits((U32x::from_bits(o) & U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(x));
-
-            let mut u = if cfg!(feature = "enable_neon32") {
-                F32x::splat(0.009_272_458_031_773_567_199_707_03)
-                    .mul_add(s, F32x::splat(0.003_319_849_958_643_317_222_595_21))
-                    .mul_add(s, F32x::splat(0.024_299_807_846_546_173_095_703_1))
-                    .mul_add(s, F32x::splat(0.053_449_530_154_466_629_028_320_3))
-                    .mul_add(s, F32x::splat(0.133_383_005_857_467_651_367_188))
-                    .mul_add(s, F32x::splat(0.333_331_853_151_321_411_132_812))
-            } else {
-                let s2 = s * s;
-                let s4 = s2 * s2;
-
-                F32x::poly6(s, s2, s4,
-                    0.009_272_458_031_773_567_199_707_03,
-                    0.003_319_849_958_643_317_222_595_21,
-                    0.024_299_807_846_546_173_095_703_1,
-                    0.053_449_530_154_466_629_028_320_3,
-                    0.133_383_005_857_467_651_367_188,
-                    0.333_331_853_151_321_411_132_812)
-            };
-
-            u = s.mul_add(u * x, x);
-
-            o.select(u.recpre(), u)
-        }
-
-        #[test]
-        fn test_tanf() {
-            test_f_f(
-                tanf,
-                rug::Float::tan,
-                f32::MIN..=f32::MAX,
-                3.5,
-            );
-        }
-
         /// Evaluate sine and cosine function simultaneously
         ///
         /// Evaluates the sine and cosine functions of a value in ***a*** at a time,
@@ -549,6 +413,142 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
+        /// Tangent function
+        ///
+        /// These functions evaluates the tangent function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP`.
+        #[cfg(not(feature = "deterministic"))]
+        pub fn tanf(d: F32x) -> F32x {
+            let q: I32x;
+
+            let mut x = d;
+
+            if d.abs().lt(TRIGRANGEMAX2_F * HALF).all() {
+                q = (d * F32x::FRAC_2_PI).roundi();
+                let u = F32x::from_cast(q);
+                x = u.mul_add(-PI_A2_F * HALF, x);
+                x = u.mul_add(-PI_B2_F * HALF, x);
+                x = u.mul_add(-PI_C2_F * HALF, x);
+            } else if d.abs().lt(TRIGRANGEMAX_F).all() {
+                q = (d * (2. * F32x::FRAC_1_PI)).roundi();
+                let u = F32x::from_cast(q);
+                x = u.mul_add(-PI_A_F * HALF, x);
+                x = u.mul_add(-PI_B_F * HALF, x);
+                x = u.mul_add(-PI_C_F * HALF, x);
+                x = u.mul_add(-PI_D_F * HALF, x);
+            } else {
+                let (dfidf, dfii) = rempif(d);
+                q = dfii;
+                x = dfidf.0 + dfidf.1;
+                x = F32x::from_bits(U32x::from_bits(d.is_infinite() | d.is_nan()) | U32x::from_bits(x));
+                x = d.is_neg_zero().select(d, x);
+            }
+
+            let s = x * x;
+
+            let o = (q & I32x::splat(1)).eq(I32x::splat(1));
+            x = F32x::from_bits((U32x::from_bits(o) & U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(x));
+
+            let mut u = if cfg!(feature = "enable_neon32") {
+                F32x::splat(0.009_272_458_031_773_567_199_707_03)
+                    .mul_add(s, F32x::splat(0.003_319_849_958_643_317_222_595_21))
+                    .mul_add(s, F32x::splat(0.024_299_807_846_546_173_095_703_1))
+                    .mul_add(s, F32x::splat(0.053_449_530_154_466_629_028_320_3))
+                    .mul_add(s, F32x::splat(0.133_383_005_857_467_651_367_188))
+                    .mul_add(s, F32x::splat(0.333_331_853_151_321_411_132_812))
+            } else {
+                let s2 = s * s;
+                let s4 = s2 * s2;
+
+                F32x::poly6(s, s2, s4,
+                    0.009_272_458_031_773_567_199_707_03,
+                    0.003_319_849_958_643_317_222_595_21,
+                    0.024_299_807_846_546_173_095_703_1,
+                    0.053_449_530_154_466_629_028_320_3,
+                    0.133_383_005_857_467_651_367_188,
+                    0.333_331_853_151_321_411_132_812)
+            };
+
+            u = s.mul_add(u * x, x);
+
+            o.select(u.recpre(), u)
+        }
+
+        /// Tangent function
+        ///
+        /// These functions evaluates the tangent function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP`.
+        #[cfg(feature = "deterministic")]
+        pub fn tanf(d: F32x) -> F32x {
+            let mut q = (d * F32x::FRAC_2_PI).roundi();
+            let u = F32x::from_cast(q);
+            let mut x = u.mul_add(-PI_A2_F * HALF, d);
+            x = u.mul_add(-PI_B2_F * HALF, x);
+            x = u.mul_add(-PI_C2_F * HALF, x);
+            let g = d.abs().lt(TRIGRANGEMAX2_F * HALF);
+
+            if !g.all() {
+                let q2 = (d * F32x::FRAC_2_PI).roundi();
+                let s = F32x::from_cast(q);
+                let mut u = s.mul_add(-PI_A_F * HALF, d);
+                u = s.mul_add(-PI_B_F * HALF, u);
+                u = s.mul_add(-PI_C_F * HALF, u);
+                u = s.mul_add(-PI_D_F * HALF, u);
+
+                q = g.select(q, q2);
+                x = g.select(x, u);
+                let g = d.abs().lt(TRIGRANGEMAX_F);
+
+                if !g.all() {
+                    let (dfidf, dfii) = rempif(d);
+                    u = dfidf.0 + dfidf.1;
+                    u = F32x::from_bits(U32x::from_bits(d.is_infinite() | d.is_nan()) | U32x::from_bits(u));
+                    u = d.is_neg_zero().select(d, u);
+                    q = g.select(q, dfii);
+                    x = g.select(x, u);
+                }
+            }
+
+            let s = x * x;
+
+            let o = (q & I32x::splat(1)).eq(I32x::splat(1));
+            x = F32x::from_bits((U32x::from_bits(o) & U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(x));
+
+            let mut u = if cfg!(feature = "enable_neon32") {
+                F32x::splat(0.009_272_458_031_773_567_199_707_03)
+                    .mul_add(s, F32x::splat(0.003_319_849_958_643_317_222_595_21))
+                    .mul_add(s, F32x::splat(0.024_299_807_846_546_173_095_703_1))
+                    .mul_add(s, F32x::splat(0.053_449_530_154_466_629_028_320_3))
+                    .mul_add(s, F32x::splat(0.133_383_005_857_467_651_367_188))
+                    .mul_add(s, F32x::splat(0.333_331_853_151_321_411_132_812))
+            } else {
+                let s2 = s * s;
+                let s4 = s2 * s2;
+
+                F32x::poly6(s, s2, s4,
+                    0.009_272_458_031_773_567_199_707_03,
+                    0.003_319_849_958_643_317_222_595_21,
+                    0.024_299_807_846_546_173_095_703_1,
+                    0.053_449_530_154_466_629_028_320_3,
+                    0.133_383_005_857_467_651_367_188,
+                    0.333_331_853_151_321_411_132_812)
+            };
+
+            u = s.mul_add(u * x, x);
+
+            o.select(u.recpre(), u)
+        }
+
+        #[test]
+        fn test_tanf() {
+            test_f_f(
+                tanf,
+                rug::Float::tan,
+                f32::MIN..=f32::MAX,
+                3.5,
+            );
+        }
+
         /// Evaluate sin( π**a** ) and cos( π**a** ) for given **a** simultaneously
         ///
         /// Evaluates the sine and cosine functions of π**a** at a time,
@@ -622,64 +622,6 @@ macro_rules! impl_math_f32_u35 {
                 },
                 -rangemax2..=rangemax2,
                 2.,
-            );
-        }
-
-        /// Arc tangent function
-        ///
-        /// These functions evaluates the arc tangent function of a value in ***a***.
-        /// The error bound of the returned value is `3.5 ULP`.
-        pub fn atanf(d: F32x) -> F32x {
-            let q = vsel_vi2_vf_vi2(d, I32x::splat(2));
-            let s = d.abs();
-
-            let q = vsel_vi2_vf_vf_vi2_vi2(ONE, s, q + I32x::splat(1), q);
-            let s = ONE.lt(s).select(s.recpre(), s);
-
-            let mut t = s * s;
-
-            let t2 = t * t;
-            let t4 = t2 * t2;
-
-
-            let u = F32x::poly8(t, t2, t4,
-                0.002_823_638_962_581_753_730_773_93,
-                -0.015_956_902_876_496_315_002_441_4,
-                0.042_504_988_610_744_476_318_359_4,
-                -0.074_890_092_015_266_418_457_031_2,
-                0.106_347_933_411_598_205_566_406,
-                -0.142_027_363_181_114_196_777_344,
-                0.199_926_957_488_059_997_558_594,
-                -0.333_331_018_686_294_555_664_062);
-
-            t = s.mul_add(t * u, s);
-
-            t = (q & I32x::splat(1))
-                .eq(I32x::splat(1))
-                .select(F32x::FRAC_PI_2 - t, t);
-
-            t = F32x::from_bits(
-                (U32x::from_bits((q & I32x::splat(2)).eq(I32x::splat(2))) & U32x::from_bits(NEG_ZERO))
-                    ^ U32x::from_bits(t),
-            );
-
-            if cfg!(feature = "enable_neon32") || cfg!(feature = "enable_neon32vfpv4") {
-                t = d.is_infinite().select(
-                    F32x::splat(1.587_401_051_968_199_474_751_705_6).mul_sign(d),
-                    t,
-                );
-            }
-
-            t
-        }
-
-        #[test]
-        fn test_atanf() {
-            test_f_f(
-                atanf,
-                rug::Float::atan,
-                f32::MIN..=f32::MAX,
-                3.5,
             );
         }
 
@@ -791,6 +733,138 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
+        /// Arc tangent function
+        ///
+        /// These functions evaluates the arc tangent function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP`.
+        pub fn atanf(d: F32x) -> F32x {
+            let q = vsel_vi2_vf_vi2(d, I32x::splat(2));
+            let s = d.abs();
+
+            let q = vsel_vi2_vf_vf_vi2_vi2(ONE, s, q + I32x::splat(1), q);
+            let s = ONE.lt(s).select(s.recpre(), s);
+
+            let mut t = s * s;
+
+            let t2 = t * t;
+            let t4 = t2 * t2;
+
+
+            let u = F32x::poly8(t, t2, t4,
+                0.002_823_638_962_581_753_730_773_93,
+                -0.015_956_902_876_496_315_002_441_4,
+                0.042_504_988_610_744_476_318_359_4,
+                -0.074_890_092_015_266_418_457_031_2,
+                0.106_347_933_411_598_205_566_406,
+                -0.142_027_363_181_114_196_777_344,
+                0.199_926_957_488_059_997_558_594,
+                -0.333_331_018_686_294_555_664_062);
+
+            t = s.mul_add(t * u, s);
+
+            t = (q & I32x::splat(1))
+                .eq(I32x::splat(1))
+                .select(F32x::FRAC_PI_2 - t, t);
+
+            t = F32x::from_bits(
+                (U32x::from_bits((q & I32x::splat(2)).eq(I32x::splat(2))) & U32x::from_bits(NEG_ZERO))
+                    ^ U32x::from_bits(t),
+            );
+
+            if cfg!(feature = "enable_neon32") || cfg!(feature = "enable_neon32vfpv4") {
+                t = d.is_infinite().select(
+                    F32x::splat(1.587_401_051_968_199_474_751_705_6).mul_sign(d),
+                    t,
+                );
+            }
+
+            t
+        }
+
+        #[test]
+        fn test_atanf() {
+            test_f_f(
+                atanf,
+                rug::Float::atan,
+                f32::MIN..=f32::MAX,
+                3.5,
+            );
+        }
+
+        /// Hyperbolic sine function
+        ///
+        /// These functions evaluates the hyperbolic sine function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP` if ***a*** is in `[-88, 88]`.
+        /// If ***a*** is a finite value out of this range, infinity with a correct sign
+        /// or a correct value with `3.5 ULP` error bound is returned.
+        pub fn sinhf(x: F32x) -> F32x {
+            let e = expm1fk(x.abs());
+            let mut y = (e + F32x::splat(2.)) / (e + ONE);
+            y *= HALF * e;
+
+            y = (x.abs().gt(F32x::splat(88.)) | y.is_nan()).select(F32x::INFINITY, y);
+            y = y.mul_sign(x);
+            F32x::from_bits(U32x::from_bits(x.is_nan()) | U32x::from_bits(y))
+        }
+
+        #[test]
+        fn test_sinhf() {
+            test_f_f(
+                sinhf,
+                rug::Float::sinh,
+                -88.0..=88.0,
+                3.5,
+            );
+        }
+
+        /// Hyperbolic cosine function
+        ///
+        /// These functions evaluates the hyperbolic cosine function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP` if a is in `[-88, 88]`.
+        /// If ***a*** is a finite value out of this range, infinity with a correct sign
+        /// or a correct value with `3.5 ULP` error bound is returned.
+        pub fn coshf(x: F32x) -> F32x {
+            let e = u10::expf(x.abs());
+            let mut y = HALF.mul_add(e, HALF / e);
+
+            y = (x.abs().gt(F32x::splat(88.)) | y.is_nan()).select(F32x::INFINITY, y);
+            F32x::from_bits(U32x::from_bits(x.is_nan()) | U32x::from_bits(y))
+        }
+
+        #[test]
+        fn test_coshf() {
+            test_f_f(
+                coshf,
+                rug::Float::cosh,
+                -88.0..=88.0,
+                3.5,
+            );
+        }
+
+        /// Hyperbolic tangent function
+        ///
+        /// These functions evaluates the hyperbolic tangent function of a value in ***a***.
+        /// The error bound of the returned value is `3.5 ULP` for the double-precision
+        /// function or `3.5 ULP` for the single-precision function.
+        pub fn tanhf(x: F32x) -> F32x {
+            let d = expm1fk(F32x::splat(2.) * x.abs());
+            let mut y = d / (F32x::splat(2.) + d);
+
+            y = (x.abs().gt(F32x::splat(8.664_339_742)) | y.is_nan()).select(ONE, y);
+            y = y.mul_sign(x);
+            F32x::from_bits(U32x::from_bits(x.is_nan()) | U32x::from_bits(y))
+        }
+
+        #[test]
+        fn test_tanhf() {
+            test_f_f(
+                tanhf,
+                rug::Float::tanh,
+                -8.7..=8.7,
+                3.5,
+            );
+        }
+
         /// Natural logarithmic function
         ///
         /// These functions return the natural logarithm of ***a***.
@@ -838,6 +912,122 @@ macro_rules! impl_math_f32_u35 {
                 logf,
                 rug::Float::ln,
                 0.0..=f32::MAX,
+                3.5,
+            );
+        }
+
+        /// Base-10 logarithmic function
+        ///
+        /// This function returns the base-10 logarithm of ***a***.
+        pub fn log2f(mut d: F32x) -> F32x {
+            let (m, e) = //if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")
+            {
+                let o = d.lt(F32x::splat(f32::MIN_POSITIVE));
+                d = o.select(d * (F1_32X * F1_32X), d);
+                let e = ilogb2kf(d * F32x::splat(1./0.75));
+                (ldexp3kf(d, -e), o.select(e - I32x::splat(64), e))
+            /*} else {
+                let e = vgetexp_vf_vf(d * F32x::splat(1./0.75));
+                (vgetmant_vf_vf(d), e.eq(F32x::INFINITY).select(F32x::splat(128.), e))
+            */};
+
+            let x = (m - ONE) / (m + ONE);
+            let x2 = x * x;
+
+            let t = F32x::splat(0.437_408_834_7)
+                .mul_add(x2, F32x::splat(0.576_484_382_2))
+                .mul_add(x2, F32x::splat(0.961_802_423));
+
+            //if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")
+            {
+                let mut r = (x2 * x).mul_add(t, x.mul_add(F32x::splat(0.288_539_004_3_e+1), F32x::from_cast(e)));
+
+                r = d.eq(F32x::INFINITY).select(F32x::INFINITY, r);
+                r = (d.lt(ZERO) | d.is_nan()).select(F32x::NAN, r);
+                d.eq(ZERO).select(F32x::NEG_INFINITY, r)
+            /*} else {
+                let r = (x2 * x).mul_add(t, x.mul_add(F32x::splat(0.288_539_004_3_e+1), e));
+
+                vfixup_vf_vf_vf_vi2_i(r, d, I32::splat((4 << (2*4)) | (3 << (4*4)) | (5 << (5*4)) | (2 << (6*4))), 0)
+            */
+            }
+        }
+
+        #[test]
+        fn test_log2f() {
+            test_f_f(
+                log2f,
+                rug::Float::log2,
+                0.0..=f32::MAX,
+                3.5,
+            );
+        }
+
+        /// Base-10 exponential function
+        ///
+        /// This function returns 10 raised to ***a***.
+        pub fn exp10f(d: F32x) -> F32x {
+            let mut u = (d * LOG10_2_F).round();
+            let q = u.roundi();
+
+            let mut s = u.mul_add(-L10U_F, d);
+            s = u.mul_add(-L10L_F, s);
+
+            u = F32x::splat(0.206_400_498_7)
+                .mul_add(s, F32x::splat(0.541_787_743_6))
+                .mul_add(s, F32x::splat(0.117_128_682_1_e+1))
+                .mul_add(s, F32x::splat(0.203_465_604_8_e+1))
+                .mul_add(s, F32x::splat(0.265_094_876_3_e+1))
+                .mul_add(s, F32x::splat(0.230_258_512_5_e+1))
+                .mul_add(s, F32x::splat(0.1_e+1));
+
+            u = ldexp2kf(u, q);
+
+            u = d
+                .gt(F32x::splat(38.531_839_419_103_623_894_138_7))
+                .select(F32x::INFINITY, u);
+            F32x::from_bits(!U32x::from_bits(d.lt(F32x::splat(-50.))) & U32x::from_bits(u))
+        }
+
+        #[test]
+        fn test_exp10f() {
+            test_f_f(
+                exp10f,
+                rug::Float::exp10,
+                -38.54..=38.54,
+                3.5,
+            );
+        }
+
+        /// Base-2 exponential function
+        ///
+        /// This function returns `2` raised to ***a***.
+        pub fn exp2f(d: F32x) -> F32x {
+            let mut u = d.round();
+            let q = u.roundi();
+
+            let s = d - u;
+
+            u = F32x::splat(0.153_592_089_2_e-3)
+                .mul_add(s, F32x::splat(0.133_926_270_1_e-2))
+                .mul_add(s, F32x::splat(0.961_838_476_4_e-2))
+                .mul_add(s, F32x::splat(0.555_034_726_9_e-1))
+                .mul_add(s, F32x::splat(0.240_226_447_6))
+                .mul_add(s, F32x::splat(0.693_147_182_5))
+                .mul_add(s, F32x::splat(0.1_e+1));
+
+            u = ldexp2kf(u, q);
+
+            u = d.ge(F32x::splat(128.)).select(F32x::INFINITY, u);
+            F32x::from_bits(!U32x::from_bits(d.lt(F32x::splat(-150.))) & U32x::from_bits(u))
+        }
+
+        #[test]
+        fn test_exp2f() {
+            test_f_f(
+                exp2f,
+                rug::Float::exp2,
+                -150.0..=128.0,
                 3.5,
             );
         }
@@ -954,80 +1144,6 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
-        /// Hyperbolic sine function
-        ///
-        /// These functions evaluates the hyperbolic sine function of a value in ***a***.
-        /// The error bound of the returned value is `3.5 ULP` if ***a*** is in `[-88, 88]`.
-        /// If ***a*** is a finite value out of this range, infinity with a correct sign
-        /// or a correct value with `3.5 ULP` error bound is returned.
-        pub fn sinhf(x: F32x) -> F32x {
-            let e = expm1fk(x.abs());
-            let mut y = (e + F32x::splat(2.)) / (e + ONE);
-            y *= HALF * e;
-
-            y = (x.abs().gt(F32x::splat(88.)) | y.is_nan()).select(F32x::INFINITY, y);
-            y = y.mul_sign(x);
-            F32x::from_bits(U32x::from_bits(x.is_nan()) | U32x::from_bits(y))
-        }
-
-        #[test]
-        fn test_sinhf() {
-            test_f_f(
-                sinhf,
-                rug::Float::sinh,
-                -88.0..=88.0,
-                3.5,
-            );
-        }
-
-        /// Hyperbolic cosine function
-        ///
-        /// These functions evaluates the hyperbolic cosine function of a value in ***a***.
-        /// The error bound of the returned value is `3.5 ULP` if a is in `[-88, 88]`.
-        /// If ***a*** is a finite value out of this range, infinity with a correct sign
-        /// or a correct value with `3.5 ULP` error bound is returned.
-        pub fn coshf(x: F32x) -> F32x {
-            let e = u10::expf(x.abs());
-            let mut y = HALF.mul_add(e, HALF / e);
-
-            y = (x.abs().gt(F32x::splat(88.)) | y.is_nan()).select(F32x::INFINITY, y);
-            F32x::from_bits(U32x::from_bits(x.is_nan()) | U32x::from_bits(y))
-        }
-
-        #[test]
-        fn test_coshf() {
-            test_f_f(
-                coshf,
-                rug::Float::cosh,
-                -88.0..=88.0,
-                3.5,
-            );
-        }
-
-        /// Hyperbolic tangent function
-        ///
-        /// These functions evaluates the hyperbolic tangent function of a value in ***a***.
-        /// The error bound of the returned value is `3.5 ULP` for the double-precision
-        /// function or `3.5 ULP` for the single-precision function.
-        pub fn tanhf(x: F32x) -> F32x {
-            let d = expm1fk(F32x::splat(2.) * x.abs());
-            let mut y = d / (F32x::splat(2.) + d);
-
-            y = (x.abs().gt(F32x::splat(8.664_339_742)) | y.is_nan()).select(ONE, y);
-            y = y.mul_sign(x);
-            F32x::from_bits(U32x::from_bits(x.is_nan()) | U32x::from_bits(y))
-        }
-
-        #[test]
-        fn test_tanhf() {
-            test_f_f(
-                tanhf,
-                rug::Float::tanh,
-                -8.7..=8.7,
-                3.5,
-            );
-        }
-
         /// 2D Euclidian distance function
         ///
         /// The error bound of the returned value is `3.5 ULP`.
@@ -1054,122 +1170,5 @@ macro_rules! impl_math_f32_u35 {
                 3.5,
             );
         }
-
-        /// Base-2 exponential function
-        ///
-        /// This function returns `2` raised to ***a***.
-        pub fn exp2f(d: F32x) -> F32x {
-            let mut u = d.round();
-            let q = u.roundi();
-
-            let s = d - u;
-
-            u = F32x::splat(0.153_592_089_2_e-3)
-                .mul_add(s, F32x::splat(0.133_926_270_1_e-2))
-                .mul_add(s, F32x::splat(0.961_838_476_4_e-2))
-                .mul_add(s, F32x::splat(0.555_034_726_9_e-1))
-                .mul_add(s, F32x::splat(0.240_226_447_6))
-                .mul_add(s, F32x::splat(0.693_147_182_5))
-                .mul_add(s, F32x::splat(0.1_e+1));
-
-            u = ldexp2kf(u, q);
-
-            u = d.ge(F32x::splat(128.)).select(F32x::INFINITY, u);
-            F32x::from_bits(!U32x::from_bits(d.lt(F32x::splat(-150.))) & U32x::from_bits(u))
-        }
-
-        #[test]
-        fn test_exp2f() {
-            test_f_f(
-                exp2f,
-                rug::Float::exp2,
-                -150.0..=128.0,
-                3.5,
-            );
-        }
-
-        /// Base-10 exponential function
-        ///
-        /// This function returns 10 raised to ***a***.
-        pub fn exp10f(d: F32x) -> F32x {
-            let mut u = (d * LOG10_2_F).round();
-            let q = u.roundi();
-
-            let mut s = u.mul_add(-L10U_F, d);
-            s = u.mul_add(-L10L_F, s);
-
-            u = F32x::splat(0.206_400_498_7)
-                .mul_add(s, F32x::splat(0.541_787_743_6))
-                .mul_add(s, F32x::splat(0.117_128_682_1_e+1))
-                .mul_add(s, F32x::splat(0.203_465_604_8_e+1))
-                .mul_add(s, F32x::splat(0.265_094_876_3_e+1))
-                .mul_add(s, F32x::splat(0.230_258_512_5_e+1))
-                .mul_add(s, F32x::splat(0.1_e+1));
-
-            u = ldexp2kf(u, q);
-
-            u = d
-                .gt(F32x::splat(38.531_839_419_103_623_894_138_7))
-                .select(F32x::INFINITY, u);
-            F32x::from_bits(!U32x::from_bits(d.lt(F32x::splat(-50.))) & U32x::from_bits(u))
-        }
-
-        #[test]
-        fn test_exp10f() {
-            test_f_f(
-                exp10f,
-                rug::Float::exp10,
-                -38.54..=38.54,
-                3.5,
-            );
-        }
-
-        /// Base-10 logarithmic function
-        ///
-        /// This function returns the base-10 logarithm of ***a***.
-        pub fn log2f(mut d: F32x) -> F32x {
-            let (m, e) = //if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")
-            {
-                let o = d.lt(F32x::splat(f32::MIN_POSITIVE));
-                d = o.select(d * (F1_32X * F1_32X), d);
-                let e = ilogb2kf(d * F32x::splat(1./0.75));
-                (ldexp3kf(d, -e), o.select(e - I32x::splat(64), e))
-            /*} else {
-                let e = vgetexp_vf_vf(d * F32x::splat(1./0.75));
-                (vgetmant_vf_vf(d), e.eq(F32x::INFINITY).select(F32x::splat(128.), e))
-            */};
-
-            let x = (m - ONE) / (m + ONE);
-            let x2 = x * x;
-
-            let t = F32x::splat(0.437_408_834_7)
-                .mul_add(x2, F32x::splat(0.576_484_382_2))
-                .mul_add(x2, F32x::splat(0.961_802_423));
-
-            //if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")
-            {
-                let mut r = (x2 * x).mul_add(t, x.mul_add(F32x::splat(0.288_539_004_3_e+1), F32x::from_cast(e)));
-
-                r = d.eq(F32x::INFINITY).select(F32x::INFINITY, r);
-                r = (d.lt(ZERO) | d.is_nan()).select(F32x::NAN, r);
-                d.eq(ZERO).select(F32x::NEG_INFINITY, r)
-            /*} else {
-                let r = (x2 * x).mul_add(t, x.mul_add(F32x::splat(0.288_539_004_3_e+1), e));
-
-                vfixup_vf_vf_vf_vi2_i(r, d, I32::splat((4 << (2*4)) | (3 << (4*4)) | (5 << (5*4)) | (2 << (6*4))), 0)
-            */
-            }
-        }
-
-        #[test]
-        fn test_log2f() {
-            test_f_f(
-                log2f,
-                rug::Float::log2,
-                0.0..=f32::MAX,
-                3.5,
-            );
-        }
-
     };
 }

@@ -415,6 +415,14 @@ impl crate::Sleef for f64 {
         trunc(self)
     }
     #[inline]
+    fn floor(self) -> Self {
+        floor(self)
+    }
+    #[inline]
+    fn ceil(self) -> Self {
+        ceil(self)
+    }
+    #[inline]
     fn round(self) -> Self {
         rint(self)
     }
@@ -453,6 +461,10 @@ impl crate::Sleef for f64 {
     #[inline]
     fn hypot(self, other: Self) -> Self {
         u35::hypot(self, other)
+    }
+    #[inline]
+    fn gamma(self) -> Self {
+        u10::tgamma(self)
     }
     #[inline]
     fn lgamma(self) -> Self {
@@ -514,7 +526,7 @@ pub fn mulsign(x: f64, y: f64) -> f64 {
 }
 
 #[inline]
-pub fn copysignk(x: f64, y: f64) -> f64 {
+fn copysignk(x: f64, y: f64) -> f64 {
     f64::from_bits((x.to_bits() & !(1 << 63)) ^ (y.to_bits() & (1 << 63)))
 }
 
@@ -1415,6 +1427,9 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
     (clc, clln / clld)
 }
 
+/// Multiply by integral power of `2`
+///
+/// These functions return the result of multiplying ***m*** by `2` raised to the power ***x***.
 pub fn ldexp(x: f64, mut exp: i32) -> f64 {
     if exp > 2100 {
         exp = 2100;
@@ -1436,6 +1451,7 @@ pub fn ldexp(x: f64, mut exp: i32) -> f64 {
     x * pow2i(e1) * p * p * p * p
 }
 
+/// Integer exponent of an FP number
 pub fn ilogb(d: f64) -> i32 {
     let mut e = ilogbk(fabsk(d));
     e = if d == 0. { SLEEF_FP_ILOGB0 as i32 } else { e };
@@ -1451,6 +1467,11 @@ pub fn ilogb(d: f64) -> i32 {
     }
 }
 
+/// Fused multiply and accumulate
+///
+/// This function compute (***x*** × ***y*** + ***z***) without rounding, and then return the rounded value of the result.
+/// This function may return infinity with a correct sign if the absolute value of the correct return value is greater than `1e+300`.
+/// The error bounds of the returned value is `max(0.500_01 ULP, f64::MIN_POSITIVE)`.
 pub fn fma(mut x: f64, mut y: f64, mut z: f64) -> f64 {
     let mut h2 = x * y + z;
     const C0: f64 = D1_54;
@@ -1483,14 +1504,17 @@ pub fn fma(mut x: f64, mut y: f64, mut z: f64) -> f64 {
     }
 }
 
+/// Absolute value
 pub fn fabs(x: f64) -> f64 {
     fabsk(x)
 }
 
+/// Copy sign of a number
 pub fn copysign(x: f64, y: f64) -> f64 {
     copysignk(x, y)
 }
 
+/// Maximum of two numbers
 pub fn fmax(x: f64, y: f64) -> f64 {
     if y.is_nan() || (x > y) {
         x
@@ -1499,6 +1523,7 @@ pub fn fmax(x: f64, y: f64) -> f64 {
     }
 }
 
+/// Minimum of two numbers
 pub fn fmin(x: f64, y: f64) -> f64 {
     if y.is_nan() || (x < y) {
         x
@@ -1507,6 +1532,7 @@ pub fn fmin(x: f64, y: f64) -> f64 {
     }
 }
 
+/// Positive difference
 pub fn fdim(x: f64, y: f64) -> f64 {
     let ret = x - y;
     if (ret < 0.) || (x == y) {
@@ -1516,6 +1542,7 @@ pub fn fdim(x: f64, y: f64) -> f64 {
     }
 }
 
+/// Round to integer towards zero
 pub fn trunc(x: f64) -> f64 {
     let mut fr = x - D1_31 * ((x * (1. / D1_31)) as i32 as f64);
     fr -= fr as i32 as f64;
@@ -1526,6 +1553,7 @@ pub fn trunc(x: f64) -> f64 {
     }
 }
 
+/// Round to integer towards minus infinity
 pub fn floor(x: f64) -> f64 {
     let mut fr = x - D1_31 * ((x * (1. / D1_31)) as i32 as f64);
     fr -= fr as i32 as f64;
@@ -1537,6 +1565,7 @@ pub fn floor(x: f64) -> f64 {
     }
 }
 
+/// Round to integer towards plus infinity
 pub fn ceil(x: f64) -> f64 {
     let mut fr = x - D1_31 * ((x * (1. / D1_31)) as i32 as f64);
     fr -= fr as i32 as f64;
@@ -1548,6 +1577,7 @@ pub fn ceil(x: f64) -> f64 {
     }
 }
 
+/// Round to integer away from zero
 pub fn round(d: f64) -> f64 {
     let mut x = d + 0.5;
     let mut fr = x - D1_31 * ((x * (1. / D1_31)) as i32 as f64);
@@ -1568,6 +1598,7 @@ pub fn round(d: f64) -> f64 {
     }
 }
 
+/// Round to integer, ties round to even
 pub fn rint(d: f64) -> f64 {
     let x = d + 0.5;
     let mut fr = x - D1_31 * ((x * (1. / D1_31)) as i32 as f64);
@@ -1590,6 +1621,7 @@ pub fn rint(d: f64) -> f64 {
     }
 }
 
+/// Find the next representable FP value
 pub fn nextafter(x: f64, y: f64) -> f64 {
     let x = if x == 0. { mulsign(0., y) } else { x };
     let mut cxi = x.to_bits() as i64;
@@ -1635,6 +1667,7 @@ fn test_nextafter() {
     );
 }
 
+/// Fractional component of an FP number
 pub fn frfrexp(mut x: f64) -> f64 {
     if fabsk(x) < f64::MIN_POSITIVE {
         x *= D1_63;
@@ -1653,6 +1686,7 @@ pub fn frfrexp(mut x: f64) -> f64 {
     }
 }
 
+/// Exponent of an FP number
 pub fn expfrexp(mut x: f64) -> i32 {
     let mut ret = if fabsk(x) < f64::MIN_POSITIVE {
         x *= D1_63;
@@ -1671,6 +1705,7 @@ pub fn expfrexp(mut x: f64) -> i32 {
     }
 }
 
+/// FP remainder
 pub fn fmod(x: f64, y: f64) -> f64 {
     #[inline]
     fn toward0(d: f64) -> f64 {
@@ -1732,6 +1767,7 @@ pub fn fmod(x: f64, y: f64) -> f64 {
     }
 }
 
+/// Integral and fractional value of FP number
 pub fn modf(x: f64) -> (f64, f64) {
     let mut fr = x - D1_31 * ((x * (1. / D1_31)) as i32 as f64);
     fr -= fr as i32 as f64;
@@ -1740,6 +1776,9 @@ pub fn modf(x: f64) -> (f64, f64) {
 }
 
 /*
+/// Square root function
+///
+/// The error bound of the returned value is `0.5001 ULP`
 pub fn sqrt(d: f64) -> f64 {
     SQRT(d)
 }

@@ -63,53 +63,157 @@ const TEST_REPEAT_FAST: usize = 10_000;
 #[cfg(test)]
 const TEST_REPEAT: usize = 100_000;
 
+/// Generic trait for floating point & SIMD numbers
 pub trait Sleef: Sized {
     type Int;
+
+    /// Sine function
     fn sin(self) -> Self;
+
+    /// Cosine function
     fn cos(self) -> Self;
+
+    /// Evaluate sine and cosine functions simultaneously
     fn sin_cos(self) -> (Self, Self);
+
+    /// Tangent function
     fn tan(self) -> Self;
+
+    /// Arc sine function
     fn asin(self) -> Self;
+
+    /// Arc cosine function
     fn acos(self) -> Self;
+
+    /// Arc tangent function
     fn atan(self) -> Self;
+
+    /// Arc tangent function of two variables
     fn atan2(self, other: Self) -> Self;
+
+    /// Natural logarithmic function
     fn ln(self) -> Self;
+
+    /// Cube root function
     fn cbrt(self) -> Self;
+
+    /// Base-*e* exponential function
     fn exp(self) -> Self;
+
+    /// Power function
     fn pow(self, other: Self) -> Self;
+
+    /// Hyperbolic sine function
     fn sinh(self) -> Self;
+
+    /// Hyperbolic cosine function
     fn cosh(self) -> Self;
+
+    /// Hyperbolic tangent function
     fn tanh(self) -> Self;
+
+    /// Inverse hyperbolic sine function
     fn asinh(self) -> Self;
+
+    /// Inverse hyperbolic cosine function
     fn acosh(self) -> Self;
+
+    /// Inverse hyperbolic tangent function
     fn atanh(self) -> Self;
+
+    /// Base-2 exponential function
     fn exp2(self) -> Self;
+
+    /// Base-10 exponential function
     fn exp10(self) -> Self;
+
+    /// Base-*e* exponential function minus 1
     fn exp_m1(self) -> Self;
+
+    /// Base-10 logarithmic function
     fn log10(self) -> Self;
+
+    /// Base-2 logarithmic function
     fn log2(self) -> Self;
+
+    /// Logarithm of one plus argument
     fn log_1p(self) -> Self;
+
+    /// Multiply by integral power of `2`
     fn ldexp(self, other: Self::Int) -> Self;
+
+    /// Integer exponent of an FP number
     fn ilogb(self) -> Self::Int;
+
+    /// Fused multiply and accumulate
     fn fma(self, y: Self, z: Self) -> Self;
+
+    /// Square root function
     fn sqrt(self) -> Self;
+
+    /// Absolute value
     fn abs(self) -> Self;
+
+    /// Copy sign of a number
     fn copy_sign(self, other: Self) -> Self;
+
+    /// Maximum of two numbers
     fn max(self, other: Self) -> Self;
+
+    /// Minimum of two numbers
     fn min(self, other: Self) -> Self;
+
+    /// Positive difference
     fn fdim(self, other: Self) -> Self;
+
+    /// Round to integer towards zero
     fn truncate(self) -> Self;
+
+    /// Round to integer towards minus infinity
+    fn floor(self) -> Self;
+
+    /// Round to integer towards plus infinity
+    fn ceil(self) -> Self;
+
+    /// Round to integer, ties round to even
     fn round(self) -> Self;
+
+    /// Find the next representable FP value
     fn next_after(self, other: Self) -> Self;
+
+    /// Fractional component of an FP number
     fn frfrexp(self) -> Self;
+
+    /// Exponent of an FP number
     fn expfrexp(self) -> Self::Int;
+
+    /// FP remainder
     fn fmod(self, other: Self) -> Self;
+
+    /// Integral and fractional value of FP number
     fn modf(self) -> (Self, Self);
+
+    /// Evaluate sin( π**a** ) and cos( π**a** ) for given **a** simultaneously
     fn sin_cos_pi(self) -> (Self, Self);
+
+    /// Evaluate sin( π***a*** ) for given ***a***
     fn sin_pi(self) -> Self;
+
+    /// Evaluate cos( π***a*** ) for given ***a***
     fn cos_pi(self) -> Self;
+
+    /// 2D Euclidian distance function
     fn hypot(self, other: Self) -> Self;
+
+    /// Gamma function
+    fn gamma(self) -> Self;
+
+    /// Log gamma function
     fn lgamma(self) -> Self;
+
+    /// Error function
     fn erf(self) -> Self;
+
+    /// Complementary error function
     fn erfc(self) -> Self;
 }

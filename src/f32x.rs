@@ -179,6 +179,14 @@ macro_rules! impl_math_f32 {
                 truncf(self)
             }
             #[inline]
+            fn floor(self) -> Self {
+                floorf(self)
+            }
+            #[inline]
+            fn ceil(self) -> Self {
+                ceilf(self)
+            }
+            #[inline]
             fn round(self) -> Self {
                 rintf(self)
             }
@@ -217,6 +225,10 @@ macro_rules! impl_math_f32 {
             #[inline]
             fn hypot(self, other: Self) -> Self {
                 u35::hypotf(self, other)
+            }
+            #[inline]
+            fn gamma(self) -> Self {
+                u10::tgammaf(self)
             }
             #[inline]
             fn lgamma(self) -> Self {
@@ -368,23 +380,41 @@ macro_rules! impl_math_f32 {
         }
 
         #[cfg(test)]
-        fn test_f_f(fun_fx: fn(F32x) -> F32x, fun_f: fn(rug::Float) -> rug::Float, range: core::ops::RangeInclusive<f32>, ulp_ex: f32) {
+        fn test_f_f(
+            f_tested: fn(F32x) -> F32x,
+            f_sample: fn(rug::Float) -> rug::Float,
+            range: core::ops::RangeInclusive<f32>,
+            ulp_ex: f32,
+        ) {
+            test_c_f_f(f_tested, f_sample, range, |ulp, _, _| {
+                (ulp <= ulp_ex, format!("ULP: {ulp} > {ulp_ex}"))
+            })
+        }
+
+        #[cfg(test)]
+        fn test_c_f_f(
+            f_tested: fn(F32x) -> F32x,
+            f_sample: fn(rug::Float) -> rug::Float,
+            range: core::ops::RangeInclusive<f32>,
+            cf: impl Fn(f32, f32, &rug::Float) -> (bool, String),
+        ) {
             let mut rng = rand::thread_rng();
             for n in 0..crate::TEST_REPEAT_FAST {
                 let in_fx = gen_input(&mut rng, range.clone());
-                let out_fx = fun_fx(in_fx);
+                let out_fx = f_tested(in_fx);
                 for i in 0..$size {
                     let input = in_fx.extract(i);
                     let output = out_fx.extract(i);
-                    let expected = fun_f(rug::Float::with_val(crate::f32::PRECF32, input));
+                    let expected = f_sample(rug::Float::with_val(crate::f32::PRECF32, input));
                     if expected.is_nan() && output.is_nan() {
                         continue;
                     }
                     let ulp = crate::f32::count_ulp(output, &expected);
+                    let (b, fault_string) = cf(ulp, output, &expected);
                     assert!(
-                        ulp <= ulp_ex,
-                        "Iteration: {n}, Position: {i}, Input: {input:e}, Output: {output}, Expected: {expected}, ULP: {ulp} > {}",
-                        ulp_ex
+                        b,
+                        "Iteration: {n}, Position: {i}, Input: {input:e}, Output: {output}, Expected: {expected}, {}",
+                        fault_string
                     );
                 }
             }
@@ -1054,6 +1084,9 @@ macro_rules! impl_math_f32 {
             o.select(h2, ret * q)
         }
 
+        /// Square root function
+        ///
+        /// The error bound of the returned value is `0.5001 ULP`
         pub fn sqrtf(d: F32x) -> F32x {
             //   if cfg!(feature = "accurate_sqrt") {
             d.sqrt()

@@ -174,24 +174,37 @@ pub(crate) fn gen_input(
 
 #[cfg(test)]
 fn test_f_f(
-    fun_fx: fn(f32) -> f32,
-    fun_f: fn(Float) -> Float,
+    f_tested: fn(f32) -> f32,
+    f_sample: fn(Float) -> Float,
     range: core::ops::RangeInclusive<f32>,
     ulp_ex: f32,
+) {
+    test_c_f_f(f_tested, f_sample, range, |ulp, _, _| {
+        (ulp <= ulp_ex, format!("ULP: {ulp} > {ulp_ex}"))
+    })
+}
+
+#[cfg(test)]
+fn test_c_f_f(
+    f_tested: fn(f32) -> f32,
+    f_sample: fn(Float) -> Float,
+    range: core::ops::RangeInclusive<f32>,
+    cf: impl Fn(f32, f32, &Float) -> (bool, String),
 ) {
     let mut rng = rand::thread_rng();
     for n in 0..crate::TEST_REPEAT {
         let input = gen_input(&mut rng, range.clone());
-        let output = fun_fx(input);
-        let expected = fun_f(Float::with_val(PRECF32, input));
+        let output = f_tested(input);
+        let expected = f_sample(Float::with_val(PRECF32, input));
         if expected.is_nan() && output.is_nan() {
             continue;
         }
         let ulp = count_ulp(output, &expected);
+        let (b, fault_string) = cf(ulp, output, &expected);
         assert!(
-            ulp <= ulp_ex,
-            "Iteration: {n}, Input: {input:e}, Output: {output}, Expected: {expected}, ULP: {ulp} > {}",
-            ulp_ex
+            b,
+            "Iteration: {n}, Input: {input:e}, Output: {output}, Expected: {expected}, {}",
+            fault_string
         );
     }
 }
@@ -389,6 +402,14 @@ impl crate::Sleef for f32 {
         truncf(self)
     }
     #[inline]
+    fn floor(self) -> Self {
+        floorf(self)
+    }
+    #[inline]
+    fn ceil(self) -> Self {
+        ceilf(self)
+    }
+    #[inline]
     fn round(self) -> Self {
         rintf(self)
     }
@@ -427,6 +448,10 @@ impl crate::Sleef for f32 {
     #[inline]
     fn hypot(self, other: Self) -> Self {
         u35::hypotf(self, other)
+    }
+    #[inline]
+    fn gamma(self) -> Self {
+        u10::tgammaf(self)
     }
     #[inline]
     fn lgamma(self) -> Self {
@@ -479,7 +504,7 @@ pub fn mulsignf(x: f32, y: f32) -> f32 {
 }
 
 #[inline]
-pub fn copysignfk(x: f32, y: f32) -> f32 {
+fn copysignfk(x: f32, y: f32) -> f32 {
     f32::from_bits((x.to_bits() & !(1 << 31)) ^ (y.to_bits() & (1 << 31)))
 }
 
@@ -534,7 +559,7 @@ fn pow2if(q: i32) -> f32 {
 #[inline]
 fn ldexpkf(mut x: f32, mut q: i32) -> f32 {
     let mut m = q >> 31;
-    m = (((m + q) >> 6) - m) << 4;
+    m = (((m.wrapping_add(q)) >> 6) - m) << 4;
     q -= m << 2;
     m += 127;
     m = if m < 0 { 0 } else { m };
@@ -1434,6 +1459,9 @@ pub fn fmaf(mut x: f32, mut y: f32, mut z: f32) -> f32 {
 }
 
 /*
+/// Square root function
+///
+/// The error bound of the returned value is `0.5001 ULP`
 pub fn sqrtf(d: f32) -> f32 {
     SQRTF(d)
 }

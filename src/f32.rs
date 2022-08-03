@@ -498,6 +498,7 @@ impl IsNegZero for f32 {
     }
 }
 
+/// Multiply left value with sign of right value
 #[inline]
 pub fn mulsignf(x: f32, y: f32) -> f32 {
     f32::from_bits(x.to_bits() ^ (y.to_bits() & (1 << 31)))

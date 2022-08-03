@@ -1,8 +1,14 @@
 [package]
 name = "sleef"
-edition = "2018"
+edition = "2021"
 version = "0.1.0"
 authors = ["Andrey Zgarbul <zgarbul.andrey@gmail.com>"]
+description = "Math functions for SIMD vectors"
+keywords = ["simd", "libm", "math"]
+repository = "https://github.com/burrbull/sleef-rs/"
+documentation = "https://docs.rs/sleef"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
 
 [dependencies.doubled]
 version = "0.2.1"

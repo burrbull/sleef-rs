@@ -770,10 +770,10 @@ macro_rules! impl_math_f64 {
             y *= a;
             x += y;
             x = x.normalize();
-            x *= Doubled::new(
-                F64x::splat(3.141_592_653_589_793_116 * 2.),
-                F64x::splat(1.224_646_799_147_353_207_2_e-16 * 2.),
-            );
+            x *= Doubled::<F64x>::splat(Doubled::new(
+                crate::f64::D_PI.0 * 2.,
+                crate::f64::D_PI.1 * 2.
+            ));
             let o = a.abs().lt(F64x::splat(0.7));
             x = Doubled::new(
                 o.select(a, x.0),
@@ -969,18 +969,12 @@ macro_rules! impl_math_f64 {
                 let mut e = ilogb2k(d * F64x::splat(1. / 0.75));
                 m = ldexp3k(d, -e);
                 e = Mx::from_cast(o).select(e - Ix::splat(64), e);
-                Doubled::new(
-                    F64x::splat(0.693_147_180_559_945_286_226_764),
-                    F64x::splat(2.319_046_813_846_299_558_417_771_e-17)
-                ) * F64x::from_cast(e)
+                Doubled::<F64x>::splat(crate::f64::D_LN2) * F64x::from_cast(e)
             }/* else {
                 let mut e = vgetexp_vd_vd(d * F64x::splat(1. / 0.75));
                 e = e.eq(F64x::INFINITY).select(F64x::splat(1024.), e);
                 m = vgetmant_vd_vd(d);
-                Doubled::new(
-                    F64x::splat(0.693_147_180_559_945_286_226_764),
-                    F64x::splat(2.319_046_813_846_299_558_417_771_e-17),
-                ) * e
+                Doubled::<F64x>::splat(D_LN2) * e
             }*/;
 
             let x = F64x::splat(-1.).add_as_doubled(m) / ONE.add_as_doubled(m);
@@ -1128,10 +1122,7 @@ macro_rules! impl_math_f64 {
             )
             .mul_add(x2.0, F64x::splat(0.666_666_666_666_664_853_302_393));
 
-            let mut s = Doubled::new(
-                F64x::splat(0.693_147_180_559_945_286_226_764),
-                F64x::splat(2.319_046_813_846_299_558_417_771_e-17),
-            ) * F64x::from_cast(e);
+            let mut s = Doubled::<F64x>::splat(crate::f64::D_LN2) * F64x::from_cast(e);
             s = s.add_checked(x.scale(F64x::splat(2.)));
             s.add_checked(x2 * x * t)
         }

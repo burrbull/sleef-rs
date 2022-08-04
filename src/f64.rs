@@ -64,6 +64,14 @@ pub(crate) const TRIGRANGEMAX: f64 = 1e+14;
 */
 pub(crate) const PI_A2: f64 = 3.141_592_653_589_793_116;
 pub(crate) const PI_B2: f64 = 1.224_646_799_147_353_207_2_e-16;
+
+pub(crate) const D_PI: Doubled<f64> =
+    Doubled::new(3.141_592_653_589_793_116, 1.224_646_799_147_353_207_2_e-16);
+pub(crate) const D_LN2: Doubled<f64> = Doubled::new(
+    0.693_147_180_559_945_286_226_764,
+    2.319_046_813_846_299_558_417_771_e-17,
+);
+
 pub(crate) const TRIGRANGEMAX2: f64 = 15.;
 
 mod u05;
@@ -705,11 +713,7 @@ fn rempi(a: f64) -> (Doubled<f64>, i32) {
         crate::tables::REMPITABDP[ex + 3],
     ) * a;
     x += y;
-    x = x.normalize()
-        * Doubled::new(
-            3.141_592_653_589_793_116 * 2.,
-            1.224_646_799_147_353_207_2_e-16 * 2.,
-        );
+    x = x.normalize() * Doubled::new(D_PI.0 * 2., D_PI.1 * 2.);
     (if fabsk(a) < 0.7 { Doubled::from(a) } else { x }, q)
 }
 
@@ -982,11 +986,7 @@ fn logk(mut d: f64) -> Doubled<f64> {
         3.805_549_625_424_120_563_366_16_e-17,
     );
 
-    let mut s = (Doubled::new(
-        0.693_147_180_559_945_286_226_764,
-        2.319_046_813_846_299_558_417_771_e-17,
-    ) * (e as f64))
-        .add_checked(x.scale(2.));
+    let mut s = (D_LN2 * (e as f64)).add_checked(x.scale(2.));
     x = x2 * x;
     s = s.add_checked(x * c);
     x = x2 * x;
@@ -1092,12 +1092,7 @@ fn logk2(d: Doubled<f64>) -> Doubled<f64> {
     )
     .mul_add(x2.0, 0.666_666_666_666_664_853_302_393);
 
-    (Doubled::new(
-        0.693_147_180_559_945_286_226_764,
-        2.319_046_813_846_299_558_417_771_e-17,
-    ) * (e as f64))
-        + x.scale(2.)
-        + x2 * x * t
+    (D_LN2 * (e as f64)) + x.scale(2.) + x2 * x * t
 }
 
 fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {

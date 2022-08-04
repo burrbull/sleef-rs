@@ -24,8 +24,8 @@ macro_rules! impl_math_f32_u10 {
                 q >>= 2;
                 let o = (dfii & I32x::splat(1)).eq(I32x::splat(1));
                 let mut x = Doubled::new(
-                    F32x::splat(3.141_592_741_012_573_242_2 * -0.5).mul_sign(dfidf.0),
-                    F32x::splat(-8.742_277_657_347_585_773_1_e-8 * -0.5).mul_sign(dfidf.0),
+                    F32x::splat(crate::f32::D_PI.0 * -0.5).mul_sign(dfidf.0),
+                    F32x::splat(crate::f32::D_PI.1 * -0.5).mul_sign(dfidf.0),
                 );
                 x = dfidf + x;
                 dfidf = o.select_doubled(x, dfidf);
@@ -78,8 +78,8 @@ macro_rules! impl_math_f32_u10 {
                 q2 >>= 2;
                 let o = (dfii & I32x::splat(1)).eq(I32x::splat(1));
                 let mut x = Doubled::new(
-                    F32x::splat(3.141_592_741_012_573_242_2 * -0.5).mul_sign(dfidf.0),
-                    F32x::splat(-8.742_277_657_347_585_773_1_e-8 * -0.5).mul_sign(dfidf.0),
+                    F32x::splat(crate::f32::D_PI.0 * -0.5).mul_sign(dfidf.0),
+                    F32x::splat(crate::f32::D_PI.1 * -0.5).mul_sign(dfidf.0),
                 );
                 x = dfidf + x;
                 dfidf = o.select_doubled(x, dfidf);
@@ -150,8 +150,8 @@ macro_rules! impl_math_f32_u10 {
                 let o = (dfii & I32x::splat(1)).eq(I32x::splat(0));
                 let y = dfidf.0.gt(ZERO).select(ZERO, F32x::splat(-1.));
                 let mut x = Doubled::new(
-                    F32x::splat(3.141_592_741_012_573_242_2 * -0.5).mul_sign(y),
-                    F32x::splat(-8.742_277_657_347_585_773_1_e-8 * -0.5).mul_sign(y),
+                    F32x::splat(crate::f32::D_PI.0 * -0.5).mul_sign(y),
+                    F32x::splat(crate::f32::D_PI.1 * -0.5).mul_sign(y),
                 );
                 x = dfidf + x;
                 dfidf = o.select_doubled(x, dfidf);
@@ -205,8 +205,8 @@ macro_rules! impl_math_f32_u10 {
                 let o = (dfii & I32x::splat(1)).eq(I32x::splat(0));
                 let y = dfidf.0.gt(ZERO).select(ZERO, F32x::splat(-1.));
                 let mut x = Doubled::new(
-                    F32x::splat(3.141_592_741_012_573_242_2 * -0.5).mul_sign(y),
-                    F32x::splat(-8.742_277_657_347_585_773_1_e-8 * -0.5).mul_sign(y),
+                    F32x::splat(crate::f32::D_PI.0 * -0.5).mul_sign(y),
+                    F32x::splat(crate::f32::D_PI.1 * -0.5).mul_sign(y),
                 );
                 x = dfidf + x;
                 dfidf = o.select_doubled(x, dfidf);
@@ -612,8 +612,8 @@ macro_rules! impl_math_f32_u10 {
                 * (x2 * x.0);
 
             let y = Doubled::new(
-                F32x::splat(3.141_592_741_012_573_242_2 / 4.),
-                F32x::splat(-8.742_277_657_347_585_773_1_e-8 / 4.),
+                F32x::splat(crate::f32::D_PI.0 / 4.),
+                F32x::splat(crate::f32::D_PI.1 / 4.),
             )
             .sub_checked(x)
             .sub_checked(u);
@@ -651,8 +651,8 @@ macro_rules! impl_math_f32_u10 {
                 * (x2 * x.0);
 
             let mut y = Doubled::new(
-                F32x::splat(3.141_592_741_012_573_242_2 / 2.),
-                F32x::splat(-8.742_277_657_347_585_773_1_e-8 / 2.),
+                F32x::splat(crate::f32::D_PI.0 / 2.),
+                F32x::splat(crate::f32::D_PI.1 / 2.),
             )
             .sub_checked(x.0.mul_sign(d).add_checked_as_doubled(u.mul_sign(d)));
             x = x.add_checked(u);
@@ -660,10 +660,7 @@ macro_rules! impl_math_f32_u10 {
             y = o.select_doubled(y, x.scale(F32x::splat(2.)));
 
             y = (!o & d.lt(ZERO)).select_doubled(
-                Doubled::new(
-                    F32x::splat(3.141_592_741_012_573_242_2),
-                    F32x::splat(-8.742_277_657_347_585_773_1_e-8),
-                )
+                Doubled::<F32x>::splat(crate::f32::D_PI)
                 .sub_checked(y),
                 y,
             );
@@ -888,18 +885,12 @@ macro_rules! impl_math_f32_u10 {
                 let mut e = ilogb2kf(d * F32x::splat(1. / 0.75));
                 m = ldexp3kf(d, -e);
                 e = o.select(e - I32x::splat(64), e);
-                Doubled::new(
-                    F32x::splat(0.693_147_182_464_599_609_38),
-                    F32x::splat(-1.904_654_323_148_236_017_e-9)
-                ) * F32x::from_cast(e)
+                Doubled::<F32x>::splat(crate::f32::D_LN2) * F32x::from_cast(e)
             }/* else {
                 let mut e = vgetexp_vf_vf(d * F32x::splat(1. / 0.75));
                 e = e.eq(F32x::INFINITY).select(F32x::splat(128.), e);
                 m = vgetmant_vf_vf(d);
-                Doubled::new(
-                    F32x::splat(0.693_147_182_464_599_609_38),
-                    F32x::splat(-1.904_654_323_148_236_017_e-9)
-                ) * e
+                Doubled::F32x::splat(crate::f32::D_LN2) * e
             }*/;
 
             let x = F32x::splat(-1.).add_as_doubled(m) / ONE.add_as_doubled(m);
@@ -1083,19 +1074,13 @@ macro_rules! impl_math_f32_u10 {
                 let t = ldexp3kf(ONE, -e);
                 m = d.mul_add(t, t - ONE);
                 let e = o.select(e - I32x::splat(64), e);
-                Doubled::new(
-                    F32x::splat(0.693_147_182_464_599_609_38),
-                    F32x::splat(-1.904_654_323_148_236_017_e-9)
-                ) * F32x::from_cast(e)
+                Doubled::<F32x>::splat(crate::f32::D_LN2) * F32x::from_cast(e)
             }/* else {
                 let e = vgetexp_vf_vf(dp1, F32x::splat(1. / 0.75));
                 let e = e.eq(F32x::INFINITY).select(F32x::splat(128.), e);
                 let t = ldexp3kf(ONE, -e.roundi());
                 m = d.mul_add(t, t - ONE);
-                Doubled::new(
-                    F32x::splat(0.693_147_182_464_599_609_38),
-                    F32x::splat(-1.904_654_323_148_236_017_e-9)
-                ) * e
+                Doubled::<F32x>::splat(crate::f32::D_LN2) * e
             }*/;
 
             let x = Doubled::from(m) / F32x::splat(2.).add_checked_as_doubled(m);

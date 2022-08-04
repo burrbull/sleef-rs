@@ -790,9 +790,8 @@ macro_rules! impl_math_f32 {
             y *= a;
             x += y;
             x = x.normalize();
-            x *= Doubled::new(
-                F32x::splat(3.141_592_741_012_573_242_2 * 2.),
-                F32x::splat(-8.742_277_657_347_585_773_1_e-8 * 2.),
+            x *= Doubled::<F32x>::splat(
+                Doubled::new(crate::f32::D_PI.0 * 2., crate::f32::D_PI.1 * 2.)
             );
             x = a
                 .abs()
@@ -873,10 +872,7 @@ macro_rules! impl_math_f32 {
                 F32x::splat(3.691_838_612_596_143_320_843_11_e-9),
             );
 
-            let mut s = Doubled::new(
-                F32x::splat(0.693_147_182_464_599_609_38),
-                F32x::splat(-1.904_654_323_148_236_017_e-9)
-            ) * ef;
+            let mut s = Doubled::<F32x>::splat(crate::f32::D_LN2) * ef;
 
             s = s.add_checked(x.scale(F32x::splat(2.)));
             s.add_checked(x2 * x * (x2 * t + c))
@@ -956,10 +952,7 @@ macro_rules! impl_math_f32 {
                 .mul_add(x2.0, F32x::splat(0.400_005_877_017_974_853_515_625))
                 .mul_add(x2.0, F32x::splat(0.666_666_686_534_881_591_796_875));
 
-            let mut s = Doubled::new(
-                F32x::splat(0.693_147_182_464_599_609_38),
-                F32x::splat(-1.904_654_323_148_236_017_e-9),
-            ) * F32x::from_cast(e);
+            let mut s = Doubled::<F32x>::splat(crate::f32::D_LN2) * F32x::from_cast(e);
             s = s.add_checked(x.scale(F32x::splat(2.)));
             s.add_checked(x2 * x * t)
         }

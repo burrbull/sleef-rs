@@ -36,8 +36,8 @@ macro_rules! impl_math_f64_u35 {
                 ql >>= 2;
                 let o = (ddii & Ix::splat(1)).eq(Ix::splat(1));
                 let mut x = Doubled::new(
-                    F64x::splat(-3.141_592_653_589_793_116 * 0.5).mul_sign(ddidd.0),
-                    F64x::splat(-1.224_646_799_147_353_207_2_e-16 * 0.5).mul_sign(ddidd.0),
+                    F64x::splat(-crate::f64::D_PI.0 * 0.5).mul_sign(ddidd.0),
+                    F64x::splat(-crate::f64::D_PI.1 * 0.5).mul_sign(ddidd.0),
                 );
                 x = ddidd + x;
                 ddidd = M64x::from_cast(o).select_doubled(x, ddidd);
@@ -115,8 +115,8 @@ macro_rules! impl_math_f64_u35 {
                     ql2 >>= 2;
                     let o = (ddii & Ix::splat(1)).eq(Ix::splat(1));
                     let mut x = Doubled::new(
-                        F64x::splat(-3.141592653589793116 * 0.5).mul_sign(ddidd.0),
-                        F64x::splat(-1.2246467991473532072e-16 * 0.5).mul_sign(ddidd.0),
+                        F64x::splat(-crate::f64::D_PI.0 * 0.5).mul_sign(ddidd.0),
+                        F64x::splat(-crate::f64::D_PI.1 * 0.5).mul_sign(ddidd.0),
                     );
                     x = ddidd + x;
                     ddidd = M64x::from_cast(o).select_doubled(x, ddidd);
@@ -203,8 +203,8 @@ macro_rules! impl_math_f64_u35 {
                 let o = (ddii & Ix::splat(1)).eq(Ix::splat(0));
                 let y = ddidd.0.gt(ZERO).select(ZERO, F64x::splat(-1.));
                 let mut x = Doubled::new(
-                    F64x::splat(-3.141_592_653_589_793_116 * 0.5).mul_sign(y),
-                    F64x::splat(-1.224_646_799_147_353_207_2_e-16 * 0.5).mul_sign(y),
+                    F64x::splat(-crate::f64::D_PI.0 * 0.5).mul_sign(y),
+                    F64x::splat(-crate::f64::D_PI.1 * 0.5).mul_sign(y),
                 );
                 x = ddidd + x;
                 ddidd = M64x::from_cast(o).select_doubled(x, ddidd);
@@ -278,8 +278,8 @@ macro_rules! impl_math_f64_u35 {
                     let o = (ddii & Ix::splat(1)).eq(Ix::splat(0));
                     let y = ddidd.0.gt(ZERO).select(ZERO, F64x::splat(-1.));
                     let mut x = Doubled::new(
-                        F64x::splat(-3.141592653589793116 * 0.5).mul_sign(y),
-                        F64x::splat(-1.2246467991473532072e-16 * 0.5).mul_sign(y),
+                        F64x::splat(-crate::f64::D_PI.0 * 0.5).mul_sign(y),
+                        F64x::splat(-crate::f64::D_PI.1 * 0.5).mul_sign(y),
                     );
                     x = ddidd + x;
                     ddidd = M64x::from_cast(o).select_doubled(x, ddidd);
@@ -825,10 +825,7 @@ macro_rules! impl_math_f64_u35 {
             x += u;
             let r = o.select(y, x * F64x::splat(2.));
             (!o & d.lt(ZERO)).select(
-                Doubled::new(
-                    F64x::splat(3.141_592_653_589_793_116),
-                    F64x::splat(1.224_646_799_147_353_207_2_e-16)
-                ).add_checked(-r).0,
+                Doubled::<F64x>::splat(crate::f64::D_PI).add_checked(-r).0,
                 r,
             )
         }

@@ -32,8 +32,8 @@ pub fn sin(mut d: f64) -> f64 {
         if ddii & 1 != 0 {
             ddidd = ddidd
                 + Doubled::new(
-                    mulsign(3.141_592_653_589_793_116 * -0.5, ddidd.0),
-                    mulsign(1.224_646_799_147_353_207_2_e-16 * -0.5, ddidd.0),
+                    mulsign(D_PI.0 * -0.5, ddidd.0),
+                    mulsign(D_PI.1 * -0.5, ddidd.0),
                 );
         }
         d = f64::from(ddidd);
@@ -110,14 +110,8 @@ pub fn cos(mut d: f64) -> f64 {
         if (ddii & 1) == 0 {
             ddidd = ddidd
                 + Doubled::new(
-                    mulsign(
-                        3.141_592_653_589_793_116 * -0.5,
-                        if ddidd.0 > 0. { 1. } else { -1. },
-                    ),
-                    mulsign(
-                        1.224_646_799_147_353_207_2_e-16 * -0.5,
-                        if ddidd.0 > 0. { 1. } else { -1. },
-                    ),
+                    mulsign(D_PI.0 * -0.5, if ddidd.0 > 0. { 1. } else { -1. }),
+                    mulsign(D_PI.1 * -0.5, if ddidd.0 > 0. { 1. } else { -1. }),
                 );
         }
         d = f64::from(ddidd);
@@ -522,13 +516,11 @@ pub fn acos(d: f64) -> f64 {
         0.166_666_666_666_649_754_3,
     ) * (x * x2);
 
-    let y = 3.141_592_653_589_793_2 / 2. - (mulsign(x, d) + mulsign(u, d));
+    let y = FRAC_PI_2 - (mulsign(x, d) + mulsign(u, d));
     x += u;
     let r = if o { y } else { x * 2. };
     if !o && (d < 0.) {
-        Doubled::new(3.141_592_653_589_793_116, 1.224_646_799_147_353_207_2_e-16)
-            .add_checked(-r)
-            .0
+        D_PI.add_checked(-r).0
     } else {
         r
     }

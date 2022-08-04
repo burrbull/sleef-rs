@@ -729,10 +729,10 @@ macro_rules! impl_math_f64_u10 {
                 .mul_add(t.0, F64x::splat(-0.333_333_333_333_317_605_173_818));
 
             t = s.add_checked(s * t * u);
-            (Doubled::from((
-                1.570_796_326_794_896_557_998_982,
-                6.123_233_995_736_766_035_868_82_e-17,
-            )) * F64x::from_cast(q))
+            (Doubled::new(
+                F64x::splat(1.570_796_326_794_896_557_998_982),
+                F64x::splat(6.123_233_995_736_766_035_868_82_e-17),
+            ) * F64x::from_cast(q))
             .add_checked(t)
         }
 
@@ -786,7 +786,7 @@ macro_rules! impl_math_f64_u10 {
             let o = d.abs().lt(HALF);
             let x2 = o.select(d * d, (ONE - d.abs()) * HALF);
             let mut x = o.select_doubled(Doubled::from(d.abs()), x2.sqrt_as_doubled());
-            x = d.abs().eq(ONE).select_doubled(Doubled::from((0., 0.)), x);
+            x = d.abs().eq(ONE).select_doubled(Doubled::from(ZERO), x);
 
             let x4 = x2 * x2;
             let x8 = x4 * x4;
@@ -808,10 +808,10 @@ macro_rules! impl_math_f64_u10 {
 
             u *= x2 * x.0;
 
-            let y = Doubled::from((
-                3.141_592_653_589_793_116 / 4.,
-                1.224_646_799_147_353_207_2_e-16 / 4.,
-            ))
+            let y = Doubled::new(
+                F64x::splat(3.141_592_653_589_793_116 / 4.),
+                F64x::splat(1.224_646_799_147_353_207_2_e-16 / 4.),
+            )
             .sub_checked(x)
             .sub_checked(u);
 
@@ -837,7 +837,7 @@ macro_rules! impl_math_f64_u10 {
             let o = d.abs().lt(HALF);
             let x2 = o.select(d * d, (ONE - d.abs()) * HALF);
             let mut x = o.select_doubled(Doubled::from(d.abs()), x2.sqrt_as_doubled());
-            x = d.abs().eq(ONE).select_doubled(Doubled::from((0., 0.)), x);
+            x = d.abs().eq(ONE).select_doubled(Doubled::from(ZERO), x);
 
             let x4 = x2 * x2;
             let x8 = x4 * x4;
@@ -859,17 +859,20 @@ macro_rules! impl_math_f64_u10 {
 
             u *= x2 * x.0;
 
-            let mut y = Doubled::from((
-                3.141_592_653_589_793_116 / 2.,
-                1.224_646_799_147_353_207_2_e-16 / 2.,
-            ))
+            let mut y = Doubled::new(
+                F64x::splat(3.141_592_653_589_793_116 / 2.),
+                F64x::splat(1.224_646_799_147_353_207_2_e-16 / 2.),
+            )
             .sub_checked(x.0.mul_sign(d).add_checked_as_doubled(u.mul_sign(d)));
             x = x.add_checked(u);
 
             y = o.select_doubled(y, x.scale(F64x::splat(2.)));
 
             y = (!o & d.lt(ZERO)).select_doubled(
-                Doubled::from((3.141_592_653_589_793_116, 1.224_646_799_147_353_207_2_e-16)).sub_checked(y),
+                Doubled::new(
+                    F64x::splat(3.141_592_653_589_793_116),
+                    F64x::splat(1.224_646_799_147_353_207_2_e-16)
+                ).sub_checked(y),
                 y,
             );
 
@@ -891,7 +894,7 @@ macro_rules! impl_math_f64_u10 {
         /// This function evaluates the arc tangent function of a value in ***a***.
         /// The error bound of the returned value is `1.0 ULP`.
         pub fn atan(d: F64x) -> F64x {
-            let d2 = atan2k_u1(Doubled::from(d.abs()), Doubled::from((1., 0.)));
+            let d2 = atan2k_u1(Doubled::from(d.abs()), Doubled::from(ONE));
             let mut r = F64x::from(d2);
             r = d
                 .is_infinite()
@@ -1088,13 +1091,18 @@ macro_rules! impl_math_f64_u10 {
                     let mut e = ilogb2k(d * F64x::splat(1. / 0.75));
                     m = ldexp3k(d, -e);
                     e = Mx::from_cast(o).select(e - Ix::splat(64), e);
-                    Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17))
-                        * F64x::from_cast(e)
+                    Doubled::new(
+                        F64x::splat(0.693_147_180_559_945_286_226_764),
+                        F64x::splat(2.319_046_813_846_299_558_417_771_e-17)
+                    ) * F64x::from_cast(e)
                 }/* else {
                     let mut e = vgetexp_vd_vd(d * F64x::splat(1. / 0.75));
                     e = e.eq(F64x::INFINITY).select(F64x::splat(1024.), e);
                     m = vgetmant_vd_vd(d);
-                    Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17)) * e
+                    Doubled::new(
+                        F64x::splat(0.693_147_180_559_945_286_226_764),
+                        F64x::splat(2.319_046_813_846_299_558_417_771_e-17)
+                    ) * e
                 }*/;
 
             let x = F64x::splat(-1.).add_as_doubled(m) / ONE.add_as_doubled(m);
@@ -1152,12 +1160,18 @@ macro_rules! impl_math_f64_u10 {
                         let mut e = ilogb2k(d * F64x::splat(1. / 0.75));
                         m = ldexp3k(d, -e);
                         e = Mx::from_cast(o).select(e - Ix::splat(64), e);
-                        Doubled::from((0.301_029_995_663_981_198_02, -2.803_728_127_785_170_339_e-18)) * F64x::from_cast(e)
+                        Doubled::new(
+                            F64x::splat(0.301_029_995_663_981_198_02),
+                            F64x::splat(-2.803_728_127_785_170_339_e-18)
+                        ) * F64x::from_cast(e)
                     }/* else {
                         let mut e = vgetexp_vd_vd(d * F64x::splat(1. / 0.75));
                         e = e.eq(F64x::INFINITY).select(F64x::splat(1024.), e);
                         m = vgetmant_vd_vd(d);
-                        Doubled::from((0.301_029_995_663_981_198_02, -2.803_728_127_785_170_339_e-18)) * e
+                        Doubled::new(
+                            F64x::splat(0.301_029_995_663_981_198_02),
+                            F64x::splat(-2.803_728_127_785_170_339_e-18)
+                        ) * e
                     }*/;
 
             let x = F64x::splat(-1.).add_as_doubled(m) / ONE.add_as_doubled(m);
@@ -1175,10 +1189,10 @@ macro_rules! impl_math_f64_u10 {
                 0.289_529_654_602_197_261_7);
 
             s = s.add_checked(
-                x * Doubled::from((
-                    0.868_588_963_806_503_633_34,
-                    1.143_005_969_409_638_931_1_e-17,
-                )),
+                x * Doubled::new(
+                    F64x::splat(0.868_588_963_806_503_633_34),
+                    F64x::splat(1.143_005_969_409_638_931_1_e-17),
+                ),
             );
             s = s.add_checked(x2 * x.0 * t);
 
@@ -1244,7 +1258,10 @@ macro_rules! impl_math_f64_u10 {
                 0.961_796_693_926_080_914_49);
 
             let mut s =
-                ef + x * Doubled::from((2.885_390_081_777_926_774, 6.056_160_499_551_673_643_4_e-18));
+                ef + x * Doubled::new(
+                    F64x::splat(2.885_390_081_777_926_774),
+                    F64x::splat(6.056_160_499_551_673_643_4_e-18)
+                );
             s += x2 * x.0 * t;
 
             let r = F64x::from(s);
@@ -1290,14 +1307,19 @@ macro_rules! impl_math_f64_u10 {
                 let t = ldexp3k(ONE, -e);
                 m = d.mul_add(t, t - ONE);
                 e = Mx::from_cast(o).select(e - Ix::splat(64), e);
-                Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17))
-                    * F64x::from_cast(e)
+                Doubled::new(
+                    F64x::splat(0.693_147_180_559_945_286_226_764),
+                    F64x::splat(2.319_046_813_846_299_558_417_771_e-17)
+                ) * F64x::from_cast(e)
             }/* else {
                 let e = vgetexp_vd_vd(dp1, F64x::splat(1. / 0.75));
                 e = e.eq(F64x::INFINITY).select(F64x::splat(1024.), e);
                 let t = ldexp3k(ONE, -e.roundi());
                 m = d.mul_add(t, t - ONE);
-                Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17)) * e
+                Doubled::new(
+                    F64x::splat(0.693_147_180_559_945_286_226_764),
+                    F64x::splat(2.319_046_813_846_299_558_417_771_e-17)
+                ) * e
             }*/;
 
             let x = Doubled::from(m) / F64x::splat(2.).add_checked_as_doubled(m);
@@ -1610,7 +1632,7 @@ macro_rules! impl_math_f64_u10 {
         /// This function returns the real cube root of ***a***.
         /// The error bound of the returned value is `1.0 ULP`.
         pub fn cbrt(mut d: F64x) -> F64x {
-            let mut q2 = Doubled::from((1., 0.));
+            let mut q2 = Doubled::from(ONE);
 
             /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
                 let s = d;
@@ -1623,17 +1645,17 @@ macro_rules! impl_math_f64_u10 {
             let re = (t - F64x::from_cast(qu) * F64x::splat(3.)).trunci();
 
             q2 = M64x::from_cast(re.eq(Ix::splat(1))).select_doubled(
-                Doubled::from((
-                    1.259_921_049_894_873_190_7,
-                    -2.589_933_375_300_506_917_7_e-17,
-                )),
+                Doubled::new(
+                    F64x::splat(1.259_921_049_894_873_190_7),
+                    F64x::splat(-2.589_933_375_300_506_917_7_e-17),
+                ),
                 q2,
             );
             q2 = M64x::from_cast(re.eq(Ix::splat(2))).select_doubled(
-                Doubled::from((
-                    1.587_401_051_968_199_583_4,
-                    -1.086_900_819_419_782_298_6_e-16,
-                )),
+                Doubled::new(
+                    F64x::splat(1.587_401_051_968_199_583_4),
+                    F64x::splat(-1.086_900_819_419_782_298_6_e-16),
+                ),
                 q2,
             );
 
@@ -1787,9 +1809,19 @@ macro_rules! impl_math_f64_u10 {
                     0.232_325_315_521_307_617_4_e-3,
                     0.149_014_971_914_554_472_9_e-3);
                 t2 = poly4dd(x, t,
-                    Doubled::from((0.009_287_795_839_227_560_440_5, 7.928_755_946_396_110_749_3_e-19)),
-                    Doubled::from((0.042_275_531_758_784_692_937, 1.378_522_662_050_101_613_8_e-19)),
-                    Doubled::from((0.070_523_697_943_469_534_91, 9.584_662_807_079_209_284_2_e-19)));
+                    Doubled::new(
+                        F64x::splat(0.009_287_795_839_227_560_440_5),
+                        F64x::splat(7.928_755_946_396_110_749_3_e-19)
+                    ),
+                    Doubled::new(
+                        F64x::splat(0.042_275_531_758_784_692_937),
+                        F64x::splat(1.378_522_662_050_101_613_8_e-19)
+                    ),
+                    Doubled::new(
+                        F64x::splat(0.070_523_697_943_469_534_91),
+                        F64x::splat(9.584_662_807_079_209_284_2_e-19)
+                    )
+                );
                 t2 = ONE.add_checked(t2 * x);
                 t2 = t2.square();
                 t2 = t2.square();
@@ -1821,16 +1853,34 @@ macro_rules! impl_math_f64_u10 {
                     o25.select_splat(0.149_014_971_914_554_472_9_e-3, -0.102_155_715_545_346_595_4));
                 t2 = poly4dd(x, t,
                     o25.select_doubled(
-                        Doubled::from((0.009_287_795_839_227_560_440_5, 7.928_755_946_396_110_749_3_e-19)),
-                        Doubled::from((-0.636_910_443_836_417_483_61, -2.424_947_752_653_943_183_9_e-17))
-                            ),
+                        Doubled::new(
+                            F64x::splat(0.009_287_795_839_227_560_440_5),
+                            F64x::splat(7.928_755_946_396_110_749_3_e-19)
+                        ),
+                        Doubled::new(
+                            F64x::splat(-0.636_910_443_836_417_483_61),
+                            F64x::splat(-2.424_947_752_653_943_183_9_e-17)
+                        )
+                    ),
                     o25.select_doubled(
-                        Doubled::from((0.042_275_531_758_784_692_937_, 1.378_522_662_050_101_613_8_e-19)),
-                        Doubled::from((-1.128_292_606_180_396_173_7, -6.297_033_886_041_099_650_5_e-17))
-                            ),
+                        Doubled::new(
+                            F64x::splat(0.042_275_531_758_784_692_937),
+                            F64x::splat(1.378_522_662_050_101_613_8_e-19)
+                        ),
+                        Doubled::new(
+                            F64x::splat(-1.128_292_606_180_396_173_7),
+                            F64x::splat(-6.297_033_886_041_099_650_5_e-17)
+                        )
+                    ),
                     o25.select_doubled(
-                        Doubled::from((0.070_523_697_943_469_534_91, 9.584_662_807_079_209_284_2_e-19)),
-                        Doubled::from((-1.226_131_378_518_480_496_7_e-05, -5.532_970_751_449_010_704_4_e-22))
+                        Doubled::new(
+                            F64x::splat(0.070_523_697_943_469_534_91),
+                            F64x::splat(9.584_662_807_079_209_284_2_e-19)
+                        ),
+                        Doubled::new(
+                            F64x::splat(-1.226_131_378_518_480_496_7_e-05),
+                            F64x::splat(-5.532_970_751_449_010_704_4_e-22)
+                        )
                     )
                 );
                 let mut s2 = ONE.add_checked(t2 * x);

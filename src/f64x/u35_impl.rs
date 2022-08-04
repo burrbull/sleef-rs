@@ -825,9 +825,10 @@ macro_rules! impl_math_f64_u35 {
             x += u;
             let r = o.select(y, x * F64x::splat(2.));
             (!o & d.lt(ZERO)).select(
-                Doubled::from((3.141_592_653_589_793_116, 1.224_646_799_147_353_207_2_e-16))
-                    .add_checked(-r)
-                    .0,
+                Doubled::new(
+                    F64x::splat(3.141_592_653_589_793_116),
+                    F64x::splat(1.224_646_799_147_353_207_2_e-16)
+                ).add_checked(-r).0,
                 r,
             )
         }

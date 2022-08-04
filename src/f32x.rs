@@ -794,10 +794,10 @@ macro_rules! impl_math_f32 {
             y *= a;
             x += y;
             x = x.normalize();
-            x *= Doubled::from((
-                3.141_592_741_012_573_242_2 * 2.,
-                -8.742_277_657_347_585_773_1_e-8 * 2.,
-            ));
+            x *= Doubled::new(
+                F32x::splat(3.141_592_741_012_573_242_2 * 2.),
+                F32x::splat(-8.742_277_657_347_585_773_1_e-8 * 2.),
+            );
             x = a
                 .abs()
                 .lt(F32x::splat(0.7))
@@ -872,12 +872,15 @@ macro_rules! impl_math_f32 {
             let t = F32x::splat(0.240_320_354_700_088_500_976_562)
                 .mul_add(x2.0, F32x::splat(0.285_112_679_004_669_189_453_125))
                 .mul_add(x2.0, F32x::splat(0.400_007_992_982_864_379_882_812));
-            let c = Doubled::from((
-                0.666_666_626_930_236_816_406_25,
-                3.691_838_612_596_143_320_843_11_e-9,
-            ));
+            let c = Doubled::new(
+                F32x::splat(0.666_666_626_930_236_816_406_25),
+                F32x::splat(3.691_838_612_596_143_320_843_11_e-9),
+            );
 
-            let mut s = Doubled::from((0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9)) * ef;
+            let mut s = Doubled::new(
+                F32x::splat(0.693_147_182_464_599_609_38),
+                F32x::splat(-1.904_654_323_148_236_017_e-9)
+            ) * ef;
 
             s = s.add_checked(x.scale(F32x::splat(2.)));
             s.add_checked(x2 * x * (x2 * t + c))
@@ -1326,14 +1329,14 @@ macro_rules! impl_math_f32 {
 
         /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
         fn gammafk(a: F32x) -> (Doubled<F32x>, Doubled<F32x>) {
-            let mut clln = Doubled::from((1., 0.));
-            let mut clld = Doubled::from((1., 0.));
+            let mut clln = Doubled::from(ONE);
+            let mut clld = Doubled::from(ONE);
 
             let otiny = a.abs().lt(F32x::splat(1e-30));
             let oref = a.lt(HALF);
 
             let x = otiny.select_doubled(
-                Doubled::from((0., 0.)),
+                Doubled::from(ZERO),
                 oref.select_doubled(ONE.add_as_doubled(-a), Doubled::from(a)),
             );
 
@@ -1471,7 +1474,7 @@ macro_rules! impl_math_f32 {
                     clc,
                 ),
             ); // log(M_PI)
-            clln = otiny.select_doubled(Doubled::from((1., 0.)), oref.select_doubled(clln, clld));
+            clln = otiny.select_doubled(Doubled::from(ONE), oref.select_doubled(clln, clld));
 
             if !(!oref).all() {
                 let t = a - F1_12X * F32x::from_cast((a * (ONE / F1_12X)).trunci());

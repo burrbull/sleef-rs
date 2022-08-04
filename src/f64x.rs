@@ -775,10 +775,10 @@ macro_rules! impl_math_f64 {
             y *= a;
             x += y;
             x = x.normalize();
-            x *= Doubled::from((
-                3.141_592_653_589_793_116 * 2.,
-                1.224_646_799_147_353_207_2_e-16 * 2.,
-            ));
+            x *= Doubled::new(
+                F64x::splat(3.141_592_653_589_793_116 * 2.),
+                F64x::splat(1.224_646_799_147_353_207_2_e-16 * 2.),
+            );
             let o = a.abs().lt(F64x::splat(0.7));
             x = Doubled::new(
                 o.select(a, x.0),
@@ -968,23 +968,25 @@ macro_rules! impl_math_f64 {
             let m: F64x;
 
             let mut s =
-                        /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
-                            let o = d.lt(F64x::splat(f64::MIN_POSITIVE));
-                            d = o.select(d * (D1_32X * D1_32X), d);
-                            let mut e = ilogb2k(d * F64x::splat(1. / 0.75));
-                            m = ldexp3k(d, -e);
-                            e = Mx::from_cast(o).select(e - Ix::splat(64), e);
-                            Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17))
-                                * F64x::from_cast(e)
-                        }/* else {
-                            let mut e = vgetexp_vd_vd(d * F64x::splat(1. / 0.75));
-                            e = e.eq(F64x::INFINITY).select(F64x::splat(1024.), e);
-                            m = vgetmant_vd_vd(d);
-                            Doubled::new(
-                                F64x::splat(0.693_147_180_559_945_286_226_764),
-                                F64x::splat(2.319_046_813_846_299_558_417_771_e-17),
-                            ) * e
-                        }*/;
+            /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
+                let o = d.lt(F64x::splat(f64::MIN_POSITIVE));
+                d = o.select(d * (D1_32X * D1_32X), d);
+                let mut e = ilogb2k(d * F64x::splat(1. / 0.75));
+                m = ldexp3k(d, -e);
+                e = Mx::from_cast(o).select(e - Ix::splat(64), e);
+                Doubled::new(
+                    F64x::splat(0.693_147_180_559_945_286_226_764),
+                    F64x::splat(2.319_046_813_846_299_558_417_771_e-17)
+                ) * F64x::from_cast(e)
+            }/* else {
+                let mut e = vgetexp_vd_vd(d * F64x::splat(1. / 0.75));
+                e = e.eq(F64x::INFINITY).select(F64x::splat(1024.), e);
+                m = vgetmant_vd_vd(d);
+                Doubled::new(
+                    F64x::splat(0.693_147_180_559_945_286_226_764),
+                    F64x::splat(2.319_046_813_846_299_558_417_771_e-17),
+                ) * e
+            }*/;
 
             let x = F64x::splat(-1.).add_as_doubled(m) / ONE.add_as_doubled(m);
             let x2 = x.square();
@@ -1009,10 +1011,10 @@ macro_rules! impl_math_f64 {
                 0.400_000_000_000_000_077_715_612,
             );
 
-            let c = Doubled::from((
-                0.666_666_666_666_666_629_659_233,
-                3.805_549_625_424_120_563_366_16_e-17,
-            ));
+            let c = Doubled::new(
+                F64x::splat(0.666_666_666_666_666_629_659_233),
+                F64x::splat(3.805_549_625_424_120_563_366_16_e-17),
+            );
 
             s = s.add_checked(x.scale(F64x::splat(2.)));
             s.add_checked(x2 * x * (x2 * t + c))
@@ -1131,10 +1133,10 @@ macro_rules! impl_math_f64 {
             )
             .mul_add(x2.0, F64x::splat(0.666_666_666_666_664_853_302_393));
 
-            let mut s = Doubled::from((
-                0.693_147_180_559_945_286_226_764,
-                2.319_046_813_846_299_558_417_771_e-17,
-            )) * F64x::from_cast(e);
+            let mut s = Doubled::new(
+                F64x::splat(0.693_147_180_559_945_286_226_764),
+                F64x::splat(2.319_046_813_846_299_558_417_771_e-17),
+            ) * F64x::from_cast(e);
             s = s.add_checked(x.scale(F64x::splat(2.)));
             s.add_checked(x2 * x * t)
         }
@@ -1433,14 +1435,14 @@ macro_rules! impl_math_f64 {
 
         /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
         fn gammak(a: F64x) -> (Doubled<F64x>, Doubled<F64x>) {
-            let mut clln = Doubled::from((1., 0.));
-            let mut clld = Doubled::from((1., 0.));
+            let mut clln = Doubled::from(ONE);
+            let mut clld = Doubled::from(ONE);
 
             let otiny = a.abs().lt(F64x::splat(1e-306));
             let oref = a.lt(HALF);
 
             let mut x = otiny.select_doubled(
-                Doubled::from((0., 0.)),
+                Doubled::from(ZERO),
                 oref.select_doubled(ONE.add_as_doubled(-a), Doubled::from(a)),
             );
 
@@ -1689,10 +1691,10 @@ macro_rules! impl_math_f64 {
 
             let mut y = (x + F64x::splat(-0.5)) * logk2(x);
             y += -x;
-            y += Doubled::from((
-                0.918_938_533_204_672_780_56,
-                -3.878_294_158_067_241_449_8_e-17,
-            )); // 0.5*log(2*M_PI)
+            y += Doubled::new(
+                F64x::splat(0.918_938_533_204_672_780_56),
+                F64x::splat(-3.878_294_158_067_241_449_8_e-17),
+            ); // 0.5*log(2*M_PI)
 
             let mut z = u.mul_as_doubled(t)
                 + o0.select_splat(
@@ -1710,17 +1712,19 @@ macro_rules! impl_math_f64 {
             y = clln;
 
             clc = otiny.select_doubled(
-                Doubled::from((
-                    83.177_661_667_193_433_459_033_3,
-                    3.671_034_596_315_685_072_218_78_e-15,
-                )), // log(2^120)
+                Doubled::new(
+                    F64x::splat(83.177_661_667_193_433_459_033_3),
+                    F64x::splat(3.671_034_596_315_685_072_218_78_e-15),
+                ), // log(2^120)
                 oref.select_doubled(
-                    Doubled::<F64x>::from((1.144_729_885_849_400_163_9, 1.026_595_116_270_782_638_e-17))
-                        + (-clc),
+                    Doubled::new(
+                        F64x::splat(1.144_729_885_849_400_163_9),
+                        F64x::splat(1.026_595_116_270_782_638_e-17)
+                    ) + (-clc),
                     clc,
                 ),
             ); // log(M_PI)
-            clln = otiny.select_doubled(Doubled::from((1., 0.)), oref.select_doubled(clln, clld));
+            clln = otiny.select_doubled(Doubled::from(ONE), oref.select_doubled(clln, clld));
 
             if !(!oref).all() {
                 let t = a - D1_28X * F64x::from_cast((a * (ONE / D1_28X)).trunci());

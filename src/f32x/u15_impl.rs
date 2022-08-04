@@ -14,7 +14,7 @@ macro_rules! impl_math_f32_u15 {
             let o2 = a.lt(F32x::splat(4.3));
             let o3 = a.lt(F32x::splat(10.1));
 
-            let u = o1.select_doubled(Doubled::from(a), Doubled::from((1., 0.)) / Doubled::from(a));
+            let u = o1.select_doubled(Doubled::from(a), Doubled::from(ONE) / Doubled::from(a));
 
             let t = F32x::select4(
                 o0,

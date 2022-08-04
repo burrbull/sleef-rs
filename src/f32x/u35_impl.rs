@@ -713,10 +713,10 @@ macro_rules! impl_math_f32_u35 {
             x += u;
             let r = o.select(y, x * F32x::splat(2.));
             (!o & d.lt(ZERO)).select(
-                Doubled::from((
-                    3.141_592_741_012_573_242_2,
-                    -8.742_277_657_347_585_773_1_e-8,
-                ))
+                Doubled::new(
+                    F32x::splat(3.141_592_741_012_573_242_2),
+                    F32x::splat(-8.742_277_657_347_585_773_1_e-8),
+                )
                 .add_checked(-r)
                 .0,
                 r,

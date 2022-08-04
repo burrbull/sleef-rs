@@ -543,10 +543,10 @@ macro_rules! impl_math_f32_u10 {
 
             t *= F32x::splat(-0.333_332_866_430_282_592_773_438).add_checked_as_doubled(u * t.0);
             t = s * ONE.add_checked(t);
-            (Doubled::from((
-                1.570_796_370_506_286_621_1,
-                -4.371_138_828_673_792_886_5_e-8,
-            )) * F32x::from_cast(q))
+            (Doubled::new(
+                F32x::splat(1.570_796_370_506_286_621_1),
+                F32x::splat(-4.371_138_828_673_792_886_5_e-8),
+            ) * F32x::from_cast(q))
             .add_checked(t)
         }
 
@@ -602,7 +602,7 @@ macro_rules! impl_math_f32_u10 {
             let o = d.abs().lt(HALF);
             let x2 = o.select(d * d, (ONE - d.abs()) * HALF);
             let mut x = o.select_doubled(Doubled::from(d.abs()), x2.sqrt_as_doubled());
-            x = d.abs().eq(ONE).select_doubled(Doubled::from((0., 0.)), x);
+            x = d.abs().eq(ONE).select_doubled(Doubled::from(ZERO), x);
 
             let u = F32x::splat(0.419_745_482_5_e-1)
                 .mul_add(x2, F32x::splat(0.242_404_602_5_e-1))
@@ -611,10 +611,10 @@ macro_rules! impl_math_f32_u10 {
                 .mul_add(x2, F32x::splat(0.166_667_729_6))
                 * (x2 * x.0);
 
-            let y = Doubled::from((
-                3.141_592_741_012_573_242_2 / 4.,
-                -8.742_277_657_347_585_773_1_e-8 / 4.,
-            ))
+            let y = Doubled::new(
+                F32x::splat(3.141_592_741_012_573_242_2 / 4.),
+                F32x::splat(-8.742_277_657_347_585_773_1_e-8 / 4.),
+            )
             .sub_checked(x)
             .sub_checked(u);
 
@@ -641,7 +641,7 @@ macro_rules! impl_math_f32_u10 {
             let x2 = o.select(d * d, (ONE - d.abs()) * HALF);
 
             let mut x = o.select_doubled(Doubled::from(d.abs()), x2.sqrt_as_doubled());
-            x = d.abs().eq(ONE).select_doubled(Doubled::from((0., 0.)), x);
+            x = d.abs().eq(ONE).select_doubled(Doubled::from(ZERO), x);
 
             let u = F32x::splat(0.419_745_482_5_e-1)
                 .mul_add(x2, F32x::splat(0.242_404_602_5_e-1))
@@ -650,20 +650,20 @@ macro_rules! impl_math_f32_u10 {
                 .mul_add(x2, F32x::splat(0.166_667_729_6))
                 * (x2 * x.0);
 
-            let mut y = Doubled::from((
-                3.141_592_741_012_573_242_2 / 2.,
-                -8.742_277_657_347_585_773_1_e-8 / 2.,
-            ))
+            let mut y = Doubled::new(
+                F32x::splat(3.141_592_741_012_573_242_2 / 2.),
+                F32x::splat(-8.742_277_657_347_585_773_1_e-8 / 2.),
+            )
             .sub_checked(x.0.mul_sign(d).add_checked_as_doubled(u.mul_sign(d)));
             x = x.add_checked(u);
 
             y = o.select_doubled(y, x.scale(F32x::splat(2.)));
 
             y = (!o & d.lt(ZERO)).select_doubled(
-                Doubled::from((
-                    3.141_592_741_012_573_242_2,
-                    -8.742_277_657_347_585_773_1_e-8,
-                ))
+                Doubled::new(
+                    F32x::splat(3.141_592_741_012_573_242_2),
+                    F32x::splat(-8.742_277_657_347_585_773_1_e-8),
+                )
                 .sub_checked(y),
                 y,
             );
@@ -686,7 +686,7 @@ macro_rules! impl_math_f32_u10 {
         /// This function evaluates the arc tangent function of a value in ***a***.
         /// The error bound of the returned value is `1.0 ULP`.
         pub fn atanf(d: F32x) -> F32x {
-            let d2 = atan2kf_u1(Doubled::from(d.abs()), Doubled::from((1., 0.)));
+            let d2 = atan2kf_u1(Doubled::from(d.abs()), Doubled::from(ONE));
             let mut r = F32x::from(d2);
             r = d
                 .is_infinite()
@@ -888,12 +888,18 @@ macro_rules! impl_math_f32_u10 {
                 let mut e = ilogb2kf(d * F32x::splat(1. / 0.75));
                 m = ldexp3kf(d, -e);
                 e = o.select(e - I32x::splat(64), e);
-                Doubled::from((0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9)) * F32x::from_cast(e)
+                Doubled::new(
+                    F32x::splat(0.693_147_182_464_599_609_38),
+                    F32x::splat(-1.904_654_323_148_236_017_e-9)
+                ) * F32x::from_cast(e)
             }/* else {
                 let mut e = vgetexp_vf_vf(d * F32x::splat(1. / 0.75));
                 e = e.eq(F32x::INFINITY).select(F32x::splat(128.), e);
                 m = vgetmant_vf_vf(d);
-                Doubled::from((0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9)) * e
+                Doubled::new(
+                    F32x::splat(0.693_147_182_464_599_609_38),
+                    F32x::splat(-1.904_654_323_148_236_017_e-9)
+                ) * e
             }*/;
 
             let x = F32x::splat(-1.).add_as_doubled(m) / ONE.add_as_doubled(m);
@@ -946,12 +952,18 @@ macro_rules! impl_math_f32_u10 {
                     let mut e = ilogb2kf(d * F32x::splat(1. / 0.75));
                     m = ldexp3kf(d, -e);
                     e = o.select(e - I32x::splat(64), e);
-                    Doubled::from((0.301_030_01, -1.432_098_889_e-8)) * F32x::from_cast(e)
+                    Doubled::new(
+                        F32x::splat(0.301_030_01),
+                        F32x::splat(-1.432_098_889_e-8)
+                    ) * F32x::from_cast(e)
                 }/* else {
                     let mut e = vgetexp_vf_vf(d * F32x::splat(1. / 0.75));
                     e = e.eq(F32x::INFINITY).select(F32x::splat(128.), e);
                     m = vgetmant_vf_vf(d);
-                    Doubled::from((0.301_030_01, -1.432_098_889_e-8)) * e
+                    Doubled::new(
+                        F32x::splat(0.301_030_01),
+                        F32x::splat(-1.432_098_889_e-8)
+                    ) * e
                 }*/;
 
             let x = F32x::splat(-1.).add_as_doubled(m) / ONE.add_as_doubled(m);
@@ -961,7 +973,10 @@ macro_rules! impl_math_f32_u10 {
                 .mul_add(x2, F32x::splat(0.173_549_354_1))
                 .mul_add(x2, F32x::splat(0.289_530_962_7));
 
-            s = s.add_checked(x * Doubled::from((0.868_588_984, -2.170_757_285_e-8)));
+            s = s.add_checked(x * Doubled::new(
+                F32x::splat(0.868_588_984),
+                F32x::splat(-2.170_757_285_e-8)
+            ));
             s = s.add_checked(x2 * x.0 * t);
 
             let mut r = F32x::from(s);
@@ -1019,7 +1034,10 @@ macro_rules! impl_math_f32_u10 {
                 .mul_add(x2, F32x::splat(0.576_479_017_7))
                 .mul_add(x2, F32x::splat(0.961_801_290_512));
             let mut s = ef
-                + x * Doubled::from((2.885_390_043_258_666_992_2, 3.273_447_448_356_848_861_6_e-8));
+                + x * Doubled::new(
+                    F32x::splat(2.885_390_043_258_666_992_2),
+                    F32x::splat(3.273_447_448_356_848_861_6_e-8)
+                );
             s += x2 * x.0 * t;
 
             let mut r = F32x::from(s);
@@ -1065,13 +1083,19 @@ macro_rules! impl_math_f32_u10 {
                 let t = ldexp3kf(ONE, -e);
                 m = d.mul_add(t, t - ONE);
                 let e = o.select(e - I32x::splat(64), e);
-                Doubled::from((0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9)) * F32x::from_cast(e)
+                Doubled::new(
+                    F32x::splat(0.693_147_182_464_599_609_38),
+                    F32x::splat(-1.904_654_323_148_236_017_e-9)
+                ) * F32x::from_cast(e)
             }/* else {
                 let e = vgetexp_vf_vf(dp1, F32x::splat(1. / 0.75));
                 let e = e.eq(F32x::INFINITY).select(F32x::splat(128.), e);
                 let t = ldexp3kf(ONE, -e.roundi());
                 m = d.mul_add(t, t - ONE);
-                Doubled::from((0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9)) * e
+                Doubled::new(
+                    F32x::splat(0.693_147_182_464_599_609_38),
+                    F32x::splat(-1.904_654_323_148_236_017_e-9)
+                ) * e
             }*/;
 
             let x = Doubled::from(m) / F32x::splat(2.).add_checked_as_doubled(m);
@@ -1313,7 +1337,7 @@ macro_rules! impl_math_f32_u10 {
         /// This function returns the real cube root of ***a***.
         /// The error bound of the returned value is `1.0 ULP`.
         pub fn cbrtf(mut d: F32x) -> F32x {
-            let mut q2 = Doubled::from((1., 0.));
+            let mut q2 = Doubled::from(ONE);
 
             /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
                 let s = d;
@@ -1326,14 +1350,17 @@ macro_rules! impl_math_f32_u10 {
             let re = (t - F32x::from_cast(qu) * F32x::splat(3.)).trunci();
 
             q2 = re.eq(I32x::splat(1)).select_doubled(
-                Doubled::from((
-                    1.259_921_073_913_574_218_8,
-                    -2.401_870_169_421_727_041_5_e-8,
-                )),
+                Doubled::new(
+                    F32x::splat(1.259_921_073_913_574_218_8),
+                    F32x::splat(-2.401_870_169_421_727_041_5_e-8),
+                ),
                 q2,
             );
             q2 = re.eq(I32x::splat(2)).select_doubled(
-                Doubled::from((1.587_401_032_447_814_941_4, 1.952_038_530_816_935_235_6_e-8)),
+                Doubled::new(
+                    F32x::splat(1.587_401_032_447_814_941_4),
+                    F32x::splat(1.952_038_530_816_935_235_6_e-8)
+                ),
                 q2,
             );
 
@@ -1476,9 +1503,18 @@ macro_rules! impl_math_f32_u10 {
                     0.239_552_391_6_e-3,
                     0.145_990_154_1_e-3);
                 t2 = poly4df(x, t,
-                    Doubled::from((0.009_288_344_532_251_358_032_2, -2.786_374_589_702_533_075_5_e-11)),
-                    Doubled::from((0.042_275_499_552_488_327_026, 1.346_139_928_998_810_605_7_e-09)),
-                    Doubled::from((0.070_523_701_608_180_999_756, -3.661_630_931_870_736_516_3_e-09))
+                    Doubled::new(
+                        F32x::splat(0.009_288_344_532_251_358_032_2),
+                        F32x::splat(-2.786_374_589_702_533_075_5_e-11)
+                    ),
+                    Doubled::new(
+                        F32x::splat(0.042_275_499_552_488_327_026),
+                        F32x::splat(1.346_139_928_998_810_605_7_e-09)
+                    ),
+                    Doubled::new(
+                        F32x::splat(0.070_523_701_608_180_999_756),
+                        F32x::splat(-3.661_630_931_870_736_516_3_e-09)
+                    )
                 );
                 t2 = ONE.add_checked(t2 * x);
                 t2 = t2.square();
@@ -1493,20 +1529,39 @@ macro_rules! impl_math_f32_u10 {
                         o25.select_splat(-0.304_515_67_e-4, -0.692_830_435_6_e-4),
                         o25.select_splat(0.980_853_656_1_e-4, 0.717_269_256_7_e-3),
                         o25.select_splat(0.239_552_391_6_e-3, -0.513_104_535_6_e-2),
-                        o25.select_splat(0.145_990_154_1_e-3, 0.270_863_715_6_e-1));
+                        o25.select_splat(0.145_990_154_1_e-3, 0.270_863_715_6_e-1)
+                );
                 t2 = poly4df(x, t,
                     o25.select_doubled(
-                        Doubled::from((0.009_288_344_532_251_358_032_2, -2.786_374_589_702_533_075_5_e-11)),
-                        Doubled::from((-0.110_643_193_125_724_792_48, 3.705_045_277_722_528_300_7_e-09))
-                            ),
+                        Doubled::new(
+                            F32x::splat(0.009_288_344_532_251_358_032_2),
+                            F32x::splat(-2.786_374_589_702_533_075_5_e-11)
+                        ),
+                        Doubled::new(
+                            F32x::splat(-0.110_643_193_125_724_792_48),
+                            F32x::splat(3.705_045_277_722_528_300_7_e-09))
+                    ),
                     o25.select_doubled(
-                        Doubled::from((0.042_275_499_552_488_327_026, 1.346_139_928_998_810_605_7_e-09)),
-                        Doubled::from((-0.631_922_304_630_279_541_02, -2.020_043_258_507_317_785_9_e-08))
-                            ),
+                        Doubled::new(
+                            F32x::splat(0.042_275_499_552_488_327_026),
+                            F32x::splat(1.346_139_928_998_810_605_7_e-09)
+                        ),
+                        Doubled::new(
+                            F32x::splat(-0.631_922_304_630_279_541_02),
+                            F32x::splat(-2.020_043_258_507_317_785_9_e-08)
+                        )
+                    ),
                     o25.select_doubled(
-                        Doubled::from((0.070_523_701_608_180_999_756, -3.661_630_931_870_736_516_3_e-09)),
-                        Doubled::from((-1.129_663_825_035_095_214_8, 2.551_512_019_645_325_925_2_e-08))
-                            ));
+                        Doubled::new(
+                            F32x::splat(0.070_523_701_608_180_999_756),
+                            F32x::splat(-3.661_630_931_870_736_516_3_e-09)
+                        ),
+                        Doubled::new(
+                            F32x::splat(-1.129_663_825_035_095_214_8),
+                            F32x::splat(2.551_512_019_645_325_925_2_e-08)
+                        )
+                    )
+                );
                 t2 *= x;
                 let mut s2 = ONE.add_checked(t2);
                 s2 = s2.square();
@@ -1518,7 +1573,10 @@ macro_rules! impl_math_f32_u10 {
             }
 
             t2 += F32x::splat(-1.);
-            t2 = x.lt(F32x::splat(1e-4)).select_doubled(Doubled::from((-1.128_379_225_730_895_996_1, 5.863_538_342_219_759_109_7_e-08)) * x, t2);
+            t2 = x.lt(F32x::splat(1e-4)).select_doubled(Doubled::new(
+                F32x::splat(-1.128_379_225_730_895_996_1),
+                F32x::splat(5.863_538_342_219_759_109_7_e-08)
+            ) * x, t2);
 
             let mut z = -F32x::from(t2);
             z = x.ge(F32x::splat(6.)).select(ONE, z);

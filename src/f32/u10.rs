@@ -20,7 +20,7 @@ pub fn sinf(d: f32) -> f32 {
         let (mut dfidf, dfii) = rempif(d);
         q = ((dfii & 3) * 2 + ((dfidf.0 > 0.) as i32) + 1) >> 2;
         if (dfii & 1) != 0 {
-            dfidf += df(
+            dfidf += Doubled::new(
                 mulsignf(3.141_592_741_012_573_242_2 * -0.5, dfidf.0),
                 mulsignf(-8.742_277_657_347_585_773_1_e-8 * -0.5, dfidf.0),
             );
@@ -77,7 +77,7 @@ pub fn cosf(mut d: f32) -> f32 {
         let (mut dfidf, dfii) = rempif(d);
         q = ((dfii & 3) * 2 + ((dfidf.0 > 0.) as i32) + 7) >> 1;
         if (dfii & 1) == 0 {
-            dfidf += df(
+            dfidf += Doubled::new(
                 mulsignf(
                     3.141_592_741_012_573_242_2 * -0.5,
                     if dfidf.0 > 0. { 1. } else { -1. },
@@ -275,7 +275,7 @@ fn atan2kf_u1(mut y: Doubled<f32>, mut x: Doubled<f32>) -> Doubled<f32> {
 
     t = t * (-0.333_332_866_430_282_592_773_438).add_checked_as_doubled(u * t.0);
     t = s * (1.).add_checked(t);
-    df(
+    Doubled::new(
         1.570_796_370_506_286_621_1,
         -4.371_138_828_673_792_886_5_e-8,
     ) * (q as f32)
@@ -293,7 +293,7 @@ pub fn atan2f(mut y: f32, mut x: f32) -> f32 {
         y *= F1_24;
         x *= F1_24;
     } // nexttowardf((1. / FLT_MAX), 1)
-    let d = atan2kf_u1(df(fabsfk(y), 0.), df(x, 0.));
+    let d = atan2kf_u1(Doubled::from(fabsfk(y)), Doubled::from(x));
     let mut r = f32::from(d);
 
     r = mulsignf(r, x);
@@ -347,11 +347,15 @@ pub fn asinf(d: f32) -> f32 {
     let o = fabsfk(d) < 0.5;
     let x2 = if o { d * d } else { (1. - fabsfk(d)) * 0.5 };
     let mut x = if o {
-        df(fabsfk(d), 0.)
+        Doubled::from(fabsfk(d))
     } else {
         x2.sqrt_as_doubled()
     };
-    x = if fabsfk(d) == 1. { df(0., 0.) } else { x };
+    x = if fabsfk(d) == 1. {
+        Doubled::from(0.)
+    } else {
+        x
+    };
 
     let u = 0.419_745_482_5_e-1_f32
         .mul_add(x2, 0.242_404_602_5_e-1)
@@ -361,7 +365,7 @@ pub fn asinf(d: f32) -> f32 {
         * x2
         * x.0;
 
-    let y = (df(
+    let y = (Doubled::new(
         3.141_592_741_012_573_242_2 / 4.,
         -8.742_277_657_347_585_773_1_e-8 / 4.,
     )
@@ -384,11 +388,15 @@ pub fn acosf(d: f32) -> f32 {
     let o = fabsfk(d) < 0.5;
     let x2 = if o { d * d } else { (1. - fabsfk(d)) * 0.5 };
     let mut x = if o {
-        df(fabsfk(d), 0.)
+        Doubled::from(fabsfk(d))
     } else {
         x2.sqrt_as_doubled()
     };
-    x = if fabsfk(d) == 1. { df(0., 0.) } else { x };
+    x = if fabsfk(d) == 1. {
+        Doubled::from(0.)
+    } else {
+        x
+    };
 
     let u = 0.419_745_482_5_e-1_f32
         .mul_add(x2, 0.242_404_602_5_e-1)
@@ -398,7 +406,7 @@ pub fn acosf(d: f32) -> f32 {
         * x.0
         * x2;
 
-    let mut y = df(
+    let mut y = Doubled::new(
         3.141_592_741_012_573_242_2 / 2.,
         -8.742_277_657_347_585_773_1_e-8 / 2.,
     )
@@ -406,7 +414,7 @@ pub fn acosf(d: f32) -> f32 {
     x.add_checked_assign(u);
     y = if o { y } else { x.scale(2.) };
     if !o && (d < 0.) {
-        y = df(
+        y = Doubled::new(
             3.141_592_741_012_573_242_2,
             -8.742_277_657_347_585_773_1_e-8,
         )
@@ -426,7 +434,7 @@ fn test_acosf() {
 /// This function evaluates the arc tangent function of a value in ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
 pub fn atanf(d: f32) -> f32 {
-    let d2 = atan2kf_u1(df(fabsfk(d), 0.), df(1., 0.));
+    let d2 = atan2kf_u1(Doubled::from(fabsfk(d)), Doubled::from(1.));
     let r = if d.is_infinite() {
         1.570_796_326_794_896_557_998_982
     } else {
@@ -448,7 +456,7 @@ fn test_atanf() {
 /// sign or a correct value with `1.0 ULP` error bound is returned.
 pub fn sinhf(x: f32) -> f32 {
     let mut y = fabsfk(x);
-    let mut d = expk2f(df(y, 0.));
+    let mut d = expk2f(Doubled::from(y));
     d = d.sub_checked(d.recpre());
     y = f32::from(d) * 0.5;
 
@@ -475,7 +483,7 @@ fn test_sinhf() {
 /// sign or a correct value with `1.0 ULP` error bound is returned.
 pub fn coshf(x: f32) -> f32 {
     let mut y = fabsfk(x);
-    let mut d = expk2f(df(y, 0.));
+    let mut d = expk2f(Doubled::from(y));
     d = d.add_checked(d.recpre());
     y = f32::from(d) * 0.5;
 
@@ -499,7 +507,7 @@ fn test_coshf() {
 /// The error bound of the returned value is `1.0001 ULP`.
 pub fn tanhf(x: f32) -> f32 {
     let mut y = fabsfk(x);
-    let mut d = expk2f(df(y, 0.));
+    let mut d = expk2f(Doubled::from(y));
     let e = d.recpre();
     d = d.sub_checked(e) / d.add_checked(e);
     y = f32::from(d);
@@ -528,7 +536,7 @@ fn test_tanhf() {
 pub fn asinhf(x: f32) -> f32 {
     let mut y = fabsfk(x);
 
-    let mut d = if y > 1. { x.recpre() } else { df(y, 0.) };
+    let mut d = if y > 1. { x.recpre() } else { Doubled::from(y) };
     d = (d.square() + 1.).sqrt();
     d = if y > 1. { d * y } else { d };
 
@@ -649,7 +657,8 @@ pub fn logf(mut d: f32) -> f32 {
         .mul_add(x2, 0.399_610_817_4)
         .mul_add(x2, 0.666_669_488);
 
-    let s = (df(0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9) * (e as f32))
+    let s = (Doubled::new(0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9)
+        * (e as f32))
         .add_checked(x.scale(2.))
         .add_checked(x2 * x.0 * t);
 
@@ -693,8 +702,8 @@ pub fn log10f(mut d: f32) -> f32 {
         .mul_add(x2, 0.173_549_354_1)
         .mul_add(x2, 0.289_530_962_7);
 
-    let s = (df(0.301_030_01, -1.432_098_889_e-8) * (e as f32))
-        .add_checked(x * df(0.868_588_984, -2.170_757_285_e-8))
+    let s = (Doubled::new(0.301_030_01, -1.432_098_889_e-8) * (e as f32))
+        .add_checked(x * Doubled::new(0.868_588_984, -2.170_757_285_e-8))
         .add_checked(x2 * x.0 * t);
 
     if d == 0. {
@@ -737,7 +746,8 @@ pub fn log2f(mut d: f32) -> f32 {
         .mul_add(x2, 0.576_479_017_7)
         .mul_add(x2, 0.961_801_290_512);
 
-    let mut s = (e as f32) + x * df(2.885_390_043_258_666_992_2, 3.273_447_448_356_848_861_6_e-8);
+    let mut s =
+        (e as f32) + x * Doubled::new(2.885_390_043_258_666_992_2, 3.273_447_448_356_848_861_6_e-8);
     s += x2 * x.0 * t;
 
     if d == 0. {
@@ -777,14 +787,15 @@ pub fn log1pf(d: f32) -> f32 {
         e -= 64;
     }
 
-    let x = df(m, 0.) / (2.).add_checked_as_doubled(m);
+    let x = Doubled::from(m) / (2.).add_checked_as_doubled(m);
     let x2 = x.0 * x.0;
 
     let t = 0.302_729_487_4_f32
         .mul_add(x2, 0.399_610_817_4)
         .mul_add(x2, 0.666_669_488);
 
-    let s = (df(0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9) * (e as f32))
+    let s = (Doubled::new(0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9)
+        * (e as f32))
         .add_checked(x.scale(2.))
         .add_checked(x2 * x.0 * t);
 
@@ -856,7 +867,7 @@ pub fn exp10f(d: f32) -> f32 {
         .mul_add(s, 0.117_124_533_7_e+1)
         .mul_add(s, 0.203_467_869_8_e+1)
         .mul_add(s, 0.265_094_900_1_e+1);
-    let x = df(2.3025851249694824219, -3.1705172516493593157e-08).add_checked(u * s);
+    let x = Doubled::new(2.3025851249694824219, -3.1705172516493593157e-08).add_checked(u * s);
     u = (1.).add_checked(x * s).normalize().0;
 
     if d > 38.531_839_419_103_623_894_138_7 {
@@ -878,7 +889,7 @@ fn test_exp10f() {
 /// This function returns the value one less than *e* raised to ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
 pub fn expm1f(a: f32) -> f32 {
-    let d = expk2f(df(a, 0.)) + (-1.);
+    let d = expk2f(Doubled::from(a)) + (-1.);
     if a.is_neg_zero() {
         -0.
     } else if a < -16.635_532_333_438_687_426_013_570 {
@@ -997,15 +1008,15 @@ pub fn cbrtf(mut d: f32) -> f32 {
     d = ldexp2kf(d, -e);
     let r = (e + 6144) % 3;
     let mut q2 = if r == 1 {
-        df(
+        Doubled::new(
             1.259_921_073_913_574_218_8,
             -2.401_870_169_421_727_041_5_e-8,
         )
     } else {
-        df(1., 0.)
+        Doubled::from(1.)
     };
     q2 = if r == 2 {
-        df(1.587_401_032_447_814_941_4, 1.952_038_530_816_935_235_6_e-8)
+        Doubled::new(1.587_401_032_447_814_941_4, 1.952_038_530_816_935_235_6_e-8)
     } else {
         q2
     };
@@ -1104,7 +1115,7 @@ fn poly2df_b(x: f32, c1: Doubled<f32>, c0: Doubled<f32>) -> Doubled<f32> {
     dfmla(x, c1, c0)
 }
 fn poly2df(x: f32, c1: f32, c0: Doubled<f32>) -> Doubled<f32> {
-    dfmla(x, df(c1, 0.), c0)
+    dfmla(x, Doubled::from(c1), c0)
 }
 fn poly4df(x: f32, c3: f32, c2: Doubled<f32>, c1: Doubled<f32>, c0: Doubled<f32>) -> Doubled<f32> {
     dfmla(x * x, poly2df(x, c3, c2), poly2df_b(x, c1, c0))
@@ -1135,15 +1146,15 @@ pub fn erff(a: f32) -> f32 {
         t2 = poly4df(
             x,
             t,
-            df(
+            Doubled::new(
                 0.009_288_344_532_251_358_032_2,
                 -2.786_374_589_702_533_075_5_e-11,
             ),
-            df(
+            Doubled::new(
                 0.042_275_499_552_488_327_026,
                 1.346_139_928_998_810_605_7_e-09,
             ),
-            df(
+            Doubled::new(
                 0.070_523_701_608_180_999_756,
                 -3.661_630_931_870_736_516_3_e-09,
             ),
@@ -1155,7 +1166,7 @@ pub fn erff(a: f32) -> f32 {
         t2 = t2.square();
         t2 = t2.recpre();
     } else if x > 4. {
-        t2 = df(0., 0.);
+        t2 = Doubled::from(0.);
     } else {
         let t = f32::poly6(
             x,
@@ -1171,27 +1182,27 @@ pub fn erff(a: f32) -> f32 {
         t2 = poly4df(
             x,
             t,
-            df(
+            Doubled::new(
                 -0.110_643_193_125_724_792_48,
                 3.705_045_277_722_528_300_7_e-09,
             ),
-            df(
+            Doubled::new(
                 -0.631_922_304_630_279_541_02,
                 -2.020_043_258_507_317_785_9_e-08,
             ),
-            df(
+            Doubled::new(
                 -1.129_663_825_035_095_214_8,
                 2.551_512_019_645_325_925_2_e-08,
             ),
         );
         t2 *= x;
-        t2 = df(expkf(t2), 0.);
+        t2 = Doubled::from(expkf(t2));
     }
 
     t2 += -1.;
 
     if x < 1e-4 {
-        t2 = df(
+        t2 = Doubled::new(
             -1.128_379_225_730_895_996_1,
             5.863_538_342_219_759_109_7_e-08,
         ) * x;

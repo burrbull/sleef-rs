@@ -17,10 +17,7 @@ macro_rules! impl_math_f64_u15 {
 
             let u = o0.select_doubled(
                 a.mul_as_doubled(a),
-                o1.select_doubled(
-                    Doubled::new(a, ZERO),
-                    Doubled::from((1., 0.)) / Doubled::new(a, ZERO),
-                ),
+                o1.select_doubled(Doubled::from(a), Doubled::from((1., 0.)) / Doubled::from(a)),
             );
 
             let t = F64x::select4(
@@ -301,7 +298,7 @@ macro_rules! impl_math_f64_u15 {
                 ),
             );
 
-            let mut x = o1.select_doubled(d, Doubled::new(-a, ZERO)) * a;
+            let mut x = o1.select_doubled(d, Doubled::from(-a)) * a;
             x = o1.select_doubled(x, x + d);
             x = o0.select_doubled(Doubled::from((1., 0.)).sub_checked(x), expk2(x));
             x = o1.select_doubled(x, x * u);

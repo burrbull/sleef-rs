@@ -27,7 +27,7 @@ pub fn sinf(mut d: f32) -> f32 {
         let (mut dfidf, dfii) = rempif(t);
         q = ((dfii & 3) * 2 + ((dfidf.0 > 0.) as i32) + 1) >> 2;
         if (dfii & 1) != 0 {
-            dfidf += df(
+            dfidf += Doubled::new(
                 mulsignf(3.141_592_741_012_573_242_2 * -0.5, dfidf.0),
                 mulsignf(-8.742_277_657_347_585_773_1_e-8 * -0.5, dfidf.0),
             );
@@ -86,7 +86,7 @@ pub fn cosf(mut d: f32) -> f32 {
         let (mut dfidf, dfii) = rempif(t);
         q = ((dfii & 3) * 2 + ((dfidf.0 > 0.) as i32) + 7) >> 1;
         if (dfii & 1) == 0 {
-            dfidf += df(
+            dfidf += Doubled::new(
                 mulsignf(
                     3.141_592_741_012_573_242_2 * -0.5,
                     if dfidf.0 > 0. { 1. } else { -1. },
@@ -428,7 +428,7 @@ pub fn acosf(d: f32) -> f32 {
     x += u;
     let r = if o { y } else { x * 2. };
     if !o && (d < 0.) {
-        df(
+        Doubled::new(
             3.141_592_741_012_573_242_2,
             -8.742_277_657_347_585_773_1_e-8,
         )

@@ -862,7 +862,7 @@ macro_rules! impl_math_f64 {
                     ),
                 );
 
-            x *= o.select_doubled(s2, Doubled::new(t, ZERO));
+            x *= o.select_doubled(s2, Doubled::from(t));
             x = o.select_doubled(x + ONE, x);
 
             let o = M64x::from_cast((q + Ix::splat(2) & Ix::splat(4)).eq(Ix::splat(4)));
@@ -1408,7 +1408,7 @@ macro_rules! impl_math_f64 {
             let de = o.select(de * D1_54X, de);
             let s = o.select(s * (ONE / D1_54X), s);
             let rde = toward0(de.recpre());
-            let mut r = Doubled::new(nu, ZERO);
+            let mut r = Doubled::from(nu);
 
             for _ in 0..21 {
                 // ceil(log2(DBL_MAX) / 51) + 1
@@ -1441,7 +1441,7 @@ macro_rules! impl_math_f64 {
 
             let mut x = otiny.select_doubled(
                 Doubled::from((0., 0.)),
-                oref.select_doubled(ONE.add_as_doubled(-a), Doubled::new(a, ZERO)),
+                oref.select_doubled(ONE.add_as_doubled(-a), Doubled::from(a)),
             );
 
             let o0 = HALF.le(x.0) & x.0.le(F64x::splat(1.1));
@@ -1728,7 +1728,7 @@ macro_rules! impl_math_f64 {
             }
 
             clld = otiny.select_doubled(
-                Doubled::new(a * (D1_60X * D1_60X), ZERO),
+                Doubled::from(a * (D1_60X * D1_60X)),
                 oref.select_doubled(x, y),
             );
 
@@ -1812,7 +1812,7 @@ macro_rules! impl_math_f64 {
                     ),
                 );
 
-            x *= o.select_doubled(s2, Doubled::new(t, ZERO));
+            x *= o.select_doubled(s2, Doubled::from(t));
             x = o.select_doubled(x + ONE, x);
 
             let o = M64x::from_cast((q & Ix::splat(4)).eq(Ix::splat(4)));

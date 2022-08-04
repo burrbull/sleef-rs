@@ -801,7 +801,7 @@ macro_rules! impl_math_f32 {
             x = a
                 .abs()
                 .lt(F32x::splat(0.7))
-                .select_doubled(Doubled::new(a, ZERO), x);
+                .select_doubled(Doubled::from(a), x);
             (x, q)
         }
 
@@ -1197,7 +1197,7 @@ macro_rules! impl_math_f32 {
             {
                 let rde = toward0(rde);
             }
-            let mut r = Doubled::new(nu, ZERO);
+            let mut r = Doubled::from(nu);
 
             for _ in 0..8 {
                 // ceil(log2(FLT_MAX) / 22)+1
@@ -1259,7 +1259,7 @@ macro_rules! impl_math_f32 {
                     ),
                 );
 
-            x *= o.select_doubled(s2, Doubled::new(t, ZERO));
+            x *= o.select_doubled(s2, Doubled::from(t));
             x = o.select_doubled(x + ONE, x);
 
             let o = (q & I32x::splat(4)).eq(I32x::splat(4));
@@ -1312,7 +1312,7 @@ macro_rules! impl_math_f32 {
                     ),
                 );
 
-            x *= o.select_doubled(s2, Doubled::new(t, ZERO));
+            x *= o.select_doubled(s2, Doubled::from(t));
             x = o.select_doubled(x + ONE, x);
 
             let o = ((q + I32x::splat(2)) & I32x::splat(4)).eq(I32x::splat(4));
@@ -1334,7 +1334,7 @@ macro_rules! impl_math_f32 {
 
             let x = otiny.select_doubled(
                 Doubled::from((0., 0.)),
-                oref.select_doubled(ONE.add_as_doubled(-a), Doubled::new(a, ZERO)),
+                oref.select_doubled(ONE.add_as_doubled(-a), Doubled::from(a)),
             );
 
             let o0 = HALF.le(x.0) & x.0.le(F32x::splat(1.2));
@@ -1479,7 +1479,7 @@ macro_rules! impl_math_f32 {
             }
 
             clld = otiny.select_doubled(
-                Doubled::new(a * (F1_30X * F1_30X), ZERO),
+                Doubled::from(a * (F1_30X * F1_30X)),
                 oref.select_doubled(x, y),
             );
 

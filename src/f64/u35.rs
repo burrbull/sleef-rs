@@ -31,7 +31,7 @@ pub fn sin(mut d: f64) -> f64 {
         ql = (((ddii & 3) * 2 + ((ddidd.0 > 0.) as i32) + 1) >> 2) as isize;
         if ddii & 1 != 0 {
             ddidd = ddidd
-                + dd(
+                + Doubled::new(
                     mulsign(3.141_592_653_589_793_116 * -0.5, ddidd.0),
                     mulsign(1.224_646_799_147_353_207_2_e-16 * -0.5, ddidd.0),
                 );
@@ -109,7 +109,7 @@ pub fn cos(mut d: f64) -> f64 {
         ql = (((ddii & 3) * 2 + ((ddidd.0 > 0.) as i32) + 7) >> 1) as isize;
         if (ddii & 1) == 0 {
             ddidd = ddidd
-                + dd(
+                + Doubled::new(
                     mulsign(
                         3.141_592_653_589_793_116 * -0.5,
                         if ddidd.0 > 0. { 1. } else { -1. },
@@ -526,7 +526,7 @@ pub fn acos(d: f64) -> f64 {
     x += u;
     let r = if o { y } else { x * 2. };
     if !o && (d < 0.) {
-        dd(3.141_592_653_589_793_116, 1.224_646_799_147_353_207_2_e-16)
+        Doubled::new(3.141_592_653_589_793_116, 1.224_646_799_147_353_207_2_e-16)
             .add_checked(-r)
             .0
     } else {

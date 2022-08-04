@@ -62,11 +62,6 @@ const PI_A2: f64 = 3.141_592_653_589_793_116;
 const PI_B2: f64 = 1.224_646_799_147_353_207_2_e-16;
 const TRIGRANGEMAX2: f64 = 15.;
 
-#[inline]
-const fn dd(h: f64, l: f64) -> Doubled<f64> {
-    Doubled::new(h, l)
-}
-
 mod u05;
 #[rustfmt::skip]
 pub use u05::{
@@ -701,17 +696,17 @@ fn rempi(a: f64) -> (Doubled<f64>, i32) {
     q += dii;
     x.0 = did;
     x = x.normalize();
-    y = dd(
+    y = Doubled::new(
         crate::tables::REMPITABDP[ex + 2],
         crate::tables::REMPITABDP[ex + 3],
     ) * a;
     x += y;
     x = x.normalize()
-        * dd(
+        * Doubled::new(
             3.141_592_653_589_793_116 * 2.,
             1.224_646_799_147_353_207_2_e-16 * 2.,
         );
-    (if fabsk(a) < 0.7 { dd(a, 0.) } else { x }, q)
+    (if fabsk(a) < 0.7 { Doubled::from(a) } else { x }, q)
 }
 
 #[inline]
@@ -774,30 +769,30 @@ fn sinpik(d: f64) -> Doubled<f64> {
     );
     let mut x = u * s
         + (if o {
-            dd(
+            Doubled::new(
                 0.015_854_344_243_815_501_891_425_9,
                 -1.046_932_722_806_315_219_088_45_e-18,
             )
         } else {
-            dd(
+            Doubled::new(
                 -0.080_745_512_188_280_785_248_473_1,
                 3.618_524_750_670_371_048_499_87_e-18,
             )
         });
     x = s2 * x
         + (if o {
-            dd(
+            Doubled::new(
                 -0.308_425_137_534_042_437_259_529,
                 -1.956_984_921_336_335_503_383_45_e-17,
             )
         } else {
-            dd(
+            Doubled::new(
                 0.785_398_163_397_448_278_999_491,
                 3.062_871_137_271_550_026_071_05_e-17,
             )
         });
 
-    x *= if o { s2 } else { dd(t, 0.) };
+    x *= if o { s2 } else { Doubled::from(t) };
     x = if o { x + 1. } else { x };
 
     //
@@ -869,30 +864,30 @@ fn cospik(d: f64) -> Doubled<f64> {
     );
     let mut x = u * s
         + (if o {
-            dd(
+            Doubled::new(
                 0.015_854_344_243_815_501_891_425_9,
                 -1.046_932_722_806_315_219_088_45_e-18,
             )
         } else {
-            dd(
+            Doubled::new(
                 -0.080_745_512_188_280_785_248_473_1,
                 3.618_524_750_670_371_048_499_87_e-18,
             )
         });
     x = s2 * x
         + (if o {
-            dd(
+            Doubled::new(
                 -0.308_425_137_534_042_437_259_529,
                 -1.956_984_921_336_335_503_383_45_e-17,
             )
         } else {
-            dd(
+            Doubled::new(
                 0.785_398_163_397_448_278_999_491,
                 3.062_871_137_271_550_026_071_05_e-17,
             )
         });
 
-    x *= if o { s2 } else { dd(t, 0.) };
+    x *= if o { s2 } else { Doubled::from(t) };
     x = if o { x + 1. } else { x };
 
     //
@@ -978,12 +973,12 @@ fn logk(mut d: f64) -> Doubled<f64> {
         0.285_714_285_714_249_172_087_875,
         0.400_000_000_000_000_077_715_612,
     );
-    let c = dd(
+    let c = Doubled::new(
         0.666_666_666_666_666_629_659_233,
         3.805_549_625_424_120_563_366_16_e-17,
     );
 
-    let mut s = (dd(
+    let mut s = (Doubled::new(
         0.693_147_180_559_945_286_226_764,
         2.319_046_813_846_299_558_417_771_e-17,
     ) * (e as f64))
@@ -1061,7 +1056,7 @@ fn expk2(d: Doubled<f64>) -> Doubled<f64> {
     t = Doubled::new(ldexp2k(t.0, q), ldexp2k(t.1, q));
 
     if d.0 < -1000. {
-        dd(0., 0.)
+        Doubled::from(0.)
     } else {
         t
     }
@@ -1093,7 +1088,7 @@ fn logk2(d: Doubled<f64>) -> Doubled<f64> {
     )
     .mul_add(x2.0, 0.666_666_666_666_664_853_302_393);
 
-    (dd(
+    (Doubled::new(
         0.693_147_180_559_945_286_226_764,
         2.319_046_813_846_299_558_417_771_e-17,
     ) * (e as f64))
@@ -1102,18 +1097,18 @@ fn logk2(d: Doubled<f64>) -> Doubled<f64> {
 }
 
 fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
-    let mut clln = dd(1., 0.);
-    let mut clld = dd(1., 0.);
+    let mut clln = Doubled::from(1.);
+    let mut clld = Doubled::from(1.);
 
     let otiny = fabsk(a) < 1e-306;
     let oref = a < 0.5;
 
     let mut x = if otiny {
-        dd(0., 0.)
+        Doubled::from(0.)
     } else if oref {
         (1.).add_as_doubled(-a)
     } else {
-        dd(a, 0.)
+        Doubled::from(a)
     };
 
     let o0 = (0.5 <= x.0) && (x.0 <= 1.1);
@@ -1363,7 +1358,7 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
 
     y = (x + (-0.5)) * logk2(x);
     y += -x;
-    y += dd(
+    y += Doubled::new(
         0.918_938_533_204_672_780_56,
         -3.878_294_158_067_241_449_8_e-17,
     ); // 0.5*log(2*M_PI)
@@ -1395,17 +1390,17 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
     y = clln;
 
     clc = if otiny {
-        dd(
+        Doubled::new(
             83.177_661_667_193_433_459_033_3,
             3.671_034_596_315_685_072_218_78_e-15,
         ) // log(2^120)
     } else if oref {
-        dd(1.144_729_885_849_400_163_9, 1.026_595_116_270_782_638_e-17) + (-clc)
+        Doubled::new(1.144_729_885_849_400_163_9, 1.026_595_116_270_782_638_e-17) + (-clc)
     } else {
         clc
     }; // log(M_PI)
     let clln = if otiny {
-        dd(1., 0.)
+        Doubled::from(1.)
     } else if oref {
         clln
     } else {
@@ -1417,7 +1412,7 @@ fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {
     }
 
     clld = if otiny {
-        dd(a * (D1_60 * D1_60), 0.)
+        Doubled::from(a * (D1_60 * D1_60))
     } else if oref {
         x
     } else {
@@ -1744,7 +1739,7 @@ pub fn fmod(x: f64, y: f64) -> f64 {
     } else {
         1.
     };
-    let mut r = dd(nu, 0.);
+    let mut r = Doubled::from(nu);
     let rde = toward0(1. / de);
 
     for _ in 0..21 {

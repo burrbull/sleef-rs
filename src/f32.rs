@@ -33,11 +33,6 @@ const R_LN2_F: f32 =
     1.442_695_040_888_963_407_359_924_681_001_892_137_426_645_954_152_985_934_135_449_406_931;
 const LOG10_2_F: f32 = 3.321_928_094_887_362_347_870_319_429_489_390_175_864_831_393;
 
-#[inline]
-const fn df(h: f32, l: f32) -> Doubled<f32> {
-    Doubled::new(h, l)
-}
-
 mod u05;
 #[rustfmt::skip]
 pub use u05::{
@@ -620,17 +615,17 @@ fn rempif(a: f32) -> (Doubled<f32>, i32) {
     q += dii;
     x.0 = did;
     x = x.normalize();
-    y = df(
+    y = Doubled::new(
         crate::tables::REMPITABSP[ex + 2],
         crate::tables::REMPITABSP[ex + 3],
     ) * a;
     x += y;
     x = x.normalize();
-    x *= df(
+    x *= Doubled::new(
         3.141_592_741_012_573_242_2 * 2.,
         -8.742_277_657_347_585_773_1_e-8 * 2.,
     );
-    (if fabsfk(a) < 0.7 { df(a, 0.) } else { x }, q)
+    (if fabsfk(a) < 0.7 { Doubled::from(a) } else { x }, q)
 }
 
 #[inline]
@@ -750,12 +745,12 @@ fn logkf(mut d: f32) -> Doubled<f32> {
     let t = 0.240_320_354_700_088_500_976_562_f32
         .mul_add(x2.0, 0.285_112_679_004_669_189_453_125)
         .mul_add(x2.0, 0.400_007_992_982_864_379_882_812);
-    let c = df(
+    let c = Doubled::new(
         0.666_666_626_930_236_816_406_25,
         3.691_838_612_596_143_320_843_11_e-9,
     );
 
-    (df(0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9) * (e as f32))
+    (Doubled::new(0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9) * (e as f32))
         .add_checked(x.scale(2.))
         .add_checked(x2 * x * (x2 * t + c))
 }
@@ -782,7 +777,7 @@ fn expk2f(d: Doubled<f32>) -> Doubled<f32> {
     t = Doubled::new(ldexp2kf(t.0, q), ldexp2kf(t.1, q));
 
     if d.0 < -104. {
-        df(0., 0.)
+        Doubled::from(0.)
     } else {
         t
     }
@@ -801,7 +796,7 @@ fn logk2f(d: Doubled<f32>) -> Doubled<f32> {
         .mul_add(x2.0, 0.400_005_877_017_974_853_515_625)
         .mul_add(x2.0, 0.666_666_686_534_881_591_796_875);
 
-    (df(0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9) * (e as f32))
+    (Doubled::new(0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9) * (e as f32))
         + x.scale(2.)
         + x2 * x * t
 }
@@ -842,30 +837,30 @@ fn sinpifk(d: f32) -> Doubled<f32> {
     );
     let mut x = u * s
         + (if o {
-            df(
+            Doubled::new(
                 0.015_854_343_771_934_509_277,
                 4.494_005_135_403_224_281_1_e-10,
             )
         } else {
-            df(
+            Doubled::new(
                 -0.080_745_510_756_969_451_904,
                 -1.337_366_533_907_693_625_8_e-9,
             )
         });
     x = s2 * x
         + (if o {
-            df(
+            Doubled::new(
                 -0.308_425_128_459_930_419_92,
                 -9.072_833_903_073_392_227_7_e-9,
             )
         } else {
-            df(
+            Doubled::new(
                 0.785_398_185_253_143_310_55,
                 -2.185_733_861_756_648_485_5_e-8,
             )
         });
 
-    x *= if o { s2 } else { df(t, 0.) };
+    x *= if o { s2 } else { Doubled::from(t) };
     x = if o { x + 1. } else { x };
 
     //
@@ -912,30 +907,30 @@ fn cospifk(d: f32) -> Doubled<f32> {
     );
     let mut x = u * s
         + (if o {
-            df(
+            Doubled::new(
                 0.015_854_343_771_934_509_277,
                 4.494_005_135_403_224_281_1_e-10,
             )
         } else {
-            df(
+            Doubled::new(
                 -0.080_745_510_756_969_451_904,
                 -1.337_366_533_907_693_625_8_e-9,
             )
         });
     x = s2 * x
         + (if o {
-            df(
+            Doubled::new(
                 -0.308_425_128_459_930_419_92,
                 -9.072_833_903_073_392_227_7_e-9,
             )
         } else {
-            df(
+            Doubled::new(
                 0.785_398_185_253_143_310_55,
                 -2.185_733_861_756_648_485_5_e-8,
             )
         });
 
-    x *= if o { s2 } else { df(t, 0.) };
+    x *= if o { s2 } else { Doubled::from(t) };
     x = if o { x + 1. } else { x };
 
     //
@@ -951,11 +946,11 @@ fn gammafk(a: f32) -> (Doubled<f32>, Doubled<f32>) {
     let oref = a < 0.5;
 
     let mut x = if otiny {
-        df(0., 0.)
+        Doubled::from(0.)
     } else if oref {
         (1.).add_as_doubled(-a)
     } else {
-        df(a, 0.)
+        Doubled::from(a)
     };
 
     let o0 = (0.5 <= x.0) && (x.0 <= 1.2);
@@ -964,7 +959,11 @@ fn gammafk(a: f32) -> (Doubled<f32>, Doubled<f32>) {
     let mut y = ((x + 1.) * x).normalize();
     y = ((x + 2.) * y).normalize();
 
-    let mut clln = if o2 && (x.0 <= 7.) { y } else { df(1., 0.) };
+    let mut clln = if o2 && (x.0 <= 7.) {
+        y
+    } else {
+        Doubled::from(1.)
+    };
 
     x = if o2 && (x.0 <= 7.) { x + 3. } else { x };
     let t = if o2 {
@@ -1063,7 +1062,7 @@ fn gammafk(a: f32) -> (Doubled<f32>, Doubled<f32>) {
 
     y = (x + (-0.5)) * logk2f(x);
     y += -x;
-    y += df(0.918_938_533_204_672_780_56, 0.); // 0.5*log(2*M_PI)
+    y += Doubled::from(0.918_938_533_204_672_780_56); // 0.5*log(2*M_PI)
 
     let mut z = u.mul_as_doubled(t)
         + (if o0 {
@@ -1090,20 +1089,20 @@ fn gammafk(a: f32) -> (Doubled<f32>, Doubled<f32>) {
     let mut clld = if o2 {
         u.mul_as_doubled(t) + 1.
     } else {
-        df(1., 0.)
+        Doubled::from(1.)
     };
 
     y = clln;
 
     clc = if otiny {
-        df(41.588_830_833_596_718_565_03, 0.) // log(2^60)
+        Doubled::from(41.588_830_833_596_718_565_03) // log(2^60)
     } else if oref {
-        df(1.144_729_885_849_400_163_9, 0.) + (-clc)
+        Doubled::from(1.144_729_885_849_400_163_9_f32) + (-clc)
     } else {
         clc
     }; // log(M_PI)
     clln = if otiny {
-        df(1., 0.)
+        Doubled::from(1.)
     } else if oref {
         clln
     } else {
@@ -1115,7 +1114,7 @@ fn gammafk(a: f32) -> (Doubled<f32>, Doubled<f32>) {
     }
 
     clld = if otiny {
-        df(a * (F1_30 * F1_30), 0.)
+        Doubled::from(a * (F1_30 * F1_30))
     } else if oref {
         x
     } else {
@@ -1393,7 +1392,7 @@ pub fn fmodf(x: f32, y: f32) -> f32 {
         1.
     };
 
-    let mut r = df(nu, 0.);
+    let mut r = Doubled::from(nu);
     let rde = toward0(1. / de);
 
     for _ in 0..8 {

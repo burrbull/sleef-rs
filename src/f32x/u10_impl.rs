@@ -561,7 +561,7 @@ macro_rules! impl_math_f32_u10 {
             x = o.select(x * F1_24X, x);
             y = o.select(y * F1_24X, y);
 
-            let d = atan2kf_u1(Doubled::new(y.abs(), ZERO), Doubled::new(x, ZERO));
+            let d = atan2kf_u1(Doubled::from(y.abs()), Doubled::from(x));
             let mut r = F32x::from(d);
 
             r = r.mul_sign(x);
@@ -601,7 +601,7 @@ macro_rules! impl_math_f32_u10 {
         pub fn asinf(d: F32x) -> F32x {
             let o = d.abs().lt(HALF);
             let x2 = o.select(d * d, (ONE - d.abs()) * HALF);
-            let mut x = o.select_doubled(Doubled::new(d.abs(), ZERO), x2.sqrt_as_doubled());
+            let mut x = o.select_doubled(Doubled::from(d.abs()), x2.sqrt_as_doubled());
             x = d.abs().eq(ONE).select_doubled(Doubled::from((0., 0.)), x);
 
             let u = F32x::splat(0.419_745_482_5_e-1)
@@ -640,7 +640,7 @@ macro_rules! impl_math_f32_u10 {
             let o = d.abs().lt(HALF);
             let x2 = o.select(d * d, (ONE - d.abs()) * HALF);
 
-            let mut x = o.select_doubled(Doubled::new(d.abs(), ZERO), x2.sqrt_as_doubled());
+            let mut x = o.select_doubled(Doubled::from(d.abs()), x2.sqrt_as_doubled());
             x = d.abs().eq(ONE).select_doubled(Doubled::from((0., 0.)), x);
 
             let u = F32x::splat(0.419_745_482_5_e-1)
@@ -686,7 +686,7 @@ macro_rules! impl_math_f32_u10 {
         /// This function evaluates the arc tangent function of a value in ***a***.
         /// The error bound of the returned value is `1.0 ULP`.
         pub fn atanf(d: F32x) -> F32x {
-            let d2 = atan2kf_u1(Doubled::new(d.abs(), ZERO), Doubled::from((1., 0.)));
+            let d2 = atan2kf_u1(Doubled::from(d.abs()), Doubled::from((1., 0.)));
             let mut r = F32x::from(d2);
             r = d
                 .is_infinite()
@@ -712,7 +712,7 @@ macro_rules! impl_math_f32_u10 {
         /// sign or a correct value with `1.0 ULP` error bound is returned.
         pub fn sinhf(x: F32x) -> F32x {
             let mut y = x.abs();
-            let d = expk2f(Doubled::new(y, ZERO));
+            let d = expk2f(Doubled::from(y));
             let d = d.sub_checked(d.recpre());
             y = F32x::from(d) * HALF;
 
@@ -739,7 +739,7 @@ macro_rules! impl_math_f32_u10 {
         /// sign or a correct value with `1.0 ULP` error bound is returned.
         pub fn coshf(x: F32x) -> F32x {
             let mut y = x.abs();
-            let d = expk2f(Doubled::new(y, ZERO));
+            let d = expk2f(Doubled::from(y));
             let d = d.add_checked(d.recpre());
             y = F32x::from(d) * HALF;
 
@@ -763,7 +763,7 @@ macro_rules! impl_math_f32_u10 {
         /// The error bound of the returned value is `1.0001 ULP`.
         pub fn tanhf(x: F32x) -> F32x {
             let mut y = x.abs();
-            let d = expk2f(Doubled::new(y, ZERO));
+            let d = expk2f(Doubled::from(y));
             let e = d.recpre();
             let d = d.add_checked(-e) / d.add_checked(e);
             y = F32x::from(d);
@@ -793,7 +793,7 @@ macro_rules! impl_math_f32_u10 {
             let mut y = x.abs();
             let o = y.gt(ONE);
 
-            let mut d = o.select_doubled(x.recpre_as_doubled(), Doubled::new(y, ZERO));
+            let mut d = o.select_doubled(x.recpre_as_doubled(), Doubled::from(y));
             d = (d.square() + ONE).sqrt();
             d = o.select_doubled(d * y, d);
 
@@ -1074,7 +1074,7 @@ macro_rules! impl_math_f32_u10 {
                 Doubled::from((0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9)) * e
             }*/;
 
-            let x = Doubled::new(m, ZERO) / F32x::splat(2.).add_checked_as_doubled(m);
+            let x = Doubled::from(m) / F32x::splat(2.).add_checked_as_doubled(m);
             let x2 = x.0 * x.0;
 
             let t = F32x::splat(0.302_729_487_4)
@@ -1183,7 +1183,7 @@ macro_rules! impl_math_f32_u10 {
         /// This function returns the value one less than *e* raised to ***a***.
         /// The error bound of the returned value is `1.0 ULP`.
         pub fn expm1f(a: F32x) -> F32x {
-            let d = expk2f(Doubled::new(a, ZERO)) + F32x::splat(-1.);
+            let d = expk2f(Doubled::from(a)) + F32x::splat(-1.);
             let mut x = F32x::from(d);
             x = a
                 .gt(F32x::splat(88.722_831_726_074_218_75))
@@ -1450,7 +1450,7 @@ macro_rules! impl_math_f32_u10 {
             dfmla(x, c1, c0)
         }
         fn poly2df(x: F32x, c1: F32x, c0: Doubled<F32x>) -> Doubled<F32x> {
-            dfmla(x, Doubled::new(c1, ZERO), c0)
+            dfmla(x, Doubled::from(c1), c0)
         }
         fn poly4df(x: F32x, c3: F32x, c2: Doubled<F32x>, c1: Doubled<F32x>, c0: Doubled<F32x>) -> Doubled<F32x> {
             dfmla(x*x, poly2df(x, c3, c2), poly2df_b(x, c1, c0))
@@ -1514,7 +1514,7 @@ macro_rules! impl_math_f32_u10 {
                 s2 = s2.square();
                 s2 = s2.square();
                 s2 = s2.recpre();
-                t2 = o25.select_doubled(s2, Doubled::new(expkf(t2), ZERO));
+                t2 = o25.select_doubled(s2, Doubled::from(expkf(t2)));
             }
 
             t2 += F32x::splat(-1.);

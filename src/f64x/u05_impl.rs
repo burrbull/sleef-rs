@@ -224,7 +224,7 @@ macro_rules! impl_math_f64_u05 {
             let n = o.select(n * D1_54X, n);
             let d = o.select(d * D1_54X, d);
 
-            let t = Doubled::new(n, ZERO) / Doubled::new(d, ZERO);
+            let t = Doubled::from(n) / Doubled::from(d);
             let t = (t.square() + ONE).sqrt() * max;
             let mut ret = F64x::from(t);
             ret = ret.is_nan().select(F64x::INFINITY, ret);

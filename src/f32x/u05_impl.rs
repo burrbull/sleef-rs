@@ -148,7 +148,7 @@ macro_rules! impl_math_f32_u05 {
             let n = o.select(n * F1_24X, n);
             let d = o.select(d * F1_24X, d);
 
-            let t = Doubled::new(n, ZERO) / Doubled::new(d, ZERO);
+            let t = Doubled::from(n) / Doubled::from(d);
             let t = (t.square() + ONE).sqrt() * max;
             let mut ret = F32x::from(t);
             ret = ret.is_nan().select(F32x::INFINITY, ret);

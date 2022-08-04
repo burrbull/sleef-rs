@@ -747,7 +747,7 @@ macro_rules! impl_math_f64_u10 {
             let x = o.select(x * D1_53X, x);
             let y = o.select(y * D1_23X, y);
 
-            let d = atan2k_u1(Doubled::new(y.abs(), ZERO), Doubled::new(x, ZERO));
+            let d = atan2k_u1(Doubled::from(y.abs()), Doubled::from(x));
             let mut r = F64x::from(d);
 
             r = r.mul_sign(x);
@@ -785,7 +785,7 @@ macro_rules! impl_math_f64_u10 {
         pub fn asin(d: F64x) -> F64x {
             let o = d.abs().lt(HALF);
             let x2 = o.select(d * d, (ONE - d.abs()) * HALF);
-            let mut x = o.select_doubled(Doubled::new(d.abs(), ZERO), x2.sqrt_as_doubled());
+            let mut x = o.select_doubled(Doubled::from(d.abs()), x2.sqrt_as_doubled());
             x = d.abs().eq(ONE).select_doubled(Doubled::from((0., 0.)), x);
 
             let x4 = x2 * x2;
@@ -836,7 +836,7 @@ macro_rules! impl_math_f64_u10 {
         pub fn acos(d: F64x) -> F64x {
             let o = d.abs().lt(HALF);
             let x2 = o.select(d * d, (ONE - d.abs()) * HALF);
-            let mut x = o.select_doubled(Doubled::new(d.abs(), ZERO), x2.sqrt_as_doubled());
+            let mut x = o.select_doubled(Doubled::from(d.abs()), x2.sqrt_as_doubled());
             x = d.abs().eq(ONE).select_doubled(Doubled::from((0., 0.)), x);
 
             let x4 = x2 * x2;
@@ -891,7 +891,7 @@ macro_rules! impl_math_f64_u10 {
         /// This function evaluates the arc tangent function of a value in ***a***.
         /// The error bound of the returned value is `1.0 ULP`.
         pub fn atan(d: F64x) -> F64x {
-            let d2 = atan2k_u1(Doubled::new(d.abs(), ZERO), Doubled::from((1., 0.)));
+            let d2 = atan2k_u1(Doubled::from(d.abs()), Doubled::from((1., 0.)));
             let mut r = F64x::from(d2);
             r = d
                 .is_infinite()
@@ -917,7 +917,7 @@ macro_rules! impl_math_f64_u10 {
         /// sign or a correct value with `1.0 ULP` error bound is returned.
         pub fn sinh(x: F64x) -> F64x {
             let mut y = x.abs();
-            let mut d = expk2(Doubled::new(y, ZERO));
+            let mut d = expk2(Doubled::from(y));
             d = d.sub_checked(d.recpre());
             y = F64x::from(d) * HALF;
 
@@ -944,7 +944,7 @@ macro_rules! impl_math_f64_u10 {
         /// sign or a correct value with `1.0 ULP` error bound is returned.
         pub fn cosh(x: F64x) -> F64x {
             let mut y = x.abs();
-            let mut d = expk2(Doubled::new(y, ZERO));
+            let mut d = expk2(Doubled::from(y));
             d = d.add_checked(d.recpre());
             y = F64x::from(d) * HALF;
 
@@ -968,7 +968,7 @@ macro_rules! impl_math_f64_u10 {
         /// The error bound of the returned value is `1.0 ULP`.
         pub fn tanh(x: F64x) -> F64x {
             let mut y = x.abs();
-            let mut d = expk2(Doubled::new(y, ZERO));
+            let mut d = expk2(Doubled::from(y));
             let e = d.recpre();
             d = (d + (-e)) / (d + e);
             y = F64x::from(d);
@@ -998,7 +998,7 @@ macro_rules! impl_math_f64_u10 {
             let mut y = x.abs();
             let o = y.gt(ONE);
 
-            let mut d = o.select_doubled(x.recpre_as_doubled(), Doubled::new(y, ZERO));
+            let mut d = o.select_doubled(x.recpre_as_doubled(), Doubled::from(y));
             d = (d.square() + ONE).sqrt();
             d = o.select_doubled(d * y, d);
 
@@ -1300,7 +1300,7 @@ macro_rules! impl_math_f64_u10 {
                 Doubled::from((0.693_147_180_559_945_286_226_764, 2.319_046_813_846_299_558_417_771_e-17)) * e
             }*/;
 
-            let x = Doubled::new(m, ZERO) / F64x::splat(2.).add_checked_as_doubled(m);
+            let x = Doubled::from(m) / F64x::splat(2.).add_checked_as_doubled(m);
             let x2 = x.0 * x.0;
             let x4 = x2 * x2;
             let x8 = x4 * x4;
@@ -1475,7 +1475,7 @@ macro_rules! impl_math_f64_u10 {
         /// This function returns the value one less than *e* raised to ***a***.
         /// The error bound of the returned value is `1.0 ULP`.
         pub fn expm1(a: F64x) -> F64x {
-            let d = expk2(Doubled::new(a, ZERO)) + F64x::splat(-1.);
+            let d = expk2(Doubled::from(a)) + F64x::splat(-1.);
             let mut x = F64x::from(d);
             x = a
                 .gt(F64x::splat(709.782_712_893_383_996_732_223))
@@ -1744,7 +1744,7 @@ macro_rules! impl_math_f64_u10 {
             ddmla(x, c1, c0)
         }
         fn poly2dd(x: F64x, c1: F64x, c0: Doubled<F64x>) -> Doubled<F64x> {
-            ddmla(x, Doubled::new(c1, ZERO), c0)
+            ddmla(x, Doubled::from(c1), c0)
         }
         fn poly4dd(x: F64x, c3: F64x, c2: Doubled<F64x>, c1: Doubled<F64x>, c0: Doubled<F64x>) -> Doubled<F64x> {
             ddmla(x*x, poly2dd(x, c3, c2), poly2dd_b(x, c1, c0))
@@ -1839,7 +1839,7 @@ macro_rules! impl_math_f64_u10 {
                 s2 = s2.square();
                 s2 = s2.square();
                 s2 = s2.recpre();
-                t2 = o25.select_doubled(s2, Doubled::new(expk(t2), ZERO));
+                t2 = o25.select_doubled(s2, Doubled::from(expk(t2)));
             }
 
             t2 += F64x::splat(-1.);

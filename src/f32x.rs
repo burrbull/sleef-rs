@@ -270,15 +270,9 @@ macro_rules! impl_math_f32 {
         const SLEEF_FP_ILOGB0: I32x = I32x::splat(crate::f32::SLEEF_FP_ILOGB0);
         const SLEEF_FP_ILOGBNAN: I32x = I32x::splat(crate::f32::SLEEF_FP_ILOGBNAN);
         const SQRT_FLT_MAX: F32x = F32x::splat(crate::f32::SQRT_FLT_MAX);
-        const L10_F: Doubled<F32x> = Doubled::new(
-            F32x::splat(crate::f32::L10_F.0),
-            F32x::splat(crate::f32::L10_F.1)
-        );
+        const L10_F: Doubled<F32x> = Doubled::<F32x>::splat(crate::f32::L10_F);
         const TRIGRANGEMAX4_F: F32x = F32x::splat(crate::f32::TRIGRANGEMAX4_F);
-        const L2_F: Doubled<F32x> = Doubled::new(
-            F32x::splat(crate::f32::L2_F.0),
-            F32x::splat(crate::f32::L2_F.1)
-        );
+        const L2_F: Doubled<F32x> = Doubled::<F32x>::splat(crate::f32::L2_F);
         const R_LN2_F: F32x = F32x::splat(crate::f32::R_LN2_F);
         const LOG10_2_F: F32x = F32x::splat(crate::f32::LOG10_2_F);
 

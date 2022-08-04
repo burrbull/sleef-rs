@@ -278,15 +278,9 @@ macro_rules! impl_math_f64 {
         const M_2_PI_H: F64x = F64x::splat(crate::f64::M_2_PI_H);
         const M_2_PI_L: F64x = F64x::splat(crate::f64::M_2_PI_L);
         const TRIGRANGEMAX3: F64x = F64x::splat(crate::f64::TRIGRANGEMAX3);
-        const L2: Doubled<F64x> = Doubled::new(
-            F64x::splat(crate::f64::L2.0),
-            F64x::splat(crate::f64::L2.1)
-        );
+        const L2: Doubled<F64x> = Doubled::<F64x>::splat(crate::f64::L2);
         const R_LN2: F64x = F64x::splat(crate::f64::R_LN2);
-        const L10: Doubled<F64x> = Doubled::new( // log 2 / log 10
-            F64x::splat(crate::f64::L10.0),
-            F64x::splat(crate::f64::L10.1)
-        );
+        const L10: Doubled<F64x> = Doubled::<F64x>::splat(crate::f64::L10);
         const LOG10_2: F64x = F64x::splat(crate::f64::LOG10_2);
 
         mod u05 {

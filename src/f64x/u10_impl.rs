@@ -1365,8 +1365,8 @@ macro_rules! impl_math_f64_u10 {
             let mut u = (d * R_LN2).round();
             let q = u.roundi();
 
-            let s = u.mul_add(-L2U, d);
-            let s = u.mul_add(-L2L, s);
+            let s = u.mul_add(-L2.0, d);
+            let s = u.mul_add(-L2.1, s);
 
             if cfg!(target_feature = "fma") {
 /*                if cfg!(feature = "split_kernel") {
@@ -1453,8 +1453,8 @@ macro_rules! impl_math_f64_u10 {
             let mut u = (d * LOG10_2).round();
             let q = u.roundi();
 
-            let s = u.mul_add(-L10U, d);
-            let s = u.mul_add(-L10L, s);
+            let s = u.mul_add(-L10.0, d);
+            let s = u.mul_add(-L10.1, s);
 
             u = F64x::splat(0.241_146_349_833_426_765_2_e-3)
                 .mul_add(s, F64x::splat(0.115_748_841_521_718_737_5_e-2))

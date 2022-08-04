@@ -278,14 +278,17 @@ macro_rules! impl_math_f64 {
         const M_2_PI_H: F64x = F64x::splat(0.636_619_772_367_581_382_43);
         const M_2_PI_L: F64x = F64x::splat(-3.935_735_335_036_497_176_4_e-17);
         const TRIGRANGEMAX3: F64x = F64x::splat(1e+9);
-        const L2U: F64x = F64x::splat(0.693_147_180_559_662_956_511_601_805_686_950_683_593_75);
-        const L2L: F64x =
-            F64x::splat(0.282_352_905_630_315_771_225_884_481_750_134_360_255_254_120_68_e-12);
+        const L2: Doubled<F64x> = Doubled::new(
+            F64x::splat(0.693_147_180_559_662_956_511_601_805_686_950_683_593_75),
+            F64x::splat(0.282_352_905_630_315_771_225_884_481_750_134_360_255_254_120_68_e-12)
+        );
         const R_LN2: F64x = F64x::splat(
             1.442_695_040_888_963_407_359_924_681_001_892_137_426_645_954_152_985_934_135_449_406_931,
         );
-        const L10U: F64x = F64x::splat(0.301_029_995_663_839_144_98); // log 2 / log 10
-        const L10L: F64x = F64x::splat(1.420_502_322_726_609_941_8_e-13);
+        const L10: Doubled<F64x> = Doubled::new( // log 2 / log 10
+            F64x::splat(0.301_029_995_663_839_144_98),
+            F64x::splat(1.420_502_322_726_609_941_8_e-13)
+        );
         const LOG10_2: F64x = F64x::splat(3.321_928_094_887_362_347_870_319_429_489_390_175_864_831_393);
 
         mod u05 {
@@ -935,8 +938,8 @@ macro_rules! impl_math_f64 {
             let mut u = (d * R_LN2).round();
             let q = u.roundi();
 
-            let s = u.mul_add(-L2U, d);
-            let s = u.mul_add(-L2L, s);
+            let s = u.mul_add(-L2.0, d);
+            let s = u.mul_add(-L2.1, s);
 
             let s2 = s * s;
             let s4 = s2 * s2;
@@ -1026,8 +1029,8 @@ macro_rules! impl_math_f64 {
             let dq = u.round();
             let q = dq.roundi();
 
-            let mut s = d + dq * (-L2U);
-            s += dq * (-L2L);
+            let mut s = d + dq * (-L2.0);
+            s += dq * (-L2.1);
 
             s = s.normalize();
 
@@ -1067,7 +1070,7 @@ macro_rules! impl_math_f64 {
             let dq = u.round();
             let q = dq.roundi();
 
-            let s = d + dq * (-L2U) + dq * (-L2L);
+            let s = d + dq * (-L2.0) + dq * (-L2.1);
 
             let s2 = s.square();
             let s4 = s2.square();

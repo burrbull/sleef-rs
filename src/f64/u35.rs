@@ -785,8 +785,8 @@ fn test_log2() {
 pub fn exp10(d: f64) -> f64 {
     let q = rintk(d * LOG10_2);
 
-    let mut s = q.mul_add(-L10U, d);
-    s = q.mul_add(-L10L, s);
+    let mut s = q.mul_add(-L10.0, d);
+    s = q.mul_add(-L10.1, s);
 
     let mut u = 0.241_146_349_833_426_765_2_e-3
         .mul_add(s, 0.115_748_841_521_718_737_5_e-2)

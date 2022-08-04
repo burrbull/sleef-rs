@@ -1113,8 +1113,8 @@ macro_rules! impl_math_f64_u35 {
             let mut u = (d * LOG10_2).round();
             let q = u.roundi();
 
-            let mut s = u.mul_add(-L10U, d);
-            s = u.mul_add(-L10L, s);
+            let mut s = u.mul_add(-L10.0, d);
+            s = u.mul_add(-L10.1, s);
 
             let s2 = s * s;
             let s4 = s2 * s2;

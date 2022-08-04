@@ -970,8 +970,8 @@ macro_rules! impl_math_f32_u35 {
             let mut u = (d * LOG10_2_F).round();
             let q = u.roundi();
 
-            let mut s = u.mul_add(-L10U_F, d);
-            s = u.mul_add(-L10L_F, s);
+            let mut s = u.mul_add(-L10_F.0, d);
+            s = u.mul_add(-L10_F.1, s);
 
             u = F32x::splat(0.206_400_498_7)
                 .mul_add(s, F32x::splat(0.541_787_743_6))

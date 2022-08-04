@@ -659,8 +659,8 @@ fn test_log2f() {
 pub fn exp10f(d: f32) -> f32 {
     let q = rintfk(d * LOG10_2_F);
 
-    let mut s = q.mul_add(-L10U_F, d);
-    s = q.mul_add(-L10L_F, s);
+    let mut s = q.mul_add(-L10_F.0, d);
+    s = q.mul_add(-L10_F.1, s);
 
     let mut u = 0.206_400_498_7
         .mul_add(s, 0.541_787_743_6)

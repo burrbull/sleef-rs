@@ -251,45 +251,43 @@ macro_rules! impl_math_f64 {
         const NEG_ZERO: F64x = F64x::splat(-0.);
         const ONE: F64x = F64x::splat(1.);
         const HALF: F64x = F64x::splat(0.5);
-        const D1_63X: F64x = F64x::splat((1u64 << 63) as f64);
-        const D1_60X: F64x = F64x::splat((1u64 << 60) as f64);
-        const D1_54X: F64x = F64x::splat((1u64 << 54) as f64);
-        const D1_53X: F64x = F64x::splat((1u64 << 53) as f64);
-        const D1_52X: F64x = F64x::splat((1u64 << 52) as f64);
-        const D1_32X: F64x = F64x::splat((1u64 << 32) as f64);
-        const D1_31X: F64x = F64x::splat((1u64 << 31) as f64);
-        const D1_28X: F64x = F64x::splat((1u64 << 28) as f64);
-        const D1_24X: F64x = F64x::splat((1u64 << 24) as f64);
-        const D1_23X: F64x = F64x::splat((1u64 << 23) as f64);
+        const D1_63X: F64x = F64x::splat(crate::f64::D1_63);
+        const D1_60X: F64x = F64x::splat(crate::f64::D1_60);
+        const D1_54X: F64x = F64x::splat(crate::f64::D1_54);
+        const D1_53X: F64x = F64x::splat(crate::f64::D1_53);
+        const D1_52X: F64x = F64x::splat(crate::f64::D1_52);
+        const D1_32X: F64x = F64x::splat(crate::f64::D1_32);
+        const D1_31X: F64x = F64x::splat(crate::f64::D1_31);
+        const D1_28X: F64x = F64x::splat(crate::f64::D1_28);
+        const D1_24X: F64x = F64x::splat(crate::f64::D1_24);
+        const D1_23X: F64x = F64x::splat(crate::f64::D1_23);
 
-        const PI_A: F64x = F64x::splat(3.141_592_621_803_283_691_4);
-        const PI_B: F64x = F64x::splat(3.178_650_942_459_171_346_9_e-8);
-        const PI_C: F64x = F64x::splat(1.224_646_786_410_718_850_2_e-16);
-        const PI_D: F64x = F64x::splat(1.273_663_432_702_189_981_6_e-24);
-        const TRIGRANGEMAX: F64x = F64x::splat(1e+14);
+        const PI_A: F64x = F64x::splat(crate::f64::PI_A);
+        const PI_B: F64x = F64x::splat(crate::f64::PI_B);
+        const PI_C: F64x = F64x::splat(crate::f64::PI_C);
+        const PI_D: F64x = F64x::splat(crate::f64::PI_D);
+        const TRIGRANGEMAX: F64x = F64x::splat(crate::f64::TRIGRANGEMAX);
 
-        const PI_A2: F64x = F64x::splat(3.141_592_653_589_793_116);
-        const PI_B2: F64x = F64x::splat(1.224_646_799_147_353_207_2_e-16);
-        const TRIGRANGEMAX2: F64x = F64x::splat(15.);
+        const PI_A2: F64x = F64x::splat(crate::f64::PI_A2);
+        const PI_B2: F64x = F64x::splat(crate::f64::PI_B2);
+        const TRIGRANGEMAX2: F64x = F64x::splat(crate::f64::TRIGRANGEMAX2);
 
-        const SLEEF_FP_ILOGB0: F64x = F64x::splat(-2_147_483_648.);
-        const SLEEF_FP_ILOGBNAN: F64x = F64x::splat(2_147_483_647.);
-        const SQRT_DBL_MAX: F64x = F64x::splat(1.340_780_792_994_259_635_5_e+154);
-        const M_2_PI_H: F64x = F64x::splat(0.636_619_772_367_581_382_43);
-        const M_2_PI_L: F64x = F64x::splat(-3.935_735_335_036_497_176_4_e-17);
-        const TRIGRANGEMAX3: F64x = F64x::splat(1e+9);
+        const SLEEF_FP_ILOGB0: F64x = F64x::splat(crate::f64::SLEEF_FP_ILOGB0 as f64);
+        const SLEEF_FP_ILOGBNAN: F64x = F64x::splat(crate::f64::SLEEF_FP_ILOGBNAN as f64);
+        const SQRT_DBL_MAX: F64x = F64x::splat(crate::f64::SQRT_DBL_MAX);
+        const M_2_PI_H: F64x = F64x::splat(crate::f64::M_2_PI_H);
+        const M_2_PI_L: F64x = F64x::splat(crate::f64::M_2_PI_L);
+        const TRIGRANGEMAX3: F64x = F64x::splat(crate::f64::TRIGRANGEMAX3);
         const L2: Doubled<F64x> = Doubled::new(
-            F64x::splat(0.693_147_180_559_662_956_511_601_805_686_950_683_593_75),
-            F64x::splat(0.282_352_905_630_315_771_225_884_481_750_134_360_255_254_120_68_e-12)
+            F64x::splat(crate::f64::L2.0),
+            F64x::splat(crate::f64::L2.1)
         );
-        const R_LN2: F64x = F64x::splat(
-            1.442_695_040_888_963_407_359_924_681_001_892_137_426_645_954_152_985_934_135_449_406_931,
-        );
+        const R_LN2: F64x = F64x::splat(crate::f64::R_LN2);
         const L10: Doubled<F64x> = Doubled::new( // log 2 / log 10
-            F64x::splat(0.301_029_995_663_839_144_98),
-            F64x::splat(1.420_502_322_726_609_941_8_e-13)
+            F64x::splat(crate::f64::L10.0),
+            F64x::splat(crate::f64::L10.1)
         );
-        const LOG10_2: F64x = F64x::splat(3.321_928_094_887_362_347_870_319_429_489_390_175_864_831_393);
+        const LOG10_2: F64x = F64x::splat(crate::f64::LOG10_2);
 
         mod u05 {
             //! Functions with 0.5 ULP error bound

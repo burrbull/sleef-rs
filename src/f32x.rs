@@ -248,41 +248,39 @@ macro_rules! impl_math_f32 {
         const NEG_ZERO: F32x = F32x::splat(-0.);
         const ONE: F32x = F32x::splat(1.);
         const HALF: F32x = F32x::splat(0.5);
-        const F1_32X: F32x = F32x::splat((1u64 << 32) as f32);
-        const F1_30X: F32x = F32x::splat((1u32 << 30) as f32);
-        const F1_25X: F32x = F32x::splat((1u32 << 25) as f32);
-        const F1_24X: F32x = F32x::splat((1u32 << 24) as f32);
-        const F1_23X: F32x = F32x::splat((1u32 << 23) as f32);
-        const F1_12X: F32x = F32x::splat((1u32 << 12) as f32);
-        const F1_10X: F32x = F32x::splat((1u32 << 10) as f32);
+        const F1_32X: F32x = F32x::splat(crate::f32::F1_32);
+        const F1_30X: F32x = F32x::splat(crate::f32::F1_30);
+        const F1_25X: F32x = F32x::splat(crate::f32::F1_25);
+        const F1_24X: F32x = F32x::splat(crate::f32::F1_24);
+        const F1_23X: F32x = F32x::splat(crate::f32::F1_23);
+        const F1_12X: F32x = F32x::splat(crate::f32::F1_12);
+        const F1_10X: F32x = F32x::splat(crate::f32::F1_10);
 
-        const PI_A_F: F32x = F32x::splat(3.140_625);
-        const PI_B_F: F32x = F32x::splat(0.000_967_025_756_835_937_5);
-        const PI_C_F: F32x = F32x::splat(6.277_114_152_908_325_195_3_e-7);
-        const PI_D_F: F32x = F32x::splat(1.215_420_125_655_342_076_2_e-10);
-        const TRIGRANGEMAX_F: F32x = F32x::splat(39000.);
+        const PI_A_F: F32x = F32x::splat(crate::f32::PI_A_F);
+        const PI_B_F: F32x = F32x::splat(crate::f32::PI_B_F);
+        const PI_C_F: F32x = F32x::splat(crate::f32::PI_C_F);
+        const PI_D_F: F32x = F32x::splat(crate::f32::PI_D_F);
+        const TRIGRANGEMAX_F: F32x = F32x::splat(crate::f32::TRIGRANGEMAX_F);
 
-        const PI_A2_F: F32x = F32x::splat(3.141_479_492_187_5);
-        const PI_B2_F: F32x = F32x::splat(0.000_113_159_418_106_079_101_56);
-        const PI_C2_F: F32x = F32x::splat(1.984_187_258_941_005_893_6_e-9);
-        const TRIGRANGEMAX2_F: F32x = F32x::splat(125.0);
+        const PI_A2_F: F32x = F32x::splat(crate::f32::PI_A2_F);
+        const PI_B2_F: F32x = F32x::splat(crate::f32::PI_B2_F);
+        const PI_C2_F: F32x = F32x::splat(crate::f32::PI_C2_F);
+        const TRIGRANGEMAX2_F: F32x = F32x::splat(crate::f32::TRIGRANGEMAX2_F);
 
-        const SLEEF_FP_ILOGB0: I32x = I32x::splat(-2_147_483_328);
-        const SLEEF_FP_ILOGBNAN: I32x = I32x::splat(2_147_483_327);
-        const SQRT_FLT_MAX: F32x = F32x::splat(18_446_743_523_953_729_536.);
+        const SLEEF_FP_ILOGB0: I32x = I32x::splat(crate::f32::SLEEF_FP_ILOGB0);
+        const SLEEF_FP_ILOGBNAN: I32x = I32x::splat(crate::f32::SLEEF_FP_ILOGBNAN);
+        const SQRT_FLT_MAX: F32x = F32x::splat(crate::f32::SQRT_FLT_MAX);
         const L10_F: Doubled<F32x> = Doubled::new(
-            F32x::splat(0.301_025_390_6),
-            F32x::splat(4.605_038_981_e-6)
+            F32x::splat(crate::f32::L10_F.0),
+            F32x::splat(crate::f32::L10_F.1)
         );
-        const TRIGRANGEMAX4_F: F32x = F32x::splat(8e+6);
+        const TRIGRANGEMAX4_F: F32x = F32x::splat(crate::f32::TRIGRANGEMAX4_F);
         const L2_F: Doubled<F32x> = Doubled::new(
-            F32x::splat(0.693_145_751_953_125),
-            F32x::splat(1.428_606_765_330_187_045_e-6)
+            F32x::splat(crate::f32::L2_F.0),
+            F32x::splat(crate::f32::L2_F.1)
         );
-        const R_LN2_F: F32x = F32x::splat(
-            1.442_695_040_888_963_407_359_924_681_001_892_137_426_645_954_152_985_934_135_449_406_931,
-        );
-        const LOG10_2_F: F32x = F32x::splat(3.321_928_094_887_362_347_870_319_429_489_390_175_864_831_393);
+        const R_LN2_F: F32x = F32x::splat(crate::f32::R_LN2_F);
+        const LOG10_2_F: F32x = F32x::splat(crate::f32::LOG10_2_F);
 
         mod u05 {
             //! Functions with 0.5 ULP error bound

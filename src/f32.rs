@@ -2,34 +2,42 @@ use crate::common::*;
 use core::f32::consts::{FRAC_1_PI, FRAC_2_PI, FRAC_PI_2, FRAC_PI_4, PI};
 use doubled::*;
 
-const F1_32: f32 = (1u64 << 32) as f32;
-const F1_30: f32 = (1u32 << 30) as f32;
-const F1_25: f32 = (1u32 << 25) as f32;
-const F1_24: f32 = (1u32 << 24) as f32;
-const F1_23: f32 = (1u32 << 23) as f32;
-const F1_12: f32 = (1u32 << 12) as f32;
-const F1_10: f32 = (1u32 << 10) as f32;
+pub(crate) const F1_32: f32 = (1u64 << 32) as f32;
+pub(crate) const F1_30: f32 = (1u32 << 30) as f32;
+pub(crate) const F1_25: f32 = (1u32 << 25) as f32;
+pub(crate) const F1_24: f32 = (1u32 << 24) as f32;
+pub(crate) const F1_23: f32 = (1u32 << 23) as f32;
+pub(crate) const F1_12: f32 = (1u32 << 12) as f32;
+pub(crate) const F1_10: f32 = (1u32 << 10) as f32;
 
-const PI_A_F: f32 = 3.140_625;
-const PI_B_F: f32 = 0.000_967_025_756_835_937_5;
-const PI_C_F: f32 = 6.277_114_152_908_325_195_3_e-7;
-const PI_D_F: f32 = 1.215_420_125_655_342_076_2_e-10;
-const TRIGRANGEMAX_F: f32 = 39000.;
+pub(crate) const PI_A_F: f32 = 3.140_625;
+pub(crate) const PI_B_F: f32 = 0.000_967_025_756_835_937_5;
+pub(crate) const PI_C_F: f32 = 6.277_114_152_908_325_195_3_e-7;
+pub(crate) const PI_D_F: f32 = 1.215_420_125_655_342_076_2_e-10;
+pub(crate) const TRIGRANGEMAX_F: f32 = 39000.;
 
-const PI_A2_F: f32 = 3.141_479_492_187_5;
-const PI_B2_F: f32 = 0.000_113_159_418_106_079_101_56;
-const PI_C2_F: f32 = 1.984_187_258_941_005_893_6_e-9;
-const TRIGRANGEMAX2_F: f32 = 125.0;
+pub(crate) const PI_A2_F: f32 = 3.141_479_492_187_5;
+pub(crate) const PI_B2_F: f32 = 0.000_113_159_418_106_079_101_56;
+pub(crate) const PI_C2_F: f32 = 1.984_187_258_941_005_893_6_e-9;
+pub(crate) const TRIGRANGEMAX2_F: f32 = 125.0;
 
-const SLEEF_FP_ILOGB0: i32 = -2_147_483_648;
-const SLEEF_FP_ILOGBNAN: i32 = 2_147_483_647;
+pub(crate) const SLEEF_FP_ILOGB0: i32 = -2_147_483_648;
+pub(crate) const SLEEF_FP_ILOGBNAN: i32 = 2_147_483_647;
 pub(crate) const SQRT_FLT_MAX: f32 = 18_446_743_523_953_729_536.;
-const L10_F: Doubled<f32> = Doubled::new(0.301_025_390_6, 4.605_038_981_e-6);
-const TRIGRANGEMAX4_F: f32 = 8e+6;
-const L2_F: Doubled<f32> = Doubled::new(0.693_145_751_953_125, 1.428_606_765_330_187_045_e-6);
-const R_LN2_F: f32 =
+pub(crate) const L10_F: Doubled<f32> = Doubled::new(0.301_025_390_6, 4.605_038_981_e-6);
+pub(crate) const TRIGRANGEMAX4_F: f32 = 8e+6;
+pub(crate) const L2_F: Doubled<f32> =
+    Doubled::new(0.693_145_751_953_125, 1.428_606_765_330_187_045_e-6);
+pub(crate) const R_LN2_F: f32 =
     1.442_695_040_888_963_407_359_924_681_001_892_137_426_645_954_152_985_934_135_449_406_931;
-const LOG10_2_F: f32 = 3.321_928_094_887_362_347_870_319_429_489_390_175_864_831_393;
+pub(crate) const LOG10_2_F: f32 = 3.321_928_094_887_362_347_870_319_429_489_390_175_864_831_393;
+
+pub(crate) const D_PI: Doubled<f32> = Doubled::new(
+    3.141_592_741_012_573_242_2,
+    -8.742_277_657_347_585_773_1_e-8,
+);
+pub(crate) const D_LN2: Doubled<f32> =
+    Doubled::new(0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9);
 
 mod u05;
 #[rustfmt::skip]
@@ -619,10 +627,7 @@ fn rempif(a: f32) -> (Doubled<f32>, i32) {
     ) * a;
     x += y;
     x = x.normalize();
-    x *= Doubled::new(
-        3.141_592_741_012_573_242_2 * 2.,
-        -8.742_277_657_347_585_773_1_e-8 * 2.,
-    );
+    x *= Doubled::new(D_PI.0 * 2., D_PI.1 * 2.);
     (if fabsfk(a) < 0.7 { Doubled::from(a) } else { x }, q)
 }
 
@@ -748,7 +753,7 @@ fn logkf(mut d: f32) -> Doubled<f32> {
         3.691_838_612_596_143_320_843_11_e-9,
     );
 
-    (Doubled::new(0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9) * (e as f32))
+    (D_LN2 * (e as f32))
         .add_checked(x.scale(2.))
         .add_checked(x2 * x * (x2 * t + c))
 }
@@ -794,9 +799,7 @@ fn logk2f(d: Doubled<f32>) -> Doubled<f32> {
         .mul_add(x2.0, 0.400_005_877_017_974_853_515_625)
         .mul_add(x2.0, 0.666_666_686_534_881_591_796_875);
 
-    (Doubled::new(0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9) * (e as f32))
-        + x.scale(2.)
-        + x2 * x * t
+    (D_LN2 * (e as f32)) + x.scale(2.) + x2 * x * t
 }
 
 #[inline]

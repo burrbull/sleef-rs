@@ -32,8 +32,8 @@ macro_rules! impl_math_f32_u35 {
                 q >>= 2;
                 let o = (dfii & I32x::splat(1)).eq(I32x::splat(1));
                 let mut x = Doubled::new(
-                    F32x::splat(3.141_592_741_012_573_242_2 * -0.5).mul_sign(dfidf.0),
-                    F32x::splat(-8.742_277_657_347_585_773_1_e-8 * -0.5).mul_sign(dfidf.0),
+                    F32x::splat(crate::f32::D_PI.0 * -0.5).mul_sign(dfidf.0),
+                    F32x::splat(crate::f32::D_PI.1 * -0.5).mul_sign(dfidf.0),
                 );
                 x = dfidf + x;
                 dfidf = o.select_doubled(x, dfidf);
@@ -91,8 +91,8 @@ macro_rules! impl_math_f32_u35 {
                     q2 >>= 2;
                     let o = (dfii & I32x::splat(1)).eq(I32x::splat(1));
                     let mut x = Doubled::new(
-                        F32x::splat(3.141_592_741_012_573_242_2 * -0.5).mul_sign(dfidf.0),
-                        F32x::splat(-8.742_277_657_347_585_773_1_e-8 * -0.5).mul_sign(dfidf.0),
+                        F32x::splat(crate::f32::D_PI.0 * -0.5).mul_sign(dfidf.0),
+                        F32x::splat(crate::f32::D_PI.1 * -0.5).mul_sign(dfidf.0),
                     );
                     x = dfidf + x;
                     dfidf = o.select_doubled(x, dfidf);
@@ -166,8 +166,8 @@ macro_rules! impl_math_f32_u35 {
                 let o = (dfii & I32x::splat(1)).eq(I32x::splat(0));
                 let y = dfidf.0.gt(ZERO).select(ZERO, F32x::splat(-1.));
                 let mut x = Doubled::new(
-                    F32x::splat(3.141_592_741_012_573_242_2 * -0.5).mul_sign(y),
-                    F32x::splat(-8.742_277_657_347_585_773_1_e-8 * -0.5).mul_sign(y),
+                    F32x::splat(crate::f32::D_PI.0 * -0.5).mul_sign(y),
+                    F32x::splat(crate::f32::D_PI.1 * -0.5).mul_sign(y),
                 );
                 x = dfidf + x;
                 dfidf = o.select_doubled(x, dfidf);
@@ -225,8 +225,8 @@ macro_rules! impl_math_f32_u35 {
                     let o = (dfii & I32x::splat(1)).eq(I32x::splat(0));
                     let y = dfidf.0.gt(ZERO).select(ZERO, F32x::splat(-1.));
                     let mut x = Doubled::new(
-                        F32x::splat(3.141_592_741_012_573_242_2 * -0.5).mul_sign(y),
-                        F32x::splat(-8.742_277_657_347_585_773_1_e-8 * -0.5).mul_sign(y),
+                        F32x::splat(crate::f32::D_PI.0 * -0.5).mul_sign(y),
+                        F32x::splat(crate::f32::D_PI.1 * -0.5).mul_sign(y),
                     );
                     x = dfidf + x;
                     dfidf = o.select_doubled(x, dfidf);
@@ -709,16 +709,11 @@ macro_rules! impl_math_f32_u35 {
                 .mul_add(x2, F32x::splat(0.166_667_729_6))
                 * (x2 * x);
 
-            let y = F32x::splat(3.141_592_653_589_793_2 / 2.) - (x.mul_sign(d) + u.mul_sign(d));
+            let y = F32x::splat(core::f32::consts::FRAC_PI_2) - (x.mul_sign(d) + u.mul_sign(d));
             x += u;
             let r = o.select(y, x * F32x::splat(2.));
             (!o & d.lt(ZERO)).select(
-                Doubled::new(
-                    F32x::splat(3.141_592_741_012_573_242_2),
-                    F32x::splat(-8.742_277_657_347_585_773_1_e-8),
-                )
-                .add_checked(-r)
-                .0,
+                Doubled::<F32x>::splat(crate::f32::D_PI).add_checked(-r).0,
                 r,
             )
         }

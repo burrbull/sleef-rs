@@ -3,34 +3,34 @@ use core::f64::consts::{FRAC_1_PI, FRAC_2_PI, FRAC_PI_2, FRAC_PI_4, PI};
 use crate::common::*;
 use doubled::*;
 
-const D1_63: f64 = (1u64 << 63) as f64;
-const D1_60: f64 = (1u64 << 60) as f64;
-const D1_54: f64 = (1u64 << 54) as f64;
-const D1_53: f64 = (1u64 << 53) as f64;
-const D1_52: f64 = (1u64 << 52) as f64;
-const D1_32: f64 = (1u64 << 32) as f64;
-const D1_31: f64 = (1u64 << 31) as f64;
-const D1_28: f64 = (1u64 << 28) as f64;
-const D1_24: f64 = (1u64 << 24) as f64;
-const D1_23: f64 = (1u64 << 23) as f64;
+pub(crate) const D1_63: f64 = (1u64 << 63) as f64;
+pub(crate) const D1_60: f64 = (1u64 << 60) as f64;
+pub(crate) const D1_54: f64 = (1u64 << 54) as f64;
+pub(crate) const D1_53: f64 = (1u64 << 53) as f64;
+pub(crate) const D1_52: f64 = (1u64 << 52) as f64;
+pub(crate) const D1_32: f64 = (1u64 << 32) as f64;
+pub(crate) const D1_31: f64 = (1u64 << 31) as f64;
+pub(crate) const D1_28: f64 = (1u64 << 28) as f64;
+pub(crate) const D1_24: f64 = (1u64 << 24) as f64;
+pub(crate) const D1_23: f64 = (1u64 << 23) as f64;
 
-const SLEEF_FP_ILOGB0: i32 = -2_147_483_648;
-const SLEEF_FP_ILOGBNAN: i32 = 2_147_483_647;
+pub(crate) const SLEEF_FP_ILOGB0: i32 = -2_147_483_648;
+pub(crate) const SLEEF_FP_ILOGBNAN: i32 = 2_147_483_647;
 pub(crate) const SQRT_DBL_MAX: f64 = 1.340_780_792_994_259_635_5_e+154;
-const M_2_PI_H: f64 = 0.636_619_772_367_581_382_43;
-const M_2_PI_L: f64 = -3.935_735_335_036_497_176_4_e-17;
-const TRIGRANGEMAX3: f64 = 1e+9;
-const L2: Doubled<f64> = Doubled::new(
+pub(crate) const M_2_PI_H: f64 = 0.636_619_772_367_581_382_43;
+pub(crate) const M_2_PI_L: f64 = -3.935_735_335_036_497_176_4_e-17;
+pub(crate) const TRIGRANGEMAX3: f64 = 1e+9;
+pub(crate) const L2: Doubled<f64> = Doubled::new(
     0.693_147_180_559_662_956_511_601_805_686_950_683_593_75,
     0.282_352_905_630_315_771_225_884_481_750_134_360_255_254_120_68_e-12,
 );
-const R_LN2: f64 =
+pub(crate) const R_LN2: f64 =
     1.442_695_040_888_963_407_359_924_681_001_892_137_426_645_954_152_985_934_135_449_406_931;
-const L10: Doubled<f64> = Doubled::new(
+pub(crate) const L10: Doubled<f64> = Doubled::new(
     0.301_029_995_663_839_144_98,
     1.420_502_322_726_609_941_8_e-13,
 ); // log 2 / log 10
-const LOG10_2: f64 = 3.321_928_094_887_362_347_870_319_429_489_390_175_864_831_393;
+pub(crate) const LOG10_2: f64 = 3.321_928_094_887_362_347_870_319_429_489_390_175_864_831_393;
 
 /*
  PI_A to PI_D are constants that satisfy the following two conditions.
@@ -45,11 +45,11 @@ const LOG10_2: f64 = 3.321_928_094_887_362_347_870_319_429_489_390_175_864_831_3
  double precision calculation, the actual maximum argument that can
  be correctly reduced is around 2^47.
 */
-const PI_A: f64 = 3.141_592_621_803_283_691_4;
-const PI_B: f64 = 3.178_650_942_459_171_346_9_e-8;
-const PI_C: f64 = 1.224_646_786_410_718_850_2_e-16;
-const PI_D: f64 = 1.273_663_432_702_189_981_6_e-24;
-const TRIGRANGEMAX: f64 = 1e+14;
+pub(crate) const PI_A: f64 = 3.141_592_621_803_283_691_4;
+pub(crate) const PI_B: f64 = 3.178_650_942_459_171_346_9_e-8;
+pub(crate) const PI_C: f64 = 1.224_646_786_410_718_850_2_e-16;
+pub(crate) const PI_D: f64 = 1.273_663_432_702_189_981_6_e-24;
+pub(crate) const TRIGRANGEMAX: f64 = 1e+14;
 
 /*
  PI_A2 and PI_B2 are constants that satisfy the following two conditions.
@@ -62,9 +62,17 @@ const TRIGRANGEMAX: f64 = 1e+14;
  could be correctly reduced should be 2^(3-1) PI = 12.6. By testing,
  we confirmed that it correctly reduces the argument up to around 15.
 */
-const PI_A2: f64 = 3.141_592_653_589_793_116;
-const PI_B2: f64 = 1.224_646_799_147_353_207_2_e-16;
-const TRIGRANGEMAX2: f64 = 15.;
+pub(crate) const PI_A2: f64 = 3.141_592_653_589_793_116;
+pub(crate) const PI_B2: f64 = 1.224_646_799_147_353_207_2_e-16;
+
+pub(crate) const D_PI: Doubled<f64> =
+    Doubled::new(3.141_592_653_589_793_116, 1.224_646_799_147_353_207_2_e-16);
+pub(crate) const D_LN2: Doubled<f64> = Doubled::new(
+    0.693_147_180_559_945_286_226_764,
+    2.319_046_813_846_299_558_417_771_e-17,
+);
+
+pub(crate) const TRIGRANGEMAX2: f64 = 15.;
 
 mod u05;
 #[rustfmt::skip]
@@ -705,11 +713,7 @@ fn rempi(a: f64) -> (Doubled<f64>, i32) {
         crate::tables::REMPITABDP[ex + 3],
     ) * a;
     x += y;
-    x = x.normalize()
-        * Doubled::new(
-            3.141_592_653_589_793_116 * 2.,
-            1.224_646_799_147_353_207_2_e-16 * 2.,
-        );
+    x = x.normalize() * Doubled::new(D_PI.0 * 2., D_PI.1 * 2.);
     (if fabsk(a) < 0.7 { Doubled::from(a) } else { x }, q)
 }
 
@@ -982,11 +986,7 @@ fn logk(mut d: f64) -> Doubled<f64> {
         3.805_549_625_424_120_563_366_16_e-17,
     );
 
-    let mut s = (Doubled::new(
-        0.693_147_180_559_945_286_226_764,
-        2.319_046_813_846_299_558_417_771_e-17,
-    ) * (e as f64))
-        .add_checked(x.scale(2.));
+    let mut s = (D_LN2 * (e as f64)).add_checked(x.scale(2.));
     x = x2 * x;
     s = s.add_checked(x * c);
     x = x2 * x;
@@ -1092,12 +1092,7 @@ fn logk2(d: Doubled<f64>) -> Doubled<f64> {
     )
     .mul_add(x2.0, 0.666_666_666_666_664_853_302_393);
 
-    (Doubled::new(
-        0.693_147_180_559_945_286_226_764,
-        2.319_046_813_846_299_558_417_771_e-17,
-    ) * (e as f64))
-        + x.scale(2.)
-        + x2 * x * t
+    (D_LN2 * (e as f64)) + x.scale(2.) + x2 * x * t
 }
 
 fn gammak(a: f64) -> (Doubled<f64>, Doubled<f64>) {

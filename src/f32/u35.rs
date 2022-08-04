@@ -28,8 +28,8 @@ pub fn sinf(mut d: f32) -> f32 {
         q = ((dfii & 3) * 2 + ((dfidf.0 > 0.) as i32) + 1) >> 2;
         if (dfii & 1) != 0 {
             dfidf += Doubled::new(
-                mulsignf(3.141_592_741_012_573_242_2 * -0.5, dfidf.0),
-                mulsignf(-8.742_277_657_347_585_773_1_e-8 * -0.5, dfidf.0),
+                mulsignf(D_PI.0 * -0.5, dfidf.0),
+                mulsignf(D_PI.1 * -0.5, dfidf.0),
             );
         }
         d = f32::from(dfidf);
@@ -87,14 +87,8 @@ pub fn cosf(mut d: f32) -> f32 {
         q = ((dfii & 3) * 2 + ((dfidf.0 > 0.) as i32) + 7) >> 1;
         if (dfii & 1) == 0 {
             dfidf += Doubled::new(
-                mulsignf(
-                    3.141_592_741_012_573_242_2 * -0.5,
-                    if dfidf.0 > 0. { 1. } else { -1. },
-                ),
-                mulsignf(
-                    -8.742_277_657_347_585_773_1_e-8 * -0.5,
-                    if dfidf.0 > 0. { 1. } else { -1. },
-                ),
+                mulsignf(D_PI.0 * -0.5, if dfidf.0 > 0. { 1. } else { -1. }),
+                mulsignf(D_PI.1 * -0.5, if dfidf.0 > 0. { 1. } else { -1. }),
             );
         }
         d = f32::from(dfidf);
@@ -424,16 +418,11 @@ pub fn acosf(d: f32) -> f32 {
 
     u *= x * x2;
 
-    let y = 3.141_592_653_589_793_2 / 2. - (mulsignf(x, d) + mulsignf(u, d));
+    let y = FRAC_PI_2 - (mulsignf(x, d) + mulsignf(u, d));
     x += u;
     let r = if o { y } else { x * 2. };
     if !o && (d < 0.) {
-        Doubled::new(
-            3.141_592_741_012_573_242_2,
-            -8.742_277_657_347_585_773_1_e-8,
-        )
-        .add_checked(-r)
-        .0
+        D_PI.add_checked(-r).0
     } else {
         r
     }

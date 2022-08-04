@@ -21,8 +21,8 @@ pub fn sinf(d: f32) -> f32 {
         q = ((dfii & 3) * 2 + ((dfidf.0 > 0.) as i32) + 1) >> 2;
         if (dfii & 1) != 0 {
             dfidf += Doubled::new(
-                mulsignf(3.141_592_741_012_573_242_2 * -0.5, dfidf.0),
-                mulsignf(-8.742_277_657_347_585_773_1_e-8 * -0.5, dfidf.0),
+                mulsignf(D_PI.0 * -0.5, dfidf.0),
+                mulsignf(D_PI.1 * -0.5, dfidf.0),
             );
         }
         s = dfidf.normalize();
@@ -78,14 +78,8 @@ pub fn cosf(mut d: f32) -> f32 {
         q = ((dfii & 3) * 2 + ((dfidf.0 > 0.) as i32) + 7) >> 1;
         if (dfii & 1) == 0 {
             dfidf += Doubled::new(
-                mulsignf(
-                    3.141_592_741_012_573_242_2 * -0.5,
-                    if dfidf.0 > 0. { 1. } else { -1. },
-                ),
-                mulsignf(
-                    -8.742_277_657_347_585_773_1_e-8 * -0.5,
-                    if dfidf.0 > 0. { 1. } else { -1. },
-                ),
+                mulsignf(D_PI.0 * -0.5, if dfidf.0 > 0. { 1. } else { -1. }),
+                mulsignf(D_PI.1 * -0.5, if dfidf.0 > 0. { 1. } else { -1. }),
             );
         }
         s = dfidf.normalize();
@@ -365,12 +359,7 @@ pub fn asinf(d: f32) -> f32 {
         * x2
         * x.0;
 
-    let y = (Doubled::new(
-        3.141_592_741_012_573_242_2 / 4.,
-        -8.742_277_657_347_585_773_1_e-8 / 4.,
-    )
-    .sub_checked(x))
-    .add_checked(-u);
+    let y = (Doubled::new(D_PI.0 / 4., D_PI.1 / 4.).sub_checked(x)).add_checked(-u);
     let r = if o { u + x.0 } else { f32::from(y) * 2. };
     mulsignf(r, d)
 }
@@ -406,19 +395,12 @@ pub fn acosf(d: f32) -> f32 {
         * x.0
         * x2;
 
-    let mut y = Doubled::new(
-        3.141_592_741_012_573_242_2 / 2.,
-        -8.742_277_657_347_585_773_1_e-8 / 2.,
-    )
-    .sub_checked(mulsignf(x.0, d).add_checked_as_doubled(mulsignf(u, d)));
+    let mut y = Doubled::new(D_PI.0 / 2., D_PI.1 / 2.)
+        .sub_checked(mulsignf(x.0, d).add_checked_as_doubled(mulsignf(u, d)));
     x.add_checked_assign(u);
     y = if o { y } else { x.scale(2.) };
     if !o && (d < 0.) {
-        y = Doubled::new(
-            3.141_592_741_012_573_242_2,
-            -8.742_277_657_347_585_773_1_e-8,
-        )
-        .sub_checked(y);
+        y = D_PI.sub_checked(y);
     }
 
     f32::from(y)
@@ -657,8 +639,7 @@ pub fn logf(mut d: f32) -> f32 {
         .mul_add(x2, 0.399_610_817_4)
         .mul_add(x2, 0.666_669_488);
 
-    let s = (Doubled::new(0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9)
-        * (e as f32))
+    let s = (D_LN2 * (e as f32))
         .add_checked(x.scale(2.))
         .add_checked(x2 * x.0 * t);
 
@@ -794,8 +775,7 @@ pub fn log1pf(d: f32) -> f32 {
         .mul_add(x2, 0.399_610_817_4)
         .mul_add(x2, 0.666_669_488);
 
-    let s = (Doubled::new(0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9)
-        * (e as f32))
+    let s = (crate::f32::D_LN2 * (e as f32))
         .add_checked(x.scale(2.))
         .add_checked(x2 * x.0 * t);
 

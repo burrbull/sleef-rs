@@ -31,8 +31,8 @@ pub fn sin(d: f64) -> f64 {
         if (ddii & 1) != 0 {
             ddidd = ddidd
                 + Doubled::new(
-                    mulsign(3.141_592_653_589_793_116 * -0.5, ddidd.0),
-                    mulsign(1.224_646_799_147_353_207_2_e-16 * -0.5, ddidd.0),
+                    mulsign(D_PI.0 * -0.5, ddidd.0),
+                    mulsign(D_PI.1 * -0.5, ddidd.0),
                 );
         }
         s = ddidd.normalize();
@@ -113,14 +113,8 @@ pub fn cos(d: f64) -> f64 {
         if (ddii & 1) == 0 {
             ddidd = ddidd
                 + Doubled::new(
-                    mulsign(
-                        3.141_592_653_589_793_116 * -0.5,
-                        if ddidd.0 > 0. { 1. } else { -1. },
-                    ),
-                    mulsign(
-                        1.224_646_799_147_353_207_2_e-16 * -0.5,
-                        if ddidd.0 > 0. { 1. } else { -1. },
-                    ),
+                    mulsign(D_PI.0 * -0.5, if ddidd.0 > 0. { 1. } else { -1. }),
+                    mulsign(D_PI.1 * -0.5, if ddidd.0 > 0. { 1. } else { -1. }),
                 );
         }
         s = ddidd.normalize();
@@ -497,12 +491,9 @@ pub fn asin(d: f64) -> f64 {
         0.166_666_666_666_649_754_3,
     ) * (x2 * x.0);
 
-    let y = Doubled::new(
-        3.141_592_653_589_793_116 / 4.,
-        1.224_646_799_147_353_207_2_e-16 / 4.,
-    )
-    .sub_checked(x)
-    .add_checked(-u);
+    let y = Doubled::new(D_PI.0 / 4., D_PI.1 / 4.)
+        .sub_checked(x)
+        .add_checked(-u);
     let r = if o { u + x.0 } else { f64::from(y) * 2. };
     mulsign(r, d)
 }
@@ -549,15 +540,12 @@ pub fn acos(d: f64) -> f64 {
         0.166_666_666_666_649_754_3,
     ) * (x.0 * x2);
 
-    let mut y = Doubled::new(
-        3.141_592_653_589_793_116 / 2.,
-        1.224_646_799_147_353_207_2_e-16 / 2.,
-    )
-    .sub_checked(mulsign(x.0, d).add_checked_as_doubled(mulsign(u, d)));
+    let mut y = Doubled::new(D_PI.0 / 2., D_PI.1 / 2.)
+        .sub_checked(mulsign(x.0, d).add_checked_as_doubled(mulsign(u, d)));
     x.add_checked_assign(u);
     y = if o { y } else { x.scale(2.) };
     if !o && (d < 0.) {
-        y = Doubled::new(3.141_592_653_589_793_116, 1.224_646_799_147_353_207_2_e-16).sub_checked(y)
+        y = D_PI.sub_checked(y)
     };
     y.into()
 }
@@ -792,10 +780,7 @@ pub fn log(mut d: f64) -> f64 {
         0.666_666_666_666_733_354_1,
     );
 
-    let s = (Doubled::new(
-        0.693_147_180_559_945_286_226_764,
-        2.319_046_813_846_299_558_417_771_e-17,
-    ) * (e as f64))
+    let s = (D_LN2 * (e as f64))
         .add_checked(x.scale(2.))
         .add_checked(x2 * x.0 * t);
 
@@ -975,10 +960,7 @@ pub fn log1p(d: f64) -> f64 {
         0.666_666_666_666_733_354_1,
     );
 
-    let s = (Doubled::new(
-        0.693_147_180_559_945_286_226_764,
-        2.319_046_813_846_299_558_417_771_e-17,
-    ) * (e as f64))
+    let s = (D_LN2 * (e as f64))
         .add_checked(x.scale(2.))
         .add_checked(x2 * x.0 * t);
 

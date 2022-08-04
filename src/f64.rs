@@ -669,23 +669,28 @@ fn atan2k(mut y: f64, mut x: f64) -> f64 {
     (q as f64) * f64::consts::FRAC_PI_2 + t
 }
 
+#[inline]
+fn orsign(x: f64, y: f64) -> f64 {
+    f64::from_bits(x.to_bits() | (y.to_bits() & (1 << 63)))
+}
+
 fn rempisub(x: f64) -> (f64, i32) {
     // This function is equivalent to :
-    // ( x - round(4 * x) * 0.25, (round(4 * x) - round(x) * 4) as i32 );
-    let mut fr = x - D1_28 * ((x * (1.0 / D1_28)) as i32 as f64);
-    let mut reti = ((7 & ((if x > 0. { 4 } else { 3 }) + ((fr * 8.) as i32))) - 3) >> 1;
-    fr = fr - 0.25 * ((fr * 4. + mulsign(0.5, x)) as i32 as f64);
-    fr = if fabsk(fr) > 0.25 {
-        fr - mulsign(0.5, x)
+    // ( x - rint(4 * x) * 0.25, (rint(4 * x) - rint(x) * 4) as i32 );
+    let c = mulsign(D1_52, x);
+    let rint4x = if fabsk(4.0 * x) > D1_52 {
+        4.0 * x
     } else {
-        fr
+        orsign(4.0.mul_add(x, c) - c, x)
     };
-    fr = if fabsk(fr) > 1e+10 { 0. } else { fr };
-    if fabsk(x) == 0.124_999_999_999_999_986_12 {
-        fr = x;
-        reti = 0;
-    }
-    (fr, reti)
+    let rintx = if fabsk(x) > D1_52 {
+        x
+    } else {
+        orsign(x + c - c, x)
+    };
+    let retd = (-0.25).mul_add(rint4x, x);
+    let reti = (-4_f64).mul_add(rintx, rint4x) as i32;
+    (retd, reti)
 }
 
 // Payne-Hanek like argument reduction
@@ -1598,24 +1603,11 @@ pub fn round(d: f64) -> f64 {
 
 /// Round to integer, ties round to even
 pub fn rint(d: f64) -> f64 {
-    let x = d + 0.5;
-    let mut fr = x - D1_31 * ((x * (1. / D1_31)) as i32 as f64);
-    let isodd = (1 & (fr as i32)) != 0;
-    fr = fr - (fr as i32 as f64);
-    fr = if (fr < 0.) || ((fr == 0.) && isodd) {
-        fr + 1.
-    } else {
-        fr
-    };
-    let x = if d == 0.500_000_000_000_000_111_02 {
-        0.
-    } else {
-        x
-    }; // nextafter(0.5, 1)
-    if d.is_infinite() || (fabsk(d) >= D1_52) {
+    let c = mulsign(D1_52, d);
+    if fabsk(d) > D1_52 {
         d
     } else {
-        copysignk(x - fr, d)
+        orsign(d + c - c, d)
     }
 }
 
@@ -1703,6 +1695,11 @@ pub fn expfrexp(mut x: f64) -> i32 {
     }
 }
 
+#[inline]
+fn removelsb(d: f64) -> f64 {
+    f64::from_bits(d.to_bits() & 0x_ffff_ffff_ffff_fffe)
+}
+
 /// FP remainder
 pub fn fmod(x: f64, y: f64) -> f64 {
     #[inline]
@@ -1712,11 +1709,6 @@ pub fn fmod(x: f64, y: f64) -> f64 {
         } else {
             f64::from_bits(d.to_bits() - 1)
         }
-    }
-
-    #[inline]
-    fn removelsb(d: f64) -> f64 {
-        f64::from_bits(d.to_bits() & 0x_ffff_ffff_ffff_fffe)
     }
 
     #[inline]
@@ -1763,6 +1755,72 @@ pub fn fmod(x: f64, y: f64) -> f64 {
     } else {
         ret
     }
+}
+
+#[inline]
+fn rintk2(d: f64) -> f64 {
+    let c = mulsign(D1_52, d);
+    if fabsk(d) > D1_52 {
+        d
+    } else {
+        orsign(d + c - c, d)
+    }
+}
+
+/// FP remainder
+pub fn remainder(x: f64, y: f64) -> f64 {
+    let mut n = fabsk(x);
+    let mut d = fabsk(y);
+    let mut s = 1.;
+    if d < f64::MIN_POSITIVE * 2. {
+        n *= D1_54;
+        d *= D1_54;
+        s = 1. / D1_54;
+    }
+    let rd = 1. / d;
+    let mut r = Doubled::from(n);
+    let mut qisodd = false;
+
+    for _ in 0..21 {
+        // ceil(log2(DBL_MAX) / 52)
+        let mut q = removelsb(rintk2(r.0 * rd));
+        if fabsk(r.0) < 1.5 * d {
+            q = if r.0 < 0. { -1. } else { 1. };
+        }
+        if fabsk(r.0) < 0.5 * d || (fabsk(r.0) == 0.5 * d && !qisodd) {
+            q = 0.;
+        }
+        if q == 0. {
+            break;
+        }
+        if (q * -d).is_infinite() {
+            q += mulsign(-1., r.0);
+        }
+        qisodd ^= q.is_odd();
+        r = (r + q.mul_as_doubled(-d)).normalize();
+    }
+
+    let mut ret = r.0 * s;
+    ret = mulsign(ret, x);
+    if y.is_infinite() {
+        ret = if x.is_infinite() { f64::NAN } else { x };
+    }
+    if d == 0. {
+        f64::NAN
+    } else {
+        ret
+    }
+}
+
+#[test]
+fn test_remainder() {
+    test_ff_f(
+        remainder,
+        rug::Float::remainder,
+        f64::MIN..=f64::MAX,
+        f64::MIN..=f64::MAX,
+        0.5,
+    );
 }
 
 /// Integral and fractional value of FP number

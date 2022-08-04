@@ -622,9 +622,13 @@ macro_rules! impl_math_f64 {
         impl IsInt for F64x {
             #[inline]
             fn is_integer(self) -> Self::Mask {
-                let mut x = (self * (ONE / D1_31X)).trunc();
-                x = (-D1_31X).mul_add(x, self);
-                x.trunc().eq(x) | self.abs().gt(D1_53X)
+                if cfg!(feature = "full_fp_rounding") {
+                    self.trunc().eq(self)
+                } else {
+                    let mut x = (self * (ONE / D1_31X)).trunc();
+                    x = (-D1_31X).mul_add(x, self);
+                    x.trunc().eq(x) | self.abs().gt(D1_53X)
+                }
             }
         }
 
@@ -694,10 +698,15 @@ macro_rules! impl_math_f64 {
         impl IsOdd for F64x {
             #[inline]
             fn is_odd(self) -> Self::Mask {
-                let mut x = (self * (ONE / D1_31X)).trunc();
-                x = (-D1_31X).mul_add(x, self);
+                if cfg!(feature = "full_fp_rounding") {
+                    let x = self * F64x::splat(0.5);
+                    x.trunc().ne(x)
+                } else {
+                    let mut x = (self * (ONE / D1_31X)).trunc();
+                    x = (-D1_31X).mul_add(x, self);
 
-                M64x::from_cast((x.trunci() & Ix::splat(1)).eq(Ix::splat(1))) & self.abs().lt(D1_53X)
+                    M64x::from_cast((x.trunci() & Ix::splat(1)).eq(Ix::splat(1))) & self.abs().lt(D1_53X)
+                }
             }
         }
 
@@ -718,25 +727,26 @@ macro_rules! impl_math_f64 {
         }
 
         #[inline]
+        fn orsign(x: F64x, y: F64x) -> F64x {
+            F64x::from_bits(U64x::from_bits(x) | y.sign_bit())
+        }
+
+        #[inline]
         fn rempisub(x: F64x) -> (F64x, Ix) {
             if cfg!(feature = "full_fp_rounding") {
                 let y = (x * F64x::splat(4.)).round();
                 let vi = (y - x.round() * F64x::splat(4.)).trunci();
                 (x - y * F64x::splat(0.25), vi)
             } else {
-                let mut fr = x - D1_28X * (x * (ONE / D1_28X)).trunc();
-                let mut vi = Mx::from_cast(x.gt(ZERO)).select(Ix::splat(4), Ix::splat(3))
-                    + (fr * F64x::splat(8.)).trunci();
-                vi = ((Ix::splat(7) & vi) - Ix::splat(3)) >> 1;
-                fr = fr - F64x::splat(0.25) * fr.mul_add(F64x::splat(4.), HALF.mul_sign(x)).trunc();
-                fr = fr
-                    .abs()
-                    .gt(F64x::splat(0.25))
-                    .select(fr - HALF.mul_sign(x), fr);
-                fr = fr.abs().gt(F64x::splat(1e+10)).select(ZERO, fr);
-                let o = x.abs().eq(F64x::splat(0.124_999_999_999_999_986_12));
-                fr = o.select(x, fr);
-                vi = Mx::from_cast(o).select(Ix::splat(0), vi);
+                let c = D1_52X.mul_sign(x);
+                let rint4x = (F64x::splat(4.) * x).abs().gt(D1_52X).select(
+                    (F64x::splat(4.) * x),
+                    orsign((F64x::splat(4.).mul_add(x, c) - c), x)
+                );
+                let rintx  = x.abs().gt(D1_52X).select(x, orsign((x + c) - c, x));
+
+                let fr = F64x::splat(-0.25).mul_add(rint4x, x);
+                let vi = F64x::splat(-4.).mul_add(rintx, rint4x).trunci();
                 (fr, vi)
             }
         }
@@ -1186,9 +1196,15 @@ macro_rules! impl_math_f64 {
 
         /// Round to integer towards zero
         pub fn trunc(x: F64x) -> F64x {
+            /*
+            #ifdef FULL_FP_ROUNDING
+  return vtruncate_vd_vd(x);
+#else
+            */
             let mut fr = x - D1_31X * F64x::from_cast((x * (ONE / D1_31X)).trunci());
             fr -= F64x::from_cast(fr.trunci());
             (x.is_infinite() | x.abs().ge(D1_52X)).select(x, (x - fr).copy_sign(x))
+// #endif
         }
 
         /// Round to integer towards minus infinity
@@ -1222,15 +1238,14 @@ macro_rules! impl_math_f64 {
 
         /// Round to integer, ties round to even
         pub fn rint(d: F64x) -> F64x {
-            let mut x = d + HALF;
-            let mut fr = x - D1_31X * F64x::from_cast((x * (ONE / D1_31X)).trunci());
-            let isodd = M64x::from_cast((Ix::splat(1) & fr.trunci()).eq(Ix::splat(1)));
-            fr -= F64x::from_cast(fr.trunci());
-            fr = (fr.lt(ZERO) | (fr.eq(ZERO) & isodd)).select(fr + ONE, fr);
-            x = d
-                .eq(F64x::splat(0.500_000_000_000_000_111_02))
-                .select(ZERO, x);
-            (d.is_infinite() | d.abs().ge(D1_52X)).select(d, (x - fr).copy_sign(d))
+            /*
+            #ifdef FULL_FP_ROUNDING
+            return vrint_vd_vd(d);
+            #else
+            */
+            let c = D1_52X.mul_sign(d);
+            d.abs().gt(D1_52X).select(d, orsign((d + c) - c, d))
+            //#endif
         }
 
         /// Find the next representable FP value
@@ -1318,6 +1333,11 @@ macro_rules! impl_math_f64 {
         /// This function may return infinity with a correct sign if the absolute value of the correct return value is greater than `1e+300`.
         /// The error bounds of the returned value is `max(0.500_01 ULP, f64::MIN_POSITIVE)`.
         pub fn fma(mut x: F64x, mut y: F64x, mut z: F64x) -> F64x {
+            /*
+            #ifdef ENABLE_FMA_DP
+  return vfma_vd_vd_vd_vd(x, y, z);
+#else
+            */
             let mut h2 = x * y + z;
             let mut q = ONE;
             const C0: F64x = D1_54X;
@@ -1349,6 +1369,7 @@ macro_rules! impl_math_f64 {
             let o = h2.is_infinite() | h2.is_nan();
 
             o.select(h2, ret * q)
+// #endif
         }
 
         /// Square root function
@@ -1417,6 +1438,62 @@ macro_rules! impl_math_f64 {
 
             ret = nu.lt(de).select(x, ret);
             de.eq(ZERO).select(F64x::NAN, ret)
+        }
+
+        #[inline]
+        fn rintk2(d: F64x) -> F64x {
+            if cfg!(feature = "full_fp_rounding") {
+                rint(d)
+            } else {
+                let c = D1_52X.mul_sign(d);
+                d.abs().gt(D1_52X).select(d, orsign((d + c) - c, d))
+            }
+        }
+
+        /// FP remainder
+        pub fn remainder(x: F64x, y: F64x) -> F64x {
+            let mut n = x.abs();
+            let mut d = y.abs();
+            let mut s = ONE;
+            let o = d.lt(F64x::splat(f64::MIN_POSITIVE*2.));
+            n = o.select(n * D1_54X, n);
+            d = o.select(d * D1_54X, d);
+            s  = o.select(s * F64x::splat(1. / crate::f64::D1_54), s);
+            let rd = d.recpre();
+            let mut r = Doubled::from(n);
+            let mut qisodd = M64x::splat(false);
+
+            for _ in 0..21 { // ceil(log2(DBL_MAX) / 52)
+                let mut q = rintk2(r.0 * rd);
+            /*#ifndef ENABLE_FMA_DP
+                q = vreinterpret_vd_vm(vand_vm_vm_vm(vreinterpret_vm_vd(q), vcast_vm_u64(UINT64_C(0xfffffffffffffffe))));
+            #endif*/
+                q = r.0.abs().lt(d * F64x::splat(1.5)).select(ONE.mul_sign(r.0), q);
+                q = (r.0.abs().lt(d * F64x::splat(0.5)) | (!qisodd & r.0.abs().eq(d * F64x::splat(0.5))))
+                    .select(ZERO, q);
+                if q.eq(ZERO).all() {
+                    break;
+                }
+                q = (q * (-d)).is_infinite().select((q + F64x::splat(-1.).mul_sign(r.0)), q);
+                qisodd ^= q.is_odd();
+                r = (r + q.mul_as_doubled(-d)).normalize();
+            }
+
+            let mut ret = r.0 * s;
+            ret = ret.mul_sign(x);
+            ret = y.is_infinite().select(x.is_infinite().select(F64x::NAN, x), ret);
+            d.eq(ZERO).select(F64x::NAN, ret)
+        }
+
+        #[test]
+        fn test_remainder() {
+            test_ff_f(
+                remainder,
+                rug::Float::remainder,
+                f64::MIN..=f64::MAX,
+                f64::MIN..=f64::MAX,
+                0.5,
+            );
         }
 
         /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */

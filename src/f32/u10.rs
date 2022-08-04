@@ -20,7 +20,7 @@ pub fn sinf(d: f32) -> f32 {
         let (mut dfidf, dfii) = rempif(d);
         q = ((dfii & 3) * 2 + ((dfidf.0 > 0.) as i32) + 1) >> 2;
         if (dfii & 1) != 0 {
-            dfidf += df(
+            dfidf += Doubled::new(
                 mulsignf(3.141_592_741_012_573_242_2 * -0.5, dfidf.0),
                 mulsignf(-8.742_277_657_347_585_773_1_e-8 * -0.5, dfidf.0),
             );
@@ -77,7 +77,7 @@ pub fn cosf(mut d: f32) -> f32 {
         let (mut dfidf, dfii) = rempif(d);
         q = ((dfii & 3) * 2 + ((dfidf.0 > 0.) as i32) + 7) >> 1;
         if (dfii & 1) == 0 {
-            dfidf += df(
+            dfidf += Doubled::new(
                 mulsignf(
                     3.141_592_741_012_573_242_2 * -0.5,
                     if dfidf.0 > 0. { 1. } else { -1. },
@@ -154,7 +154,7 @@ pub fn sincosf(d: f32) -> (f32, f32) {
         * t.0;
 
     let mut x = t.add_checked(u);
-    let mut rsin = if d.is_neg_zero() { -0. } else { x.0 + x.1 };
+    let mut rsin = if d.is_neg_zero() { -0. } else { f32::from(x) };
 
     let u = (-2.718_118_423_672_422_068_193_55_e-7_f32)
         .mul_add(s.0, 2.479_904_469_510_074_704_885_48_e-5)
@@ -163,7 +163,7 @@ pub fn sincosf(d: f32) -> (f32, f32) {
         .mul_add(s.0, -0.5);
 
     x = (1.).add_checked(s.0.mul_as_doubled(u));
-    let mut rcos = x.0 + x.1;
+    let mut rcos = f32::from(x);
 
     if (q & 1) != 0 {
         core::mem::swap(&mut rcos, &mut rsin);
@@ -237,7 +237,7 @@ pub fn tanf(d: f32) -> f32 {
     if d.is_neg_zero() {
         -0.
     } else {
-        x.0 + x.1
+        x.into()
     }
 }
 
@@ -248,8 +248,7 @@ fn test_tanf() {
 
 fn atan2kf_u1(mut y: Doubled<f32>, mut x: Doubled<f32>) -> Doubled<f32> {
     let mut q = if x.0 < 0. {
-        x.0 = -x.0;
-        x.1 = -x.1;
+        x = -x;
         -2
     } else {
         0
@@ -258,8 +257,7 @@ fn atan2kf_u1(mut y: Doubled<f32>, mut x: Doubled<f32>) -> Doubled<f32> {
     if y.0 > x.0 {
         let t = x;
         x = y;
-        y.0 = -t.0;
-        y.1 = -t.1;
+        y = -t;
         q += 1;
     }
 
@@ -277,7 +275,7 @@ fn atan2kf_u1(mut y: Doubled<f32>, mut x: Doubled<f32>) -> Doubled<f32> {
 
     t = t * (-0.333_332_866_430_282_592_773_438).add_checked_as_doubled(u * t.0);
     t = s * (1.).add_checked(t);
-    df(
+    Doubled::new(
         1.570_796_370_506_286_621_1,
         -4.371_138_828_673_792_886_5_e-8,
     ) * (q as f32)
@@ -295,8 +293,8 @@ pub fn atan2f(mut y: f32, mut x: f32) -> f32 {
         y *= F1_24;
         x *= F1_24;
     } // nexttowardf((1. / FLT_MAX), 1)
-    let d = atan2kf_u1(df(fabsfk(y), 0.), df(x, 0.));
-    let mut r = d.0 + d.1;
+    let d = atan2kf_u1(Doubled::from(fabsfk(y)), Doubled::from(x));
+    let mut r = f32::from(d);
 
     r = mulsignf(r, x);
     r = if y == 0. {
@@ -349,11 +347,15 @@ pub fn asinf(d: f32) -> f32 {
     let o = fabsfk(d) < 0.5;
     let x2 = if o { d * d } else { (1. - fabsfk(d)) * 0.5 };
     let mut x = if o {
-        df(fabsfk(d), 0.)
+        Doubled::from(fabsfk(d))
     } else {
         x2.sqrt_as_doubled()
     };
-    x = if fabsfk(d) == 1. { df(0., 0.) } else { x };
+    x = if fabsfk(d) == 1. {
+        Doubled::from(0.)
+    } else {
+        x
+    };
 
     let u = 0.419_745_482_5_e-1_f32
         .mul_add(x2, 0.242_404_602_5_e-1)
@@ -363,13 +365,13 @@ pub fn asinf(d: f32) -> f32 {
         * x2
         * x.0;
 
-    let y = (df(
+    let y = (Doubled::new(
         3.141_592_741_012_573_242_2 / 4.,
         -8.742_277_657_347_585_773_1_e-8 / 4.,
     )
     .sub_checked(x))
     .add_checked(-u);
-    let r = if o { u + x.0 } else { (y.0 + y.1) * 2. };
+    let r = if o { u + x.0 } else { f32::from(y) * 2. };
     mulsignf(r, d)
 }
 
@@ -386,11 +388,15 @@ pub fn acosf(d: f32) -> f32 {
     let o = fabsfk(d) < 0.5;
     let x2 = if o { d * d } else { (1. - fabsfk(d)) * 0.5 };
     let mut x = if o {
-        df(fabsfk(d), 0.)
+        Doubled::from(fabsfk(d))
     } else {
         x2.sqrt_as_doubled()
     };
-    x = if fabsfk(d) == 1. { df(0., 0.) } else { x };
+    x = if fabsfk(d) == 1. {
+        Doubled::from(0.)
+    } else {
+        x
+    };
 
     let u = 0.419_745_482_5_e-1_f32
         .mul_add(x2, 0.242_404_602_5_e-1)
@@ -400,7 +406,7 @@ pub fn acosf(d: f32) -> f32 {
         * x.0
         * x2;
 
-    let mut y = df(
+    let mut y = Doubled::new(
         3.141_592_741_012_573_242_2 / 2.,
         -8.742_277_657_347_585_773_1_e-8 / 2.,
     )
@@ -408,14 +414,14 @@ pub fn acosf(d: f32) -> f32 {
     x.add_checked_assign(u);
     y = if o { y } else { x.scale(2.) };
     if !o && (d < 0.) {
-        y = df(
+        y = Doubled::new(
             3.141_592_741_012_573_242_2,
             -8.742_277_657_347_585_773_1_e-8,
         )
         .sub_checked(y);
     }
 
-    y.0 + y.1
+    f32::from(y)
 }
 
 #[test]
@@ -428,11 +434,11 @@ fn test_acosf() {
 /// This function evaluates the arc tangent function of a value in ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
 pub fn atanf(d: f32) -> f32 {
-    let d2 = atan2kf_u1(df(fabsfk(d), 0.), df(1., 0.));
+    let d2 = atan2kf_u1(Doubled::from(fabsfk(d)), Doubled::from(1.));
     let r = if d.is_infinite() {
         1.570_796_326_794_896_557_998_982
     } else {
-        d2.0 + d2.1
+        f32::from(d2)
     };
     mulsignf(r, d)
 }
@@ -450,9 +456,9 @@ fn test_atanf() {
 /// sign or a correct value with `1.0 ULP` error bound is returned.
 pub fn sinhf(x: f32) -> f32 {
     let mut y = fabsfk(x);
-    let mut d = expk2f(df(y, 0.));
+    let mut d = expk2f(Doubled::from(y));
     d = d.sub_checked(d.recpre());
-    y = (d.0 + d.1) * 0.5;
+    y = f32::from(d) * 0.5;
 
     y = if fabsfk(x) > 89. { f32::INFINITY } else { y };
     y = if y.is_nan() { f32::INFINITY } else { y };
@@ -477,9 +483,9 @@ fn test_sinhf() {
 /// sign or a correct value with `1.0 ULP` error bound is returned.
 pub fn coshf(x: f32) -> f32 {
     let mut y = fabsfk(x);
-    let mut d = expk2f(df(y, 0.));
+    let mut d = expk2f(Doubled::from(y));
     d = d.add_checked(d.recpre());
-    y = (d.0 + d.1) * 0.5;
+    y = f32::from(d) * 0.5;
 
     y = if fabsfk(x) > 89. { f32::INFINITY } else { y };
     y = if y.is_nan() { f32::INFINITY } else { y };
@@ -501,10 +507,10 @@ fn test_coshf() {
 /// The error bound of the returned value is `1.0001 ULP`.
 pub fn tanhf(x: f32) -> f32 {
     let mut y = fabsfk(x);
-    let mut d = expk2f(df(y, 0.));
+    let mut d = expk2f(Doubled::from(y));
     let e = d.recpre();
     d = d.sub_checked(e) / d.add_checked(e);
-    y = d.0 + d.1;
+    y = f32::from(d);
 
     y = if fabsfk(x) > 18.714_973_875 { 1. } else { y }; // TODO: check
     y = if y.is_nan() { 1. } else { y };
@@ -530,12 +536,12 @@ fn test_tanhf() {
 pub fn asinhf(x: f32) -> f32 {
     let mut y = fabsfk(x);
 
-    let mut d = if y > 1. { x.recpre() } else { df(y, 0.) };
+    let mut d = if y > 1. { x.recpre() } else { Doubled::from(y) };
     d = (d.square() + 1.).sqrt();
     d = if y > 1. { d * y } else { d };
 
     d = logk2f(d.add_checked(x).normalize());
-    y = d.0 + d.1;
+    y = f32::from(d);
 
     y = if fabsfk(x) > SQRT_FLT_MAX || y.is_nan() {
         mulsignf(f32::INFINITY, x)
@@ -568,7 +574,7 @@ fn test_asinhf() {
 /// sign or a correct value with `1.0 ULP` error bound is returned.
 pub fn acoshf(x: f32) -> f32 {
     let d = logk2f((x.add_as_doubled(1.)).sqrt() * (x.add_as_doubled(-1.)).sqrt() + x);
-    let mut y = d.0 + d.1;
+    let mut y = f32::from(d);
 
     y = if (x > SQRT_FLT_MAX) || y.is_nan() {
         f32::INFINITY
@@ -606,7 +612,7 @@ pub fn atanhf(x: f32) -> f32 {
     } else if y == 1. {
         f32::INFINITY
     } else {
-        (d.0 + d.1) * 0.5
+        f32::from(d) * 0.5
     };
 
     y = if x.is_infinite() || y.is_nan() {
@@ -651,7 +657,8 @@ pub fn logf(mut d: f32) -> f32 {
         .mul_add(x2, 0.399_610_817_4)
         .mul_add(x2, 0.666_669_488);
 
-    let s = (df(0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9) * (e as f32))
+    let s = (Doubled::new(0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9)
+        * (e as f32))
         .add_checked(x.scale(2.))
         .add_checked(x2 * x.0 * t);
 
@@ -662,7 +669,7 @@ pub fn logf(mut d: f32) -> f32 {
     } else if d.is_infinite() {
         f32::INFINITY
     } else {
-        s.0 + s.1
+        s.into()
     }
 }
 
@@ -695,8 +702,8 @@ pub fn log10f(mut d: f32) -> f32 {
         .mul_add(x2, 0.173_549_354_1)
         .mul_add(x2, 0.289_530_962_7);
 
-    let s = (df(0.301_030_01, -1.432_098_889_e-8) * (e as f32))
-        .add_checked(x * df(0.868_588_984, -2.170_757_285_e-8))
+    let s = (Doubled::new(0.301_030_01, -1.432_098_889_e-8) * (e as f32))
+        .add_checked(x * Doubled::new(0.868_588_984, -2.170_757_285_e-8))
         .add_checked(x2 * x.0 * t);
 
     if d == 0. {
@@ -706,7 +713,7 @@ pub fn log10f(mut d: f32) -> f32 {
     } else if d.is_infinite() {
         f32::INFINITY
     } else {
-        s.0 + s.1
+        s.into()
     }
 }
 
@@ -739,7 +746,8 @@ pub fn log2f(mut d: f32) -> f32 {
         .mul_add(x2, 0.576_479_017_7)
         .mul_add(x2, 0.961_801_290_512);
 
-    let mut s = (e as f32) + x * df(2.885_390_043_258_666_992_2, 3.273_447_448_356_848_861_6_e-8);
+    let mut s =
+        (e as f32) + x * Doubled::new(2.885_390_043_258_666_992_2, 3.273_447_448_356_848_861_6_e-8);
     s += x2 * x.0 * t;
 
     if d == 0. {
@@ -749,7 +757,7 @@ pub fn log2f(mut d: f32) -> f32 {
     } else if d.is_infinite() {
         f32::INFINITY
     } else {
-        s.0 + s.1
+        s.into()
     }
 }
 
@@ -779,14 +787,15 @@ pub fn log1pf(d: f32) -> f32 {
         e -= 64;
     }
 
-    let x = df(m, 0.) / (2.).add_checked_as_doubled(m);
+    let x = Doubled::from(m) / (2.).add_checked_as_doubled(m);
     let x2 = x.0 * x.0;
 
     let t = 0.302_729_487_4_f32
         .mul_add(x2, 0.399_610_817_4)
         .mul_add(x2, 0.666_669_488);
 
-    let s = (df(0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9) * (e as f32))
+    let s = (Doubled::new(0.693_147_182_464_599_609_38, -1.904_654_323_148_236_017_e-9)
+        * (e as f32))
         .add_checked(x.scale(2.))
         .add_checked(x2 * x.0 * t);
 
@@ -799,7 +808,7 @@ pub fn log1pf(d: f32) -> f32 {
     } else if d > 1e+38 {
         f32::INFINITY
     } else {
-        s.0 + s.1
+        s.into()
     }
 }
 
@@ -815,8 +824,8 @@ fn test_log1pf() {
 pub fn expf(d: f32) -> f32 {
     let qf = rintfk(d * R_LN2_F);
     let q = qf as i32;
-    let s = qf.mul_add(-L2U_F, d);
-    let s = qf.mul_add(-L2L_F, s);
+    let s = qf.mul_add(-L2_F.0, d);
+    let s = qf.mul_add(-L2_F.1, s);
 
     let mut u = 0.000_198_527_617_612_853_646_278_381_f32
         .mul_add(s, 0.001_393_043_552_525_341_510_772_71)
@@ -849,8 +858,8 @@ pub fn exp10f(d: f32) -> f32 {
     let qf = rintfk(d * LOG10_2_F);
 
     let q = qf as i32;
-    let s = qf.mul_add(-L10U_F, d);
-    let s = qf.mul_add(-L10L_F, s);
+    let s = qf.mul_add(-L10_F.0, d);
+    let s = qf.mul_add(-L10_F.1, s);
 
     let mut u = 0.680_255_591_9_e-1
         .mul_add(s, 0.207_808_032_6)
@@ -858,7 +867,7 @@ pub fn exp10f(d: f32) -> f32 {
         .mul_add(s, 0.117_124_533_7_e+1)
         .mul_add(s, 0.203_467_869_8_e+1)
         .mul_add(s, 0.265_094_900_1_e+1);
-    let x = df(2.3025851249694824219, -3.1705172516493593157e-08).add_checked(u * s);
+    let x = Doubled::new(2.3025851249694824219, -3.1705172516493593157e-08).add_checked(u * s);
     u = (1.).add_checked(x * s).normalize().0;
 
     if d > 38.531_839_419_103_623_894_138_7 {
@@ -880,7 +889,7 @@ fn test_exp10f() {
 /// This function returns the value one less than *e* raised to ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
 pub fn expm1f(a: f32) -> f32 {
-    let d = expk2f(df(a, 0.)) + (-1.);
+    let d = expk2f(Doubled::from(a)) + (-1.);
     if a.is_neg_zero() {
         -0.
     } else if a < -16.635_532_333_438_687_426_013_570 {
@@ -888,7 +897,7 @@ pub fn expm1f(a: f32) -> f32 {
     } else if a > 88.722_831_726_074_218_75 {
         f32::INFINITY
     } else {
-        d.0 + d.1
+        d.into()
     }
 }
 
@@ -999,21 +1008,20 @@ pub fn cbrtf(mut d: f32) -> f32 {
     d = ldexp2kf(d, -e);
     let r = (e + 6144) % 3;
     let mut q2 = if r == 1 {
-        df(
+        Doubled::new(
             1.259_921_073_913_574_218_8,
             -2.401_870_169_421_727_041_5_e-8,
         )
     } else {
-        df(1., 0.)
+        Doubled::from(1.)
     };
     q2 = if r == 2 {
-        df(1.587_401_032_447_814_941_4, 1.952_038_530_816_935_235_6_e-8)
+        Doubled::new(1.587_401_032_447_814_941_4, 1.952_038_530_816_935_235_6_e-8)
     } else {
         q2
     };
 
-    q2.0 = mulsignf(q2.0, d);
-    q2.1 = mulsignf(q2.1, d);
+    q2 = Doubled::new(mulsignf(q2.0, d), mulsignf(q2.1, d));
     d = fabsfk(d);
 
     let mut x = (-0.601_564_466_953_277_587_890_625_f32)
@@ -1031,7 +1039,7 @@ pub fn cbrtf(mut d: f32) -> f32 {
 
     let mut u = x.mul_as_doubled(x);
     u = u * u * d + (-x);
-    y = u.0 + u.1;
+    y = f32::from(u);
 
     y = -2. / 3. * y * z;
     let v = (z.mul_as_doubled(z) + y) * d * q2;
@@ -1041,7 +1049,7 @@ pub fn cbrtf(mut d: f32) -> f32 {
     } else if d.is_infinite() {
         mulsignf(f32::INFINITY, q2.0)
     } else {
-        ldexp2kf(v.0 + v.1, (e + 6144) / 3 - 2048)
+        ldexp2kf(f32::from(v), (e + 6144) / 3 - 2048)
     }
 }
 
@@ -1056,7 +1064,7 @@ fn test_cbrtf() {
 pub fn tgammaf(a: f32) -> f32 {
     let (da, db) = gammafk(a);
     let y = expk2f(da) * db;
-    let mut r = y.0 + y.1;
+    let mut r = f32::from(y);
     r = if ((a == f32::NEG_INFINITY) || ((a < 0.) && a.is_integer()))
         || (a.is_finite() && (a < 0.) && r.is_nan())
     {
@@ -1087,7 +1095,7 @@ fn test_tgammaf() {
 pub fn lgammaf(a: f32) -> f32 {
     let (da, db) = gammafk(a);
     let y = da + logk2f(db.abs());
-    let r = y.0 + y.1;
+    let r = f32::from(y);
     if a.is_infinite() || (a <= 0. && a.is_integer()) || (a.is_finite() && r.is_nan()) {
         f32::INFINITY
     } else {
@@ -1107,7 +1115,7 @@ fn poly2df_b(x: f32, c1: Doubled<f32>, c0: Doubled<f32>) -> Doubled<f32> {
     dfmla(x, c1, c0)
 }
 fn poly2df(x: f32, c1: f32, c0: Doubled<f32>) -> Doubled<f32> {
-    dfmla(x, df(c1, 0.), c0)
+    dfmla(x, Doubled::from(c1), c0)
 }
 fn poly4df(x: f32, c3: f32, c2: Doubled<f32>, c1: Doubled<f32>, c0: Doubled<f32>) -> Doubled<f32> {
     dfmla(x * x, poly2df(x, c3, c2), poly2df_b(x, c1, c0))
@@ -1138,15 +1146,15 @@ pub fn erff(a: f32) -> f32 {
         t2 = poly4df(
             x,
             t,
-            df(
+            Doubled::new(
                 0.009_288_344_532_251_358_032_2,
                 -2.786_374_589_702_533_075_5_e-11,
             ),
-            df(
+            Doubled::new(
                 0.042_275_499_552_488_327_026,
                 1.346_139_928_998_810_605_7_e-09,
             ),
-            df(
+            Doubled::new(
                 0.070_523_701_608_180_999_756,
                 -3.661_630_931_870_736_516_3_e-09,
             ),
@@ -1158,7 +1166,7 @@ pub fn erff(a: f32) -> f32 {
         t2 = t2.square();
         t2 = t2.recpre();
     } else if x > 4. {
-        t2 = df(0., 0.);
+        t2 = Doubled::from(0.);
     } else {
         let t = f32::poly6(
             x,
@@ -1174,27 +1182,27 @@ pub fn erff(a: f32) -> f32 {
         t2 = poly4df(
             x,
             t,
-            df(
+            Doubled::new(
                 -0.110_643_193_125_724_792_48,
                 3.705_045_277_722_528_300_7_e-09,
             ),
-            df(
+            Doubled::new(
                 -0.631_922_304_630_279_541_02,
                 -2.020_043_258_507_317_785_9_e-08,
             ),
-            df(
+            Doubled::new(
                 -1.129_663_825_035_095_214_8,
                 2.551_512_019_645_325_925_2_e-08,
             ),
         );
         t2 *= x;
-        t2 = df(expkf(t2), 0.);
+        t2 = Doubled::from(expkf(t2));
     }
 
     t2 += -1.;
 
     if x < 1e-4 {
-        t2 = df(
+        t2 = Doubled::new(
             -1.128_379_225_730_895_996_1,
             5.863_538_342_219_759_109_7_e-08,
         ) * x;
@@ -1205,7 +1213,7 @@ pub fn erff(a: f32) -> f32 {
         } else if a.is_infinite() {
             1.
         } else {
-            -t2.0 - t2.1
+            -f32::from(t2)
         },
         a,
     )

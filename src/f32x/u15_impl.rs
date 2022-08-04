@@ -14,10 +14,7 @@ macro_rules! impl_math_f32_u15 {
             let o2 = a.lt(F32x::splat(4.3));
             let o3 = a.lt(F32x::splat(10.1));
 
-            let u = o1.select_doubled(
-                Doubled::new(a, ZERO),
-                Doubled::from((1., 0.)) / Doubled::new(a, ZERO),
-            );
+            let u = o1.select_doubled(Doubled::from(a), Doubled::from(ONE) / Doubled::from(a));
 
             let t = F32x::select4(
                 o0,
@@ -108,13 +105,13 @@ macro_rules! impl_math_f32_u15 {
                 -0.572_364_030_327_966_044_425_932_623_525,
             );
 
-            let mut x = o1.select_doubled(d, Doubled::new(-a, ZERO)) * a;
+            let mut x = o1.select_doubled(d, Doubled::from(-a)) * a;
             x = o1.select_doubled(x, x + d);
 
             x = expk2f(x);
             x = o1.select_doubled(x, x * u);
 
-            let mut r = o3.select(x.0 + x.1, ZERO);
+            let mut r = o3.select(F32x::from(x), ZERO);
             r = s.is_sign_negative().select(F32x::splat(2.) - r, r);
             s.is_nan().select(F32x::NAN, r)
         }

@@ -26,18 +26,18 @@ pub fn sincospi(d: f64) -> (f64, f64) {
         .mul_add(s, -3.657_620_418_216_155_192_036_1_e-5)
         .mul_add(s, 0.002_490_394_570_192_718_502_743_56);
     let mut x = u * s
-        + dd(
+        + Doubled::new(
             -0.080_745_512_188_280_785_248_473_1,
             3.618_524_750_670_371_048_499_87_e-18,
         );
     x = s2 * x
-        + dd(
+        + Doubled::new(
             0.785_398_163_397_448_278_999_491,
             3.062_871_137_271_550_026_071_05_e-17,
         );
 
     x *= t;
-    let mut rsin = if d.is_neg_zero() { -0. } else { x.0 + x.1 };
+    let mut rsin = if d.is_neg_zero() { -0. } else { f64::from(x) };
 
     //
 
@@ -48,18 +48,18 @@ pub fn sincospi(d: f64) -> (f64, f64) {
         .mul_add(s, 3.590_860_448_590_527_540_050_62_e-6)
         .mul_add(s, -0.000_325_991_886_927_389_905_997_954);
     x = u * s
-        + dd(
+        + Doubled::new(
             0.015_854_344_243_815_501_891_425_9,
             -1.046_932_722_806_315_219_088_45_e-18,
         );
     x = s2 * x
-        + dd(
+        + Doubled::new(
             -0.308_425_137_534_042_437_259_529,
             -1.956_984_921_336_335_503_383_45_e-17,
         );
 
     x = x * s2 + 1.;
-    let mut rcos = x.0 + x.1;
+    let mut rcos = f64::from(x);
 
     //
 
@@ -117,7 +117,7 @@ pub fn sinpi(d: f64) -> f64 {
     } else if d.is_neg_zero() {
         -0.
     } else {
-        x.0 + x.1
+        x.into()
     }
 }
 
@@ -152,7 +152,7 @@ pub fn cospi(d: f64) -> f64 {
     } else if fabsk(d) > TRIGRANGEMAX3 / 4. {
         1.
     } else {
-        x.0 + x.1
+        x.into()
     }
 }
 
@@ -199,7 +199,7 @@ pub fn sqrt(mut d: f64) -> f64 {
 
     let d2 = (d + x.mul_as_doubled(x)) * x.recpre();
 
-    let ret = (d2.0 + d2.1) * q;
+    let ret = f64::from(d2) * q;
 
     let ret = if d == f64::INFINITY {
         f64::INFINITY
@@ -233,9 +233,9 @@ pub fn hypot(mut x: f64, mut y: f64) -> f64 {
         n *= D1_54;
         d *= D1_54;
     }
-    let mut t = dd(n, 0.) / dd(d, 0.);
+    let mut t = Doubled::<f64>::from(n) / Doubled::from(d);
     t = (t.square() + 1.).sqrt() * max;
-    let ret = t.0 + t.1;
+    let ret = f64::from(t);
 
     if (x == f64::INFINITY) || (y == f64::INFINITY) {
         f64::INFINITY

@@ -23,18 +23,18 @@ macro_rules! impl_math_f32_u05 {
                 .mul_add(s, F32x::splat(-0.365_730_738_8_e-4))
                 .mul_add(s, F32x::splat(0.249_039_358_5_e-2));
             let mut x = u * s
-                + Doubled::from((
-                    -0.080_745_510_756_969_451_904,
-                    -1.337_366_533_907_693_625_8_e-9,
-                ));
+                + Doubled::new(
+                    F32x::splat(-0.080_745_510_756_969_451_904),
+                    F32x::splat(-1.337_366_533_907_693_625_8_e-9),
+                );
             x = s2 * x
-                + Doubled::from((
-                    0.785_398_185_253_143_310_55,
-                    -2.185_733_861_756_648_485_5_e-8,
-                ));
+                + Doubled::new(
+                    F32x::splat(0.785_398_185_253_143_310_55),
+                    F32x::splat(-2.185_733_861_756_648_485_5_e-8),
+                );
 
             x *= t;
-            let rx = x.0 + x.1;
+            let rx = F32x::from(x);
 
             let rx = d.is_neg_zero().select(NEG_ZERO, rx);
 
@@ -42,18 +42,18 @@ macro_rules! impl_math_f32_u05 {
                 .mul_add(s, F32x::splat(0.359_057_708_e-5))
                 .mul_add(s, F32x::splat(-0.325_991_772_1_e-3));
             x = u * s
-                + Doubled::from((
-                    0.015_854_343_771_934_509_277,
-                    4.494_005_135_403_224_281_1_e-10,
-                ));
+                + Doubled::new(
+                    F32x::splat(0.015_854_343_771_934_509_277),
+                    F32x::splat(4.494_005_135_403_224_281_1_e-10),
+                );
             x = s2 * x
-                + Doubled::from((
-                    -0.308_425_128_459_930_419_92,
-                    -9.072_833_903_073_392_227_7_e-9,
-                ));
+                + Doubled::new(
+                    F32x::splat(-0.308_425_128_459_930_419_92),
+                    F32x::splat(-9.072_833_903_073_392_227_7_e-9),
+                );
 
             x = x * s2 + ONE;
-            let ry = x.0 + x.1;
+            let ry = F32x::from(x);
 
             let o = (q & I32x::splat(2)).eq(I32x::splat(0));
             let mut rsin = o.select(rx, ry);
@@ -122,7 +122,7 @@ macro_rules! impl_math_f32_u05 {
 
             let d2 = (d + x.mul_as_doubled(x)) * x.recpre_as_doubled();
 
-            x = (d2.0 + d2.1) * q;
+            x = F32x::from(d2) * q;
 
             x = d.eq(F32x::INFINITY).select(F32x::INFINITY, x);
             d.eq(ZERO).select(d, x)
@@ -148,9 +148,9 @@ macro_rules! impl_math_f32_u05 {
             let n = o.select(n * F1_24X, n);
             let d = o.select(d * F1_24X, d);
 
-            let t = Doubled::new(n, ZERO) / Doubled::new(d, ZERO);
+            let t = Doubled::from(n) / Doubled::from(d);
             let t = (t.square() + ONE).sqrt() * max;
-            let mut ret = t.0 + t.1;
+            let mut ret = F32x::from(t);
             ret = ret.is_nan().select(F32x::INFINITY, ret);
             ret = min.eq(ZERO).select(max, ret);
             ret = (x.is_nan() | y.is_nan()).select(F32x::NAN, ret);
@@ -177,7 +177,7 @@ macro_rules! impl_math_f32_u05 {
         /// If ***a*** is a `NaN` or infinity, a NaN is returned.
         pub fn sinpif(d: F32x) -> F32x {
             let x = sinpifk(d);
-            let mut r = x.0 + x.1;
+            let mut r = F32x::from(x);
 
             r = d.is_neg_zero().select(NEG_ZERO, r);
             r = F32x::from_bits(!U32x::from_bits(d.abs().gt(TRIGRANGEMAX4_F)) & U32x::from_bits(r));
@@ -209,7 +209,7 @@ macro_rules! impl_math_f32_u05 {
         /// If ***a*** is a `NaN` or infinity, a `NaN` is returned.
         pub fn cospif(d: F32x) -> F32x {
             let x = cospifk(d);
-            let r = x.0 + x.1;
+            let r = F32x::from(x);
 
             let r = d.abs().gt(TRIGRANGEMAX4_F).select(ONE, r);
             F32x::from_bits(U32x::from_bits(d.is_infinite()) | U32x::from_bits(r))

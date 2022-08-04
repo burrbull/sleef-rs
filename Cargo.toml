@@ -11,7 +11,7 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 
 [dependencies.doubled]
-version = "0.2.1"
+version = "0.2.2"
 features = ["packed_simd"]
 
 [dependencies.packed_simd]

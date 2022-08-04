@@ -31,12 +31,12 @@ pub fn sin(mut d: f64) -> f64 {
         ql = (((ddii & 3) * 2 + ((ddidd.0 > 0.) as i32) + 1) >> 2) as isize;
         if ddii & 1 != 0 {
             ddidd = ddidd
-                + dd(
+                + Doubled::new(
                     mulsign(3.141_592_653_589_793_116 * -0.5, ddidd.0),
                     mulsign(1.224_646_799_147_353_207_2_e-16 * -0.5, ddidd.0),
                 );
         }
-        d = ddidd.0 + ddidd.1;
+        d = f64::from(ddidd);
         if t.is_infinite() || t.is_nan() {
             d = f64::NAN;
         }
@@ -109,7 +109,7 @@ pub fn cos(mut d: f64) -> f64 {
         ql = (((ddii & 3) * 2 + ((ddidd.0 > 0.) as i32) + 7) >> 1) as isize;
         if (ddii & 1) == 0 {
             ddidd = ddidd
-                + dd(
+                + Doubled::new(
                     mulsign(
                         3.141_592_653_589_793_116 * -0.5,
                         if ddidd.0 > 0. { 1. } else { -1. },
@@ -120,7 +120,7 @@ pub fn cos(mut d: f64) -> f64 {
                     ),
                 );
         }
-        d = ddidd.0 + ddidd.1;
+        d = f64::from(ddidd);
         if t.is_infinite() || t.is_nan() {
             d = f64::NAN;
         }
@@ -189,7 +189,7 @@ pub fn sincos(d: f64) -> (f64, f64) {
     } else {
         let (ddidd, ddii) = rempi(d);
         ql = ddii as isize;
-        s = ddidd.0 + ddidd.1;
+        s = f64::from(ddidd);
         if d.is_infinite() || d.is_nan() {
             s = f64::NAN;
         }
@@ -273,7 +273,7 @@ pub fn tan(d: f64) -> f64 {
     } else {
         let (ddidd, ddii) = rempi(d);
         ql = ddii as isize;
-        x = ddidd.0 + ddidd.1;
+        x = f64::from(ddidd);
         if d.is_infinite() || d.is_nan() {
             x = f64::NAN;
         }
@@ -526,7 +526,7 @@ pub fn acos(d: f64) -> f64 {
     x += u;
     let r = if o { y } else { x * 2. };
     if !o && (d < 0.) {
-        dd(3.141_592_653_589_793_116, 1.224_646_799_147_353_207_2_e-16)
+        Doubled::new(3.141_592_653_589_793_116, 1.224_646_799_147_353_207_2_e-16)
             .add_checked(-r)
             .0
     } else {
@@ -761,7 +761,7 @@ pub fn log2(mut d: f64) -> f64 {
         .mul_add(x2, 0.961_796_693_926_080_914_49);
 
     let s = (e as f64).add_checked((2.885_390_081_777_926_774).mul_as_doubled(x));
-    let r = t.mul_add(x * x2, s.0 + s.1);
+    let r = t.mul_add(x * x2, f64::from(s));
 
     if d == 0. {
         f64::NEG_INFINITY
@@ -785,8 +785,8 @@ fn test_log2() {
 pub fn exp10(d: f64) -> f64 {
     let q = rintk(d * LOG10_2);
 
-    let mut s = q.mul_add(-L10U, d);
-    s = q.mul_add(-L10L, s);
+    let mut s = q.mul_add(-L10.0, d);
+    s = q.mul_add(-L10.1, s);
 
     let mut u = 0.241_146_349_833_426_765_2_e-3
         .mul_add(s, 0.115_748_841_521_718_737_5_e-2)

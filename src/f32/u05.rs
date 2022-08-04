@@ -23,35 +23,35 @@ pub fn sincospif(d: f32) -> (f32, f32) {
         .mul_add(s, -0.365_730_738_8_e-4)
         .mul_add(s, 0.249_039_358_5_e-2);
     let mut x = u * s
-        + df(
+        + Doubled::new(
             -0.080_745_510_756_969_451_904,
             -1.337_366_533_907_693_625_8_e-9,
         );
     x = s2 * x
-        + df(
+        + Doubled::new(
             0.785_398_185_253_143_310_55,
             -2.185_733_861_756_648_485_5_e-8,
         );
 
     x *= t;
-    let mut rsin = if d.is_neg_zero() { -0. } else { x.0 + x.1 };
+    let mut rsin = if d.is_neg_zero() { -0. } else { f32::from(x) };
 
     let u = (-0.243_061_180_1_e-7_f32)
         .mul_add(s, 0.359_057_708_e-5)
         .mul_add(s, -0.325_991_772_1_e-3);
     x = u * s
-        + df(
+        + Doubled::new(
             0.015_854_343_771_934_509_277,
             4.494_005_135_403_224_281_1_e-10,
         );
     x = s2 * x
-        + df(
+        + Doubled::new(
             -0.308_425_128_459_930_419_92,
             -9.072_833_903_073_392_227_7_e-9,
         );
 
     x = x * s2 + 1.;
-    let mut rcos = x.0 + x.1;
+    let mut rcos = f32::from(x);
 
     if (q & 2) != 0 {
         core::mem::swap(&mut rcos, &mut rsin)
@@ -107,7 +107,7 @@ pub fn sinpif(d: f32) -> f32 {
     } else if d.is_neg_zero() {
         -0.
     } else {
-        x.0 + x.1
+        f32::from(x)
     }
 }
 
@@ -141,7 +141,7 @@ pub fn cospif(d: f32) -> f32 {
     } else if fabsfk(d) > TRIGRANGEMAX4_F {
         1.
     } else {
-        x.0 + x.1
+        f32::from(x)
     }
 }
 
@@ -190,7 +190,7 @@ pub fn sqrtf(mut d: f32) -> f32 {
     if (d == 0.) || (d == f32::INFINITY) {
         d
     } else {
-        (d2.0 + d2.1) * q
+        f32::from(d2) * q
     }
 }
 
@@ -214,10 +214,10 @@ pub fn hypotf(mut x: f32, mut y: f32) -> f32 {
         n *= F1_24;
         d *= F1_24;
     }
-    let mut t = df(n, 0.) / df(d, 0.);
+    let mut t = Doubled::from(n) / Doubled::from(d);
     t = (t.square() + 1.).sqrt() * max;
 
-    let ret = t.0 + t.1;
+    let ret = f32::from(t);
     if (x == f32::INFINITY) || (y == f32::INFINITY) {
         f32::INFINITY
     } else if x.is_nan() || y.is_nan() {

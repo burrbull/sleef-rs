@@ -27,12 +27,12 @@ pub fn sinf(mut d: f32) -> f32 {
         let (mut dfidf, dfii) = rempif(t);
         q = ((dfii & 3) * 2 + ((dfidf.0 > 0.) as i32) + 1) >> 2;
         if (dfii & 1) != 0 {
-            dfidf += df(
+            dfidf += Doubled::new(
                 mulsignf(3.141_592_741_012_573_242_2 * -0.5, dfidf.0),
                 mulsignf(-8.742_277_657_347_585_773_1_e-8 * -0.5, dfidf.0),
             );
         }
-        d = dfidf.0 + dfidf.1;
+        d = f32::from(dfidf);
         if t.is_infinite() || t.is_nan() {
             d = f32::NAN;
         }
@@ -86,7 +86,7 @@ pub fn cosf(mut d: f32) -> f32 {
         let (mut dfidf, dfii) = rempif(t);
         q = ((dfii & 3) * 2 + ((dfidf.0 > 0.) as i32) + 7) >> 1;
         if (dfii & 1) == 0 {
-            dfidf += df(
+            dfidf += Doubled::new(
                 mulsignf(
                     3.141_592_741_012_573_242_2 * -0.5,
                     if dfidf.0 > 0. { 1. } else { -1. },
@@ -97,7 +97,7 @@ pub fn cosf(mut d: f32) -> f32 {
                 ),
             );
         }
-        d = dfidf.0 + dfidf.1;
+        d = f32::from(dfidf);
         if t.is_infinite() || t.is_nan() {
             d = f32::NAN;
         }
@@ -149,7 +149,7 @@ pub fn sincosf(d: f32) -> (f32, f32) {
     } else {
         let (dfidf, dfii) = rempif(d);
         q = dfii;
-        s = dfidf.0 + dfidf.1;
+        s = f32::from(dfidf);
         if d.is_infinite() || d.is_nan() {
             s = f32::NAN;
         }
@@ -225,7 +225,7 @@ pub fn tanf(d: f32) -> f32 {
     } else {
         let (dfidf, dfii) = rempif(d);
         q = dfii;
-        x = dfidf.0 + dfidf.1;
+        x = f32::from(dfidf);
         if d.is_infinite() || d.is_nan() {
             x = f32::NAN;
         }
@@ -428,7 +428,7 @@ pub fn acosf(d: f32) -> f32 {
     x += u;
     let r = if o { y } else { x * 2. };
     if !o && (d < 0.) {
-        df(
+        Doubled::new(
             3.141_592_741_012_573_242_2,
             -8.742_277_657_347_585_773_1_e-8,
         )
@@ -659,8 +659,8 @@ fn test_log2f() {
 pub fn exp10f(d: f32) -> f32 {
     let q = rintfk(d * LOG10_2_F);
 
-    let mut s = q.mul_add(-L10U_F, d);
-    s = q.mul_add(-L10L_F, s);
+    let mut s = q.mul_add(-L10_F.0, d);
+    s = q.mul_add(-L10_F.1, s);
 
     let mut u = 0.206_400_498_7
         .mul_add(s, 0.541_787_743_6)

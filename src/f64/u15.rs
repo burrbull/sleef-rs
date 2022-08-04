@@ -16,9 +16,9 @@ pub fn erfc(a: f64) -> f64 {
     let u = if o0 {
         a.mul_as_doubled(a)
     } else if o1 {
-        dd(a, 0.)
+        Doubled::from(a)
     } else {
-        dd(1., 0.) / dd(a, 0.)
+        Doubled::<f64>::from(1.) / Doubled::from(a)
     };
 
     let t = (if o0 {
@@ -237,81 +237,81 @@ pub fn erfc(a: f64) -> f64 {
 
     let mut d = u * t;
     d += if o0 {
-        dd(
+        Doubled::new(
             0.112_837_916_709_551_261_41,
             -4.017_569_162_593_211_848_3_e-18,
         )
     } else if o1 {
-        dd(
+        Doubled::new(
             -0.102_772_633_431_476_467_79,
             -6.233_871_408_340_490_022_5_e-18,
         )
     } else if o2 {
-        dd(
+        Doubled::new(
             -0.500_051_804_739_990_224_39,
             2.636_214_056_904_199_580_3_e-17,
         )
     } else {
-        dd(
+        Doubled::new(
             -0.500_000_000_025_844_437_7,
             -4.007_404_471_238_699_228_1_e-17,
         )
     };
     d *= u;
     d += if o0 {
-        dd(
+        Doubled::new(
             -0.376_126_389_031_837_538_02,
             1.339_189_720_604_255_238_7_e-17,
         )
     } else if o1 {
-        dd(
+        Doubled::new(
             -0.636_619_767_429_163_596_62,
             7.632_101_915_908_572_466_2_e-18,
         )
     } else if o2 {
-        dd(
+        Doubled::new(
             1.601_106_273_924_963_368_e-6,
             1.197_400_185_776_447_677_5_e-23,
         )
     } else {
-        dd(
+        Doubled::new(
             2.376_197_313_752_336_479_2_e-13,
             -1.167_007_695_053_102_658_2_e-29,
         )
     };
     d *= u;
     d += if o0 {
-        dd(
+        Doubled::new(
             1.128_379_167_095_512_558_6,
             1.533_545_961_316_582_267_4_e-17,
         )
     } else if o1 {
-        dd(
+        Doubled::new(
             -1.128_379_167_471_729_616_1,
             8.089_684_775_596_537_719_4_e-17,
         )
     } else if o2 {
-        dd(
+        Doubled::new(
             -0.572_364_966_451_454_293_41,
             3.070_455_324_587_202_725_8_e-17,
         )
     } else {
-        dd(
+        Doubled::new(
             -0.572_364_942_924_701_081_14,
             -2.398_435_220_805_689_800_3_e-17,
         )
     };
 
-    let mut x = (if o1 { d } else { dd(-a, 0.) }) * a;
+    let mut x = (if o1 { d } else { Doubled::from(-a) }) * a;
     x = if o1 { x } else { x + d };
     x = if o0 {
-        dd(1., 0.).sub_checked(x)
+        Doubled::from(1.).sub_checked(x)
     } else {
         expk2(x)
     };
     x = if o1 { x } else { x * u };
 
-    let mut r = if o3 { x.0 + x.1 } else { 0. };
+    let mut r = if o3 { f64::from(x) } else { 0. };
     if s < 0. {
         r = 2. - r;
     }

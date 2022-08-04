@@ -51,7 +51,7 @@ impl Sqrt for f64 {
 impl Sqrt for Doubled<f32> {
     #[inline]
     fn sqrt(self) -> Self {
-        let t = (self.0 + self.1).sqrt();
+        let t = f32::from(self).sqrt();
         ((self + t.mul_as_doubled(t)) * t.recpre()).scale(0.5)
     }
 }
@@ -59,7 +59,7 @@ impl Sqrt for Doubled<f32> {
 impl Sqrt for Doubled<f64> {
     #[inline]
     fn sqrt(self) -> Self {
-        let t = (self.0 + self.1).sqrt();
+        let t = f64::from(self).sqrt();
         ((self + t.mul_as_doubled(t)) * t.recpre()).scale(0.5)
     }
 }

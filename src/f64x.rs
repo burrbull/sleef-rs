@@ -474,14 +474,8 @@ macro_rules! impl_math_f64 {
 
         #[inline]
         fn from_slice_offset(ptr: &[f64], vi: Ix) -> F64x {
-            use core::mem::MaybeUninit;
-
-            const L: usize = F64x::lanes();
-            let mut ar: [MaybeUninit<f64>; L] = MaybeUninit::uninit_array();
-            for i in 0..L {
-                ar[i].write(ptr[vi.extract(i) as usize]);
-            }
-            unsafe { MaybeUninit::array_assume_init(ar) }.into()
+            let ar: [f64; $size] = core::array::from_fn(|i| ptr[vi.extract(i) as usize]);
+            ar.into()
         }
 
         #[inline]

@@ -494,15 +494,8 @@ macro_rules! impl_math_f32 {
 
         #[inline]
         fn from_slice_offset(ptr: &[f32], vi: I32x) -> F32x {
-            use core::mem::MaybeUninit;
-
-            const L: usize = F32x::lanes();
-            let mut ar: [MaybeUninit<f32>; L] = MaybeUninit::uninit_array();
-            for i in 0..L {
-                ar[i].write(ptr[vi.extract(i) as usize]);
-            }
-
-            unsafe { MaybeUninit::array_assume_init(ar) }.into()
+            let ar: [f32; $size] = core::array::from_fn(|i| ptr[vi.extract(i) as usize]);
+            ar.into()
         }
 
         impl SqrtAsDoubled for F32x {

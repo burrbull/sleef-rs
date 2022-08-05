@@ -609,6 +609,10 @@ macro_rules! impl_math_f64 {
                 Self::from_bits(Self::Bits::from_bits(self) ^ other.sign_bit())
             }
             #[inline]
+            fn or_sign(self, other: Self) -> Self {
+                Self::from_bits(Self::Bits::from_bits(self) | other.sign_bit())
+            }
+            #[inline]
             fn copy_sign(self, other: Self) -> Self {
                 Self::from_bits(
                     (!Self::Bits::from_bits(NEG_ZERO) & Self::Bits::from_bits(self)) ^ (other.sign_bit()),
@@ -731,11 +735,6 @@ macro_rules! impl_math_f64 {
         }
 
         #[inline]
-        fn orsign(x: F64x, y: F64x) -> F64x {
-            F64x::from_bits(U64x::from_bits(x) | y.sign_bit())
-        }
-
-        #[inline]
         fn rempisub(x: F64x) -> (F64x, Ix) {
             if cfg!(feature = "full_fp_rounding") {
                 let y = (x * F64x::splat(4.)).round();
@@ -745,9 +744,9 @@ macro_rules! impl_math_f64 {
                 let c = D1_52X.mul_sign(x);
                 let rint4x = (F64x::splat(4.) * x).abs().gt(D1_52X).select(
                     (F64x::splat(4.) * x),
-                    orsign((F64x::splat(4.).mul_add(x, c) - c), x)
+                    (F64x::splat(4.).mul_add(x, c) - c).or_sign(x)
                 );
-                let rintx  = x.abs().gt(D1_52X).select(x, orsign((x + c) - c, x));
+                let rintx  = x.abs().gt(D1_52X).select(x, ((x + c) - c).or_sign(x));
 
                 let fr = F64x::splat(-0.25).mul_add(rint4x, x);
                 let vi = F64x::splat(-4.).mul_add(rintx, rint4x).trunci();
@@ -1248,7 +1247,7 @@ macro_rules! impl_math_f64 {
             #else
             */
             let c = D1_52X.mul_sign(d);
-            d.abs().gt(D1_52X).select(d, orsign((d + c) - c, d))
+            d.abs().gt(D1_52X).select(d, ((d + c) - c).or_sign(d))
             //#endif
         }
 
@@ -1454,7 +1453,7 @@ macro_rules! impl_math_f64 {
                 rint(d)
             } else {
                 let c = D1_52X.mul_sign(d);
-                d.abs().gt(D1_52X).select(d, orsign((d + c) - c, d))
+                d.abs().gt(D1_52X).select(d, ((d + c) - c).or_sign(d))
             }
         }
 

@@ -495,6 +495,10 @@ impl MaskType for f64 {
     type Mask = bool;
 }
 
+impl BitsType for f64 {
+    type Bits = u64;
+}
+
 impl MulAdd for f64 {
     #[inline]
     fn mul_add(self, y: Self, z: Self) -> Self {
@@ -505,6 +509,37 @@ impl MulAdd for f64 {
 impl Poly<f64> for f64 {
     fn c2v(c: f64) -> Self {
         c
+    }
+}
+
+impl Sign for f64 {
+    #[inline]
+    fn is_sign_negative(self) -> Self::Mask {
+        self.is_sign_negative()
+    }
+    #[inline]
+    fn is_sign_positive(self) -> Self::Mask {
+        self.is_sign_positive()
+    }
+    #[inline]
+    fn sign_bit(self) -> Self::Bits {
+        self.to_bits() & (1 << 63)
+    }
+    #[inline]
+    fn sign(self) -> Self {
+        mulsign(1., self)
+    }
+    #[inline]
+    fn mul_sign(self, other: Self) -> Self {
+        mulsign(self, other)
+    }
+    #[inline]
+    fn or_sign(self, other: Self) -> Self {
+        Self::from_bits(self.to_bits() | other.sign_bit())
+    }
+    #[inline]
+    fn copy_sign(self, other: Self) -> Self {
+        copysignk(self, other)
     }
 }
 
@@ -673,24 +708,19 @@ fn atan2k(mut y: f64, mut x: f64) -> f64 {
     (q as f64) * f64::consts::FRAC_PI_2 + t
 }
 
-#[inline]
-fn orsign(x: f64, y: f64) -> f64 {
-    f64::from_bits(x.to_bits() | (y.to_bits() & (1 << 63)))
-}
-
 fn rempisub(x: f64) -> (f64, i32) {
     // This function is equivalent to :
     // ( x - rint(4 * x) * 0.25, (rint(4 * x) - rint(x) * 4) as i32 );
-    let c = mulsign(D1_52, x);
+    let c = D1_52.mul_sign(x);
     let rint4x = if fabsk(4.0 * x) > D1_52 {
         4.0 * x
     } else {
-        orsign(4.0.mul_add(x, c) - c, x)
+        (4.0.mul_add(x, c) - c).or_sign(x)
     };
     let rintx = if fabsk(x) > D1_52 {
         x
     } else {
-        orsign(x + c - c, x)
+        (x + c - c).or_sign(x)
     };
     let retd = (-0.25).mul_add(rint4x, x);
     let reti = (-4_f64).mul_add(rintx, rint4x) as i32;
@@ -1556,7 +1586,7 @@ pub fn trunc(x: f64) -> f64 {
     if x.is_infinite() || (fabsk(x) >= D1_52) {
         x
     } else {
-        copysignk(x - fr, x)
+        (x - fr).copy_sign(x)
     }
 }
 
@@ -1568,7 +1598,7 @@ pub fn floor(x: f64) -> f64 {
     if x.is_infinite() || (fabsk(x) >= D1_52) {
         x
     } else {
-        copysignk(x - fr, x)
+        (x - fr).copy_sign(x)
     }
 }
 
@@ -1580,7 +1610,7 @@ pub fn ceil(x: f64) -> f64 {
     if x.is_infinite() || (fabsk(x) >= D1_52) {
         x
     } else {
-        copysignk(x - fr, x)
+        (x - fr).copy_sign(x)
     }
 }
 
@@ -1601,23 +1631,23 @@ pub fn round(d: f64) -> f64 {
     if d.is_infinite() || (fabsk(d) >= D1_52) {
         d
     } else {
-        copysignk(x - fr, d)
+        (x - fr).copy_sign(d)
     }
 }
 
 /// Round to integer, ties round to even
 pub fn rint(d: f64) -> f64 {
-    let c = mulsign(D1_52, d);
+    let c = D1_52.mul_sign(d);
     if fabsk(d) > D1_52 {
         d
     } else {
-        orsign(d + c - c, d)
+        (d + c - c).or_sign(d)
     }
 }
 
 /// Find the next representable FP value
 pub fn nextafter(x: f64, y: f64) -> f64 {
-    let x = if x == 0. { mulsign(0., y) } else { x };
+    let x = if x == 0. { 0.0.mul_sign(y) } else { x };
     let mut cxi = x.to_bits() as i64;
     let c = (cxi < 0) == (y < x);
     if c {
@@ -1674,7 +1704,7 @@ pub fn frfrexp(mut x: f64) -> f64 {
     if x == 0. {
         x
     } else if x.is_infinite() {
-        mulsign(f64::INFINITY, x)
+        f64::INFINITY.mul_sign(x)
     } else {
         f64::from_bits(cxu)
     }
@@ -1758,7 +1788,7 @@ pub fn fmod(x: f64, y: f64) -> f64 {
     }
 
     let mut ret = if f64::from(r) == d { 0. } else { r.0 * s };
-    ret = mulsign(ret, x);
+    ret = ret.mul_sign(x);
     if d == 0. {
         f64::NAN
     } else if n < d {
@@ -1772,11 +1802,11 @@ pub fn fmod(x: f64, y: f64) -> f64 {
 
 #[inline]
 fn rintk2(d: f64) -> f64 {
-    let c = mulsign(D1_52, d);
+    let c = D1_52.mul_sign(d);
     if fabsk(d) > D1_52 {
         d
     } else {
-        orsign(d + c - c, d)
+        (d + c - c).or_sign(d)
     }
 }
 
@@ -1807,14 +1837,14 @@ pub fn remainder(x: f64, y: f64) -> f64 {
             break;
         }
         if (q * -d).is_infinite() {
-            q += mulsign(-1., r.0);
+            q += (-1.0).mul_sign(r.0);
         }
         qisodd ^= q.is_odd();
         r = (r + q.mul_as_doubled(-d)).normalize();
     }
 
     let mut ret = r.0 * s;
-    ret = mulsign(ret, x);
+    ret = ret.mul_sign(x);
     if y.is_infinite() {
         ret = if x.is_infinite() { f64::NAN } else { x };
     }
@@ -1841,7 +1871,7 @@ pub fn modf(x: f64) -> (f64, f64) {
     let mut fr = x - D1_31 * ((x * (1. / D1_31)) as i32 as f64);
     fr -= fr as i32 as f64;
     fr = if fabsk(x) >= D1_52 { 0. } else { fr };
-    (copysignk(fr, x), copysignk(x - fr, x))
+    (fr.copy_sign(x), (x - fr).copy_sign(x))
 }
 
 /*

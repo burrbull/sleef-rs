@@ -28,8 +28,8 @@ pub fn sinf(mut d: f32) -> f32 {
         q = ((dfii & 3) * 2 + ((dfidf.0 > 0.) as i32) + 1) >> 2;
         if (dfii & 1) != 0 {
             dfidf += Doubled::new(
-                mulsignf(D_PI.0 * -0.5, dfidf.0),
-                mulsignf(D_PI.1 * -0.5, dfidf.0),
+                (D_PI.0 * -0.5).mul_sign(dfidf.0),
+                (D_PI.1 * -0.5).mul_sign(dfidf.0),
             );
         }
         d = f32::from(dfidf);
@@ -87,8 +87,8 @@ pub fn cosf(mut d: f32) -> f32 {
         q = ((dfii & 3) * 2 + ((dfidf.0 > 0.) as i32) + 7) >> 1;
         if (dfii & 1) == 0 {
             dfidf += Doubled::new(
-                mulsignf(D_PI.0 * -0.5, if dfidf.0 > 0. { 1. } else { -1. }),
-                mulsignf(D_PI.1 * -0.5, if dfidf.0 > 0. { 1. } else { -1. }),
+                (D_PI.0 * -0.5).mul_sign(if dfidf.0 > 0. { 1. } else { -1. }),
+                (D_PI.1 * -0.5).mul_sign(if dfidf.0 > 0. { 1. } else { -1. }),
             );
         }
         d = f32::from(dfidf);
@@ -336,31 +336,31 @@ pub fn atan2f(y: f32, x: f32) -> f32 {
     r = if x.is_infinite() || (x == 0.) {
         FRAC_PI_2
             - (if x.is_infinite() {
-                signf(x) * FRAC_PI_2
+                x.sign() * FRAC_PI_2
             } else {
                 0.
             })
     } else if y.is_infinite() {
         FRAC_PI_2
             - (if x.is_infinite() {
-                signf(x) * FRAC_PI_4
+                x.sign() * FRAC_PI_4
             } else {
                 0.
             })
     } else if y == 0. {
-        if signf(x) == -1. {
+        if x.sign() == -1. {
             PI
         } else {
             0.
         }
     } else {
-        mulsignf(r, x)
+        r.mul_sign(x)
     };
 
     if x.is_nan() || y.is_nan() {
         f32::NAN
     } else {
-        mulsignf(r, y)
+        r.mul_sign(y)
     }
 }
 
@@ -392,7 +392,7 @@ pub fn asinf(d: f32) -> f32 {
         .mul_add(x * x2, x);
 
     let r = if o { u } else { FRAC_PI_2 - 2. * u };
-    mulsignf(r, d)
+    r.mul_sign(d)
 }
 
 #[test]
@@ -418,7 +418,7 @@ pub fn acosf(d: f32) -> f32 {
 
     u *= x * x2;
 
-    let y = FRAC_PI_2 - (mulsignf(x, d) + mulsignf(u, d));
+    let y = FRAC_PI_2 - (x.mul_sign(d) + u.mul_sign(d));
     x += u;
     let r = if o { y } else { x * 2. };
     if !o && (d < 0.) {
@@ -438,7 +438,7 @@ fn test_acosf() {
 /// These functions evaluates the arc tangent function of a value in ***a***.
 /// The error bound of the returned value is `3.5 ULP`.
 pub fn atanf(mut s: f32) -> f32 {
-    let mut q = if signf(s) == -1. {
+    let mut q = if s.sign() == -1. {
         s = -s;
         2
     } else {
@@ -497,7 +497,7 @@ pub fn sinhf(x: f32) -> f32 {
 
     y = if fabsfk(x) > 88. { f32::INFINITY } else { y };
     y = if y.is_nan() { f32::INFINITY } else { y };
-    y = mulsignf(y, x);
+    y = y.mul_sign(x);
     if x.is_nan() {
         f32::NAN
     } else {
@@ -546,7 +546,7 @@ pub fn tanhf(x: f32) -> f32 {
 
     y = if fabsfk(x) > 18.714_973_875 { 1. } else { y };
     y = if y.is_nan() { 1. } else { y };
-    y = mulsignf(y, x);
+    y = y.mul_sign(x);
     if x.is_nan() {
         f32::NAN
     } else {
@@ -765,7 +765,7 @@ pub fn cbrtf(mut d: f32) -> f32 {
     };
     q = ldexp2kf(q, (e + 6144) / 3 - 2048);
 
-    q = mulsignf(q, d);
+    q = q.mul_sign(d);
     d = fabsfk(d);
 
     let x = (-0.601_564_466_953_277_587_890_625_f32)

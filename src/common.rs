@@ -105,6 +105,7 @@ pub trait Sign: MaskType + BitsType {
     fn sign_bit(self) -> Self::Bits;
     fn sign(self) -> Self;
     fn mul_sign(self, other: Self) -> Self;
+    fn or_sign(self, other: Self) -> Self;
     fn copy_sign(self, other: Self) -> Self;
 }
 

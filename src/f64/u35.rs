@@ -32,8 +32,8 @@ pub fn sin(mut d: f64) -> f64 {
         if ddii & 1 != 0 {
             ddidd = ddidd
                 + Doubled::new(
-                    mulsign(D_PI.0 * -0.5, ddidd.0),
-                    mulsign(D_PI.1 * -0.5, ddidd.0),
+                    (D_PI.0 * -0.5).mul_sign(ddidd.0),
+                    (D_PI.1 * -0.5).mul_sign(ddidd.0),
                 );
         }
         d = f64::from(ddidd);
@@ -110,8 +110,8 @@ pub fn cos(mut d: f64) -> f64 {
         if (ddii & 1) == 0 {
             ddidd = ddidd
                 + Doubled::new(
-                    mulsign(D_PI.0 * -0.5, if ddidd.0 > 0. { 1. } else { -1. }),
-                    mulsign(D_PI.1 * -0.5, if ddidd.0 > 0. { 1. } else { -1. }),
+                    (D_PI.0 * -0.5).mul_sign(if ddidd.0 > 0. { 1. } else { -1. }),
+                    (D_PI.1 * -0.5).mul_sign(if ddidd.0 > 0. { 1. } else { -1. }),
                 );
         }
         d = f64::from(ddidd);
@@ -401,7 +401,7 @@ pub fn atan2(y: f64, x: f64) -> f64 {
     let mut r = atan2k(fabsk(y), x);
 
     r = if y == 0. {
-        if sign(x) == -1. {
+        if x.sign() == -1. {
             PI
         } else {
             0.
@@ -409,24 +409,24 @@ pub fn atan2(y: f64, x: f64) -> f64 {
     } else if y.is_infinite() {
         FRAC_PI_2
             - (if x.is_infinite() {
-                sign(x) * FRAC_PI_4
+                x.sign() * FRAC_PI_4
             } else {
                 0.
             })
     } else if x.is_infinite() || (x == 0.) {
         FRAC_PI_2
             - (if x.is_infinite() {
-                sign(x) * FRAC_PI_2
+                x.sign() * FRAC_PI_2
             } else {
                 0.
             })
     } else {
-        mulsign(r, x)
+        r.mul_sign(x)
     };
     if x.is_nan() || y.is_nan() {
         f64::NAN
     } else {
-        mulsign(r, y)
+        r.mul_sign(y)
     }
 }
 
@@ -475,7 +475,7 @@ pub fn asin(d: f64) -> f64 {
     .mul_add(x * x2, x);
 
     let r = if o { u } else { FRAC_PI_2 - 2. * u };
-    mulsign(r, d)
+    r.mul_sign(d)
 }
 
 #[test]
@@ -516,7 +516,7 @@ pub fn acos(d: f64) -> f64 {
         0.166_666_666_666_649_754_3,
     ) * (x * x2);
 
-    let y = FRAC_PI_2 - (mulsign(x, d) + mulsign(u, d));
+    let y = FRAC_PI_2 - (x.mul_sign(d) + u.mul_sign(d));
     x += u;
     let r = if o { y } else { x * 2. };
     if !o && (d < 0.) {
@@ -536,7 +536,7 @@ fn test_acos() {
 /// These functions evaluates the arc tangent function of a value in ***a***.
 /// The error bound of the returned value is `3.5 ULP`.
 pub fn atan(mut s: f64) -> f64 {
-    let mut q = if sign(s) == -1. {
+    let mut q = if s.sign() == -1. {
         s = -s;
         2
     } else {
@@ -610,7 +610,7 @@ pub fn sinh(x: f64) -> f64 {
 
     y = if fabsk(x) > 709. { f64::INFINITY } else { y };
     y = if y.is_nan() { f64::INFINITY } else { y };
-    y = mulsign(y, x);
+    y = y.mul_sign(x);
     if x.is_nan() {
         f64::NAN
     } else {
@@ -658,7 +658,7 @@ pub fn tanh(x: f64) -> f64 {
 
     y = if fabsk(x) > 18.714_973_875 { 1. } else { y };
     y = if y.is_nan() { 1. } else { y };
-    y = mulsign(y, x);
+    y = y.mul_sign(x);
     if x.is_nan() {
         f64::NAN
     } else {
@@ -875,7 +875,7 @@ pub fn cbrt(mut d: f64) -> f64 {
     };
     q = ldexp2k(q, (e + 6144) / 3 - 2048);
 
-    q = mulsign(q, d);
+    q = q.mul_sign(d);
     d = fabsk(d);
 
     let mut x = (-0.640_245_898_480_692_909_870_982_f64)

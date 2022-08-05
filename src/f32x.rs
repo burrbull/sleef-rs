@@ -207,6 +207,10 @@ macro_rules! impl_math_f32 {
                 fmodf(self, other)
             }
             #[inline]
+            fn remainder(self, other: Self) -> Self {
+                remainderf(self, other)
+            }
+            #[inline]
             fn modf(self) -> (Self, Self) {
                 modff(self)
             }

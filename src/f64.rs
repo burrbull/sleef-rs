@@ -450,6 +450,10 @@ impl crate::Sleef for f64 {
         fmod(self, other)
     }
     #[inline]
+    fn remainder(self, other: Self) -> Self {
+        remainder(self, other)
+    }
+    #[inline]
     fn modf(self) -> (Self, Self) {
         modf(self)
     }

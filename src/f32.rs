@@ -476,6 +476,10 @@ impl MaskType for f32 {
     type Mask = bool;
 }
 
+impl BitsType for f32 {
+    type Bits = u32;
+}
+
 impl MulAdd for f32 {
     #[inline]
     fn mul_add(self, y: Self, z: Self) -> Self {
@@ -486,6 +490,37 @@ impl MulAdd for f32 {
 impl Poly<Self> for f32 {
     fn c2v(c: Self) -> Self {
         c
+    }
+}
+
+impl Sign for f32 {
+    #[inline]
+    fn is_sign_negative(self) -> Self::Mask {
+        self.is_sign_negative()
+    }
+    #[inline]
+    fn is_sign_positive(self) -> Self::Mask {
+        self.is_sign_positive()
+    }
+    #[inline]
+    fn sign_bit(self) -> Self::Bits {
+        self.to_bits() & (1 << 31)
+    }
+    #[inline]
+    fn sign(self) -> Self {
+        mulsignf(1., self)
+    }
+    #[inline]
+    fn mul_sign(self, other: Self) -> Self {
+        mulsignf(self, other)
+    }
+    #[inline]
+    fn or_sign(self, other: Self) -> Self {
+        Self::from_bits(self.to_bits() | other.sign_bit())
+    }
+    #[inline]
+    fn copy_sign(self, other: Self) -> Self {
+        copysignfk(self, other)
     }
 }
 
@@ -592,9 +627,9 @@ fn ldexp3kf(d: f32, e: i32) -> f32 {
 fn rempisubf(x: f32) -> (f32, i32) {
     let mut fr = x - F1_10 * ((x * (1. / F1_10)) as i32 as f32);
     let mut reti = ((7 & ((if x > 0. { 4 } else { 3 }) + ((fr * 8.) as i32))) - 3) >> 1;
-    fr = fr - 0.25 * ((fr * 4. + mulsignf(0.5, x)) as i32 as f32);
+    fr = fr - 0.25 * ((fr * 4. + 0.5.mul_sign(x)) as i32 as f32);
     fr = if fabsfk(fr) > 0.125 {
-        fr - mulsignf(0.5, x)
+        fr - 0.5.mul_sign(x)
     } else {
         fr
     };
@@ -1185,7 +1220,7 @@ pub fn truncf(x: f32) -> f32 {
     if x.is_infinite() || (fabsfk(x) >= F1_23) {
         x
     } else {
-        copysignfk(x - fr, x)
+        (x - fr).copy_sign(x)
     }
 }
 
@@ -1196,7 +1231,7 @@ pub fn floorf(x: f32) -> f32 {
     if x.is_infinite() || (fabsfk(x) >= F1_23) {
         x
     } else {
-        copysignfk(x - fr, x)
+        (x - fr).copy_sign(x)
     }
 }
 
@@ -1207,7 +1242,7 @@ pub fn ceilf(x: f32) -> f32 {
     if x.is_infinite() || (fabsfk(x) >= F1_23) {
         x
     } else {
-        copysignfk(x - fr, x)
+        (x - fr).copy_sign(x)
     }
 }
 
@@ -1227,7 +1262,7 @@ pub fn roundf(d: f32) -> f32 {
     if d.is_infinite() || (fabsfk(d) >= F1_23) {
         d
     } else {
-        copysignfk(x - fr, d)
+        (x - fr).copy_sign(d)
     }
 }
 
@@ -1249,7 +1284,7 @@ pub fn rintf(d: f32) -> f32 {
     if d.is_infinite() || (fabsfk(d) >= F1_23) {
         d
     } else {
-        copysignfk(x - fr, d)
+        (x - fr).copy_sign(d)
     }
 }
 
@@ -1257,7 +1292,7 @@ pub fn rintf(d: f32) -> f32 {
 pub fn modff(x: f32) -> (f32, f32) {
     let mut fr = x - (x as i32 as f32);
     fr = if fabsfk(x) > F1_23 { 0. } else { fr };
-    (copysignfk(fr, x), copysignfk(x - fr, x))
+    (fr.copy_sign(x), (x - fr).copy_sign(x))
 }
 
 /// Multiply by integral power of `2`
@@ -1286,7 +1321,7 @@ pub fn ldexpf(x: f32, mut exp: i32) -> f32 {
 
 /// Find the next representable FP value
 pub fn nextafterf(x: f32, y: f32) -> f32 {
-    let mut cxi = (if x == 0. { mulsignf(0., y) } else { x }).to_bits() as i32;
+    let mut cxi = (if x == 0. { 0.0.mul_sign(y) } else { x }).to_bits() as i32;
     let c = (cxi < 0) == (y < x);
     if c {
         cxi = -(cxi ^ i32::MIN);
@@ -1307,7 +1342,7 @@ pub fn nextafterf(x: f32, y: f32) -> f32 {
     } else if (x == 0.) && (y == 0.) {
         y
     } else if (cxf == 0.) && (x != 0.) {
-        mulsignf(0., x)
+        0.0.mul_sign(x)
     } else {
         cxf
     }
@@ -1343,7 +1378,7 @@ pub fn frfrexpf(mut x: f32) -> f32 {
     if x == 0. {
         x
     } else if x.is_infinite() {
-        mulsignf(f32::INFINITY, x)
+        f32::INFINITY.mul_sign(x)
     } else {
         f32::from_bits(cxu)
     }
@@ -1422,7 +1457,7 @@ pub fn fmodf(x: f32, y: f32) -> f32 {
     let r = f32::from(r);
     let mut ret = if r == de { 0. } else { r * s };
 
-    ret = mulsignf(ret, x);
+    ret = ret.mul_sign(x);
     if de == 0. {
         f32::NAN
     } else if nu < de {
@@ -1447,7 +1482,7 @@ fn rintfk2(d: f32) -> f32 {
     if fabsfk(d) >= F1_23 {
         d
     } else {
-        copysignfk(x - fr, d)
+        (x - fr).copy_sign(d)
     }
 }
 
@@ -1478,14 +1513,14 @@ pub fn remainderf(x: f32, y: f32) -> f32 {
             break;
         }
         if (q * -d).is_infinite() {
-            q += mulsignf(-1., r.0);
+            q += (-1.0).mul_sign(r.0);
         }
         qisodd ^= (1 & (q as isize)) != 0 && fabsfk(q) < F1_24; // TODO: check
         r = (r + q.mul_as_doubled(-d)).normalize();
     }
 
     let mut ret = r.0 * s;
-    ret = mulsignf(ret, x);
+    ret = ret.mul_sign(x);
     if y.is_infinite() {
         ret = if x.is_infinite() { f32::NAN } else { x };
     }

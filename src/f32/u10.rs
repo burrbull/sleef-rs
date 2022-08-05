@@ -21,8 +21,8 @@ pub fn sinf(d: f32) -> f32 {
         q = ((dfii & 3) * 2 + ((dfidf.0 > 0.) as i32) + 1) >> 2;
         if (dfii & 1) != 0 {
             dfidf += Doubled::new(
-                mulsignf(D_PI.0 * -0.5, dfidf.0),
-                mulsignf(D_PI.1 * -0.5, dfidf.0),
+                (D_PI.0 * -0.5).mul_sign(dfidf.0),
+                (D_PI.1 * -0.5).mul_sign(dfidf.0),
             );
         }
         s = dfidf.normalize();
@@ -78,8 +78,8 @@ pub fn cosf(mut d: f32) -> f32 {
         q = ((dfii & 3) * 2 + ((dfidf.0 > 0.) as i32) + 7) >> 1;
         if (dfii & 1) == 0 {
             dfidf += Doubled::new(
-                mulsignf(D_PI.0 * -0.5, if dfidf.0 > 0. { 1. } else { -1. }),
-                mulsignf(D_PI.1 * -0.5, if dfidf.0 > 0. { 1. } else { -1. }),
+                (D_PI.0 * -0.5).mul_sign(if dfidf.0 > 0. { 1. } else { -1. }),
+                (D_PI.1 * -0.5).mul_sign(if dfidf.0 > 0. { 1. } else { -1. }),
             );
         }
         s = dfidf.normalize();
@@ -290,9 +290,9 @@ pub fn atan2f(mut y: f32, mut x: f32) -> f32 {
     let d = atan2kf_u1(Doubled::from(fabsfk(y)), Doubled::from(x));
     let mut r = f32::from(d);
 
-    r = mulsignf(r, x);
+    r = r.mul_sign(x);
     r = if y == 0. {
-        if signf(x) == -1. {
+        if x.sign() == -1. {
             PI
         } else {
             0.
@@ -300,14 +300,14 @@ pub fn atan2f(mut y: f32, mut x: f32) -> f32 {
     } else if y.is_infinite() {
         FRAC_PI_2
             - (if x.is_infinite() {
-                signf(x) * FRAC_PI_4
+                x.sign() * FRAC_PI_4
             } else {
                 0.
             })
     } else if x.is_infinite() || (x == 0.) {
         FRAC_PI_2
             - (if x.is_infinite() {
-                signf(x) * FRAC_PI_2
+                x.sign() * FRAC_PI_2
             } else {
                 0.
             })
@@ -318,7 +318,7 @@ pub fn atan2f(mut y: f32, mut x: f32) -> f32 {
     if x.is_nan() || y.is_nan() {
         f32::NAN
     } else {
-        mulsignf(r, y)
+        r.mul_sign(y)
     }
 }
 
@@ -361,7 +361,7 @@ pub fn asinf(d: f32) -> f32 {
 
     let y = (Doubled::new(D_PI.0 / 4., D_PI.1 / 4.).sub_checked(x)).add_checked(-u);
     let r = if o { u + x.0 } else { f32::from(y) * 2. };
-    mulsignf(r, d)
+    r.mul_sign(d)
 }
 
 #[test]
@@ -396,7 +396,7 @@ pub fn acosf(d: f32) -> f32 {
         * x2;
 
     let mut y = Doubled::new(D_PI.0 / 2., D_PI.1 / 2.)
-        .sub_checked(mulsignf(x.0, d).add_checked_as_doubled(mulsignf(u, d)));
+        .sub_checked(x.0.mul_sign(d).add_checked_as_doubled(u.mul_sign(d)));
     x.add_checked_assign(u);
     y = if o { y } else { x.scale(2.) };
     if !o && (d < 0.) {
@@ -422,7 +422,7 @@ pub fn atanf(d: f32) -> f32 {
     } else {
         f32::from(d2)
     };
-    mulsignf(r, d)
+    r.mul_sign(d)
 }
 
 #[test]
@@ -444,7 +444,7 @@ pub fn sinhf(x: f32) -> f32 {
 
     y = if fabsfk(x) > 89. { f32::INFINITY } else { y };
     y = if y.is_nan() { f32::INFINITY } else { y };
-    y = mulsignf(y, x);
+    y = y.mul_sign(x);
     if x.is_nan() {
         f32::NAN
     } else {
@@ -496,7 +496,7 @@ pub fn tanhf(x: f32) -> f32 {
 
     y = if fabsfk(x) > 18.714_973_875 { 1. } else { y }; // TODO: check
     y = if y.is_nan() { 1. } else { y };
-    y = mulsignf(y, x);
+    y = y.mul_sign(x);
     if x.is_nan() {
         f32::NAN
     } else {
@@ -526,7 +526,7 @@ pub fn asinhf(x: f32) -> f32 {
     y = f32::from(d);
 
     y = if fabsfk(x) > SQRT_FLT_MAX || y.is_nan() {
-        mulsignf(f32::INFINITY, x)
+        f32::INFINITY.mul_sign(x)
     } else {
         y
     };
@@ -602,7 +602,7 @@ pub fn atanhf(x: f32) -> f32 {
     } else {
         y
     };
-    y = mulsignf(y, x);
+    y = y.mul_sign(x);
     if x.is_nan() {
         f32::NAN
     } else {
@@ -942,13 +942,13 @@ pub fn powf(x: f32, y: f32) -> f32 {
         1.
     };
 
-    let efx = mulsignf(fabsfk(x) - 1., y);
+    let efx = (fabsfk(x) - 1.).mul_sign(y);
     if (y == 0.) || (x == 1.) {
         1.
     } else if x.is_nan() || y.is_nan() {
         f32::NAN
     } else if x.is_infinite() || (x == 0.) {
-        (if yisodd { signf(x) } else { 1. })
+        (if yisodd { x.sign() } else { 1. })
             * (if (if x == 0. { -y } else { y }) < 0. {
                 0.
             } else {
@@ -1001,7 +1001,7 @@ pub fn cbrtf(mut d: f32) -> f32 {
         q2
     };
 
-    q2 = Doubled::new(mulsignf(q2.0, d), mulsignf(q2.1, d));
+    q2 = Doubled::new(q2.0.mul_sign(d), q2.1.mul_sign(d));
     d = fabsfk(d);
 
     let mut x = (-0.601_564_466_953_277_587_890_625_f32)
@@ -1025,9 +1025,9 @@ pub fn cbrtf(mut d: f32) -> f32 {
     let v = (z.mul_as_doubled(z) + y) * d * q2;
 
     if d == 0. {
-        mulsignf(0., q2.0)
+        0.0.mul_sign(q2.0)
     } else if d.is_infinite() {
-        mulsignf(f32::INFINITY, q2.0)
+        f32::INFINITY.mul_sign(q2.0)
     } else {
         ldexp2kf(f32::from(v), (e + 6144) / 3 - 2048)
     }
@@ -1056,7 +1056,7 @@ pub fn tgammaf(a: f32) -> f32 {
         && (a >= -f32::MIN_POSITIVE)
         && ((a == 0.) || (a > 36.) || r.is_nan())
     {
-        mulsignf(f32::INFINITY, a)
+        f32::INFINITY.mul_sign(a)
     } else {
         r
     }
@@ -1187,16 +1187,14 @@ pub fn erff(a: f32) -> f32 {
             5.863_538_342_219_759_109_7_e-08,
         ) * x;
     }
-    mulsignf(
-        if a == 0. {
-            0.
-        } else if a.is_infinite() {
-            1.
-        } else {
-            -f32::from(t2)
-        },
-        a,
-    )
+    (if a == 0. {
+        0.
+    } else if a.is_infinite() {
+        1.
+    } else {
+        -f32::from(t2)
+    })
+    .mul_sign(a)
 }
 
 #[test]

@@ -8,10 +8,10 @@ macro_rules! impl_math_f32_fast {
         pub fn sinf(mut d: F32x) -> F32x {
             let t = d;
 
-            let s = d * F32x::FRAC_1_PI;
+            let s = d * FRAC_1_PI;
             let mut u = s.round();
             let q = s.roundi();
-            d = u.mul_add(-F32x::PI, d);
+            d = u.mul_add(-PI, d);
 
             let s = d * d;
 
@@ -21,11 +21,11 @@ macro_rules! impl_math_f32_fast {
             u = (s * d).mul_add(u, d);
 
             u = F32x::from_bits(
-                (U32x::from_bits((q & I32x::splat(1)).eq(I32x::splat(1))) & U32x::from_bits(-ZERO))
-                    ^ U32x::from_bits(u),
+                ((q & I32x::splat(1)).simd_eq(I32x::splat(1)).to_int().cast() & (-ZERO).to_bits())
+                    ^ u.to_bits(),
             );
 
-            let g = t.abs().lt(F32x::splat(30.));
+            let g = t.abs().simd_lt(F32x::splat(30.));
             if !g.all() {
                 return g.select(u, super::u35::sinf(t));
             } // !!!!???????????
@@ -50,10 +50,10 @@ macro_rules! impl_math_f32_fast {
         pub fn cosf(mut d: F32x) -> F32x {
             let t = d;
 
-            let s = d.mul_add(F32x::FRAC_1_PI, -HALF);
+            let s = d.mul_add(FRAC_1_PI, -HALF);
             let mut u = s.round();
             let q = s.roundi();
-            d = u.mul_add(-F32x::PI, d - F32x::FRAC_PI_2);
+            d = u.mul_add(-PI, d - FRAC_PI_2);
 
             let s = d * d;
 
@@ -63,11 +63,11 @@ macro_rules! impl_math_f32_fast {
             u = (s * d).mul_add(u, d);
 
             u = F32x::from_bits(
-                (U32x::from_bits((q & I32x::splat(1)).eq(I32x::splat(0))) & U32x::from_bits(-ZERO))
-                    ^ U32x::from_bits(u),
+                ((q & I32x::splat(1)).simd_eq(I32x::splat(0)).to_int().cast() & (-ZERO).to_bits())
+                    ^ u.to_bits(),
             );
 
-            let g = t.abs().lt(F32x::splat(30.));
+            let g = t.abs().simd_lt(F32x::splat(30.));
             if !g.all() {
                 return g.select(u, super::u35::cosf(t));
             }
@@ -91,14 +91,15 @@ macro_rules! impl_math_f32_fast {
         /// The error bounds of the returned value is `350 ULP`.
         pub fn powf(x: F32x, y: F32x) -> F32x {
             let mut result = expk3f(logk3f(x.abs()) * y);
-            let yisint = y.trunc().eq(y) | y.abs().gt(F1_24X);
-            let yisodd =
-                (y.trunci() & I32x::splat(1)).eq(I32x::splat(1)) & yisint & y.abs().lt(F1_24X);
+            let yisint = y.trunc().simd_eq(y) | y.abs().simd_gt(F1_24X);
+            let yisodd = (y.trunci() & I32x::splat(1)).simd_eq(I32x::splat(1))
+                & yisint
+                & y.abs().simd_lt(F1_24X);
 
             result = (x.is_sign_negative() & yisodd).select(-result, result);
 
-            result = x.eq(ZERO).select(ZERO, result);
-            y.eq(ZERO).select(ONE, result)
+            result = x.simd_eq(ZERO).select(ZERO, result);
+            y.simd_eq(ZERO).select(ONE, result)
         }
 
         #[test]

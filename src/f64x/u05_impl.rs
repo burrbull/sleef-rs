@@ -11,8 +11,8 @@ macro_rules! impl_math_f64_u05 {
         pub fn sincospi(d: F64x) -> (F64x, F64x) {
             let u = d * F64x::splat(4.);
             let mut q = u.trunci();
-            q = (q + (Ix::from_bits(Ux::from_bits(q) >> 31) ^ Ix::splat(1))) & Ix::splat(!1);
-            let s = u - F64x::from_cast(q);
+            q = (q + ((q.cast() >> Ux::splat(31)).cast() ^ Ix::splat(1))) & Ix::splat(!1);
+            let s = u - q.cast();
 
             let t = s;
             let s = s * s;
@@ -66,27 +66,25 @@ macro_rules! impl_math_f64_u05 {
 
             //
 
-            let o = M64x::from_cast((q & Ix::splat(2)).eq(Ix::splat(0)));
+            let o = (q & Ix::splat(2)).simd_eq(Ix::splat(0)).cast();
             let mut rsin = o.select(rx, ry);
             let mut rcos = o.select(ry, rx);
 
-            let o = M64x::from_cast((q & Ix::splat(4)).eq(Ix::splat(4)));
-            rsin = F64x::from_bits(
-                (U64x::from_bits(o) & U64x::from_bits(NEG_ZERO)) ^ U64x::from_bits(rsin),
-            );
+            let o: M64x = (q & Ix::splat(4)).simd_eq(Ix::splat(4)).cast();
+            rsin = F64x::from_bits((o.to_int().cast() & NEG_ZERO.to_bits()) ^ rsin.to_bits());
 
-            let o = M64x::from_cast(((q + Ix::splat(2)) & Ix::splat(4)).eq(Ix::splat(4)));
-            rcos = F64x::from_bits(
-                (U64x::from_bits(o) & U64x::from_bits(NEG_ZERO)) ^ U64x::from_bits(rcos),
-            );
+            let o: M64x = ((q + Ix::splat(2)) & Ix::splat(4))
+                .simd_eq(Ix::splat(4))
+                .cast();
+            rcos = F64x::from_bits((o.to_int().cast() & NEG_ZERO.to_bits()) ^ rcos.to_bits());
 
-            let o = d.abs().gt(TRIGRANGEMAX3 / F64x::splat(4.));
-            rsin = F64x::from_bits(!U64x::from_bits(o) & U64x::from_bits(rsin));
+            let o = d.abs().simd_gt(TRIGRANGEMAX3 / F64x::splat(4.));
+            rsin = F64x::from_bits(!o.to_int().cast::<u64>() & rsin.to_bits());
             rcos = o.select(ONE, rcos);
 
             let o = d.is_infinite();
-            rsin = F64x::from_bits(U64x::from_bits(o) | U64x::from_bits(rsin));
-            rcos = F64x::from_bits(U64x::from_bits(o) | U64x::from_bits(rcos));
+            rsin = F64x::from_bits(o.to_int().cast() | rsin.to_bits());
+            rcos = F64x::from_bits(o.to_int().cast() | rcos.to_bits());
 
             (rsin, rcos)
         }
@@ -120,9 +118,13 @@ macro_rules! impl_math_f64_u05 {
 
             r = d.is_neg_zero().select(NEG_ZERO, r);
             r = F64x::from_bits(
-                !U64x::from_bits(d.abs().gt(TRIGRANGEMAX3 / F64x::splat(4.))) & U64x::from_bits(r),
+                !d.abs()
+                    .simd_gt(TRIGRANGEMAX3 / F64x::splat(4.))
+                    .to_int()
+                    .cast::<u64>()
+                    & r.to_bits(),
             );
-            F64x::from_bits(U64x::from_bits(d.is_infinite()) | U64x::from_bits(r))
+            F64x::from_bits(d.is_infinite().to_int().cast() | r.to_bits())
         }
 
         #[test]
@@ -152,8 +154,11 @@ macro_rules! impl_math_f64_u05 {
             let x = cospik(d);
             let r = F64x::from(x);
 
-            let r = d.abs().gt(TRIGRANGEMAX3 / F64x::splat(4.)).select(ONE, r);
-            F64x::from_bits(U64x::from_bits(d.is_infinite()) | U64x::from_bits(r))
+            let r = d
+                .abs()
+                .simd_gt(TRIGRANGEMAX3 / F64x::splat(4.))
+                .select(ONE, r);
+            F64x::from_bits(d.is_infinite().to_int().cast() | r.to_bits())
         }
 
         #[test]
@@ -216,19 +221,20 @@ macro_rules! impl_math_f64_u05 {
             #else
             */
 
-            let d = d.lt(ZERO).select(F64x::NAN, d);
+            let d = d.simd_lt(ZERO).select(NAN, d);
 
-            let o = d.lt(F64x::splat(8.636_168_555_094_445_e-78));
+            let o = d.simd_lt(F64x::splat(8.636_168_555_094_445_e-78));
             let d = o.select(d * F64x::splat(1.157_920_892_373_162_e77), d);
             let q = o.select(F64x::splat(2.938_735_877_055_718_8_e-39 * 0.5), HALF);
 
-            let o = d.gt(F64x::splat(1.340_780_792_994_259_7_e+154));
+            let o = d.simd_gt(F64x::splat(1.340_780_792_994_259_7_e+154));
             let d = o.select(d * F64x::splat(7.458_340_731_200_207_e-155), d);
             let q = o.select(F64x::splat(1.157_920_892_373_162_e+77 * 0.5), q);
 
             let mut x = F64x::from_bits(
-                splat2i(0x_5fe6_ec86, 0)
-                    - I64x::from_bits(U64x::from_bits(d + F64x::splat(1e-320)) >> 1),
+                (splat2i(0x_5fe6_ec86, 0)
+                    - ((d + F64x::splat(1e-320)).to_bits() >> U64x::splat(1)).cast())
+                .cast(),
             );
 
             x *= F64x::splat(1.5) - HALF * d * x * x;
@@ -240,8 +246,8 @@ macro_rules! impl_math_f64_u05 {
 
             x = F64x::from(d2) * q;
 
-            x = d.eq(F64x::INFINITY).select(F64x::INFINITY, x);
-            d.eq(ZERO).select(d, x)
+            x = d.simd_eq(INFINITY).select(INFINITY, x);
+            d.simd_eq(ZERO).select(d, x)
             // #endif
         }
 
@@ -256,22 +262,22 @@ macro_rules! impl_math_f64_u05 {
         pub fn hypot(x: F64x, y: F64x) -> F64x {
             let x = x.abs();
             let y = y.abs();
-            let min = x.min(y);
+            let min = x.simd_min(y);
             let n = min;
-            let max = x.max(y);
+            let max = x.simd_max(y);
             let d = max;
 
-            let o = max.lt(F64x::splat(f64::MIN_POSITIVE));
+            let o = max.simd_lt(F64x::splat(f64::MIN_POSITIVE));
             let n = o.select(n * D1_54X, n);
             let d = o.select(d * D1_54X, d);
 
             let t = Doubled::from(n) / Doubled::from(d);
             let t = (t.square() + ONE).sqrt() * max;
             let mut ret = F64x::from(t);
-            ret = ret.is_nan().select(F64x::INFINITY, ret);
-            ret = min.eq(ZERO).select(max, ret);
-            ret = (x.is_nan() | y.is_nan()).select(F64x::NAN, ret);
-            (x.eq(F64x::INFINITY) | y.eq(F64x::INFINITY)).select(F64x::INFINITY, ret)
+            ret = ret.is_nan().select(INFINITY, ret);
+            ret = min.simd_eq(ZERO).select(max, ret);
+            ret = (x.is_nan() | y.is_nan()).select(NAN, ret);
+            (x.simd_eq(INFINITY) | y.simd_eq(INFINITY)).select(INFINITY, ret)
         }
 
         #[test]

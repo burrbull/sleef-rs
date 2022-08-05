@@ -6,7 +6,6 @@ macro_rules! impl_math_f32_u35 {
         ///
         /// These functions evaluates the sine function of a value in ***a***.
         /// The error bound of the returned value is `3.5 ULP`.
-        #[cfg(not(feature = "deterministic"))]
         pub fn sinf(mut d: F32x) -> F32x {
             let mut q: I32x;
             let u: F32x;
@@ -63,8 +62,9 @@ macro_rules! impl_math_f32_u35 {
         ///
         /// These functions evaluates the sine function of a value in ***a***.
         /// The error bound of the returned value is `3.5 ULP`.
-        #[cfg(feature = "deterministic")]
-        pub fn sinf(mut d: F32x) -> F32x {
+        ///
+        /// NOTE: This version is slower, but SIMD lanes are independent
+        pub fn sinf_deterministic(mut d: F32x) -> F32x {
             let r = d;
 
             let mut q = (d * F32x::FRAC_1_PI).roundi();
@@ -130,13 +130,18 @@ macro_rules! impl_math_f32_u35 {
                 f32::MIN..=f32::MAX,
                 3.5,
             );
+            test_f_f(
+                sinf_deterministic,
+                rug::Float::sin,
+                f32::MIN..=f32::MAX,
+                3.5,
+            );
         }
 
         /// Cosine function
         ///
         /// These functions evaluates the cosine function of a value in ***a***.
         /// The error bound of the returned value is `3.5 ULP`.
-        #[cfg(not(feature = "deterministic"))]
         pub fn cosf(mut d: F32x) -> F32x {
             let mut q: I32x;
             let r = d;
@@ -195,8 +200,9 @@ macro_rules! impl_math_f32_u35 {
         ///
         /// These functions evaluates the cosine function of a value in ***a***.
         /// The error bound of the returned value is `3.5 ULP`.
-        #[cfg(feature = "deterministic")]
-        pub fn cosf(mut d: F32x) -> F32x {
+        ///
+        /// NOTE: This version is slower, but SIMD lanes are independent
+        pub fn cosf_deterministic(mut d: F32x) -> F32x {
             let r = d;
 
             let mut q = (d * F32x::FRAC_1_PI - HALF).roundi();
@@ -262,6 +268,12 @@ macro_rules! impl_math_f32_u35 {
                 f32::MIN..=f32::MAX,
                 3.5,
             );
+            test_f_f(
+                cosf_deterministic,
+                rug::Float::cos,
+                f32::MIN..=f32::MAX,
+                3.5,
+            );
         }
 
         /// Evaluate sine and cosine function simultaneously
@@ -270,7 +282,6 @@ macro_rules! impl_math_f32_u35 {
         /// and store the two values in *first* and *second* position in the returned value, respectively.
         /// The error bound of the returned values is `3.5 ULP`.
         /// If ***a*** is a `NaN` or `infinity`, a `NaN` is returned.
-        #[cfg(not(feature = "deterministic"))]
         pub fn sincosf(d: F32x) -> (F32x, F32x) {
             let q: I32x;
             let mut s = d;
@@ -335,8 +346,9 @@ macro_rules! impl_math_f32_u35 {
         /// and store the two values in *first* and *second* position in the returned value, respectively.
         /// The error bound of the returned values is `3.5 ULP`.
         /// If ***a*** is a `NaN` or `infinity`, a `NaN` is returned.
-        #[cfg(feature = "deterministic")]
-        pub fn sincosf(d: F32x) -> (F32x, F32x) {
+        ///
+        /// NOTE: This version is slower, but SIMD lanes are independent
+        pub fn sincosf_deterministic(d: F32x) -> (F32x, F32x) {
             let mut q = (d * F32x::FRAC_2_PI).roundi();
             let u = F32x::from_cast(q);
             let mut s = u.mul_add(-PI_A2_F * HALF, d);
@@ -411,13 +423,21 @@ macro_rules! impl_math_f32_u35 {
                 f32::MIN..=f32::MAX,
                 3.5,
             );
+            test_f_ff(
+                sincosf_deterministic,
+                |in1| {
+                    let prec = in1.prec();
+                    in1.sin_cos(rug::Float::new(prec))
+                },
+                f32::MIN..=f32::MAX,
+                3.5,
+            );
         }
 
         /// Tangent function
         ///
         /// These functions evaluates the tangent function of a value in ***a***.
         /// The error bound of the returned value is `3.5 ULP`.
-        #[cfg(not(feature = "deterministic"))]
         pub fn tanf(d: F32x) -> F32x {
             let q: I32x;
 
@@ -478,8 +498,9 @@ macro_rules! impl_math_f32_u35 {
         ///
         /// These functions evaluates the tangent function of a value in ***a***.
         /// The error bound of the returned value is `3.5 ULP`.
-        #[cfg(feature = "deterministic")]
-        pub fn tanf(d: F32x) -> F32x {
+        ///
+        /// NOTE: This version is slower, but SIMD lanes are independent
+        pub fn tanf_deterministic(d: F32x) -> F32x {
             let mut q = (d * F32x::FRAC_2_PI).roundi();
             let u = F32x::from_cast(q);
             let mut x = u.mul_add(-PI_A2_F * HALF, d);
@@ -543,6 +564,12 @@ macro_rules! impl_math_f32_u35 {
         fn test_tanf() {
             test_f_f(
                 tanf,
+                rug::Float::tan,
+                f32::MIN..=f32::MAX,
+                3.5,
+            );
+            test_f_f(
+                tanf_deterministic,
                 rug::Float::tan,
                 f32::MIN..=f32::MAX,
                 3.5,

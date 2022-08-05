@@ -297,9 +297,13 @@ macro_rules! impl_math_f32 {
         }
         pub use u10::{
             sinf as sin_u10,
+            sinf_deterministic as sin_u10_deterministic,
             cosf as cos_u10,
+            cosf_deterministic as cos_u10_deterministic,
             sincosf as sincos_u10,
+            sincosf_deterministic as sincos_u10_deterministic,
             tanf as tan_u10,
+            tanf_deterministic as tan_u10_deterministic,
             atan2f as atan2_u10,
             asinf as asin_u10,
             acosf as acos_u10,
@@ -339,9 +343,13 @@ macro_rules! impl_math_f32 {
         }
         pub use u35::{
             sinf as sin_u35,
+            sinf_deterministic as sin_u35_deterministic,
             cosf as cos_u35,
-            tanf as tan_u35,
+            cosf_deterministic as cos_u35_deterministic,
             sincosf as sincos_u35,
+            sincosf_deterministic as sincos_u35_deterministic,
+            tanf as tan_u35,
+            tanf_deterministic as tan_u35_deterministic,
             sincospif as sincospi_u35,
             atanf as atan_u35,
             atan2f as atan2_u35,
@@ -486,15 +494,8 @@ macro_rules! impl_math_f32 {
 
         #[inline]
         fn from_slice_offset(ptr: &[f32], vi: I32x) -> F32x {
-            use core::mem::MaybeUninit;
-
-            const L: usize = F32x::lanes();
-            let mut ar: [MaybeUninit<f32>; L] = MaybeUninit::uninit_array();
-            for i in 0..L {
-                ar[i].write(ptr[vi.extract(i) as usize]);
-            }
-
-            unsafe { MaybeUninit::array_assume_init(ar) }.into()
+            let ar: [f32; $size] = core::array::from_fn(|i| ptr[vi.extract(i) as usize]);
+            ar.into()
         }
 
         impl SqrtAsDoubled for F32x {

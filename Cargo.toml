@@ -21,7 +21,6 @@ features = ["into_bits"]
 
 [features]
 default = []
-deterministic = []
 
 [dev-dependencies]
 rug = "1.16"

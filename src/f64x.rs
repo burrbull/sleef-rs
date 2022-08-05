@@ -305,9 +305,13 @@ macro_rules! impl_math_f64 {
         }
         pub use u10::{
             sin as sin_u10,
+            sin_deterministic as sin_u10_deterministic,
             cos as cos_u10,
+            cos_deterministic as cos_u10_deterministic,
             sincos as sincos_u10,
+            sincos_deterministic as sincos_u10_deterministic,
             tan as tan_u10,
+            tan_deterministic as tan_u10_deterministic,
             atan2 as atan2_u10,
             asin as asin_u10,
             acos as acos_u10,
@@ -347,9 +351,13 @@ macro_rules! impl_math_f64 {
         }
         pub use u35::{
             sin as sin_u35,
+            sin_deterministic as sin_u35_deterministic,
             cos as cos_u35,
-            tan as tan_u35,
+            cos_deterministic as cos_u35_deterministic,
             sincos as sincos_u35,
+            sincos_deterministic as sincos_u35_deterministic,
+            tan as tan_u35,
+            tan_deterministic as tan_u35_deterministic,
             sincospi as sincospi_u35,
             atan as atan_u35,
             atan2 as atan2_u35,
@@ -466,14 +474,8 @@ macro_rules! impl_math_f64 {
 
         #[inline]
         fn from_slice_offset(ptr: &[f64], vi: Ix) -> F64x {
-            use core::mem::MaybeUninit;
-
-            const L: usize = F64x::lanes();
-            let mut ar: [MaybeUninit<f64>; L] = MaybeUninit::uninit_array();
-            for i in 0..L {
-                ar[i].write(ptr[vi.extract(i) as usize]);
-            }
-            unsafe { MaybeUninit::array_assume_init(ar) }.into()
+            let ar: [f64; $size] = core::array::from_fn(|i| ptr[vi.extract(i) as usize]);
+            ar.into()
         }
 
         #[inline]

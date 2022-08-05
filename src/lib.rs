@@ -8,8 +8,6 @@
 #![allow(clippy::float_cmp)]
 #![allow(clippy::cognitive_complexity)]
 #![allow(clippy::wrong_self_convention)]
-#![feature(maybe_uninit_uninit_array)]
-#![feature(maybe_uninit_array_assume_init)]
 
 //! SLEEF stands for SIMD Library for Evaluating Elementary Functions.
 //! It implements vectorized versions of all C99 real floating point math functions.

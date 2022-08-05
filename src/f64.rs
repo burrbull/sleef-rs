@@ -1721,41 +1721,50 @@ pub fn fmod(x: f64, y: f64) -> f64 {
         }
     }
 
-    let mut nu = fabsk(x);
-    let mut de = fabsk(y);
-    let s = if de < f64::MIN_POSITIVE {
-        nu *= D1_54;
-        de *= D1_54;
+    let mut n = fabsk(x);
+    let mut d = fabsk(y);
+    let s = if d < f64::MIN_POSITIVE {
+        n *= D1_54;
+        d *= D1_54;
         1. / D1_54
     } else {
         1.
     };
-    let mut r = Doubled::from(nu);
-    let rde = toward0(1. / de);
+    let mut r = Doubled::from(n);
+    let rd = toward0(1. / d);
 
     for _ in 0..21 {
-        // ceil(log2(DBL_MAX) / 51) + 1
-        let q = if (de + de > r.0) && (r.0 >= de) {
-            1.
+        // ceil(log2(DBL_MAX) / 52)
+        let mut q = removelsb(trunc_positive(toward0(r.0) * rd));
+        q = if (3. * d > r.0) && (r.0 > d) { 2. } else { q };
+        q = if (2. * d > r.0) && (r.0 > d) { 1. } else { q };
+        q = if r.0 == d {
+            if r.1 >= 0. {
+                1.
+            } else {
+                0.
+            }
         } else {
-            toward0(r.0) * rde
+            q
         };
-        r = (r + removelsb(trunc_positive(q)).mul_as_doubled(-de)).normalize();
-        if r.0 < de {
+        r = (r + q.mul_as_doubled(-d)).normalize();
+        if r.0 < d {
             break;
         }
     }
 
-    let mut ret = if f64::from(r) == de { 0. } else { r.0 * s };
+    let mut ret = if f64::from(r) == d { 0. } else { r.0 * s };
     ret = mulsign(ret, x);
-    if de == 0. {
+    if d == 0. {
         f64::NAN
-    } else if nu < de {
+    } else if n < d {
         x
     } else {
         ret
     }
 }
+
+// TODO: add test for fmod
 
 #[inline]
 fn rintk2(d: f64) -> f64 {

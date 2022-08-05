@@ -1398,12 +1398,18 @@ pub fn fmodf(x: f32, y: f32) -> f32 {
 
     for _ in 0..8 {
         // ceil(log2(FLT_MAX) / 22)+1
-        let q = if (de + de > r.0) && (r.0 >= de) {
+        let mut q = trunc_positive(toward0(r.0) * rde);
+        q = if (3. * de > r.0) && (r.0 >= de) {
+            2.
+        } else {
+            q
+        };
+        q = if (2. * de > r.0) && (r.0 >= de) {
             1.
         } else {
-            toward0(r.0) * rde
+            q
         };
-        r = (r + trunc_positive(q).mul_as_doubled(-de)).normalize();
+        r = (r + (q.mul_as_doubled(-de))).normalize();
         if r.0 < de {
             break;
         }
@@ -1421,6 +1427,8 @@ pub fn fmodf(x: f32, y: f32) -> f32 {
         ret
     }
 }
+
+// TODO: add test for fmodf
 
 #[inline]
 fn rintfk2(d: f32) -> f32 {

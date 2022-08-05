@@ -699,7 +699,7 @@ macro_rules! impl_math_f64 {
             #[inline]
             fn is_odd(self) -> Self::Mask {
                 if cfg!(feature = "full_fp_rounding") {
-                    let x = self * F64x::splat(0.5);
+                    let x = self * HALF;
                     x.trunc().ne(x)
                 } else {
                     let mut x = (self * (ONE / D1_31X)).trunc();
@@ -1409,36 +1409,40 @@ macro_rules! impl_math_f64 {
                 x.abs().ge(D1_52X).select(x, x - fr)
             }
 
-            let nu = x.abs();
-            let de = y.abs();
+            let n = x.abs();
+            let d = y.abs();
             let s = ONE;
-            let o = de.lt(F64x::splat(f64::MIN_POSITIVE));
-            let nu = o.select(nu * D1_54X, nu);
-            let de = o.select(de * D1_54X, de);
+            let o = d.lt(F64x::splat(f64::MIN_POSITIVE));
+            let n = o.select(n * D1_54X, n);
+            let d = o.select(d * D1_54X, d);
             let s = o.select(s * (ONE / D1_54X), s);
-            let rde = toward0(de.recpre());
-            let mut r = Doubled::from(nu);
+            let rd = toward0(d.recpre());
+            let mut r = Doubled::from(n);
 
             for _ in 0..21 {
-                // ceil(log2(DBL_MAX) / 51) + 1
-                let q = ((de + de).gt(r.0) & r.0.ge(de)).select(ONE, toward0(r.0) * rde);
-                let q = F64x::from_bits(
-                    U64x::from_bits(trunc_positive(q)) & splat2uu(0x_ffff_ffff, 0x_ffff_fffe),
-                );
-                r = (r + q.mul_as_doubled(-de)).normalize();
-                if r.0.lt(de).all() {
+                // ceil(log2(DBL_MAX) / 52)
+                let mut q = trunc_positive(toward0(r.0) * rd);
+                /* #ifndef ENABLE_FMA_DP
+                q = vreinterpret_vd_vm(vand_vm_vm_vm(vreinterpret_vm_vd(q), vcast_vm_i_i(0xffffffff, 0xfffffffe)));
+                #endif */
+                q = ((F64x::splat(3.) * d).gt(r.0) & r.0.ge(d)).select(F64x::splat(2.), q);
+                q = ((d + d).gt(r.0) & r.0.ge(d)).select( ONE, q);
+                r = (r + q.mul_as_doubled(-d)).normalize();
+                if r.0.lt(d).all() {
                     break;
                 }
             }
 
             let mut ret = r.0 * s;
-            ret = F64x::from(r).eq(de).select(ZERO, ret);
+            ret = F64x::from(r).eq(d).select(ZERO, ret);
 
             ret = ret.mul_sign(x);
 
-            ret = nu.lt(de).select(x, ret);
-            de.eq(ZERO).select(F64x::NAN, ret)
+            ret = n.lt(d).select(x, ret);
+            d.eq(ZERO).select(F64x::NAN, ret)
         }
+
+        // TODO: add test for fmodf
 
         #[inline]
         fn rintk2(d: F64x) -> F64x {
@@ -1469,7 +1473,7 @@ macro_rules! impl_math_f64 {
                 q = vreinterpret_vd_vm(vand_vm_vm_vm(vreinterpret_vm_vd(q), vcast_vm_u64(UINT64_C(0xfffffffffffffffe))));
             #endif*/
                 q = r.0.abs().lt(d * F64x::splat(1.5)).select(ONE.mul_sign(r.0), q);
-                q = (r.0.abs().lt(d * F64x::splat(0.5)) | (!qisodd & r.0.abs().eq(d * F64x::splat(0.5))))
+                q = (r.0.abs().lt(d * HALF) | (!qisodd & r.0.abs().eq(d * HALF)))
                     .select(ZERO, q);
                 if q.eq(ZERO).all() {
                     break;

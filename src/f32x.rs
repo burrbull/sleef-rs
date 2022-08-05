@@ -1202,8 +1202,10 @@ macro_rules! impl_math_f32 {
 
             for _ in 0..8 {
                 // ceil(log2(FLT_MAX) / 22)+1
-                let q = ((de + de).gt(r.0) & r.0.ge(de)).select(ONE, toward0(r.0) * rde);
-                r = (r + trunc_positive(q).mul_as_doubled(-de)).normalize();
+                let mut q = trunc_positive((toward0(r.0) * rde));
+                q = ((F32x::splat(3.) * de).gt(r.0) & r.0.ge(de)).select(F32x::splat(2.), q);
+                q = ((F32x::splat(2.) * de).gt(r.0) & r.0.ge(de)).select(ONE, q);
+                r = (r + trunc_positive(q).mul_as_doubled((-de))).normalize();
                 if r.0.lt(de).all() {
                     break;
                 }
@@ -1219,6 +1221,7 @@ macro_rules! impl_math_f32 {
             de.eq(ZERO).select(F32x::NAN, ret)
         }
 
+        // TODO: add test for fmodf
 
         #[inline]
         fn rintfk2(d: F32x) -> F32x {
@@ -1246,7 +1249,7 @@ macro_rules! impl_math_f32 {
             for _ in 0..8 { // ceil(log2(FLT_MAX) / 22)+1
                 let mut q = rintfk2(r.0 * rd);
                 q = r.0.abs().lt(d * F32x::splat(1.5)).select(ONE.mul_sign(r.0), q);
-                q = (r.0.abs().lt(d * F32x::splat(0.5)) | (!qisodd & r.0.abs().eq(d * F32x::splat(0.5))))
+                q = (r.0.abs().lt(d * HALF) | (!qisodd & r.0.abs().eq(d * HALF)))
                     .select(ZERO, q);
                 if q.eq(ZERO).all() {
                     break;
@@ -1608,7 +1611,7 @@ macro_rules! impl_math_f32 {
                 .mul_add(s, F32x::splat(0.008_333_360_776_305_198_669_433_59))
                 .mul_add(s, F32x::splat(0.041_666_485_369_205_474_853_515_6))
                 .mul_add(s, F32x::splat(0.166_666_671_633_720_397_949_219))
-                .mul_add(s, F32x::splat(0.5));
+                .mul_add(s, HALF);
 
             u = (s * s).mul_add(u, s + ONE);
             u = ldexp2kf(u, q);

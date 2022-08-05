@@ -570,7 +570,7 @@ macro_rules! impl_math_f64_u10 {
                 );
             }
 
-            let t = s.scale(F64x::splat(0.5));
+            let t = s.scale(HALF);
             s = t.square();
 
             let s2 = s.0 * s.0;
@@ -644,7 +644,7 @@ macro_rules! impl_math_f64_u10 {
                 }
             }
 
-            let t = s.scale(F64x::splat(0.5));
+            let t = s.scale(HALF);
             s = t.square();
 
             let s2 = s.0 * s.0;

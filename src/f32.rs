@@ -431,6 +431,10 @@ impl crate::Sleef for f32 {
         fmodf(self, other)
     }
     #[inline]
+    fn remainder(self, other: Self) -> Self {
+        remainderf(self, other)
+    }
+    #[inline]
     fn modf(self) -> (Self, Self) {
         modff(self)
     }
@@ -1398,12 +1402,18 @@ pub fn fmodf(x: f32, y: f32) -> f32 {
 
     for _ in 0..8 {
         // ceil(log2(FLT_MAX) / 22)+1
-        let q = if (de + de > r.0) && (r.0 >= de) {
+        let mut q = trunc_positive(toward0(r.0) * rde);
+        q = if (3. * de > r.0) && (r.0 >= de) {
+            2.
+        } else {
+            q
+        };
+        q = if (2. * de > r.0) && (r.0 >= de) {
             1.
         } else {
-            toward0(r.0) * rde
+            q
         };
-        r = (r + trunc_positive(q).mul_as_doubled(-de)).normalize();
+        r = (r + (q.mul_as_doubled(-de))).normalize();
         if r.0 < de {
             break;
         }
@@ -1420,6 +1430,81 @@ pub fn fmodf(x: f32, y: f32) -> f32 {
     } else {
         ret
     }
+}
+
+// TODO: add test for fmodf
+
+#[inline]
+fn rintfk2(d: f32) -> f32 {
+    let x = d + 0.5;
+    let isodd = 1 & (x as i32) != 0;
+    let mut fr = x - (x as i32 as f32);
+    fr = if fr < 0. || (fr == 0. && isodd) {
+        fr + 1.
+    } else {
+        fr
+    };
+    if fabsfk(d) >= F1_23 {
+        d
+    } else {
+        copysignfk(x - fr, d)
+    }
+}
+
+/// FP remainder
+pub fn remainderf(x: f32, y: f32) -> f32 {
+    let mut n = fabsfk(x);
+    let mut d = fabsfk(y);
+    let mut s = 1.;
+    if d < f32::MIN_POSITIVE * 2. {
+        n *= F1_25;
+        d *= F1_25;
+        s = 1. / F1_25;
+    }
+    let rd = 1. / d;
+    let mut r = Doubled::from(n);
+    let mut qisodd = false;
+
+    for _ in 0..8 {
+        // ceil(log2(FLT_MAX) / 22)+1
+        let mut q = rintfk2(r.0 * rd);
+        if fabsfk(r.0) < 1.5 * d {
+            q = if r.0 < 0. { -1. } else { 1. };
+        }
+        if fabsfk(r.0) < 0.5 * d || (fabsfk(r.0) == 0.5 * d && !qisodd) {
+            q = 0.;
+        }
+        if q == 0. {
+            break;
+        }
+        if (q * -d).is_infinite() {
+            q += mulsignf(-1., r.0);
+        }
+        qisodd ^= (1 & (q as isize)) != 0 && fabsfk(q) < F1_24; // TODO: check
+        r = (r + q.mul_as_doubled(-d)).normalize();
+    }
+
+    let mut ret = r.0 * s;
+    ret = mulsignf(ret, x);
+    if y.is_infinite() {
+        ret = if x.is_infinite() { f32::NAN } else { x };
+    }
+    if d == 0. {
+        f32::NAN
+    } else {
+        ret
+    }
+}
+
+#[test]
+fn test_remainderf() {
+    test_ff_f(
+        remainderf,
+        rug::Float::remainder,
+        f32::MIN..=f32::MAX,
+        f32::MIN..=f32::MAX,
+        0.5,
+    );
 }
 
 /// Fused multiply and accumulate

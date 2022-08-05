@@ -207,6 +207,10 @@ macro_rules! impl_math_f32 {
                 fmodf(self, other)
             }
             #[inline]
+            fn remainder(self, other: Self) -> Self {
+                remainderf(self, other)
+            }
+            #[inline]
             fn modf(self) -> (Self, Self) {
                 modff(self)
             }
@@ -254,7 +258,6 @@ macro_rules! impl_math_f32 {
         const F1_24X: F32x = F32x::splat(crate::f32::F1_24);
         const F1_23X: F32x = F32x::splat(crate::f32::F1_23);
         const F1_12X: F32x = F32x::splat(crate::f32::F1_12);
-        const F1_10X: F32x = F32x::splat(crate::f32::F1_10);
 
         const PI_A_F: F32x = F32x::splat(crate::f32::PI_A_F);
         const PI_B_F: F32x = F32x::splat(crate::f32::PI_B_F);
@@ -738,25 +741,25 @@ macro_rules! impl_math_f32 {
         }
 
         #[inline]
+        fn orsign(x: F32x, y: F32x) -> F32x {
+            F32x::from_bits(U32x::from_bits(x) | y.sign_bit())
+        }
+
+        #[inline]
         fn rempisubf(x: F32x) -> (F32x, I32x) {
             if cfg!(feature = "full_fp_rounding") {
                 let y = (x * F32x::splat(4.)).round();
                 let vi = (y - x.round() * F32x::splat(4.)).trunci();
                 (x - y * F32x::splat(0.25), vi)
             } else {
-                let mut fr = x - F1_10X * (x * (ONE / F1_10X)).trunc();
-                let mut vi =
-                    x.gt(ZERO).select(I32x::splat(4), I32x::splat(3)) + (fr * F32x::splat(8.)).trunci();
-                vi = ((I32x::splat(7) & vi) - I32x::splat(3)) >> 1;
-                fr -= F32x::splat(0.25) * (fr.mul_add(F32x::splat(4.), HALF.mul_sign(x))).trunc();
-                fr = fr
-                    .abs()
-                    .gt(F32x::splat(0.25))
-                    .select(fr - HALF.mul_sign(x), fr);
-                fr = fr.abs().gt(F32x::splat(1e+10)).select(ZERO, fr);
-                let o = x.abs().eq(F32x::splat(0.124_999_992_549_419_403_08));
-                fr = o.select(x, fr);
-                vi = o.select(I32x::splat(0), vi);
+                let c = F1_23X.mul_sign(x);
+                let rint4x = (F32x::splat(4.) * x).abs().gt(F1_23X).select(
+                    (F32x::splat(4.) * x),
+                    orsign((F32x::splat(4.).mul_add(x, c) - c), x));
+                let rintx  = x.abs().gt(F1_23X).select(x, orsign(((x + c) - c), x));
+
+                let fr = F32x::splat(-0.25).mul_add(rint4x, x);
+                let vi = F32x::splat(-4.).mul_add(rintx, rint4x).trunci();
                 (fr, vi)
             }
         }
@@ -999,8 +1002,14 @@ macro_rules! impl_math_f32 {
 
         /// Round to integer towards zero
         pub fn truncf(x: F32x) -> F32x {
+            /*
+            #ifdef FULL_FP_ROUNDING
+  return vtruncate_vf_vf(x);
+#else
+            */
             let fr = x - F32x::from_cast(x.trunci());
             (x.is_infinite() | x.abs().ge(F1_23X)).select(x, (x - fr).copy_sign(x))
+    // #endif
         }
 
         /// Round to integer towards minus infinity
@@ -1031,14 +1040,12 @@ macro_rules! impl_math_f32 {
 
         /// Round to integer, ties round to even
         pub fn rintf(d: F32x) -> F32x {
-            let mut x = d + HALF;
-            let isodd = (I32x::splat(1) & x.trunci()).eq(I32x::splat(1));
-            let mut fr = x - F32x::from_cast(x.trunci());
-            fr = (fr.lt(ZERO) | (fr.eq(ZERO) & isodd)).select(fr + ONE, fr);
-            x = d
-                .eq(F32x::splat(0.500_000_059_604_644_775_39))
-                .select(ZERO, x);
-            (d.is_infinite() | d.abs().ge(F1_23X)).select(d, (x - fr).copy_sign(d))
+            /* #ifdef FULL_FP_ROUNDING
+                return vrint_vf_vf(d);
+            #else */
+            let c = F1_23X.mul_sign(d);
+            d.abs().gt(F1_23X).select(d, orsign((d + c) - c, d))
+            // #endif
         }
 
         /// Fused multiply and accumulate
@@ -1047,6 +1054,11 @@ macro_rules! impl_math_f32 {
         /// This function may return infinity with a correct sign if the absolute value of the correct return value is greater than `1e+33`.
         /// The error bounds of the returned value is `max(0.500_01 ULP, f32::MIN_POSITIVE)`.
         pub fn fmaf(mut x: F32x, mut y: F32x, mut z: F32x) -> F32x {
+    /*
+    #ifdef ENABLE_FMA_SP
+  return vfma_vf_vf_vf_vf(x, y, z);
+#else
+    */
             let h2 = x * y + z;
             let mut q = ONE;
             let o = h2.abs().lt(F32x::splat(1e-38));
@@ -1078,6 +1090,7 @@ macro_rules! impl_math_f32 {
             o = h2.is_infinite() | h2.is_nan();
 
             o.select(h2, ret * q)
+// #endif
         }
 
         /// Square root function
@@ -1193,8 +1206,10 @@ macro_rules! impl_math_f32 {
 
             for _ in 0..8 {
                 // ceil(log2(FLT_MAX) / 22)+1
-                let q = ((de + de).gt(r.0) & r.0.ge(de)).select(ONE, toward0(r.0) * rde);
-                r = (r + trunc_positive(q).mul_as_doubled(-de)).normalize();
+                let mut q = trunc_positive((toward0(r.0) * rde));
+                q = ((F32x::splat(3.) * de).gt(r.0) & r.0.ge(de)).select(F32x::splat(2.), q);
+                q = ((F32x::splat(2.) * de).gt(r.0) & r.0.ge(de)).select(ONE, q);
+                r = (r + trunc_positive(q).mul_as_doubled((-de))).normalize();
                 if r.0.lt(de).all() {
                     break;
                 }
@@ -1208,6 +1223,61 @@ macro_rules! impl_math_f32 {
 
             ret = nu.lt(de).select(x, ret);
             de.eq(ZERO).select(F32x::NAN, ret)
+        }
+
+        // TODO: add test for fmodf
+
+        #[inline]
+        fn rintfk2(d: F32x) -> F32x {
+            /*#ifdef FULL_FP_ROUNDING
+                return vrint_vf_vf(d);
+            #else*/
+            let c = F1_23X.mul_sign(d);
+            d.abs().gt(F1_23X).select(d, orsign((d + c) - c, d))
+            //#endif
+        }
+
+        /// FP remainder
+        pub fn remainderf(x: F32x, y: F32x) -> F32x {
+            let mut n = x.abs();
+            let mut d = y.abs();
+            let mut s = ONE;
+            let o = d.lt(F32x::splat(f32::MIN_POSITIVE*2.));
+            n = o.select(n * F1_25X, n);
+            d = o.select(d * F1_25X, d);
+            s  = o.select(s * F32x::splat(1. / crate::f32::F1_25), s);
+            let mut r = Doubled::from(n);
+            let rd = d.recpre();
+            let mut qisodd = M32x::splat(false);
+
+            for _ in 0..8 { // ceil(log2(FLT_MAX) / 22)+1
+                let mut q = rintfk2(r.0 * rd);
+                q = r.0.abs().lt(d * F32x::splat(1.5)).select(ONE.mul_sign(r.0), q);
+                q = (r.0.abs().lt(d * HALF) | (!qisodd & r.0.abs().eq(d * HALF)))
+                    .select(ZERO, q);
+                if q.eq(ZERO).all() {
+                    break;
+                }
+                q = (q * (-d)).is_infinite().select(q + F32x::splat(-1.).mul_sign(r.0), q);
+                qisodd ^= (q.trunci() & I32x::splat(1)).eq(I32x::splat(1)) & q.abs().lt(F1_24X);
+                r = (r + q.mul_as_doubled(-d)).normalize();
+            }
+
+            let mut ret = F32x::from(r) * s;
+            ret = ret.mul_sign(x);
+            ret = y.is_infinite().select(x.is_infinite().select(F32x::NAN, x), ret);
+            d.eq(ZERO).select(F32x::NAN, ret)
+        }
+
+        #[test]
+        fn test_remainderf() {
+            test_ff_f(
+                remainderf,
+                rug::Float::remainder,
+                f32::MIN..=f32::MAX,
+                f32::MIN..=f32::MAX,
+                0.5,
+            );
         }
 
         #[inline]
@@ -1545,7 +1615,7 @@ macro_rules! impl_math_f32 {
                 .mul_add(s, F32x::splat(0.008_333_360_776_305_198_669_433_59))
                 .mul_add(s, F32x::splat(0.041_666_485_369_205_474_853_515_6))
                 .mul_add(s, F32x::splat(0.166_666_671_633_720_397_949_219))
-                .mul_add(s, F32x::splat(0.5));
+                .mul_add(s, HALF);
 
             u = (s * s).mul_add(u, s + ONE);
             u = ldexp2kf(u, q);

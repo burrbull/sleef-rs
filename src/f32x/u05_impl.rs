@@ -100,6 +100,44 @@ macro_rules! impl_math_f32_u05 {
         ///
         /// The error bound of the returned value is `0.5001 ULP`.
         pub fn sqrtf(d: F32x) -> F32x {
+            /*
+            #if defined(ENABLE_FMA_SP)
+              vfloat q, w, x, y, z;
+
+              d = vsel_vf_vo_vf_vf(vlt_vo_vf_vf(d, vcast_vf_f(0)), vcast_vf_f(SLEEF_NANf), d);
+
+              vopmask o = vlt_vo_vf_vf(d, vcast_vf_f(5.2939559203393770e-23f));
+              d = vsel_vf_vo_vf_vf(o, vmul_vf_vf_vf(d, vcast_vf_f(1.8889465931478580e+22f)), d);
+              q = vsel_vf_vo_vf_vf(o, vcast_vf_f(7.2759576141834260e-12f), vcast_vf_f(1.0f));
+
+              y = vreinterpret_vf_vi2(vsub_vi2_vi2_vi2(vcast_vi2_i(0x5f3759df), vsrl_vi2_vi2_i(vreinterpret_vi2_vf(d), 1)));
+
+              x = vmul_vf_vf_vf(d, y);         w = vmul_vf_vf_vf(vcast_vf_f(0.5), y);
+              y = vfmanp_vf_vf_vf_vf(x, w, vcast_vf_f(0.5));
+              x = vfma_vf_vf_vf_vf(x, y, x);   w = vfma_vf_vf_vf_vf(w, y, w);
+              y = vfmanp_vf_vf_vf_vf(x, w, vcast_vf_f(0.5));
+              x = vfma_vf_vf_vf_vf(x, y, x);   w = vfma_vf_vf_vf_vf(w, y, w);
+
+              y = vfmanp_vf_vf_vf_vf(x, w, vcast_vf_f(1.5));  w = vadd_vf_vf_vf(w, w);
+              w = vmul_vf_vf_vf(w, y);
+              x = vmul_vf_vf_vf(w, d);
+              y = vfmapn_vf_vf_vf_vf(w, d, x); z = vfmanp_vf_vf_vf_vf(w, x, vcast_vf_f(1));
+
+              z = vfmanp_vf_vf_vf_vf(w, y, z); w = vmul_vf_vf_vf(vcast_vf_f(0.5), x);
+              w = vfma_vf_vf_vf_vf(w, z, y);
+              w = vadd_vf_vf_vf(w, x);
+
+              w = vmul_vf_vf_vf(w, q);
+
+              w = vsel_vf_vo_vf_vf(vor_vo_vo_vo(veq_vo_vf_vf(d, vcast_vf_f(0)),
+                                veq_vo_vf_vf(d, vcast_vf_f(SLEEF_INFINITYf))), d, w);
+
+              w = vsel_vf_vo_vf_vf(vlt_vo_vf_vf(d, vcast_vf_f(0)), vcast_vf_f(SLEEF_NANf), w);
+
+              return w;
+            #else
+            */
+
             let d = d.lt(ZERO).select(F32x::NAN, d);
 
             let o = d.lt(F32x::splat(5.293_955_920_339_377_e-23));
@@ -126,6 +164,7 @@ macro_rules! impl_math_f32_u05 {
 
             x = d.eq(F32x::INFINITY).select(F32x::INFINITY, x);
             d.eq(ZERO).select(d, x)
+            // #endif
         }
 
         #[test]

@@ -531,7 +531,7 @@ macro_rules! impl_math_f64_u35 {
                 x = F64x::from_bits(U64x::from_bits(d.is_infinite() | d.is_nan()) | U64x::from_bits(x));
             }
 
-            x *= F64x::splat(0.5);
+            x *= HALF;
             let s = x * x;
 
             let s2 = s * s;
@@ -598,7 +598,7 @@ macro_rules! impl_math_f64_u35 {
                 }
             }
 
-            let x = s * F64x::splat(0.5);
+            let x = s * HALF;
             let s = x * x;
 
             let s2 = s * s;

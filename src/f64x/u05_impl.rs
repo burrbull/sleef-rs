@@ -176,6 +176,46 @@ macro_rules! impl_math_f64_u05 {
         ///
         /// The error bound of the returned value is `0.5001 ULP`.
         pub fn sqrt(d: F64x) -> F64x {
+            /*
+            #if defined(ENABLE_FMA_DP)
+              vdouble q, w, x, y, z;
+
+              d = vsel_vd_vo_vd_vd(vlt_vo_vd_vd(d, vcast_vd_d(0)), vcast_vd_d(SLEEF_NAN), d);
+
+              vopmask o = vlt_vo_vd_vd(d, vcast_vd_d(8.636168555094445E-78));
+              d = vsel_vd_vo_vd_vd(o, vmul_vd_vd_vd(d, vcast_vd_d(1.157920892373162E77)), d);
+              q = vsel_vd_vo_vd_vd(o, vcast_vd_d(2.9387358770557188E-39), vcast_vd_d(1));
+
+              y = vreinterpret_vd_vi2(vsub_vi2_vi2_vi2(vcast_vi2_i_i(0x5fe6ec85, 0xe7de30da), vsrl_vi2_vi2_i(vreinterpret_vi2_vd(d), 1)));
+
+              x = vmul_vd_vd_vd(d, y);         w = vmul_vd_vd_vd(vcast_vd_d(0.5), y);
+              y = vfmanp_vd_vd_vd_vd(x, w, vcast_vd_d(0.5));
+              x = vfma_vd_vd_vd_vd(x, y, x);   w = vfma_vd_vd_vd_vd(w, y, w);
+              y = vfmanp_vd_vd_vd_vd(x, w, vcast_vd_d(0.5));
+              x = vfma_vd_vd_vd_vd(x, y, x);   w = vfma_vd_vd_vd_vd(w, y, w);
+              y = vfmanp_vd_vd_vd_vd(x, w, vcast_vd_d(0.5));
+              x = vfma_vd_vd_vd_vd(x, y, x);   w = vfma_vd_vd_vd_vd(w, y, w);
+
+              y = vfmanp_vd_vd_vd_vd(x, w, vcast_vd_d(1.5));  w = vadd_vd_vd_vd(w, w);
+              w = vmul_vd_vd_vd(w, y);
+              x = vmul_vd_vd_vd(w, d);
+              y = vfmapn_vd_vd_vd_vd(w, d, x); z = vfmanp_vd_vd_vd_vd(w, x, vcast_vd_d(1));
+
+              z = vfmanp_vd_vd_vd_vd(w, y, z); w = vmul_vd_vd_vd(vcast_vd_d(0.5), x);
+              w = vfma_vd_vd_vd_vd(w, z, y);
+              w = vadd_vd_vd_vd(w, x);
+
+              w = vmul_vd_vd_vd(w, q);
+
+              w = vsel_vd_vo_vd_vd(vor_vo_vo_vo(veq_vo_vd_vd(d, vcast_vd_d(0)),
+                                veq_vo_vd_vd(d, vcast_vd_d(SLEEF_INFINITY))), d, w);
+
+              w = vsel_vd_vo_vd_vd(vlt_vo_vd_vd(d, vcast_vd_d(0)), vcast_vd_d(SLEEF_NAN), w);
+
+              return w;
+            #else
+            */
+
             let d = d.lt(ZERO).select(F64x::NAN, d);
 
             let o = d.lt(F64x::splat(8.636_168_555_094_445_e-78));
@@ -202,6 +242,7 @@ macro_rules! impl_math_f64_u05 {
 
             x = d.eq(F64x::INFINITY).select(F64x::INFINITY, x);
             d.eq(ZERO).select(d, x)
+            // #endif
         }
 
         #[test]

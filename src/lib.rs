@@ -198,6 +198,9 @@ pub trait Sleef: Sized {
     /// FP remainder
     fn fmod(self, other: Self) -> Self;
 
+    /// FP remainder
+    fn remainder(self, other: Self) -> Self;
+
     /// Integral and fractional value of FP number
     fn modf(self) -> (Self, Self);
 

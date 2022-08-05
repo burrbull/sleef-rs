@@ -6,7 +6,6 @@ macro_rules! impl_math_f64_u10 {
         ///
         /// This function evaluates the sine function of a value in ***a***.
         /// The error bound of the returned value is `1.0 ULP`.
-        #[cfg(not(feature = "deterministic"))]
         pub fn sin(d: F64x) -> F64x {
             let mut s;
             let mut ql;
@@ -80,8 +79,9 @@ macro_rules! impl_math_f64_u10 {
         ///
         /// This function evaluates the sine function of a value in ***a***.
         /// The error bound of the returned value is `1.0 ULP`.
-        #[cfg(feature = "deterministic")]
-        pub fn sin(d: F64x) -> F64x {
+        ///
+        /// NOTE: This version is slower, but SIMD lanes are independent
+        pub fn sin_deterministic(d: F64x) -> F64x {
             let mut s;
             let mut ql;
 
@@ -167,13 +167,18 @@ macro_rules! impl_math_f64_u10 {
                 f64::MIN..=f64::MAX,
                 1.
             );
+            test_f_f(
+                sin_deterministic,
+                rug::Float::sin,
+                f64::MIN..=f64::MAX,
+                1.
+            );
         }
 
         /// Cosine function
         ///
         /// This function evaluates the cosine function of a value in ***a***.
         /// The error bound of the returned value is `1.0 ULP`.
-        #[cfg(not(feature = "deterministic"))]
         pub fn cos(d: F64x) -> F64x {
             let mut s;
             let mut ql;
@@ -251,8 +256,9 @@ macro_rules! impl_math_f64_u10 {
         ///
         /// This function evaluates the cosine function of a value in ***a***.
         /// The error bound of the returned value is `1.0 ULP`.
-        #[cfg(feature = "deterministic")]
-        pub fn cos(d: F64x) -> F64x {
+        ///
+        /// NOTE: This version is slower, but SIMD lanes are independent
+        pub fn cos_deterministic(d: F64x) -> F64x {
             let g = d.abs().lt(TRIGRANGEMAX2);
             let mut dql = d.mul_add(F64x::FRAC_1_PI, F64x::splat(-0.5)).round();
             dql = F64x::splat(2.).mul_add(dql, ONE);
@@ -337,6 +343,12 @@ macro_rules! impl_math_f64_u10 {
                 f64::MIN..=f64::MAX,
                 1.
             );
+            test_f_f(
+                cos_deterministic,
+                rug::Float::cos,
+                f64::MIN..=f64::MAX,
+                1.
+            );
         }
 
         /// Evaluate sine and cosine functions simultaneously
@@ -346,7 +358,6 @@ macro_rules! impl_math_f64_u10 {
         /// returned value, respectively.
         /// The error bound of the returned values is `1.0 ULP`.
         /// If ***a*** is a `NaN` or `infinity`, a `NaN` is returned.
-        #[cfg(not(feature = "deterministic"))]
         pub fn sincos(d: F64x) -> (F64x, F64x) {
             let mut s;
             let ql;
@@ -432,8 +443,9 @@ macro_rules! impl_math_f64_u10 {
         /// returned value, respectively.
         /// The error bound of the returned values is `1.0 ULP`.
         /// If ***a*** is a `NaN` or `infinity`, a `NaN` is returned.
-        #[cfg(feature = "deterministic")]
-        pub fn sincos(d: F64x) -> (F64x, F64x) {
+        ///
+        /// NOTE: This version is slower, but SIMD lanes are independent
+        pub fn sincos_deterministic(d: F64x) -> (F64x, F64x) {
             let dql = (d * F64x::FRAC_2_PI).round();
             let mut ql = dql.roundi();
             let u = dql.mul_add(-PI_A2 * HALF, d);
@@ -520,11 +532,19 @@ macro_rules! impl_math_f64_u10 {
         fn test_sincos() {
             test_f_ff(
                 sincos,
-
-        |in1| {
-            let prec = in1.prec();
-            in1.sin_cos(rug::Float::new(prec))
-        },
+                |in1| {
+                    let prec = in1.prec();
+                    in1.sin_cos(rug::Float::new(prec))
+                },
+                f64::MIN..=f64::MAX,
+                1.
+            );
+            test_f_ff(
+                sincos_deterministic,
+                |in1| {
+                    let prec = in1.prec();
+                    in1.sin_cos(rug::Float::new(prec))
+                },
                 f64::MIN..=f64::MAX,
                 1.
             );
@@ -534,7 +554,6 @@ macro_rules! impl_math_f64_u10 {
         ///
         /// This function evaluates the tangent function of a value in ***a***.
         /// The error bound of the returned value is `1.0 ULP`.
-        #[cfg(not(feature = "deterministic"))]
         pub fn tan(d: F64x) -> F64x {
             let mut s;
             let ql;
@@ -603,8 +622,9 @@ macro_rules! impl_math_f64_u10 {
         ///
         /// This function evaluates the tangent function of a value in ***a***.
         /// The error bound of the returned value is `1.0 ULP`.
-        #[cfg(feature = "deterministic")]
-        pub fn tan(d: F64x) -> F64x {
+        ///
+        /// NOTE: This version is slower, but SIMD lanes are independent
+        pub fn tan_deterministic(d: F64x) -> F64x {
             let dql = (d * F64x::FRAC_2_PI).round();
             let mut ql = dql.roundi();
             let u = dql.mul_add(-PI_A2 * HALF, d);
@@ -677,6 +697,12 @@ macro_rules! impl_math_f64_u10 {
         fn test_tan() {
             test_f_f(
                 tan,
+                rug::Float::tan,
+                f64::MIN..=f64::MAX,
+                1.
+            );
+            test_f_f(
+                tan_deterministic,
                 rug::Float::tan,
                 f64::MIN..=f64::MAX,
                 1.

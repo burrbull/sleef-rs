@@ -507,7 +507,9 @@ macro_rules! impl_math_f32 {
 
         #[inline]
         fn from_slice_offset(ptr: &[f32], vi: I32x) -> F32x {
-            F32x::gather_or_default(ptr, vi.cast())
+            //F32x::gather_or_default(ptr, vi.cast()) // Failes to compile on release
+            let ar: [f32; $size] = core::array::from_fn(|i| ptr[vi[i] as usize]);
+            F32x::from_array(ar)
         }
 
         impl Sqrt for F32x {

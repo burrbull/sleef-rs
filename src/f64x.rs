@@ -486,7 +486,9 @@ macro_rules! impl_math_f64 {
 
         #[inline]
         fn from_slice_offset(ptr: &[f64], vi: Ix) -> F64x {
-            F64x::gather_or_default(ptr, vi.cast())
+            //F64x::gather_or_default(ptr, vi.cast())
+            let ar: [f64; $size] = core::array::from_fn(|i| ptr[vi[i] as usize]);
+            F64x::from_array(ar)
         }
 
         #[inline]

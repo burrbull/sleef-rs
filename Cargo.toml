@@ -11,7 +11,8 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 
 [dependencies.doubled]
-path = "/home/burrbull/doubled-rs"
+git = "https://github.com/burrbull/doubled-rs"
+branch = "portable-simd"
 features = ["simd"]
 
 [features]

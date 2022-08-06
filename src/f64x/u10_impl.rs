@@ -68,7 +68,7 @@ macro_rules! impl_math_f64_u10 {
             u = t.mul_as_f(x);
 
             u = F64x::from_bits(
-                ((ql & Ix::splat(1)).simd_eq(Ix::splat(1)).cast::<i64>().to_int().cast()
+                ((ql & Ix::splat(1)).simd_eq(Ix::splat(1)).to_int().cast()
                     & NEG_ZERO.to_bits()
                 ) ^ u.to_bits(),
             );
@@ -151,7 +151,7 @@ macro_rules! impl_math_f64_u10 {
             u = t.mul_as_f(x);
 
             u = F64x::from_bits(
-                ((ql & Ix::splat(1)).simd_eq(Ix::splat(1)).cast::<i64>().to_int().cast()
+                ((ql & Ix::splat(1)).simd_eq(Ix::splat(1)).to_int().cast()
                     & NEG_ZERO.to_bits()
                 ) ^ u.to_bits(),
             );
@@ -246,7 +246,7 @@ macro_rules! impl_math_f64_u10 {
             let u = t.mul_as_f(x);
 
             F64x::from_bits(
-                ((ql & Ix::splat(2)).simd_eq(Ix::splat(0)).cast::<i64>().to_int().cast()
+                ((ql & Ix::splat(2)).simd_eq(Ix::splat(0)).to_int().cast()
                     & NEG_ZERO.to_bits()
                 ) ^ u.to_bits(),
             )
@@ -329,7 +329,7 @@ macro_rules! impl_math_f64_u10 {
             let u = t.mul_as_f(x);
 
             F64x::from_bits(
-                ((ql & Ix::splat(2)).simd_eq(Ix::splat(0)).cast::<i64>().to_int().cast()
+                ((ql & Ix::splat(2)).simd_eq(Ix::splat(0)).to_int().cast()
                     & NEG_ZERO.to_bits()
                 ) ^ u.to_bits(),
             )

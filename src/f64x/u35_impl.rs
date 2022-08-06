@@ -47,7 +47,7 @@ macro_rules! impl_math_f64_u35 {
             let s = d * d;
 
             d = F64x::from_bits(
-                ((ql & Ix::splat(1)).simd_eq(Ix::splat(1)).cast::<i64>().to_int().cast()
+                ((ql & Ix::splat(1)).simd_eq(Ix::splat(1)).to_int().cast()
                     & NEG_ZERO.to_bits()
                 ) ^ d.to_bits(),
             );
@@ -128,7 +128,7 @@ macro_rules! impl_math_f64_u35 {
             let s = d * d;
 
             d = F64x::from_bits(
-                ((ql & Ix::splat(1)).simd_eq(Ix::splat(1)).cast::<i64>().to_int().cast()
+                ((ql & Ix::splat(1)).simd_eq(Ix::splat(1)).to_int().cast()
                     & NEG_ZERO.to_bits()
                 ) ^ d.to_bits(),
             );
@@ -218,7 +218,7 @@ macro_rules! impl_math_f64_u35 {
             let s = d * d;
 
             d = F64x::from_bits(
-                ((ql & Ix::splat(2)).simd_eq(Ix::splat(0)).cast::<i64>().to_int().cast()
+                ((ql & Ix::splat(2)).simd_eq(Ix::splat(0)).to_int().cast()
                     & NEG_ZERO.to_bits()
                 ) ^ d.to_bits(),
             );
@@ -297,7 +297,7 @@ macro_rules! impl_math_f64_u35 {
             let s = d * d;
 
             d = F64x::from_bits(
-                ((ql & Ix::splat(2)).simd_eq(Ix::splat(0)).cast::<i64>().to_int().cast()
+                ((ql & Ix::splat(2)).simd_eq(Ix::splat(0)).to_int().cast()
                     & NEG_ZERO.to_bits()
                 ) ^ d.to_bits(),
             );
@@ -913,7 +913,7 @@ macro_rules! impl_math_f64_u35 {
 
             t = (q & Ix::splat(1)).simd_eq(Ix::splat(1)).cast().select(FRAC_PI_2 - t, t);
             t = F64x::from_bits(
-                ((q & Ix::splat(2)).simd_eq(Ix::splat(2)).cast::<i64>().to_int().cast()
+                ((q & Ix::splat(2)).simd_eq(Ix::splat(2)).to_int().cast()
                     & NEG_ZERO.to_bits()
                 ) ^ t.to_bits(),
             );

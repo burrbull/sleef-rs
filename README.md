@@ -5,7 +5,7 @@
 
 # sleef-rs
 
-Rust port of [Sleef] math library based on [Portable Packed SIMD Vectors]
+Rust port of [Sleef] math library based on [Portable SIMD Vectors] a.k.a. `core::simd`
 
 [Sleef]: https://github.com/shibatch/sleef/
-[Portable Packed SIMD Vectors]: https://github.com/rust-lang/packed_simd
+[Portable Packed SIMD Vectors]: https://github.com/rust-lang/portable-simd

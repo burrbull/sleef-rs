@@ -509,14 +509,6 @@ impl Poly<f64> for f64 {
 }
 
 impl Sign for f64 {
-    /*    #[inline]
-    fn is_sign_negative(self) -> Self::Mask {
-        self.is_sign_negative()
-    }
-    #[inline]
-    fn is_sign_positive(self) -> Self::Mask {
-        self.is_sign_positive()
-    }*/
     #[inline]
     fn sign_bit(self) -> Self::Bits {
         self.to_bits() & (1 << 63)

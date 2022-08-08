@@ -608,27 +608,7 @@ macro_rules! impl_math_f64 {
             }
         }
 
-        // return d0 < d1 ? x : y
-        #[inline]
-        fn vsel_vi_vd_vd_vi_vi(d0: F64x, d1: F64x, x: Ix, y: Ix) -> Ix {
-            d0.simd_lt(d1).cast().select(x, y)
-        }
-
-        // return d0 < 0 ? x : 0
-        #[inline]
-        fn vsel_vi_vd_vi(d: F64x, x: Ix) -> Ix {
-            d.is_sign_negative().cast::<i32>().to_int() & x
-        }
-
         impl Sign for F64x {
-/*            #[inline]
-            fn is_sign_negative(self) -> Self::Mask {
-                self.sign_bit().simd_ne(Self::Bits::splat(0))
-            }
-            #[inline]
-            fn is_sign_positive(self) -> Self::Mask {
-                !self.is_sign_negative()
-            }*/
             #[inline]
             fn sign_bit(self) -> Self::Bits {
                 self.to_bits() & NEG_ZERO.to_bits()

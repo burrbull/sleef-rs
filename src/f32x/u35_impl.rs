@@ -654,10 +654,10 @@ macro_rules! impl_math_f32_u35 {
 
         #[inline]
         fn atan2kf(y: F32x, x: F32x) -> F32x {
-            let q = vsel_vi2_vf_vi2(x, I32x::splat(-2));
+            let q = x.is_sign_negative().to_int() & I32x::splat(-2);
             let x = x.abs();
 
-            let q = vsel_vi2_vf_vf_vi2_vi2(x, y, q + I32x::splat(1), q);
+            let q = x.simd_lt(y).select(q + I32x::splat(1), q);
             let p = x.simd_lt(y);
             let s = p.select(-x, y);
             let mut t = x.simd_max(y);
@@ -790,10 +790,10 @@ macro_rules! impl_math_f32_u35 {
         /// These functions evaluates the arc tangent function of a value in ***a***.
         /// The error bound of the returned value is `3.5 ULP`.
         pub fn atanf(d: F32x) -> F32x {
-            let q = vsel_vi2_vf_vi2(d, I32x::splat(2));
+            let q = d.is_sign_negative().to_int() & I32x::splat(2);
             let s = d.abs();
 
-            let q = vsel_vi2_vf_vf_vi2_vi2(ONE, s, q + I32x::splat(1), q);
+            let q = ONE.simd_lt(s).select(q + I32x::splat(1), q);
             let s = ONE.simd_lt(s).select(s.recip(), s);
 
             let mut t = s * s;

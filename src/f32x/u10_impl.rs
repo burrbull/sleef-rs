@@ -542,7 +542,7 @@ macro_rules! impl_math_f32_u10 {
 
         #[inline]
         fn atan2kf_u1(y: Doubled<F32x>, mut x: Doubled<F32x>) -> Doubled<F32x> {
-            let q = vsel_vi2_vf_vf_vi2_vi2(x.0, ZERO, I32x::splat(-2), I32x::splat(0));
+            let q = x.0.simd_lt(ZERO).select(I32x::splat(-2), I32x::splat(0));
             let p = x.0.simd_lt(ZERO);
             let r = p.to_int().cast() & NEG_ZERO.to_bits();
             x = Doubled::new(
@@ -550,7 +550,7 @@ macro_rules! impl_math_f32_u10 {
                 F32x::from_bits(x.1.to_bits() ^ r)
             );
 
-            let q = vsel_vi2_vf_vf_vi2_vi2(x.0, y.0, q + I32x::splat(1), q);
+            let q = x.0.simd_lt(y.0).select(q + I32x::splat(1), q);
             let p = x.0.simd_lt(y.0);
             let s = p.select_doubled(-x, y);
             let mut t = p.select_doubled(y, x);

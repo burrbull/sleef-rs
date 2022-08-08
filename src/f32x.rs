@@ -647,25 +647,7 @@ macro_rules! impl_math_f32 {
             }
         }
 
-        #[inline]
-        fn vsel_vi2_vf_vf_vi2_vi2(f0: F32x, f1: F32x, x: I32x, y: I32x) -> I32x {
-            f0.simd_lt(f1).select(x, y)
-        }
-
-        #[inline]
-        fn vsel_vi2_vf_vi2(d: F32x, x: I32x) -> I32x {
-            d.is_sign_negative().to_int() & x
-        }
-
         impl Sign for F32x {
-/*            #[inline]
-            fn is_sign_negative(self) -> Self::Mask {
-                self.sign_bit().simd_ne(Self::Bits::splat(0))
-            }
-            #[inline]
-            fn is_sign_positive(self) -> Self::Mask {
-                !self.is_sign_negative()
-            }*/
             #[inline]
             fn sign_bit(self) -> Self::Bits {
                 self.to_bits() & NEG_ZERO.to_bits()

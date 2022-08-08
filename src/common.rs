@@ -100,8 +100,6 @@ where
 }
 
 pub trait Sign: MaskType + BitsType {
-    /*    fn is_sign_negative(self) -> Self::Mask;
-    fn is_sign_positive(self) -> Self::Mask;*/
     fn sign_bit(self) -> Self::Bits;
     fn sign(self) -> Self;
     fn mul_sign(self, other: Self) -> Self;

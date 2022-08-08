@@ -711,7 +711,7 @@ macro_rules! impl_math_f64_u10 {
 
         #[inline]
         fn atan2k_u1(y: Doubled<F64x>, mut x: Doubled<F64x>) -> Doubled<F64x> {
-            let q = vsel_vi_vd_vi(x.0, Ix::splat(-2));
+            let q = x.0.is_sign_negative().cast().to_int() & Ix::splat(-2);
             let p = x.0.simd_lt(ZERO);
             let b = p.to_int().cast() & NEG_ZERO.to_bits();
             x = Doubled::new(
@@ -719,7 +719,7 @@ macro_rules! impl_math_f64_u10 {
                 F64x::from_bits(b ^ x.1.to_bits())
             );
 
-            let q = vsel_vi_vd_vd_vi_vi(x.0, y.0, q + Ix::splat(1), q);
+            let q = x.0.simd_lt(y.0).cast().select(q + Ix::splat(1), q);
             let p = x.0.simd_lt(y.0);
             let s = p.select_doubled(-x, y);
             let mut t = p.select_doubled(y, x);

@@ -495,14 +495,6 @@ impl Poly<Self> for f32 {
 }
 
 impl Sign for f32 {
-    /*    #[inline]
-    fn is_sign_negative(self) -> Self::Mask {
-        self.is_sign_negative()
-    }
-    #[inline]
-    fn is_sign_positive(self) -> Self::Mask {
-        self.is_sign_positive()
-    }*/
     #[inline]
     fn sign_bit(self) -> Self::Bits {
         self.to_bits() & (1 << 31)

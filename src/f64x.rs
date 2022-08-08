@@ -559,7 +559,7 @@ macro_rules! impl_math_f64 {
             #[inline]
             fn sqrt_as_doubled(self) -> Doubled<Self> {
                 let t = self.sqrt();
-                ((self + t.mul_as_doubled(t)) * t.recpre_as_doubled()).scale(Self::splat(0.5))
+                ((self + t.mul_as_doubled(t)) * t.recip_as_doubled()).scale(Self::splat(0.5))
             }
         }
 

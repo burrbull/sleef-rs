@@ -18,7 +18,7 @@ impl SqrtAsDoubled for f32 {
     #[inline]
     fn sqrt_as_doubled(self) -> Doubled<Self> {
         let t = self.sqrt();
-        ((self + t.mul_as_doubled(t)) * t.recpre()).scale(0.5)
+        ((self + t.mul_as_doubled(t)) * t.recip_as_doubled()).scale(0.5)
     }
 }
 
@@ -26,7 +26,7 @@ impl SqrtAsDoubled for f64 {
     #[inline]
     fn sqrt_as_doubled(self) -> Doubled<Self> {
         let t = self.sqrt();
-        ((self + t.mul_as_doubled(t)) * t.recpre()).scale(0.5)
+        ((self + t.mul_as_doubled(t)) * t.recip_as_doubled()).scale(0.5)
     }
 }
 
@@ -52,7 +52,7 @@ impl Sqrt for Doubled<f32> {
     #[inline]
     fn sqrt(self) -> Self {
         let t = f32::from(self).sqrt();
-        ((self + t.mul_as_doubled(t)) * t.recpre()).scale(0.5)
+        ((self + t.mul_as_doubled(t)) * t.recip_as_doubled()).scale(0.5)
     }
 }
 
@@ -60,7 +60,7 @@ impl Sqrt for Doubled<f64> {
     #[inline]
     fn sqrt(self) -> Self {
         let t = f64::from(self).sqrt();
-        ((self + t.mul_as_doubled(t)) * t.recpre()).scale(0.5)
+        ((self + t.mul_as_doubled(t)) * t.recip_as_doubled()).scale(0.5)
     }
 }
 

@@ -944,7 +944,7 @@ macro_rules! impl_math_f64_u10 {
         pub fn sinh(x: F64x) -> F64x {
             let mut y = x.abs();
             let mut d = expk2(Doubled::from(y));
-            d = d.sub_checked(d.recpre());
+            d = d.sub_checked(d.recip());
             y = F64x::from(d) * HALF;
 
             y = (x.abs().simd_gt(F64x::splat(710.)) | y.is_nan()).select(INFINITY, y);
@@ -971,7 +971,7 @@ macro_rules! impl_math_f64_u10 {
         pub fn cosh(x: F64x) -> F64x {
             let mut y = x.abs();
             let mut d = expk2(Doubled::from(y));
-            d = d.add_checked(d.recpre());
+            d = d.add_checked(d.recip());
             y = F64x::from(d) * HALF;
 
             y = (x.abs().simd_gt(F64x::splat(710.)) | y.is_nan()).select(INFINITY, y);
@@ -995,7 +995,7 @@ macro_rules! impl_math_f64_u10 {
         pub fn tanh(x: F64x) -> F64x {
             let mut y = x.abs();
             let mut d = expk2(Doubled::from(y));
-            let e = d.recpre();
+            let e = d.recip();
             d = (d + (-e)) / (d + e);
             y = F64x::from(d);
 
@@ -1055,7 +1055,7 @@ macro_rules! impl_math_f64_u10 {
             let mut y = x.abs();
             let o = y.simd_gt(ONE);
 
-            let mut d = o.select_doubled(x.recpre_as_doubled(), Doubled::from(y));
+            let mut d = o.select_doubled(x.recip_as_doubled(), Doubled::from(y));
             d = (d.square() + ONE).sqrt();
             d = o.select_doubled(d * y, d);
 
@@ -2248,7 +2248,7 @@ macro_rules! impl_math_f64_u10 {
                 t2 = t2.square();
                 t2 = t2.square();
                 t2 = t2.square();
-                t2 = t2.recpre();
+                t2 = t2.recip();
             } else {
                 let t = F64x::poly21(x, x2, x4, x8, x16,
                     o25.select_splat(-0.208_327_100_252_522_209_7_e-14, -0.402_401_513_075_262_193_2_e-18),
@@ -2309,7 +2309,7 @@ macro_rules! impl_math_f64_u10 {
                 s2 = s2.square();
                 s2 = s2.square();
                 s2 = s2.square();
-                s2 = s2.recpre();
+                s2 = s2.recip();
                 t2 = o25.select_doubled(s2, Doubled::from(expk(t2)));
             }
 

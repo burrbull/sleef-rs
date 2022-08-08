@@ -292,7 +292,7 @@ pub fn sqrt(mut d: f64) -> f64 {
     x = x * (1.5 - 0.5 * d * x * x);
     x = x * (1.5 - 0.5 * d * x * x) * d;
 
-    let d2 = (d + x.mul_as_doubled(x)) * x.recpre();
+    let d2 = (d + x.mul_as_doubled(x)) * x.recip_as_doubled();
 
     let ret = f64::from(d2) * q;
 

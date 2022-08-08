@@ -225,7 +225,7 @@ pub fn tanf(d: f32) -> f32 {
     x = t * x;
 
     if (q & 1) != 0 {
-        x = x.recpre();
+        x = x.recip();
     }
 
     if d.is_neg_zero() {
@@ -439,7 +439,7 @@ fn test_atanf() {
 pub fn sinhf(x: f32) -> f32 {
     let mut y = fabsfk(x);
     let mut d = expk2f(Doubled::from(y));
-    d = d.sub_checked(d.recpre());
+    d = d.sub_checked(d.recip());
     y = f32::from(d) * 0.5;
 
     y = if fabsfk(x) > 89. { f32::INFINITY } else { y };
@@ -466,7 +466,7 @@ fn test_sinhf() {
 pub fn coshf(x: f32) -> f32 {
     let mut y = fabsfk(x);
     let mut d = expk2f(Doubled::from(y));
-    d = d.add_checked(d.recpre());
+    d = d.add_checked(d.recip());
     y = f32::from(d) * 0.5;
 
     y = if fabsfk(x) > 89. { f32::INFINITY } else { y };
@@ -490,7 +490,7 @@ fn test_coshf() {
 pub fn tanhf(x: f32) -> f32 {
     let mut y = fabsfk(x);
     let mut d = expk2f(Doubled::from(y));
-    let e = d.recpre();
+    let e = d.recip();
     d = d.sub_checked(e) / d.add_checked(e);
     y = f32::from(d);
 
@@ -534,7 +534,11 @@ fn logk2f(d: Doubled<f32>) -> Doubled<f32> {
 pub fn asinhf(x: f32) -> f32 {
     let mut y = fabsfk(x);
 
-    let mut d = if y > 1. { x.recpre() } else { Doubled::from(y) };
+    let mut d = if y > 1. {
+        x.recip_as_doubled()
+    } else {
+        Doubled::from(y)
+    };
     d = (d.square() + 1.).sqrt();
     d = if y > 1. { d * y } else { d };
 
@@ -1400,7 +1404,7 @@ pub fn erff(a: f32) -> f32 {
         t2 = t2.square();
         t2 = t2.square();
         t2 = t2.square();
-        t2 = t2.recpre();
+        t2 = t2.recip();
     } else if x > 4. {
         t2 = Doubled::from(0.);
     } else {

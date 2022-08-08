@@ -583,7 +583,7 @@ fn test_atan() {
 pub fn sinh(x: f64) -> f64 {
     let mut y = fabsk(x);
     let mut d = expk2(Doubled::from(y));
-    d = d.sub_checked(d.recpre());
+    d = d.sub_checked(d.recip());
     y = f64::from(d) * 0.5;
 
     y = if fabsk(x) > 710. { f64::INFINITY } else { y };
@@ -610,7 +610,7 @@ fn test_sinh() {
 pub fn cosh(x: f64) -> f64 {
     let mut y = fabsk(x);
     let mut d = expk2(Doubled::from(y));
-    d = d.add_checked(d.recpre());
+    d = d.add_checked(d.recip());
     y = f64::from(d) * 0.5;
 
     y = if fabsk(x) > 710. { f64::INFINITY } else { y };
@@ -634,7 +634,7 @@ fn test_cosh() {
 pub fn tanh(x: f64) -> f64 {
     let mut y = fabsk(x);
     let mut d = expk2(Doubled::from(y));
-    let e = d.recpre();
+    let e = d.recip();
     d = d.sub_checked(e) / d.add_checked(e);
     y = f64::from(d);
 
@@ -691,7 +691,11 @@ fn logk2(d: Doubled<f64>) -> Doubled<f64> {
 pub fn asinh(x: f64) -> f64 {
     let mut y = fabsk(x);
 
-    let mut d = if y > 1. { x.recpre() } else { Doubled::from(y) };
+    let mut d = if y > 1. {
+        x.recip_as_doubled()
+    } else {
+        Doubled::from(y)
+    };
     d = (d.square() + 1.).sqrt();
     d = if y > 1. { d * y } else { d };
 
@@ -1839,7 +1843,7 @@ pub fn erf(a: f64) -> f64 {
         t2 = t2.square();
         t2 = t2.square();
         t2 = t2.square();
-        t2 = t2.recpre();
+        t2 = t2.recip();
     } else if x > 6. {
         t2 = Doubled::from(0.);
     } else {

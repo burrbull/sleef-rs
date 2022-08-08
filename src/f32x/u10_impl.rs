@@ -461,7 +461,7 @@ macro_rules! impl_math_f32_u10 {
                 .add_checked(F32x::splat(0.333_333_611_488_342_285_156_25).add_checked(s * x) * s);
             x = t * x;
 
-            x = o.select_doubled(x.recpre(), x);
+            x = o.select_doubled(x.recip(), x);
 
             let u = F32x::from(x);
 
@@ -517,7 +517,7 @@ macro_rules! impl_math_f32_u10 {
                 .add_checked(F32x::splat(0.333_333_611_488_342_285_156_25).add_checked(s * x) * s);
             x = t * x;
 
-            x = o.select_doubled(x.recpre(), x);
+            x = o.select_doubled(x.recip(), x);
 
             let u = F32x::from(x);
 
@@ -737,7 +737,7 @@ macro_rules! impl_math_f32_u10 {
         pub fn sinhf(x: F32x) -> F32x {
             let mut y = x.abs();
             let d = expk2f(Doubled::from(y));
-            let d = d.sub_checked(d.recpre());
+            let d = d.sub_checked(d.recip());
             y = F32x::from(d) * HALF;
 
             y = (x.abs().simd_gt(F32x::splat(89.)) | y.is_nan()).select(INFINITY, y);
@@ -764,7 +764,7 @@ macro_rules! impl_math_f32_u10 {
         pub fn coshf(x: F32x) -> F32x {
             let mut y = x.abs();
             let d = expk2f(Doubled::from(y));
-            let d = d.add_checked(d.recpre());
+            let d = d.add_checked(d.recip());
             y = F32x::from(d) * HALF;
 
             y = (x.abs().simd_gt(F32x::splat(89.)) | y.is_nan()).select(INFINITY, y);
@@ -788,7 +788,7 @@ macro_rules! impl_math_f32_u10 {
         pub fn tanhf(x: F32x) -> F32x {
             let mut y = x.abs();
             let d = expk2f(Doubled::from(y));
-            let e = d.recpre();
+            let e = d.recip();
             let d = d.add_checked(-e) / d.add_checked(e);
             y = F32x::from(d);
 
@@ -839,7 +839,7 @@ macro_rules! impl_math_f32_u10 {
             let mut y = x.abs();
             let o = y.simd_gt(ONE);
 
-            let mut d = o.select_doubled(x.recpre_as_doubled(), Doubled::from(y));
+            let mut d = o.select_doubled(x.recip_as_doubled(), Doubled::from(y));
             d = (d.square() + ONE).sqrt();
             d = o.select_doubled(d * y, d);
 
@@ -1778,7 +1778,7 @@ macro_rules! impl_math_f32_u10 {
                 t2 = t2.square();
                 t2 = t2.square();
                 t2 = t2.square();
-                t2 = t2.recpre();
+                t2 = t2.recip();
             } else {
                 let t = F32x::poly6(x, x2, x4,
                         o25.select_splat(-0.436_044_700_8_e-6, -0.113_001_284_8_e-6),
@@ -1825,7 +1825,7 @@ macro_rules! impl_math_f32_u10 {
                 s2 = s2.square();
                 s2 = s2.square();
                 s2 = s2.square();
-                s2 = s2.recpre();
+                s2 = s2.recip();
                 t2 = o25.select_doubled(s2, Doubled::from(expkf(t2)));
             }
 

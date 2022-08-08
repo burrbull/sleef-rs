@@ -331,7 +331,7 @@ macro_rules! impl_math_f64_u05 {
             x *= F64x::splat(1.5) - HALF * d * x * x;
             x *= d;
 
-            let d2 = (d + x.mul_as_doubled(x)) * x.recpre_as_doubled();
+            let d2 = (d + x.mul_as_doubled(x)) * x.recip_as_doubled();
 
             x = F64x::from(d2) * q;
 

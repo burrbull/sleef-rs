@@ -689,18 +689,6 @@ macro_rules! impl_math_f64 {
             F64x::from_bits((r << I64x::splat(20)).cast())
         }
         #[inline]
-        fn ldexpk(x: F64x, q: Ix) -> F64x {
-            let mut m = q >> Ix::splat(31);
-            m = (((m + q) >> Ix::splat(9)) - m) << Ix::splat(7);
-            let q = q - (m << Ix::splat(2));
-            m = Ix::splat(0x3ff) + m;
-            m = !Ix::splat(0).simd_gt(m).to_int() & m;
-            m = m.simd_gt(Ix::splat(0x7ff)).select(Ix::splat(0x7ff), m);
-            let r = cast_into_upper(m);
-            let y = F64x::from_bits((r << I64x::splat(20)).cast());
-            x * y * y * y * y * pow2i(q)
-        }
-        #[inline]
         fn ldexp2k(d: F64x, e: Ix) -> F64x {
             let e1 = e >> Ix::splat(1);
             d * pow2i(e1) * pow2i(e - (e1))
@@ -748,6 +736,19 @@ macro_rules! impl_math_f64 {
                     (x.trunci() & Ix::splat(1)).simd_eq(Ix::splat(1)).cast::<i64>() & self.abs().simd_lt(D1_53X)
                 }
             }
+        }
+
+        #[inline]
+        fn ldexpk(x: F64x, q: Ix) -> F64x {
+            let mut m = q >> Ix::splat(31);
+            m = (((m + q) >> Ix::splat(9)) - m) << Ix::splat(7);
+            let q = q - (m << Ix::splat(2));
+            m = Ix::splat(0x3ff) + m;
+            m = !Ix::splat(0).simd_gt(m).to_int() & m;
+            m = m.simd_gt(Ix::splat(0x7ff)).select(Ix::splat(0x7ff), m);
+            let r = cast_into_upper(m);
+            let y = F64x::from_bits((r << I64x::splat(20)).cast());
+            x * y * y * y * y * pow2i(q)
         }
 
         /// Multiply by integral power of `2`
@@ -828,271 +829,11 @@ macro_rules! impl_math_f64 {
         }
 
         #[inline]
-        fn cospik(d: F64x) -> Doubled<F64x> {
-            let u = d * F64x::splat(4.);
-            let mut q = u.trunci();
-            q = (q + ((q.cast() >> Ux::splat(31)).cast() ^ Ix::splat(1))) & Ix::splat(!1);
-            let o: M64x = (q & Ix::splat(2)).simd_eq(Ix::splat(0)).cast();
-
-            let s = u - q.cast();
-            let t = s;
-            let s = s * s;
-            let s2 = t.mul_as_doubled(t);
-
-            let u = o
-                .select_splat(
-                    9.944_803_876_268_437_740_902_08_e-16,
-                    -2.024_611_207_851_823_992_958_68_e-14,
-                )
-                .mul_add(
-                    s,
-                    o.select_splat(
-                        -3.897_962_260_629_327_991_640_47_e-13,
-                        6.948_218_305_801_794_613_277_84_e-12,
-                    ),
-                )
-                .mul_add(
-                    s,
-                    o.select_splat(
-                        1.150_115_825_399_960_352_669_01_e-10,
-                        -1.757_247_499_528_531_799_526_64_e-9,
-                    ),
-                )
-                .mul_add(
-                    s,
-                    o.select_splat(
-                        -2.461_136_950_104_469_749_535_9_e-8,
-                        3.133_616_889_668_683_928_784_22_e-7,
-                    ),
-                )
-                .mul_add(
-                    s,
-                    o.select_splat(
-                        3.590_860_448_590_527_540_050_62_e-6,
-                        -3.657_620_418_216_155_192_036_1_e-5,
-                    ),
-                )
-                .mul_add(
-                    s,
-                    o.select_splat(
-                        -0.000_325_991_886_927_389_905_997_954,
-                        0.002_490_394_570_192_718_502_743_560,
-                    ),
-                );
-            let mut x = u * s
-                + o.select_doubled(
-                    Doubled::new(
-                        F64x::splat(0.015_854_344_243_815_501_891_425_9),
-                        F64x::splat(-1.046_932_722_806_315_219_088_45_e-18),
-                    ),
-                    Doubled::new(
-                        F64x::splat(-0.080_745_512_188_280_785_248_473_1),
-                        F64x::splat(3.618_524_750_670_371_048_499_87_e-18),
-                    ),
-                );
-            x = s2 * x
-                + o.select_doubled(
-                    Doubled::new(
-                        F64x::splat(-0.308_425_137_534_042_437_259_529),
-                        F64x::splat(-1.956_984_921_336_335_503_383_45_e-17),
-                    ),
-                    Doubled::new(
-                        F64x::splat(0.785_398_163_397_448_278_999_491),
-                        F64x::splat(3.062_871_137_271_550_026_071_05_e-17),
-                    ),
-                );
-
-            x *= o.select_doubled(s2, Doubled::from(t));
-            x = o.select_doubled(x + ONE, x);
-
-            let o: M64x = (q + Ix::splat(2) & Ix::splat(4)).simd_eq(Ix::splat(4)).cast();
-            x = Doubled::new(
-                F64x::from_bits((o.to_int().cast() & NEG_ZERO.to_bits()) ^ x.0.to_bits()),
-                F64x::from_bits((o.to_int().cast() & NEG_ZERO.to_bits()) ^ x.1.to_bits())
-            );
-
-            x
-        }
-
-        #[inline]
-        fn atan2k(y: F64x, x: F64x) -> F64x {
-            let q = vsel_vi_vd_vi(x, Ix::splat(-2));
-            let x = x.abs();
-
-            let q = vsel_vi_vd_vd_vi_vi(x, y, q + Ix::splat(1), q);
-            let p = x.simd_lt(y);
-            let s = p.select(-x, y);
-            let mut t = x.simd_max(y);
-
-            let s = s / t;
-            t = s * s;
-
-            let t2 = t * t;
-            let t4 = t2 * t2;
-            let t8 = t4 * t4;
-            let t16 = t8 * t8;
-
-            let u = F64x::poly19(
-                t,
-                t2,
-                t4,
-                t8,
-                t16,
-                -1.887_960_084_630_734_965_637_46_e-05,
-                0.000_209_850_076_645_816_976_906_797,
-                -0.001_106_118_314_866_724_825_634_71,
-                0.003_700_267_441_887_131_192_324_03,
-                -0.008_898_961_958_876_554_917_408_09,
-                0.016_599_329_773_529_201_970_117,
-                -0.025_451_762_493_231_264_161_686_1,
-                0.033_785_258_000_135_306_999_389_7,
-                -0.040_762_919_127_683_650_000_193_4,
-                0.046_666_715_007_784_062_563_267_5,
-                -0.052_367_485_230_348_245_761_611_3,
-                0.058_766_639_292_667_358_085_431_3,
-                -0.066_657_357_936_108_052_598_456_2,
-                0.076_921_953_831_176_961_835_502_9,
-                -0.090_908_995_008_245_008_229_153,
-                0.111_111_105_648_261_418_443_745,
-                -0.142_857_142_667_713_293_837_65,
-                0.199_999_999_996_591_265_594_148,
-                -0.333_333_333_333_311_110_369_124,
-            );
-
-            t = s.mul_add(t * u, s);
-            q.cast::<f64>().mul_add(FRAC_PI_2, t)
-        }
-        #[inline]
         fn visinf2_vd_vd_vd(d: F64x, m: F64x) -> F64x {
             F64x::from_bits(
                 d.is_infinite().to_int().cast()
                     & ((d.to_bits() & NEG_ZERO.to_bits()) | m.to_bits()),
             )
-        }
-
-        #[inline]
-        fn expm1k(d: F64x) -> F64x {
-            let mut u = (d * R_LN2).round();
-            let q = u.roundi();
-
-            let s = u.mul_add(-L2_U, d);
-            let s = u.mul_add(-L2_L, s);
-
-            let s2 = s * s;
-            let s4 = s2 * s2;
-            let s8 = s4 * s4;
-
-            u = F64x::poly10(
-                s,
-                s2,
-                s4,
-                s8,
-                2.088_606_211_072_836_875_363_41_e-9,
-                2.511_129_308_928_765_186_106_61_e-8,
-                2.755_739_112_349_004_718_933_38_e-7,
-                2.755_723_629_119_288_276_294_23_e-6,
-                2.480_158_715_923_547_299_879_1_e-5,
-                0.000_198_412_698_960_509_205_564_975,
-                0.001_388_888_888_897_744_922_079_62,
-                0.008_333_333_333_316_527_216_649_84,
-                0.041_666_666_666_666_504_759_142_2,
-                0.166_666_666_666_666_851_703_837,
-            );
-
-            u = s2.mul_add(HALF, s2 * s * u) + s;
-
-            q.simd_eq(Ix::splat(0)).cast().select(u, ldexp2k(u + ONE, q) - ONE)
-        }
-        #[inline]
-        fn logk(mut d: F64x) -> Doubled<F64x> {
-            let m: F64x;
-
-            let mut s =
-            /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
-                let o = d.simd_lt(F64x::splat(f64::MIN_POSITIVE));
-                d = o.select(d * (D1_32X * D1_32X), d);
-                let mut e = ilogb2k(d * F64x::splat(1. / 0.75));
-                m = ldexp3k(d, -e);
-                e = o.cast().select(e - Ix::splat(64), e);
-                Doubled::<F64x>::splat(crate::f64::D_LN2) * e.cast()
-            }/* else {
-                let mut e = vgetexp_vd_vd(d * F64x::splat(1. / 0.75));
-                e = e.simd_eq(INFINITY).select(F64x::splat(1024.), e);
-                m = vgetmant_vd_vd(d);
-                Doubled::<F64x>::splat(D_LN2) * e
-            }*/;
-
-            let x = F64x::splat(-1.).add_as_doubled(m) / ONE.add_as_doubled(m);
-            let x2 = x.square();
-
-            let x4 = x2.0 * x2.0;
-            let x8 = x4 * x4;
-            let x16 = x8 * x8;
-
-            let t = F64x::poly9(
-                x2.0,
-                x4,
-                x8,
-                x16,
-                0.116_255_524_079_935_043_668_677,
-                0.103_239_680_901_072_952_701_192,
-                0.117_754_809_412_463_995_466_069,
-                0.133_329_810_868_462_739_215_09,
-                0.153_846_227_114_512_262_845_736,
-                0.181_818_180_850_050_775_676_507,
-                0.222_222_222_230_083_560_345_903,
-                0.285_714_285_714_249_172_087_875,
-                0.400_000_000_000_000_077_715_612,
-            );
-
-            let c = Doubled::new(
-                F64x::splat(0.666_666_666_666_666_629_659_233),
-                F64x::splat(3.805_549_625_424_120_563_366_16_e-17),
-            );
-
-            s = s.add_checked(x.scale(F64x::splat(2.)));
-            s.add_checked(x2 * x * (x2 * t + c))
-        }
-
-        #[inline]
-        fn expk(d: Doubled<F64x>) -> F64x {
-            let mut u = F64x::from(d) * R_LN2;
-            let dq = u.round();
-            let q = dq.roundi();
-
-            let mut s = d + dq * (-L2_U);
-            s += dq * (-L2_L);
-
-            s = s.normalize();
-
-            let s2 = s.0 * s.0;
-            let s4 = s2 * s2;
-            let s8 = s4 * s4;
-
-            u = F64x::poly10(
-                s.0,
-                s2,
-                s4,
-                s8,
-                2.510_696_834_209_504_195_271_39_e-8,
-                2.762_861_667_702_706_491_168_55_e-7,
-                2.755_724_967_250_235_741_438_64_e-6,
-                2.480_149_739_898_197_941_141_53_e-5,
-                0.000_198_412_698_809_069_797_676_111,
-                0.001_388_888_893_997_712_896_052_9,
-                0.008_333_333_333_323_714_176_010_81,
-                0.041_666_666_666_540_952_412_844_9,
-                0.166_666_666_666_666_740_681_535,
-                0.500_000_000_000_000_999_200_722,
-            );
-
-            let mut t = ONE.add_checked(s);
-            t = t.add_checked(s.square() * u);
-
-            u = F64x::from(t);
-            u = ldexp2k(u, q);
-
-            F64x::from_bits(!d.0.simd_lt(F64x::splat(-1000.)).to_int().cast::<u64>() & u.to_bits())
         }
 
         #[inline]
@@ -1139,37 +880,6 @@ macro_rules! impl_math_f64 {
                 F64x::from_bits(!d.0.simd_lt(F64x::splat(-1000.)).to_int().cast::<u64>() & t.1.to_bits())
             );
             t
-        }
-
-        #[inline]
-        fn logk2(d: Doubled<F64x>) -> Doubled<F64x> {
-            let e = ilogbk(d.0 * F64x::splat(1. / 0.75));
-
-            let m = Doubled::new(ldexp2k(d.0, -e), ldexp2k(d.1, -e));
-
-            let x = (m + F64x::splat(-1.)) / (m + ONE);
-            let x2 = x.square();
-
-            let x4 = x2.0 * x2.0;
-            let x8 = x4 * x4;
-
-            let t = F64x::poly7(
-                x2.0,
-                x4,
-                x8,
-                0.138_604_363_904_671_679_108_56,
-                0.131_699_838_841_615_374_240_845,
-                0.153_914_168_346_271_945_653_214,
-                0.181_816_523_941_564_611_721_589,
-                0.222_222_246_326_620_354_039_96,
-                0.285_714_285_511_134_091_777_308,
-                0.400_000_000_000_914_013_309_483,
-            )
-            .mul_add(x2.0, F64x::splat(0.666_666_666_666_664_853_302_393));
-
-            let mut s = Doubled::<F64x>::splat(crate::f64::D_LN2) * e.cast();
-            s = s.add_checked(x.scale(F64x::splat(2.)));
-            s.add_checked(x2 * x * t)
         }
 
         #[inline]
@@ -1233,13 +943,13 @@ macro_rules! impl_math_f64 {
         pub fn trunc(x: F64x) -> F64x {
             /*
             #ifdef FULL_FP_ROUNDING
-  return vtruncate_vd_vd(x);
-#else
+            return vtruncate_vd_vd(x);
+            #else
             */
             let mut fr = x - D1_31X * (x * (ONE / D1_31X)).trunci().cast();
             fr -= fr.trunci().cast();
             (x.is_infinite() | x.abs().simd_ge(D1_52X)).select(x, (x - fr).copy_sign(x))
-// #endif
+        // #endif
         }
 
         /// Round to integer towards minus infinity
@@ -1370,8 +1080,8 @@ macro_rules! impl_math_f64 {
         pub fn fma(mut x: F64x, mut y: F64x, mut z: F64x) -> F64x {
             /*
             #ifdef ENABLE_FMA_DP
-  return vfma_vd_vd_vd_vd(x, y, z);
-#else
+            return vfma_vd_vd_vd_vd(x, y, z);
+            #else
             */
             let mut h2 = x * y + z;
             let mut q = ONE;
@@ -1533,312 +1243,6 @@ macro_rules! impl_math_f64 {
                 f64::MIN..=f64::MAX,
                 0.5,
             );
-        }
-
-        /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
-        fn gammak(a: F64x) -> (Doubled<F64x>, Doubled<F64x>) {
-            let mut clln = Doubled::from(ONE);
-            let mut clld = Doubled::from(ONE);
-
-            let otiny = a.abs().simd_lt(F64x::splat(1e-306));
-            let oref = a.simd_lt(HALF);
-
-            let mut x = otiny.select_doubled(
-                Doubled::from(ZERO),
-                oref.select_doubled(ONE.add_as_doubled(-a), Doubled::from(a)),
-            );
-
-            let o0 = HALF.simd_le(x.0) & x.0.simd_le(F64x::splat(1.1));
-            let o2 = F64x::splat(2.3).simd_le(x.0);
-
-            let mut y = ((x + ONE) * x).normalize();
-            y = ((x + F64x::splat(2.)) * y).normalize();
-            y = ((x + F64x::splat(3.)) * y).normalize();
-            y = ((x + F64x::splat(4.)) * y).normalize();
-
-            let o = o2 & x.0.simd_le(F64x::splat(7.));
-            clln = o.select_doubled(y, clln);
-
-            x = o.select_doubled(x + F64x::splat(5.), x);
-
-            let t = o2.select(x.0.recip(), (x + o0.select_splat(-1., -2.)).normalize().0);
-
-            let u = F64x::select3(
-                o2,
-                o0,
-                -156.801_412_704_022_726_379_848_862,
-                0.294_791_677_282_761_419_6_e+2,
-                0.707_481_600_086_460_927_9_e-7,
-            )
-            .mul_add(
-                t,
-                F64x::select3(
-                    o2,
-                    o0,
-                    1.120_804_464_289_911_606_838_558_16,
-                    0.128_145_969_182_782_010_9_e+3,
-                    0.400_924_433_300_873_044_3_e-6,
-                ),
-            )
-            .mul_add(
-                t,
-                F64x::select3(
-                    o2,
-                    o0,
-                    13.397_985_455_142_589_218_333_060_2,
-                    0.261_754_402_578_451_504_3_e+3,
-                    0.104_011_464_162_824_694_6_e-5,
-                ),
-            )
-            .mul_add(
-                t,
-                F64x::select3(
-                    o2,
-                    o0,
-                    -0.116_546_276_599_463_200_848_033_357,
-                    0.328_702_285_568_579_043_2_e+3,
-                    0.150_834_915_073_332_916_7_e-5,
-                ),
-            )
-            .mul_add(
-                t,
-                F64x::select3(
-                    o2,
-                    o0,
-                    -1.391_801_093_265_337_481_495_562_41,
-                    0.281_814_586_773_034_818_6_e+3,
-                    0.128_814_307_493_390_102_e-5,
-                ),
-            )
-            .mul_add(
-                t,
-                F64x::select3(
-                    o2,
-                    o0,
-                    0.015_056_113_040_026_424_412_918_973_4,
-                    0.172_867_041_467_355_960_5_e+3,
-                    0.474_416_774_988_499_393_7_e-6,
-                ),
-            )
-            .mul_add(
-                t,
-                F64x::select3(
-                    o2,
-                    o0,
-                    0.179_540_117_061_234_856_098_844_714,
-                    0.774_873_576_403_041_681_7_e+2,
-                    -0.655_481_630_654_248_990_2_e-7,
-                ),
-            )
-            .mul_add(
-                t,
-                F64x::select3(
-                    o2,
-                    o0,
-                    -0.002_481_743_600_264_997_730_942_489_28,
-                    0.251_285_664_308_093_075_2_e+2,
-                    -0.318_925_247_145_259_984_4_e-6,
-                ),
-            )
-            .mul_add(
-                t,
-                F64x::select3(
-                    o2,
-                    o0,
-                    -0.029_527_880_945_699_120_504_851_034_1,
-                    0.576_679_210_614_007_686_8_e+1,
-                    0.135_888_382_147_035_537_7_e-6,
-                ),
-            )
-            .mul_add(
-                t,
-                F64x::select3(
-                    o2,
-                    o0,
-                    0.000_540_164_767_892_604_515_196_325_186,
-                    0.727_027_547_399_618_057_1,
-                    -0.434_393_127_715_733_604_e-6,
-                ),
-            )
-            .mul_add(
-                t,
-                F64x::select3(
-                    o2,
-                    o0,
-                    0.006_403_362_833_808_069_794_787_256_2,
-                    0.839_670_912_457_914_780_9_e-1,
-                    0.972_478_589_740_677_955_5_e-6,
-                ),
-            )
-            .mul_add(
-                t,
-                F64x::select3(
-                    o2,
-                    o0,
-                    -0.000_162_516_262_783_915_816_896_611_252,
-                    -0.821_155_866_974_680_459_5_e-1,
-                    -0.203_688_605_722_596_601_1_e-5,
-                ),
-            )
-            .mul_add(
-                t,
-                F64x::select3(
-                    o2,
-                    o0,
-                    -0.001_914_438_498_565_477_526_465_972_39,
-                    0.682_883_182_834_188_445_8_e-1,
-                    0.437_336_314_181_972_581_5_e-5,
-                ),
-            )
-            .mul_add(
-                t,
-                F64x::select3(
-                    o2,
-                    o0,
-                    7.204_895_416_020_010_558_983_115_17_e-5,
-                    -0.771_248_133_996_167_151_1_e-1,
-                    -0.943_995_126_830_400_867_7_e-5,
-                ),
-            )
-            .mul_add(
-                t,
-                F64x::select3(
-                    o2,
-                    o0,
-                    0.000_839_498_720_672_087_279_971_000_786,
-                    0.833_749_202_301_731_495_7_e-1,
-                    0.205_072_703_037_638_980_4_e-4,
-                ),
-            )
-            .mul_add(
-                t,
-                F64x::select3(
-                    o2,
-                    o0,
-                    -5.171_790_908_260_592_193_293_944_22_e-5,
-                    -0.909_496_493_145_624_251_8_e-1,
-                    -0.449_262_018_343_118_401_8_e-4,
-                ),
-            )
-            .mul_add(
-                t,
-                F64x::select3(
-                    o2,
-                    o0,
-                    -0.000_592_166_437_353_693_882_857_342_347,
-                    0.100_099_631_357_592_935_8,
-                    0.994_575_123_607_187_593_1_e-4,
-                ),
-            )
-            .mul_add(
-                t,
-                F64x::select3(
-                    o2,
-                    o0,
-                    6.972_813_758_365_857_774_037_435_39_e-5,
-                    -0.111_334_286_154_420_772_4,
-                    -0.223_154_759_903_498_319_6_e-3,
-                ),
-            )
-            .mul_add(
-                t,
-                F64x::select3(
-                    o2,
-                    o0,
-                    0.000_784_039_221_720_066_627_493_314_301,
-                    0.125_509_667_321_302_087_5,
-                    0.509_669_524_710_196_762_2_e-3,
-                ),
-            )
-            .mul_add(
-                t,
-                F64x::select3(
-                    o2,
-                    o0,
-                    -0.000_229_472_093_621_399_176_949_318_732,
-                    -0.144_049_896_784_305_436_8,
-                    -0.119_275_391_166_788_697_1_e-2,
-                ),
-            )
-            .mul_add(
-                t,
-                F64x::select3(
-                    o2,
-                    o0,
-                    -0.002_681_327_160_493_827_160_473_958_490,
-                    0.169_557_177_004_194_981_1,
-                    0.289_051_033_074_221_031_e-2,
-                ),
-            )
-            .mul_add(
-                t,
-                F64x::select3(
-                    o2,
-                    o0,
-                    0.003_472_222_222_222_222_222_175_164_840,
-                    -0.207_385_551_028_409_276_2,
-                    -0.738_555_102_867_446_185_8_e-2,
-                ),
-            )
-            .mul_add(
-                t,
-                F64x::select3(
-                    o2,
-                    o0,
-                    0.083_333_333_333_333_333_335_592_087_900,
-                    0.270_580_808_427_781_593_9,
-                    0.205_808_084_277_845_533_5_e-1,
-                ),
-            );
-
-            let mut y = (x + F64x::splat(-0.5)) * logk2(x);
-            y += -x;
-            y += Doubled::new(
-                F64x::splat(0.918_938_533_204_672_780_56),
-                F64x::splat(-3.878_294_158_067_241_449_8_e-17),
-            ); // 0.5*log(2*M_PI)
-
-            let mut z = u.mul_as_doubled(t)
-                + o0.select_splat(
-                    -0.400_685_634_386_531_486_2,
-                    -0.673_523_010_531_981_020_1_e-1,
-                );
-            z = z * t + o0.select_splat(0.822_467_033_424_113_203, 0.322_467_033_424_113_203);
-            z = z * t + o0.select_splat(-0.577_215_664_901_532_865_5, 0.422_784_335_098_467_134_5);
-            z *= t;
-
-            let mut clc = o2.select_doubled(y, z);
-
-            clld = o2.select_doubled(u.mul_as_doubled(t) + ONE, clld);
-
-            y = clln;
-
-            clc = otiny.select_doubled(
-                Doubled::new(
-                    F64x::splat(83.177_661_667_193_433_459_033_3),
-                    F64x::splat(3.671_034_596_315_685_072_218_78_e-15),
-                ), // log(2^120)
-                oref.select_doubled(
-                    Doubled::new(
-                        F64x::splat(1.144_729_885_849_400_163_9),
-                        F64x::splat(1.026_595_116_270_782_638_e-17)
-                    ) + (-clc),
-                    clc,
-                ),
-            ); // log(M_PI)
-            clln = otiny.select_doubled(Doubled::from(ONE), oref.select_doubled(clln, clld));
-
-            if !(!oref).all() {
-                let t = a - D1_28X * (a * (ONE / D1_28X)).trunci().cast();
-                x = clld * sinpik(t);
-            }
-
-            clld = otiny.select_doubled(
-                Doubled::from(a * (D1_60X * D1_60X)),
-                oref.select_doubled(x, y),
-            );
-
-            (clc, clln / clld)
         }
 
         #[inline]

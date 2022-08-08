@@ -143,6 +143,95 @@ macro_rules! impl_math_f64_u05 {
             );
         }
 
+        #[inline]
+        fn cospik(d: F64x) -> Doubled<F64x> {
+            let u = d * F64x::splat(4.);
+            let mut q = u.trunci();
+            q = (q + ((q.cast() >> Ux::splat(31)).cast() ^ Ix::splat(1))) & Ix::splat(!1);
+            let o: M64x = (q & Ix::splat(2)).simd_eq(Ix::splat(0)).cast();
+
+            let s = u - q.cast();
+            let t = s;
+            let s = s * s;
+            let s2 = t.mul_as_doubled(t);
+
+            let u = o
+                .select_splat(
+                    9.944_803_876_268_437_740_902_08_e-16,
+                    -2.024_611_207_851_823_992_958_68_e-14,
+                )
+                .mul_add(
+                    s,
+                    o.select_splat(
+                        -3.897_962_260_629_327_991_640_47_e-13,
+                        6.948_218_305_801_794_613_277_84_e-12,
+                    ),
+                )
+                .mul_add(
+                    s,
+                    o.select_splat(
+                        1.150_115_825_399_960_352_669_01_e-10,
+                        -1.757_247_499_528_531_799_526_64_e-9,
+                    ),
+                )
+                .mul_add(
+                    s,
+                    o.select_splat(
+                        -2.461_136_950_104_469_749_535_9_e-8,
+                        3.133_616_889_668_683_928_784_22_e-7,
+                    ),
+                )
+                .mul_add(
+                    s,
+                    o.select_splat(
+                        3.590_860_448_590_527_540_050_62_e-6,
+                        -3.657_620_418_216_155_192_036_1_e-5,
+                    ),
+                )
+                .mul_add(
+                    s,
+                    o.select_splat(
+                        -0.000_325_991_886_927_389_905_997_954,
+                        0.002_490_394_570_192_718_502_743_560,
+                    ),
+                );
+            let mut x = u * s
+                + o.select_doubled(
+                    Doubled::new(
+                        F64x::splat(0.015_854_344_243_815_501_891_425_9),
+                        F64x::splat(-1.046_932_722_806_315_219_088_45_e-18),
+                    ),
+                    Doubled::new(
+                        F64x::splat(-0.080_745_512_188_280_785_248_473_1),
+                        F64x::splat(3.618_524_750_670_371_048_499_87_e-18),
+                    ),
+                );
+            x = s2 * x
+                + o.select_doubled(
+                    Doubled::new(
+                        F64x::splat(-0.308_425_137_534_042_437_259_529),
+                        F64x::splat(-1.956_984_921_336_335_503_383_45_e-17),
+                    ),
+                    Doubled::new(
+                        F64x::splat(0.785_398_163_397_448_278_999_491),
+                        F64x::splat(3.062_871_137_271_550_026_071_05_e-17),
+                    ),
+                );
+
+            x *= o.select_doubled(s2, Doubled::from(t));
+            x = o.select_doubled(x + ONE, x);
+
+            let o: M64x = (q + Ix::splat(2) & Ix::splat(4))
+                .simd_eq(Ix::splat(4))
+                .cast();
+            x = Doubled::new(
+                F64x::from_bits((o.to_int().cast() & NEG_ZERO.to_bits()) ^ x.0.to_bits()),
+                F64x::from_bits((o.to_int().cast() & NEG_ZERO.to_bits()) ^ x.1.to_bits()),
+            );
+
+            x
+        }
+
         /// Evaluate cos( π***a*** ) for given ***a***
         ///
         /// This function evaluates the cosine function of π***a***.

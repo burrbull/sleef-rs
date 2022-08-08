@@ -78,6 +78,56 @@ fn test_cosf() {
     });
 }
 
+#[inline]
+fn logk3f(mut d: f32) -> f32 {
+    let o = d < f32::MIN_POSITIVE;
+    if o {
+        d *= F1_32 * F1_32;
+    }
+
+    let mut e = ilogb2kf(d * (1. / 0.75));
+    let m = ldexp3kf(d, -e);
+
+    if o {
+        e -= 64;
+    }
+
+    let x = (m - 1.) / (m + 1.);
+    let x2 = x * x;
+
+    let t = 0.239_282_846_450_805_664_062_5
+        .mul_add(x2, 0.285_182_118_415_832_519_531_25)
+        .mul_add(x2, 0.400_005_877_017_974_853_515_625)
+        .mul_add(x2, 0.666_666_686_534_881_591_796_875)
+        .mul_add(x2, 2.);
+
+    x.mul_add(t, 0.693_147_180_559_945_286_226_764 * (e as f32))
+}
+
+#[inline]
+fn expk3f(d: f32) -> f32 {
+    let q = rintfk(d * R_LN2_F);
+
+    let mut s = q.mul_add(-L2U_F, d);
+    s = q.mul_add(-L2L_F, s);
+
+    let mut u = 0.000_198_527_617_612_853_646_278_381
+        .mul_add(s, 0.001_393_043_552_525_341_510_772_71)
+        .mul_add(s, 0.008_333_360_776_305_198_669_433_59)
+        .mul_add(s, 0.041_666_485_369_205_474_853_515_6)
+        .mul_add(s, 0.166_666_671_633_720_397_949_219)
+        .mul_add(s, 0.5);
+
+    u = (s * s).mul_add(u, s + 1.);
+    u = ldexpkf(u, q as i32);
+
+    if d < -104. {
+        0.
+    } else {
+        u
+    }
+}
+
 /// Fast power function
 ///
 /// The error bounds of the returned value is `350 ULP`.

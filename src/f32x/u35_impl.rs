@@ -652,6 +652,36 @@ macro_rules! impl_math_f32_u35 {
             );
         }
 
+        #[inline]
+        fn atan2kf(y: F32x, x: F32x) -> F32x {
+            let q = vsel_vi2_vf_vi2(x, I32x::splat(-2));
+            let x = x.abs();
+
+            let q = vsel_vi2_vf_vf_vi2_vi2(x, y, q + I32x::splat(1), q);
+            let p = x.simd_lt(y);
+            let s = p.select(-x, y);
+            let mut t = x.simd_max(y);
+
+            let s = s / t;
+            t = s * s;
+
+            let t2 = t * t;
+            let t4 = t2 * t2;
+
+            let u = F32x::poly8(t, t2, t4,
+                0.002_823_638_962_581_753_730_773_93,
+                -0.015_956_902_876_496_315_002_441_4,
+                0.042_504_988_610_744_476_318_359_4,
+                -0.074_890_092_015_266_418_457_031_2,
+                0.106_347_933_411_598_205_566_406,
+                -0.142_027_363_181_114_196_777_344,
+                0.199_926_957_488_059_997_558_594,
+                -0.333_331_018_686_294_555_664_062);
+
+            let t = s.mul_add(t * u, s);
+            q.cast::<f32>().mul_add(FRAC_PI_2, t)
+        }
+
         /// Arc tangent function of two variables
         ///
         /// These functions evaluates the arc tangent function of (***y*** / ***x***).

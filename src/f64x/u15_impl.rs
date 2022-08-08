@@ -29,7 +29,7 @@ macro_rules! impl_math_f64_u15 {
                 -0.575_781_953_642_071_044_9_e+2,
                 0.233_424_972_963_870_131_9_e+5,
             )
-            .mul_add(
+            .mla(
                 u.0,
                 F64x::select4(
                     o0,
@@ -41,7 +41,7 @@ macro_rules! impl_math_f64_u15 {
                     -0.469_566_104_493_310_776_9_e+5,
                 ),
             )
-            .mul_add(
+            .mla(
                 u.0,
                 F64x::select4(
                     o0,
@@ -53,7 +53,7 @@ macro_rules! impl_math_f64_u15 {
                     0.317_340_310_874_864_335_3_e+5,
                 ),
             )
-            .mul_add(
+            .mla(
                 u.0,
                 F64x::select4(
                     o0,
@@ -65,7 +65,7 @@ macro_rules! impl_math_f64_u15 {
                     0.324_298_278_695_957_378_7_e+4,
                 ),
             )
-            .mul_add(
+            .mla(
                 u.0,
                 F64x::select4(
                     o0,
@@ -77,7 +77,7 @@ macro_rules! impl_math_f64_u15 {
                     -0.201_471_799_976_034_781_1_e+5,
                 ),
             )
-            .mul_add(
+            .mla(
                 u.0,
                 F64x::select4(
                     o0,
@@ -89,7 +89,7 @@ macro_rules! impl_math_f64_u15 {
                     0.155_400_697_096_711_828_6_e+5,
                 ),
             )
-            .mul_add(
+            .mla(
                 u.0,
                 F64x::select4(
                     o0,
@@ -101,7 +101,7 @@ macro_rules! impl_math_f64_u15 {
                     -0.615_087_419_056_355_429_3_e+4,
                 ),
             )
-            .mul_add(
+            .mla(
                 u.0,
                 F64x::select4(
                     o0,
@@ -113,7 +113,7 @@ macro_rules! impl_math_f64_u15 {
                     0.124_004_776_563_481_573_2_e+4,
                 ),
             )
-            .mul_add(
+            .mla(
                 u.0,
                 F64x::select4(
                     o0,
@@ -125,7 +125,7 @@ macro_rules! impl_math_f64_u15 {
                     -0.821_032_547_575_269_973_1_e+2,
                 ),
             )
-            .mul_add(
+            .mla(
                 u.0,
                 F64x::select4(
                     o0,
@@ -137,7 +137,7 @@ macro_rules! impl_math_f64_u15 {
                     0.324_244_388_083_993_087_e+2,
                 ),
             )
-            .mul_add(
+            .mla(
                 u.0,
                 F64x::select4(
                     o0,
@@ -149,7 +149,7 @@ macro_rules! impl_math_f64_u15 {
                     -0.292_341_886_383_316_058_6_e+2,
                 ),
             )
-            .mul_add(
+            .mla(
                 u.0,
                 F64x::select4(
                     o0,
@@ -161,7 +161,7 @@ macro_rules! impl_math_f64_u15 {
                     0.345_746_173_281_438_307_1,
                 ),
             )
-            .mul_add(
+            .mla(
                 u.0,
                 F64x::select4(
                     o0,
@@ -173,7 +173,7 @@ macro_rules! impl_math_f64_u15 {
                     0.548_973_015_595_239_299_8_e+1,
                 ),
             )
-            .mul_add(
+            .mla(
                 u.0,
                 F64x::select4(
                     o0,
@@ -185,7 +185,7 @@ macro_rules! impl_math_f64_u15 {
                     0.155_993_413_225_129_413_4_e-2,
                 ),
             )
-            .mul_add(
+            .mla(
                 u.0,
                 F64x::select4(
                     o0,
@@ -197,7 +197,7 @@ macro_rules! impl_math_f64_u15 {
                     -0.154_174_156_683_152_063_8_e+1,
                 ),
             )
-            .mul_add(
+            .mla(
                 u.0,
                 F64x::select4(
                     o0,
@@ -209,7 +209,7 @@ macro_rules! impl_math_f64_u15 {
                     0.282_315_223_055_836_418_6_e-5,
                 ),
             )
-            .mul_add(
+            .mla(
                 u.0,
                 F64x::select4(
                     o0,
@@ -221,7 +221,7 @@ macro_rules! impl_math_f64_u15 {
                     0.624_999_918_419_534_283_8,
                 ),
             )
-            .mul_add(
+            .mla(
                 u.0,
                 F64x::select4(
                     o0,

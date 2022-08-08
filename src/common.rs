@@ -76,7 +76,7 @@ pub trait Round {
 }
 
 pub trait MulAdd {
-    fn mul_add(self, y: Self, z: Self) -> Self;
+    fn mla(self, y: Self, z: Self) -> Self;
 }
 
 pub trait MulSub {
@@ -139,25 +139,25 @@ where
 {
     fn c2v(c: B) -> Self;
     fn poly2(x: Self, c1: B, c0: B) -> Self {
-        x.mul_add(Poly::c2v(c1), Poly::c2v(c0))
+        x.mla(Poly::c2v(c1), Poly::c2v(c0))
     }
     fn poly3(x: Self, x2: Self, c2: B, c1: B, c0: B) -> Self {
-        x2.mul_add(Poly::c2v(c2), x.mul_add(Poly::c2v(c1), Poly::c2v(c0)))
+        x2.mla(Poly::c2v(c2), x.mla(Poly::c2v(c1), Poly::c2v(c0)))
     }
     fn poly4(x: Self, x2: Self, c3: B, c2: B, c1: B, c0: B) -> Self {
-        x2.mul_add(
-            x.mul_add(Poly::c2v(c3), Poly::c2v(c2)),
-            x.mul_add(Poly::c2v(c1), Poly::c2v(c0)),
+        x2.mla(
+            x.mla(Poly::c2v(c3), Poly::c2v(c2)),
+            x.mla(Poly::c2v(c1), Poly::c2v(c0)),
         )
     }
     fn poly5(x: Self, x2: Self, x4: Self, c4: B, c3: B, c2: B, c1: B, c0: B) -> Self {
-        x4.mul_add(Poly::c2v(c4), Poly::poly4(x, x2, c3, c2, c1, c0))
+        x4.mla(Poly::c2v(c4), Poly::poly4(x, x2, c3, c2, c1, c0))
     }
     fn poly6(x: Self, x2: Self, x4: Self, c5: B, c4: B, c3: B, c2: B, c1: B, c0: B) -> Self {
-        x4.mul_add(Poly::poly2(x, c5, c4), Poly::poly4(x, x2, c3, c2, c1, c0))
+        x4.mla(Poly::poly2(x, c5, c4), Poly::poly4(x, x2, c3, c2, c1, c0))
     }
     fn poly7(x: Self, x2: Self, x4: Self, c6: B, c5: B, c4: B, c3: B, c2: B, c1: B, c0: B) -> Self {
-        x4.mul_add(
+        x4.mla(
             Poly::poly3(x, x2, c6, c5, c4),
             Poly::poly4(x, x2, c3, c2, c1, c0),
         )
@@ -175,7 +175,7 @@ where
         c1: B,
         c0: B,
     ) -> Self {
-        x4.mul_add(
+        x4.mla(
             Poly::poly4(x, x2, c7, c6, c5, c4),
             Poly::poly4(x, x2, c3, c2, c1, c0),
         )
@@ -195,7 +195,7 @@ where
         c1: B,
         c0: B,
     ) -> Self {
-        x8.mul_add(
+        x8.mla(
             Poly::c2v(c8),
             Poly::poly8(x, x2, x4, c7, c6, c5, c4, c3, c2, c1, c0),
         )
@@ -216,7 +216,7 @@ where
         c1: B,
         c0: B,
     ) -> Self {
-        x8.mul_add(
+        x8.mla(
             Poly::poly2(x, c9, c8),
             Poly::poly8(x, x2, x4, c7, c6, c5, c4, c3, c2, c1, c0),
         )
@@ -238,7 +238,7 @@ where
         c1: B,
         c0: B,
     ) -> Self {
-        x8.mul_add(
+        x8.mla(
             Poly::poly3(x, x2, ca, c9, c8),
             Poly::poly8(x, x2, x4, c7, c6, c5, c4, c3, c2, c1, c0),
         )
@@ -261,7 +261,7 @@ where
         c1: B,
         c0: B,
     ) -> Self {
-        x8.mul_add(
+        x8.mla(
             Poly::poly4(x, x2, cb, ca, c9, c8),
             Poly::poly8(x, x2, x4, c7, c6, c5, c4, c3, c2, c1, c0),
         )
@@ -285,7 +285,7 @@ where
         c1: B,
         c0: B,
     ) -> Self {
-        x8.mul_add(
+        x8.mla(
             Poly::poly5(x, x2, x4, cc, cb, ca, c9, c8),
             Poly::poly8(x, x2, x4, c7, c6, c5, c4, c3, c2, c1, c0),
         )
@@ -310,7 +310,7 @@ where
         c1: B,
         c0: B,
     ) -> Self {
-        x8.mul_add(
+        x8.mla(
             Poly::poly6(x, x2, x4, cd, cc, cb, ca, c9, c8),
             Poly::poly8(x, x2, x4, c7, c6, c5, c4, c3, c2, c1, c0),
         )
@@ -336,7 +336,7 @@ where
         c1: B,
         c0: B,
     ) -> Self {
-        x8.mul_add(
+        x8.mla(
             Poly::poly7(x, x2, x4, ce, cd, cc, cb, ca, c9, c8),
             Poly::poly8(x, x2, x4, c7, c6, c5, c4, c3, c2, c1, c0),
         )
@@ -363,7 +363,7 @@ where
         c1: B,
         c0: B,
     ) -> Self {
-        x8.mul_add(
+        x8.mla(
             Poly::poly8(x, x2, x4, cf, ce, cd, cc, cb, ca, c9, c8),
             Poly::poly8(x, x2, x4, c7, c6, c5, c4, c3, c2, c1, c0),
         )
@@ -392,7 +392,7 @@ where
         c1: B,
         c0: B,
     ) -> Self {
-        x16.mul_add(
+        x16.mla(
             Poly::c2v(d0),
             Poly::poly16(
                 x, x2, x4, x8, cf, ce, cd, cc, cb, ca, c9, c8, c7, c6, c5, c4, c3, c2, c1, c0,
@@ -424,7 +424,7 @@ where
         c1: B,
         c0: B,
     ) -> Self {
-        x16.mul_add(
+        x16.mla(
             Poly::poly2(x, d1, d0),
             Poly::poly16(
                 x, x2, x4, x8, cf, ce, cd, cc, cb, ca, c9, c8, c7, c6, c5, c4, c3, c2, c1, c0,
@@ -457,7 +457,7 @@ where
         c1: B,
         c0: B,
     ) -> Self {
-        x16.mul_add(
+        x16.mla(
             Poly::poly3(x, x2, d2, d1, d0),
             Poly::poly16(
                 x, x2, x4, x8, cf, ce, cd, cc, cb, ca, c9, c8, c7, c6, c5, c4, c3, c2, c1, c0,
@@ -491,7 +491,7 @@ where
         c1: B,
         c0: B,
     ) -> Self {
-        x16.mul_add(
+        x16.mla(
             Poly::poly4(x, x2, d3, d2, d1, d0),
             Poly::poly16(
                 x, x2, x4, x8, cf, ce, cd, cc, cb, ca, c9, c8, c7, c6, c5, c4, c3, c2, c1, c0,
@@ -526,7 +526,7 @@ where
         c1: B,
         c0: B,
     ) -> Self {
-        x16.mul_add(
+        x16.mla(
             Poly::poly5(x, x2, x4, d4, d3, d2, d1, d0),
             Poly::poly16(
                 x, x2, x4, x8, cf, ce, cd, cc, cb, ca, c9, c8, c7, c6, c5, c4, c3, c2, c1, c0,

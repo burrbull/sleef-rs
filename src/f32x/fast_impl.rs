@@ -11,14 +11,14 @@ macro_rules! impl_math_f32_fast {
             let s = d * FRAC_1_PI;
             let mut u = s.round();
             let q = s.roundi();
-            d = u.mul_add(-PI, d);
+            d = u.mla(-PI, d);
 
             let s = d * d;
 
             u = F32x::splat(-0.188_174_817_6_e-3)
-                .mul_add(s, F32x::splat(0.832_350_272_7_e-2))
-                .mul_add(s, F32x::splat(-0.166_665_136_8));
-            u = (s * d).mul_add(u, d);
+                .mla(s, F32x::splat(0.832_350_272_7_e-2))
+                .mla(s, F32x::splat(-0.166_665_136_8));
+            u = (s * d).mla(u, d);
 
             u = F32x::from_bits(
                 ((q & I32x::splat(1)).simd_eq(I32x::splat(1)).to_int().cast() & (-ZERO).to_bits())
@@ -50,17 +50,17 @@ macro_rules! impl_math_f32_fast {
         pub fn cosf(mut d: F32x) -> F32x {
             let t = d;
 
-            let s = d.mul_add(FRAC_1_PI, -HALF);
+            let s = d.mla(FRAC_1_PI, -HALF);
             let mut u = s.round();
             let q = s.roundi();
-            d = u.mul_add(-PI, d - FRAC_PI_2);
+            d = u.mla(-PI, d - FRAC_PI_2);
 
             let s = d * d;
 
             u = F32x::splat(-0.188_174_817_6_e-3)
-                .mul_add(s, F32x::splat(0.832_350_272_7_e-2))
-                .mul_add(s, F32x::splat(-0.166_665_136_8));
-            u = (s * d).mul_add(u, d);
+                .mla(s, F32x::splat(0.832_350_272_7_e-2))
+                .mla(s, F32x::splat(-0.166_665_136_8));
+            u = (s * d).mla(u, d);
 
             u = F32x::from_bits(
                 ((q & I32x::splat(1)).simd_eq(I32x::splat(0)).to_int().cast() & (-ZERO).to_bits())
@@ -103,18 +103,18 @@ macro_rules! impl_math_f32_fast {
             let x2 = x * x;
 
             let t = F32x::splat(0.239_282_846_450_805_664_062_5)
-                .mul_add(x2, F32x::splat(0.285_182_118_415_832_519_531_25))
-                .mul_add(x2, F32x::splat(0.400_005_877_017_974_853_515_625))
-                .mul_add(x2, F32x::splat(0.666_666_686_534_881_591_796_875))
-                .mul_add(x2, F32x::splat(2.));
+                .mla(x2, F32x::splat(0.285_182_118_415_832_519_531_25))
+                .mla(x2, F32x::splat(0.400_005_877_017_974_853_515_625))
+                .mla(x2, F32x::splat(0.666_666_686_534_881_591_796_875))
+                .mla(x2, F32x::splat(2.));
 
             //if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {
-            x.mul_add(
+            x.mla(
                 t,
                 F32x::splat(0.693_147_180_559_945_286_226_764) * e.cast(),
             )
             /* } else {
-              x.mul_add(t, F32x::splat(0.693_147_180_559_945_286_226_764) * e)
+              x.mla(t, F32x::splat(0.693_147_180_559_945_286_226_764) * e)
             }*/
         }
 
@@ -122,17 +122,17 @@ macro_rules! impl_math_f32_fast {
         fn expk3f(d: F32x) -> F32x {
             let q = (d * R_LN2_F).roundi();
 
-            let mut s = q.cast::<f32>().mul_add(-L2U_F, d);
-            s = q.cast::<f32>().mul_add(-L2L_F, s);
+            let mut s = q.cast::<f32>().mla(-L2U_F, d);
+            s = q.cast::<f32>().mla(-L2L_F, s);
 
             let mut u = F32x::splat(0.000_198_527_617_612_853_646_278_381)
-                .mul_add(s, F32x::splat(0.001_393_043_552_525_341_510_772_71))
-                .mul_add(s, F32x::splat(0.008_333_360_776_305_198_669_433_59))
-                .mul_add(s, F32x::splat(0.041_666_485_369_205_474_853_515_6))
-                .mul_add(s, F32x::splat(0.166_666_671_633_720_397_949_219))
-                .mul_add(s, HALF);
+                .mla(s, F32x::splat(0.001_393_043_552_525_341_510_772_71))
+                .mla(s, F32x::splat(0.008_333_360_776_305_198_669_433_59))
+                .mla(s, F32x::splat(0.041_666_485_369_205_474_853_515_6))
+                .mla(s, F32x::splat(0.166_666_671_633_720_397_949_219))
+                .mla(s, HALF);
 
-            u = (s * s).mul_add(u, s + ONE);
+            u = (s * s).mla(u, s + ONE);
             u = ldexp2kf(u, q);
 
             F32x::from_bits(!d.simd_lt(F32x::splat(-104.)).to_int().cast::<u32>() & u.to_bits())

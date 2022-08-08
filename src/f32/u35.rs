@@ -13,16 +13,16 @@ pub fn sinf(mut d: f32) -> f32 {
     if fabsfk(d) < TRIGRANGEMAX2_F {
         let qf = rintfk(d * FRAC_1_PI);
         q = qf as i32;
-        d = qf.mul_add(-PI_A2_F, d);
-        d = qf.mul_add(-PI_B2_F, d);
-        d = qf.mul_add(-PI_C2_F, d);
+        d = qf.mla(-PI_A2_F, d);
+        d = qf.mla(-PI_B2_F, d);
+        d = qf.mla(-PI_C2_F, d);
     } else if fabsfk(d) < TRIGRANGEMAX_F {
         let qf = rintfk(d * FRAC_1_PI);
         q = qf as i32;
-        d = qf.mul_add(-PI_A_F, d);
-        d = qf.mul_add(-PI_B_F, d);
-        d = qf.mul_add(-PI_C_F, d);
-        d = qf.mul_add(-PI_D_F, d);
+        d = qf.mla(-PI_A_F, d);
+        d = qf.mla(-PI_B_F, d);
+        d = qf.mla(-PI_C_F, d);
+        d = qf.mla(-PI_D_F, d);
     } else {
         let (mut dfidf, dfii) = rempif(t);
         q = ((dfii & 3) * 2 + ((dfidf.0 > 0.) as i32) + 1) >> 2;
@@ -45,14 +45,14 @@ pub fn sinf(mut d: f32) -> f32 {
     }
 
     let u = 2.608_315_980_978_659_354_150_3_e-6_f32
-        .mul_add(s, -0.000_198_106_907_191_686_332_225_8)
-        .mul_add(s, 0.008_333_078_585_565_090_179_443_36)
-        .mul_add(s, -0.166_666_597_127_914_428_710_938);
+        .mla(s, -0.000_198_106_907_191_686_332_225_8)
+        .mla(s, 0.008_333_078_585_565_090_179_443_36)
+        .mla(s, -0.166_666_597_127_914_428_710_938);
 
     if t.is_neg_zero() {
         -0.
     } else {
-        s.mul_add(u * d, d)
+        s.mla(u * d, d)
     }
 }
 
@@ -72,16 +72,16 @@ pub fn cosf(mut d: f32) -> f32 {
     if fabsfk(d) < TRIGRANGEMAX2_F {
         q = 1 + 2 * (rintfk(d * FRAC_1_PI - 0.5) as i32);
         let qf = q as f32;
-        d = qf.mul_add(-PI_A2_F * 0.5, d);
-        d = qf.mul_add(-PI_B2_F * 0.5, d);
-        d = qf.mul_add(-PI_C2_F * 0.5, d);
+        d = qf.mla(-PI_A2_F * 0.5, d);
+        d = qf.mla(-PI_B2_F * 0.5, d);
+        d = qf.mla(-PI_C2_F * 0.5, d);
     } else if fabsfk(d) < TRIGRANGEMAX_F {
         q = 1 + 2 * (rintfk(d * FRAC_1_PI - 0.5) as i32);
         let qf = q as f32;
-        d = qf.mul_add(-PI_A_F * 0.5, d);
-        d = qf.mul_add(-PI_B_F * 0.5, d);
-        d = qf.mul_add(-PI_C_F * 0.5, d);
-        d = qf.mul_add(-PI_D_F * 0.5, d);
+        d = qf.mla(-PI_A_F * 0.5, d);
+        d = qf.mla(-PI_B_F * 0.5, d);
+        d = qf.mla(-PI_C_F * 0.5, d);
+        d = qf.mla(-PI_D_F * 0.5, d);
     } else {
         let (mut dfidf, dfii) = rempif(t);
         q = ((dfii & 3) * 2 + ((dfidf.0 > 0.) as i32) + 7) >> 1;
@@ -104,11 +104,11 @@ pub fn cosf(mut d: f32) -> f32 {
     }
 
     let u = 2.608_315_980_978_659_354_150_3_e-6_f32
-        .mul_add(s, -0.000_198_106_907_191_686_332_225_8)
-        .mul_add(s, 0.008_333_078_585_565_090_179_443_36)
-        .mul_add(s, -0.166_666_597_127_914_428_710_938);
+        .mla(s, -0.000_198_106_907_191_686_332_225_8)
+        .mla(s, 0.008_333_078_585_565_090_179_443_36)
+        .mla(s, -0.166_666_597_127_914_428_710_938);
 
-    s.mul_add(u * d, d)
+    s.mla(u * d, d)
 }
 
 #[test]
@@ -130,16 +130,16 @@ pub fn sincosf(d: f32) -> (f32, f32) {
     if fabsfk(d) < TRIGRANGEMAX2_F {
         let qf = rintfk(d * FRAC_2_PI);
         q = qf as i32;
-        s = qf.mul_add(-PI_A2_F * 0.5, s);
-        s = qf.mul_add(-PI_B2_F * 0.5, s);
-        s = qf.mul_add(-PI_C2_F * 0.5, s);
+        s = qf.mla(-PI_A2_F * 0.5, s);
+        s = qf.mla(-PI_B2_F * 0.5, s);
+        s = qf.mla(-PI_C2_F * 0.5, s);
     } else if fabsfk(d) < TRIGRANGEMAX_F {
         let qf = rintfk(d * FRAC_2_PI);
         q = qf as i32;
-        s = qf.mul_add(-PI_A_F * 0.5, s);
-        s = qf.mul_add(-PI_B_F * 0.5, s);
-        s = qf.mul_add(-PI_C_F * 0.5, s);
-        s = qf.mul_add(-PI_D_F * 0.5, s);
+        s = qf.mla(-PI_A_F * 0.5, s);
+        s = qf.mla(-PI_B_F * 0.5, s);
+        s = qf.mla(-PI_C_F * 0.5, s);
+        s = qf.mla(-PI_D_F * 0.5, s);
     } else {
         let (dfidf, dfii) = rempif(d);
         q = dfii;
@@ -154,17 +154,17 @@ pub fn sincosf(d: f32) -> (f32, f32) {
     s = s * s;
 
     let mut u = (-0.000_195_169_282_960_705_459_117_889_f32)
-        .mul_add(s, 0.008_332_157_507_538_795_471_191_41)
-        .mul_add(s, -0.166_666_537_523_269_653_320_312);
+        .mla(s, 0.008_332_157_507_538_795_471_191_41)
+        .mla(s, -0.166_666_537_523_269_653_320_312);
     u = u * s * t;
 
     let mut rsin = if d.is_neg_zero() { -0. } else { t + u };
 
     u = (-2.718_118_423_672_422_068_193_55_e-7_f32)
-        .mul_add(s, 2.479_904_469_510_074_704_885_48_e-5)
-        .mul_add(s, -0.001_388_887_874_782_085_418_701_17)
-        .mul_add(s, 0.041_666_664_183_139_801_025_390_6)
-        .mul_add(s, -0.5);
+        .mla(s, 2.479_904_469_510_074_704_885_48_e-5)
+        .mla(s, -0.001_388_887_874_782_085_418_701_17)
+        .mla(s, 0.041_666_664_183_139_801_025_390_6)
+        .mla(s, -0.5);
 
     let mut rcos = u * s + 1.;
 
@@ -206,16 +206,16 @@ pub fn tanf(d: f32) -> f32 {
     if fabsfk(d) < TRIGRANGEMAX2_F * 0.5 {
         let qf = rintfk(d * FRAC_2_PI);
         q = qf as i32;
-        x = qf.mul_add(-PI_A2_F * 0.5, x);
-        x = qf.mul_add(-PI_B2_F * 0.5, x);
-        x = qf.mul_add(-PI_C2_F * 0.5, x);
+        x = qf.mla(-PI_A2_F * 0.5, x);
+        x = qf.mla(-PI_B2_F * 0.5, x);
+        x = qf.mla(-PI_C2_F * 0.5, x);
     } else if fabsfk(d) < TRIGRANGEMAX_F {
         let qf = rintfk(d * FRAC_2_PI);
         q = qf as i32;
-        x = qf.mul_add(-PI_A_F * 0.5, x);
-        x = qf.mul_add(-PI_B_F * 0.5, x);
-        x = qf.mul_add(-PI_C_F * 0.5, x);
-        x = qf.mul_add(-PI_D_F * 0.5, x);
+        x = qf.mla(-PI_A_F * 0.5, x);
+        x = qf.mla(-PI_B_F * 0.5, x);
+        x = qf.mla(-PI_C_F * 0.5, x);
+        x = qf.mla(-PI_D_F * 0.5, x);
     } else {
         let (dfidf, dfii) = rempif(d);
         q = dfii;
@@ -246,7 +246,7 @@ pub fn tanf(d: f32) -> f32 {
         0.333_331_853_151_321_411_132_812,
     );
 
-    u = s.mul_add(u * x, x);
+    u = s.mla(u * x, x);
 
     if (q & 1) != 0 {
         1. / u
@@ -276,16 +276,16 @@ pub fn sincospif(d: f32) -> (f32, f32) {
     let s = s * s;
 
     let mut rsin = (-0.360_092_526_5_e-4_f32)
-        .mul_add(s, 0.249_008_811_1_e-2)
-        .mul_add(s, -0.807_455_107_6_e-1)
-        .mul_add(s, 0.785_398_185_3)
+        .mla(s, 0.249_008_811_1_e-2)
+        .mla(s, -0.807_455_107_6_e-1)
+        .mla(s, 0.785_398_185_3)
         * t;
 
     let mut rcos = 0.353_981_522_5_e-5_f32
-        .mul_add(s, -0.325_957_400_5_e-3)
-        .mul_add(s, 0.158_543_158_3_e-1)
-        .mul_add(s, -0.308_425_128_5)
-        .mul_add(s, 1.);
+        .mla(s, -0.325_957_400_5_e-3)
+        .mla(s, 0.158_543_158_3_e-1)
+        .mla(s, -0.308_425_128_5)
+        .mla(s, 1.);
 
     if (q & 2) != 0 {
         core::mem::swap(&mut rcos, &mut rsin);
@@ -424,11 +424,11 @@ pub fn asinf(d: f32) -> f32 {
     let x = if o { fabsfk(d) } else { x2.sqrt() };
 
     let u = 0.419_745_482_5_e-1_f32
-        .mul_add(x2, 0.242_404_602_5_e-1)
-        .mul_add(x2, 0.454_742_386_9_e-1)
-        .mul_add(x2, 0.749_502_927_1_e-1)
-        .mul_add(x2, 0.166_667_729_6)
-        .mul_add(x * x2, x);
+        .mla(x2, 0.242_404_602_5_e-1)
+        .mla(x2, 0.454_742_386_9_e-1)
+        .mla(x2, 0.749_502_927_1_e-1)
+        .mla(x2, 0.166_667_729_6)
+        .mla(x * x2, x);
 
     let r = if o { u } else { FRAC_PI_2 - 2. * u };
     r.mul_sign(d)
@@ -450,10 +450,10 @@ pub fn acosf(d: f32) -> f32 {
     x = if fabsfk(d) == 1. { 0. } else { x };
 
     let mut u = 0.419_745_482_5_e-1_f32
-        .mul_add(x2, 0.242_404_602_5_e-1)
-        .mul_add(x2, 0.454_742_386_9_e-1)
-        .mul_add(x2, 0.749_502_927_1_e-1)
-        .mul_add(x2, 0.166_667_729_6);
+        .mla(x2, 0.242_404_602_5_e-1)
+        .mla(x2, 0.454_742_386_9_e-1)
+        .mla(x2, 0.749_502_927_1_e-1)
+        .mla(x2, 0.166_667_729_6);
 
     u *= x * x2;
 
@@ -529,8 +529,8 @@ fn expm1kf(d: f32) -> f32 {
     let qf = rintfk(d * R_LN2_F);
 
     let q = qf as i32;
-    let s = qf.mul_add(-L2U_F, d);
-    let s = qf.mul_add(-L2L_F, s);
+    let s = qf.mla(-L2U_F, d);
+    let s = qf.mla(-L2L_F, s);
 
     let s2 = s * s;
     let s4 = s2 * s2;
@@ -650,10 +650,10 @@ pub fn logf(mut d: f32) -> f32 {
     let x2 = x * x;
 
     let t = 0.239_282_846_450_805_664_062_5_f32
-        .mul_add(x2, 0.285_182_118_415_832_519_531_25)
-        .mul_add(x2, 0.400_005_877_017_974_853_515_625)
-        .mul_add(x2, 0.666_666_686_534_881_591_796_875)
-        .mul_add(x2, 2.);
+        .mla(x2, 0.285_182_118_415_832_519_531_25)
+        .mla(x2, 0.400_005_877_017_974_853_515_625)
+        .mla(x2, 0.666_666_686_534_881_591_796_875)
+        .mla(x2, 2.);
 
     if d == 0. {
         f32::NEG_INFINITY
@@ -691,10 +691,10 @@ pub fn log2f(mut d: f32) -> f32 {
     let x2 = x * x;
 
     let t = 0.437_408_834_7
-        .mul_add(x2, 0.576_484_382_2)
-        .mul_add(x2, 0.961_802_423);
+        .mla(x2, 0.576_484_382_2)
+        .mla(x2, 0.961_802_423);
 
-    let r = (x2 * x).mul_add(t, x.mul_add(0.288_539_004_3_e+1, e as f32));
+    let r = (x2 * x).mla(t, x.mla(0.288_539_004_3_e+1, e as f32));
 
     if d == 0. {
         f32::NEG_INFINITY
@@ -718,16 +718,16 @@ fn test_log2f() {
 pub fn exp10f(d: f32) -> f32 {
     let q = rintfk(d * LOG10_2_F);
 
-    let mut s = q.mul_add(-L10U_F, d);
-    s = q.mul_add(-L10L_F, s);
+    let mut s = q.mla(-L10U_F, d);
+    s = q.mla(-L10L_F, s);
 
     let mut u = 0.206_400_498_7
-        .mul_add(s, 0.541_787_743_6)
-        .mul_add(s, 0.117_128_682_1_e+1)
-        .mul_add(s, 0.203_465_604_8_e+1)
-        .mul_add(s, 0.265_094_876_3_e+1)
-        .mul_add(s, 0.230_258_512_5_e+1)
-        .mul_add(s, 0.1_e+1);
+        .mla(s, 0.541_787_743_6)
+        .mla(s, 0.117_128_682_1_e+1)
+        .mla(s, 0.203_465_604_8_e+1)
+        .mla(s, 0.265_094_876_3_e+1)
+        .mla(s, 0.230_258_512_5_e+1)
+        .mla(s, 0.1_e+1);
 
     u = ldexp2kf(u, q as i32);
 
@@ -754,12 +754,12 @@ pub fn exp2f(d: f32) -> f32 {
     let s = d - q;
 
     let mut u = 0.153_592_089_2_e-3
-        .mul_add(s, 0.133_926_270_1_e-2)
-        .mul_add(s, 0.961_838_476_4_e-2)
-        .mul_add(s, 0.555_034_726_9_e-1)
-        .mul_add(s, 0.240_226_447_6)
-        .mul_add(s, 0.693_147_182_5)
-        .mul_add(s, 0.1_e+1);
+        .mla(s, 0.133_926_270_1_e-2)
+        .mla(s, 0.961_838_476_4_e-2)
+        .mla(s, 0.555_034_726_9_e-1)
+        .mla(s, 0.240_226_447_6)
+        .mla(s, 0.693_147_182_5)
+        .mla(s, 0.1_e+1);
 
     u = ldexp2kf(u, q as i32);
 
@@ -839,11 +839,11 @@ pub fn cbrtf(mut d: f32) -> f32 {
     d = fabsfk(d);
 
     let x = (-0.601_564_466_953_277_587_890_625_f32)
-        .mul_add(d, 2.820_889_234_542_846_679_687_5)
-        .mul_add(d, -5.532_182_216_644_287_109_375)
-        .mul_add(d, 5.898_262_500_762_939_453_125)
-        .mul_add(d, -3.809_541_702_270_507_812_5)
-        .mul_add(d, 2.224_125_623_703_002_929_687_5);
+        .mla(d, 2.820_889_234_542_846_679_687_5)
+        .mla(d, -5.532_182_216_644_287_109_375)
+        .mla(d, 5.898_262_500_762_939_453_125)
+        .mla(d, -3.809_541_702_270_507_812_5)
+        .mla(d, 2.224_125_623_703_002_929_687_5);
 
     let y = d * x * x;
     (y - (2. / 3.) * y * (y * x - 1.)) * q

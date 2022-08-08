@@ -552,10 +552,10 @@ macro_rules! impl_math_f32 {
 
         impl MulAdd for F32x {
             #[inline]
-            fn mul_add(self, y: Self, z: Self) -> Self {
+            fn mla(self, y: Self, z: Self) -> Self {
                 if cfg!(target_feature = "fma") {
                     use std::simd::{StdFloat};
-                    <Self as StdFloat>::mul_add(self, y, z)
+                    self.mul_add(y, z)
                 } else {
                     self * y + z
                 }
@@ -567,7 +567,7 @@ macro_rules! impl_math_f32 {
             fn mul_sub(self, y: Self, z: Self) -> Self {
                 if cfg!(target_feature = "fma") {
                     use std::simd::{StdFloat};
-                    <Self as StdFloat>::mul_add(self, y, -z)
+                    self.mul_add(y, -z)
                 } else {
                     self * y - z
                 }
@@ -579,7 +579,7 @@ macro_rules! impl_math_f32 {
             fn neg_mul_add(self, y: Self, z: Self) -> Self {
                 if cfg!(target_feature = "fma") {
                     use std::simd::{StdFloat};
-                    <Self as StdFloat>::mul_add(-self, y, z)
+                    (-self).mul_add(y, z)
                 } else {
                     -self * y + z
                 }
@@ -777,12 +777,12 @@ macro_rules! impl_math_f32 {
                 let c = F1_23X.mul_sign(x);
                 let rint4x = (F32x::splat(4.) * x).abs().simd_gt(F1_23X).select(
                     (F32x::splat(4.) * x),
-                    (F32x::splat(4.).mul_add(x, c) - c).or_sign(x)
+                    (F32x::splat(4.).mla(x, c) - c).or_sign(x)
                 );
                 let rintx  = x.abs().simd_gt(F1_23X).select(x, ((x + c) - c).or_sign(x));
 
-                let fr = F32x::splat(-0.25).mul_add(rint4x, x);
-                let vi = F32x::splat(-4.).mul_add(rintx, rint4x).trunci();
+                let fr = F32x::splat(-0.25).mla(rint4x, x);
+                let vi = F32x::splat(-4.).mla(rintx, rint4x).trunci();
                 (fr, vi)
             }
         }
@@ -847,9 +847,9 @@ macro_rules! impl_math_f32 {
             s += q.cast::<f32>() * (-L2L_F);
 
             let u = F32x::splat(0.198_096_022_4_e-3)
-                .mul_add(s.0, F32x::splat(0.139_425_648_4_e-2))
-                .mul_add(s.0, F32x::splat(0.833_345_670_3_e-2))
-                .mul_add(s.0, F32x::splat(0.416_663_736_1_e-1));
+                .mla(s.0, F32x::splat(0.139_425_648_4_e-2))
+                .mla(s.0, F32x::splat(0.833_345_670_3_e-2))
+                .mla(s.0, F32x::splat(0.416_663_736_1_e-1));
 
             let mut t = s * u + F32x::splat(0.166_666_659_414_234_244_790_680_580_464);
             t = s * t + HALF;
@@ -1206,8 +1206,8 @@ macro_rules! impl_math_f32 {
 
             let u = o
                 .select_splat(-0.243_061_180_1_e-7, 0.309_384_205_4_e-6)
-                .mul_add(s, o.select_splat(0.359_057_708_e-5, -0.365_730_738_8_e-4))
-                .mul_add(s, o.select_splat(-0.325_991_772_1_e-3, 0.249_039_358_5_e-2));
+                .mla(s, o.select_splat(0.359_057_708_e-5, -0.365_730_738_8_e-4))
+                .mla(s, o.select_splat(-0.325_991_772_1_e-3, 0.249_039_358_5_e-2));
             let mut x = u * s
                 + o.select_doubled(
                     Doubled::new(
@@ -1259,8 +1259,8 @@ macro_rules! impl_math_f32 {
 
             let u = o
                 .select_splat(-0.243_061_180_1_e-7, 0.309_384_205_4_e-6)
-                .mul_add(s, o.select_splat(0.359_057_708_e-5, -0.365_730_738_8_e-4))
-                .mul_add(s, o.select_splat(-0.325_991_772_1_e-3, 0.249_039_358_5_e-2));
+                .mla(s, o.select_splat(0.359_057_708_e-5, -0.365_730_738_8_e-4))
+                .mla(s, o.select_splat(-0.325_991_772_1_e-3, 0.249_039_358_5_e-2));
             let mut x = u * s
                 + o.select_doubled(
                     Doubled::new(
@@ -1299,8 +1299,8 @@ macro_rules! impl_math_f32 {
         #[inline]
         fn expm1fk(d: F32x) -> F32x {
             let q = (d * R_LN2_F).roundi();
-            let s = q.cast::<f32>().mul_add(-L2U_F, d);
-            let s = q.cast::<f32>().mul_add(-L2L_F, s);
+            let s = q.cast::<f32>().mla(-L2U_F, d);
+            let s = q.cast::<f32>().mla(-L2L_F, s);
 
             let s2 = s * s;
             let s4 = s2 * s2;
@@ -1313,7 +1313,7 @@ macro_rules! impl_math_f32 {
                 0.166_666_671_633_720_397_949_219,
                 0.5);
 
-            let u = (s * s).mul_add(u, s);
+            let u = (s * s).mla(u, s);
 
             q.simd_eq(I32x::splat(0))
                 .select(u, ldexp2kf(u + ONE, q) - ONE)

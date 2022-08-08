@@ -483,8 +483,12 @@ impl BitsType for f32 {
 
 impl MulAdd for f32 {
     #[inline]
-    fn mul_add(self, y: Self, z: Self) -> Self {
-        self * y + z
+    fn mla(self, y: Self, z: Self) -> Self {
+        if cfg!(target_feature = "fma") {
+            self.mul_add(y, z)
+        } else {
+            self * y + z
+        }
     }
 }
 
@@ -672,9 +676,9 @@ fn expk2f(d: Doubled<f32>) -> Doubled<f32> {
     s += qf * -L2L_F;
 
     let u = 0.198_096_022_4_e-3_f32
-        .mul_add(s.0, 0.139_425_648_4_e-2)
-        .mul_add(s.0, 0.833_345_670_3_e-2)
-        .mul_add(s.0, 0.416_663_736_1_e-1);
+        .mla(s.0, 0.139_425_648_4_e-2)
+        .mla(s.0, 0.833_345_670_3_e-2)
+        .mla(s.0, 0.416_663_736_1_e-1);
 
     let mut t = s * u + 0.166_666_659_414_234_244_790_680_580_464;
     t = s * t + 0.5;
@@ -709,7 +713,7 @@ fn sinpifk(d: f32) -> Doubled<f32> {
     } else {
         0.309_384_205_4_e-6
     })
-    .mul_add(
+    .mla(
         s,
         if o {
             0.359_057_708_e-5
@@ -717,7 +721,7 @@ fn sinpifk(d: f32) -> Doubled<f32> {
             -0.365_730_738_8_e-4
         },
     )
-    .mul_add(
+    .mla(
         s,
         if o {
             -0.325_991_772_1_e-3
@@ -779,7 +783,7 @@ fn cospifk(d: f32) -> Doubled<f32> {
     } else {
         0.309_384_205_4_e-6
     })
-    .mul_add(
+    .mla(
         s,
         if o {
             0.359_057_708_e-5
@@ -787,7 +791,7 @@ fn cospifk(d: f32) -> Doubled<f32> {
             -0.365_730_738_8_e-4
         },
     )
-    .mul_add(
+    .mla(
         s,
         if o {
             -0.325_991_772_1_e-3

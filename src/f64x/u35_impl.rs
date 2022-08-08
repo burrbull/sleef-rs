@@ -13,21 +13,21 @@ macro_rules! impl_math_f64_u35 {
             if d.abs().simd_lt(TRIGRANGEMAX2).all() {
                 let dql = (d * FRAC_1_PI).round();
                 ql = dql.roundi();
-                d = dql.mul_add(-PI_A2, d);
-                d = dql.mul_add(-PI_B2, d);
+                d = dql.mla(-PI_A2, d);
+                d = dql.mla(-PI_B2, d);
             } else if d.abs().simd_lt(TRIGRANGEMAX).all() {
                 let dqh = (d * (FRAC_1_PI / D1_24X)).trunc();
                 let dqh = dqh * D1_24X;
                 let dql = d.mul_sub(FRAC_1_PI, dqh).round();
                 ql = dql.roundi();
 
-                d = dqh.mul_add(-PI_A, d);
-                d = dql.mul_add(-PI_A, d);
-                d = dqh.mul_add(-PI_B, d);
-                d = dql.mul_add(-PI_B, d);
-                d = dqh.mul_add(-PI_C, d);
-                d = dql.mul_add(-PI_C, d);
-                d = (dqh + dql).mul_add(-PI_D, d);
+                d = dqh.mla(-PI_A, d);
+                d = dql.mla(-PI_A, d);
+                d = dqh.mla(-PI_B, d);
+                d = dql.mla(-PI_B, d);
+                d = dqh.mla(-PI_C, d);
+                d = dql.mla(-PI_C, d);
+                d = (dqh + dql).mla(-PI_D, d);
             } else {
                 let (mut ddidd, ddii) = rempi(d);
                 ql = ddii & Ix::splat(3);
@@ -64,7 +64,7 @@ macro_rules! impl_math_f64_u35 {
                 2.755_731_922_391_987_476_304_16_e-6,
                 -0.000_198_412_698_412_696_162_806_809,
                 0.008_333_333_333_333_329_748_238_15)
-                .mul_add(s, F64x::splat(-0.166_666_666_666_666_657_414_808));
+                .mla(s, F64x::splat(-0.166_666_666_666_666_657_414_808));
 
             u = s * (u * d) + d;
 
@@ -85,8 +85,8 @@ macro_rules! impl_math_f64_u35 {
 
             let dql = (d * FRAC_1_PI).round();
             let mut ql = dql.roundi();
-            d = dql.mul_add(-PI_A2, d);
-            d = dql.mul_add(-PI_B2, d);
+            d = dql.mla(-PI_A2, d);
+            d = dql.mla(-PI_B2, d);
             let g = r.abs().simd_lt(TRIGRANGEMAX2);
 
             if !g.all() {
@@ -94,13 +94,13 @@ macro_rules! impl_math_f64_u35 {
                 dqh *= D1_24X;
                 let dql = r.mul_sub(FRAC_1_PI, dqh).round();
 
-                let mut u = dqh.mul_add(-PI_A, r);
-                u = dql.mul_add(-PI_A, u);
-                u = dqh.mul_add(-PI_B, u);
-                u = dql.mul_add(-PI_B, u);
-                u = dqh.mul_add(-PI_C, u);
-                u = dql.mul_add(-PI_C, u);
-                u = (dqh + dql).mul_add(-PI_D, u);
+                let mut u = dqh.mla(-PI_A, r);
+                u = dql.mla(-PI_A, u);
+                u = dqh.mla(-PI_B, u);
+                u = dql.mla(-PI_B, u);
+                u = dqh.mla(-PI_C, u);
+                u = dql.mla(-PI_C, u);
+                u = (dqh + dql).mla(-PI_D, u);
 
                 ql = g.cast().select(ql, dql.roundi());
                 d = g.select(d, u);
@@ -145,7 +145,7 @@ macro_rules! impl_math_f64_u35 {
                 2.755_731_922_391_987_476_304_16_e-6,
                 -0.000_198_412_698_412_696_162_806_809,
                 0.008_333_333_333_333_329_748_238_15)
-                .mul_add(s, F64x::splat(-0.166_666_666_666_666_657_414_808));
+                .mla(s, F64x::splat(-0.166_666_666_666_666_657_414_808));
 
             u = s * (u * d) + d;
 
@@ -178,26 +178,26 @@ macro_rules! impl_math_f64_u35 {
 
             if d.abs().simd_lt(TRIGRANGEMAX2).all() {
                 let dql =
-                    F64x::splat(2.).mul_add(d.mul_add(FRAC_1_PI, F64x::splat(-0.5)).round(), ONE);
+                    F64x::splat(2.).mla(d.mla(FRAC_1_PI, F64x::splat(-0.5)).round(), ONE);
                 ql = dql.roundi();
-                d = dql.mul_add(-PI_A2 * HALF, d);
-                d = dql.mul_add(-PI_B2 * HALF, d);
+                d = dql.mla(-PI_A2 * HALF, d);
+                d = dql.mla(-PI_B2 * HALF, d);
             } else if d.abs().simd_lt(TRIGRANGEMAX).all() {
                 let dqh = d
-                    .mul_add(FRAC_1_PI / D1_23X, -FRAC_1_PI / D1_24X)
+                    .mla(FRAC_1_PI / D1_23X, -FRAC_1_PI / D1_24X)
                     .trunc();
-                ql = (d * FRAC_1_PI + dqh.mul_add(-D1_23X, F64x::splat(-0.5))).roundi();
+                ql = (d * FRAC_1_PI + dqh.mla(-D1_23X, F64x::splat(-0.5))).roundi();
                 let dqh = dqh * D1_24X;
                 ql = ql + ql + Ix::splat(1);
                 let dql: F64x = ql.cast();
 
-                d = dqh.mul_add(-PI_A * HALF, d);
-                d = dql.mul_add(-PI_A * HALF, d);
-                d = dqh.mul_add(-PI_B * HALF, d);
-                d = dql.mul_add(-PI_B * HALF, d);
-                d = dqh.mul_add(-PI_C * HALF, d);
-                d = dql.mul_add(-PI_C * HALF, d);
-                d = (dqh + dql).mul_add(-PI_D * HALF, d);
+                d = dqh.mla(-PI_A * HALF, d);
+                d = dql.mla(-PI_A * HALF, d);
+                d = dqh.mla(-PI_B * HALF, d);
+                d = dql.mla(-PI_B * HALF, d);
+                d = dqh.mla(-PI_C * HALF, d);
+                d = dql.mla(-PI_C * HALF, d);
+                d = (dqh + dql).mla(-PI_D * HALF, d);
             } else {
                 let (mut ddidd, ddii) = rempi(d);
                 ql = ddii & Ix::splat(3);
@@ -235,7 +235,7 @@ macro_rules! impl_math_f64_u35 {
                 2.755_731_922_391_987_476_304_16_e-6,
                 -0.000_198_412_698_412_696_162_806_809,
                 0.008_333_333_333_333_329_748_238_15)
-                .mul_add(s, F64x::splat(-0.166_666_666_666_666_657_414_808));
+                .mla(s, F64x::splat(-0.166_666_666_666_666_657_414_808));
 
             s * (u * d) + d
         }
@@ -250,25 +250,25 @@ macro_rules! impl_math_f64_u35 {
             let r = d;
 
             let g = d.abs().simd_lt(TRIGRANGEMAX2);
-            let dql = F64x::splat(2.).mul_add((d.mul_add(FRAC_1_PI, F64x::splat(-0.5))).round(), ONE);
+            let dql = F64x::splat(2.).mla((d.mla(FRAC_1_PI, F64x::splat(-0.5))).round(), ONE);
             let mut ql = dql.roundi();
-            d = dql.mul_add(-PI_A2 * HALF, d);
-            d = dql.mul_add(-PI_B2 * HALF, d);
+            d = dql.mla(-PI_A2 * HALF, d);
+            d = dql.mla(-PI_B2 * HALF, d);
 
             if !g.all() {
-                let mut dqh = (r.mul_add(FRAC_1_PI / D1_23X, -FRAC_1_PI / D1_24X)).trunc();
-                let mut ql2 = (r * FRAC_1_PI + dqh.mul_add(-D1_23X, F64x::splat(-0.5))).roundi();
+                let mut dqh = (r.mla(FRAC_1_PI / D1_23X, -FRAC_1_PI / D1_24X)).trunc();
+                let mut ql2 = (r * FRAC_1_PI + dqh.mla(-D1_23X, F64x::splat(-0.5))).roundi();
                 dqh *= D1_24X;
                 ql2 = ql2 + ql2 + Ix::splat(1);
                 let dql: F64x = ql2.cast();
 
-                let mut u = dqh.mul_add(-PI_A * HALF, r);
-                u = dql.mul_add(-PI_A * HALF, u);
-                u = dqh.mul_add(-PI_B * HALF, u);
-                u = dql.mul_add(-PI_B * HALF, u);
-                u = dqh.mul_add(-PI_C * HALF, u);
-                u = dql.mul_add(-PI_C * HALF, u);
-                u = (dqh + dql).mul_add(-PI_D * HALF, u);
+                let mut u = dqh.mla(-PI_A * HALF, r);
+                u = dql.mla(-PI_A * HALF, u);
+                u = dqh.mla(-PI_B * HALF, u);
+                u = dql.mla(-PI_B * HALF, u);
+                u = dqh.mla(-PI_C * HALF, u);
+                u = dql.mla(-PI_C * HALF, u);
+                u = (dqh + dql).mla(-PI_D * HALF, u);
 
                 ql = g.cast().select(ql, ql2);
                 d = g.select(d, u);
@@ -314,7 +314,7 @@ macro_rules! impl_math_f64_u35 {
                 2.755_731_922_391_987_476_304_16_e-6,
                 -0.000_198_412_698_412_696_162_806_809,
                 0.008_333_333_333_333_329_748_238_15)
-                .mul_add(s, F64x::splat(-0.166_666_666_666_666_657_414_808));
+                .mla(s, F64x::splat(-0.166_666_666_666_666_657_414_808));
 
             s * (u * d) + d
         }
@@ -348,21 +348,21 @@ macro_rules! impl_math_f64_u35 {
             if d.abs().simd_lt(TRIGRANGEMAX2).all() {
                 let dql = (d * FRAC_2_PI).round();
                 ql = dql.roundi();
-                s = dql.mul_add(-PI_A2 * HALF, d);
-                s = dql.mul_add(-PI_B2 * HALF, s);
+                s = dql.mla(-PI_A2 * HALF, d);
+                s = dql.mla(-PI_B2 * HALF, s);
             } else if d.abs().simd_lt(TRIGRANGEMAX).all() {
                 let dqh = (d * (FRAC_2_PI / D1_24X)).trunc();
                 let dqh = dqh * D1_24X;
                 let dql = (d * FRAC_2_PI - dqh).round();
                 ql = dql.roundi();
 
-                s = dqh.mul_add(-PI_A * HALF, d);
-                s = dql.mul_add(-PI_A * HALF, s);
-                s = dqh.mul_add(-PI_B * HALF, s);
-                s = dql.mul_add(-PI_B * HALF, s);
-                s = dqh.mul_add(-PI_C * HALF, s);
-                s = dql.mul_add(-PI_C * HALF, s);
-                s = (dqh + dql).mul_add(-PI_D * HALF, s);
+                s = dqh.mla(-PI_A * HALF, d);
+                s = dql.mla(-PI_A * HALF, s);
+                s = dqh.mla(-PI_B * HALF, s);
+                s = dql.mla(-PI_B * HALF, s);
+                s = dqh.mla(-PI_C * HALF, s);
+                s = dql.mla(-PI_C * HALF, s);
+                s = (dqh + dql).mla(-PI_D * HALF, s);
             } else {
                 let (ddidd, ddii) = rempi(d);
                 ql = ddii;
@@ -375,24 +375,24 @@ macro_rules! impl_math_f64_u35 {
             s = s * s;
 
             let u = F64x::splat(1.589_383_072_832_289_373_285_11_e-10)
-                .mul_add(s, F64x::splat(-2.505_069_435_025_397_733_493_18_e-8))
-                .mul_add(s, F64x::splat(2.755_731_317_768_463_605_125_47_e-6))
-                .mul_add(s, F64x::splat(-0.000_198_412_698_278_911_770_864_914))
-                .mul_add(s, F64x::splat(0.008_333_333_333_319_184_596_174_6))
-                .mul_add(s, F64x::splat(-0.166_666_666_666_666_130_709_393));
+                .mla(s, F64x::splat(-2.505_069_435_025_397_733_493_18_e-8))
+                .mla(s, F64x::splat(2.755_731_317_768_463_605_125_47_e-6))
+                .mla(s, F64x::splat(-0.000_198_412_698_278_911_770_864_914))
+                .mla(s, F64x::splat(0.008_333_333_333_319_184_596_174_6))
+                .mla(s, F64x::splat(-0.166_666_666_666_666_130_709_393));
 
-            let rx = (u * s).mul_add(t, t);
+            let rx = (u * s).mla(t, t);
             let rx = d.is_neg_zero().select(NEG_ZERO, rx);
 
             let u = F64x::splat(-1.136_153_502_390_974_295_315_23_e-11)
-                .mul_add(s, F64x::splat(2.087_574_712_070_400_554_793_66_e-9))
-                .mul_add(s, F64x::splat(-2.755_731_440_288_475_674_985_67_e-7))
-                .mul_add(s, F64x::splat(2.480_158_728_900_018_673_119_15_e-5))
-                .mul_add(s, F64x::splat(-0.001_388_888_888_887_140_192_823_29))
-                .mul_add(s, F64x::splat(0.041_666_666_666_666_551_959_206_2))
-                .mul_add(s, F64x::splat(-0.5));
+                .mla(s, F64x::splat(2.087_574_712_070_400_554_793_66_e-9))
+                .mla(s, F64x::splat(-2.755_731_440_288_475_674_985_67_e-7))
+                .mla(s, F64x::splat(2.480_158_728_900_018_673_119_15_e-5))
+                .mla(s, F64x::splat(-0.001_388_888_888_887_140_192_823_29))
+                .mla(s, F64x::splat(0.041_666_666_666_666_551_959_206_2))
+                .mla(s, F64x::splat(-0.5));
 
-            let ry = s.mul_add(u, ONE);
+            let ry = s.mla(u, ONE);
 
             let o = (ql & Ix::splat(1)).simd_eq(Ix::splat(0)).cast();
             let mut rsin = o.select(rx, ry);
@@ -422,8 +422,8 @@ macro_rules! impl_math_f64_u35 {
 
             let dql = (s * FRAC_2_PI).round();
             let mut ql = dql.roundi();
-            s = dql.mul_add(-PI_A2 * HALF, s);
-            s = dql.mul_add(-PI_B2 * HALF, s);
+            s = dql.mla(-PI_A2 * HALF, s);
+            s = dql.mla(-PI_B2 * HALF, s);
             let g = d.abs().simd_lt(TRIGRANGEMAX2);
 
             if !g.all() {
@@ -431,13 +431,13 @@ macro_rules! impl_math_f64_u35 {
                 dqh *= D1_24X;
                 let dql = (d * FRAC_2_PI - dqh).round();
 
-                let mut u = dqh.mul_add(-PI_A * HALF, d);
-                u = dql.mul_add(-PI_A * HALF, u);
-                u = dqh.mul_add(-PI_B * HALF, u);
-                u = dql.mul_add(-PI_B * HALF, u);
-                u = dqh.mul_add(-PI_C * HALF, u);
-                u = dql.mul_add(-PI_C * HALF, u);
-                u = (dqh + dql).mul_add(-PI_D * HALF, u);
+                let mut u = dqh.mla(-PI_A * HALF, d);
+                u = dql.mla(-PI_A * HALF, u);
+                u = dqh.mla(-PI_B * HALF, u);
+                u = dql.mla(-PI_B * HALF, u);
+                u = dqh.mla(-PI_C * HALF, u);
+                u = dql.mla(-PI_C * HALF, u);
+                u = (dqh + dql).mla(-PI_D * HALF, u);
 
                 ql = g.cast().select(ql, dql.roundi());
                 s = g.select(s, u);
@@ -458,24 +458,24 @@ macro_rules! impl_math_f64_u35 {
             s = s * s;
 
             let u = F64x::splat(1.589_383_072_832_289_373_285_11_e-10)
-                .mul_add(s, F64x::splat(-2.505_069_435_025_397_733_493_18_e-8))
-                .mul_add(s, F64x::splat(2.755_731_317_768_463_605_125_47_e-6))
-                .mul_add(s, F64x::splat(-0.000_198_412_698_278_911_770_864_914))
-                .mul_add(s, F64x::splat(0.008_333_333_333_319_184_596_174_6))
-                .mul_add(s, F64x::splat(-0.166_666_666_666_666_130_709_393));
+                .mla(s, F64x::splat(-2.505_069_435_025_397_733_493_18_e-8))
+                .mla(s, F64x::splat(2.755_731_317_768_463_605_125_47_e-6))
+                .mla(s, F64x::splat(-0.000_198_412_698_278_911_770_864_914))
+                .mla(s, F64x::splat(0.008_333_333_333_319_184_596_174_6))
+                .mla(s, F64x::splat(-0.166_666_666_666_666_130_709_393));
 
-            let mut rx = (u * s).mul_add(t, t);
+            let mut rx = (u * s).mla(t, t);
             rx = d.is_neg_zero().select(NEG_ZERO, rx);
 
             let u = F64x::splat(-1.136_153_502_390_974_295_315_23_e-11)
-                .mul_add(s, F64x::splat(2.087_574_712_070_400_554_793_66_e-9))
-                .mul_add(s, F64x::splat(-2.755_731_440_288_475_674_985_67_e-7))
-                .mul_add(s, F64x::splat(2.480_158_728_900_018_673_119_15_e-5))
-                .mul_add(s, F64x::splat(-0.001_388_888_888_887_140_192_823_29))
-                .mul_add(s, F64x::splat(0.041_666_666_666_666_551_959_206_2))
-                .mul_add(s, F64x::splat(-0.5));
+                .mla(s, F64x::splat(2.087_574_712_070_400_554_793_66_e-9))
+                .mla(s, F64x::splat(-2.755_731_440_288_475_674_985_67_e-7))
+                .mla(s, F64x::splat(2.480_158_728_900_018_673_119_15_e-5))
+                .mla(s, F64x::splat(-0.001_388_888_888_887_140_192_823_29))
+                .mla(s, F64x::splat(0.041_666_666_666_666_551_959_206_2))
+                .mla(s, F64x::splat(-0.5));
 
-            let ry = s.mul_add(u, ONE);
+            let ry = s.mla(u, ONE);
 
             let o = (ql & Ix::splat(1)).simd_eq(Ix::splat(0)).cast();
             let mut rsin = o.select(rx, ry);
@@ -526,21 +526,21 @@ macro_rules! impl_math_f64_u35 {
             if d.abs().simd_lt(TRIGRANGEMAX2).all() {
                 let dql = (d * FRAC_2_PI).round();
                 ql = dql.roundi();
-                x = dql.mul_add(-PI_A2 * HALF, d);
-                x = dql.mul_add(-PI_B2 * HALF, x);
+                x = dql.mla(-PI_A2 * HALF, d);
+                x = dql.mla(-PI_B2 * HALF, x);
             } else if d.abs().simd_lt(F64x::splat(1e+6)).all() {
                 let dqh = (d * (FRAC_2_PI / D1_24X)).trunc();
                 let dqh = dqh * D1_24X;
                 let dql = (d * FRAC_2_PI - dqh).round();
                 ql = dql.roundi();
 
-                x = dqh.mul_add(-PI_A * HALF, d);
-                x = dql.mul_add(-PI_A * HALF, x);
-                x = dqh.mul_add(-PI_B * HALF, x);
-                x = dql.mul_add(-PI_B * HALF, x);
-                x = dqh.mul_add(-PI_C * HALF, x);
-                x = dql.mul_add(-PI_C * HALF, x);
-                x = (dqh + dql).mul_add(-PI_D * HALF, x);
+                x = dqh.mla(-PI_A * HALF, d);
+                x = dql.mla(-PI_A * HALF, x);
+                x = dqh.mla(-PI_B * HALF, x);
+                x = dql.mla(-PI_B * HALF, x);
+                x = dqh.mla(-PI_C * HALF, x);
+                x = dql.mla(-PI_C * HALF, x);
+                x = (dqh + dql).mla(-PI_D * HALF, x);
             } else {
                 let (ddidd, ddii) = rempi(d);
                 ql = ddii;
@@ -564,10 +564,10 @@ macro_rules! impl_math_f64_u35 {
                 0.218_694_872_818_553_549_8_e-1,
                 0.539_682_539_951_727_297_e-1,
                 0.133_333_333_333_050_058_1)
-                .mul_add(s, F64x::splat(0.333_333_333_333_334_369_5));
-            u = s.mul_add(u * x, x);
+                .mla(s, F64x::splat(0.333_333_333_333_334_369_5));
+            u = s.mla(u * x, x);
 
-            let y = u.mul_add(u, -ONE);
+            let y = u.mla(u, -ONE);
             x = u * F64x::splat(-2.);
 
             let o = (ql & Ix::splat(1)).simd_eq(Ix::splat(1)).cast();
@@ -585,8 +585,8 @@ macro_rules! impl_math_f64_u35 {
         pub fn tan_deterministic(d: F64x) -> F64x {
             let dql = (d * FRAC_2_PI).round();
             let mut ql = dql.roundi();
-            let mut s = dql.mul_add(-PI_A2 * HALF, d);
-            s = dql.mul_add(-PI_B2 * HALF, s);
+            let mut s = dql.mla(-PI_A2 * HALF, d);
+            s = dql.mla(-PI_B2 * HALF, s);
             let g = d.abs().simd_lt(TRIGRANGEMAX2);
 
             if !g.all() {
@@ -594,13 +594,13 @@ macro_rules! impl_math_f64_u35 {
                 dqh *= D1_24X;
                 let dql = (d * FRAC_2_PI - dqh).round();
 
-                let mut u = dqh.mul_add(-PI_A * HALF, d);
-                u = dql.mul_add(-PI_A * HALF, u);
-                u = dqh.mul_add(-PI_B * HALF, u);
-                u = dql.mul_add(-PI_B * HALF, u);
-                u = dqh.mul_add(-PI_C * HALF, u);
-                u = dql.mul_add(-PI_C * HALF, u);
-                u = (dqh + dql).mul_add(-PI_D * HALF, u);
+                let mut u = dqh.mla(-PI_A * HALF, d);
+                u = dql.mla(-PI_A * HALF, u);
+                u = dqh.mla(-PI_B * HALF, u);
+                u = dql.mla(-PI_B * HALF, u);
+                u = dqh.mla(-PI_C * HALF, u);
+                u = dql.mla(-PI_C * HALF, u);
+                u = (dqh + dql).mla(-PI_D * HALF, u);
 
                 ql = g.cast().select(ql, dql.roundi());
                 s = g.select(s, u);
@@ -632,10 +632,10 @@ macro_rules! impl_math_f64_u35 {
                 0.218_694_872_818_553_549_8_e-1,
                 0.539_682_539_951_727_297_e-1,
                 0.133_333_333_333_050_058_1)
-                .mul_add(s, F64x::splat(0.333_333_333_333_334_369_5));
-            u = s.mul_add(u * x, x);
+                .mla(s, F64x::splat(0.333_333_333_333_334_369_5));
+            u = s.mla(u * x, x);
 
-            let y = u.mul_add(u, -ONE);
+            let y = u.mla(u, -ONE);
             let x = u * F64x::splat(-2.);
 
             let o = (ql & Ix::splat(1)).simd_eq(Ix::splat(1)).cast();
@@ -678,23 +678,23 @@ macro_rules! impl_math_f64_u35 {
             //
 
             let u = F64x::splat(0.688_063_889_476_606_013_6_e-11)
-                .mul_add(s, F64x::splat(-0.175_715_956_454_231_019_9_e-8))
-                .mul_add(s, F64x::splat(0.313_361_632_725_786_731_1_e-6))
-                .mul_add(s, F64x::splat(-0.365_762_041_638_848_645_2_e-4))
-                .mul_add(s, F64x::splat(0.249_039_457_018_993_210_3_e-2))
-                .mul_add(s, F64x::splat(-0.807_455_121_882_805_632_e-1))
-                .mul_add(s, F64x::splat(0.785_398_163_397_448_279));
+                .mla(s, F64x::splat(-0.175_715_956_454_231_019_9_e-8))
+                .mla(s, F64x::splat(0.313_361_632_725_786_731_1_e-6))
+                .mla(s, F64x::splat(-0.365_762_041_638_848_645_2_e-4))
+                .mla(s, F64x::splat(0.249_039_457_018_993_210_3_e-2))
+                .mla(s, F64x::splat(-0.807_455_121_882_805_632_e-1))
+                .mla(s, F64x::splat(0.785_398_163_397_448_279));
 
             let rx = u * t;
 
             let u = F64x::splat(-0.386_014_121_368_379_435_2_e-12)
-                .mul_add(s, F64x::splat(0.115_005_788_802_968_141_5_e-9))
-                .mul_add(s, F64x::splat(-0.246_113_649_300_666_355_3_e-7))
-                .mul_add(s, F64x::splat(0.359_086_044_662_351_671_3_e-5))
-                .mul_add(s, F64x::splat(-0.325_991_886_926_943_594_2_e-3))
-                .mul_add(s, F64x::splat(0.158_543_442_438_154_116_9_e-1))
-                .mul_add(s, F64x::splat(-0.308_425_137_534_042_437_3))
-                .mul_add(s, ONE);
+                .mla(s, F64x::splat(0.115_005_788_802_968_141_5_e-9))
+                .mla(s, F64x::splat(-0.246_113_649_300_666_355_3_e-7))
+                .mla(s, F64x::splat(0.359_086_044_662_351_671_3_e-5))
+                .mla(s, F64x::splat(-0.325_991_886_926_943_594_2_e-3))
+                .mla(s, F64x::splat(0.158_543_442_438_154_116_9_e-1))
+                .mla(s, F64x::splat(-0.308_425_137_534_042_437_3))
+                .mla(s, ONE);
 
             let ry = u;
 
@@ -782,8 +782,8 @@ macro_rules! impl_math_f64_u35 {
                 -0.333_333_333_333_311_110_369_124,
             );
 
-            t = s.mul_add(t * u, s);
-            q.cast::<f64>().mul_add(FRAC_PI_2, t)
+            t = s.mla(t * u, s);
+            q.cast::<f64>().mla(FRAC_PI_2, t)
         }
 
         /// Arc tangent function of two variables
@@ -849,9 +849,9 @@ macro_rules! impl_math_f64_u35 {
                 0.750_000_000_037_858_161_1_e-1,
                 0.166_666_666_666_649_754_3);
 
-            u = u.mul_add(x * x2, x);
+            u = u.mla(x * x2, x);
 
-            let r = o.select(u, u.mul_add(F64x::splat(-2.), FRAC_PI_2));
+            let r = o.select(u, u.mla(F64x::splat(-2.), FRAC_PI_2));
             r.mul_sign(d)
         }
 
@@ -958,7 +958,7 @@ macro_rules! impl_math_f64_u35 {
                 0.199_999_999_996_591_265_594_148,
                 -0.333_333_333_333_311_110_369_124);
 
-            t = s.mul_add(t * u, s);
+            t = s.mla(t * u, s);
 
             t = (q & Ix::splat(1)).simd_eq(Ix::splat(1)).cast().select(FRAC_PI_2 - t, t);
             t = F64x::from_bits(
@@ -989,8 +989,8 @@ macro_rules! impl_math_f64_u35 {
             let mut u = (d * R_LN2).round();
             let q = u.roundi();
 
-            let s = u.mul_add(-L2_U, d);
-            let s = u.mul_add(-L2_L, s);
+            let s = u.mla(-L2_U, d);
+            let s = u.mla(-L2_L, s);
 
             let s2 = s * s;
             let s4 = s2 * s2;
@@ -1013,7 +1013,7 @@ macro_rules! impl_math_f64_u35 {
                 0.166_666_666_666_666_851_703_837,
             );
 
-            u = s2.mul_add(HALF, s2 * s * u) + s;
+            u = s2.mla(HALF, s2 * s * u) + s;
 
             q.simd_eq(Ix::splat(0)).cast().select(u, ldexp2k(u + ONE, q) - ONE)
         }
@@ -1053,7 +1053,7 @@ macro_rules! impl_math_f64_u35 {
         /// or a correct value with `3.5 ULP` error bound is returned.
         pub fn cosh(x: F64x) -> F64x {
             let e = u10::exp(x.abs());
-            let mut y = HALF.mul_add(e, HALF / e);
+            let mut y = HALF.mla(e, HALF / e);
 
             y = (x.abs().simd_gt(F64x::splat(709.)) | y.is_nan()).select(INFINITY, y);
             F64x::from_bits(x.is_nan().to_int().cast() | y.to_bits())
@@ -1132,15 +1132,15 @@ macro_rules! impl_math_f64_u35 {
                 0.666_666_666_666_777_874_006_3);
 
             /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
-            x = x.mul_add(F64x::splat(2.), F64x::splat(0.693_147_180_559_945_286_226_764) * ef);
-            x = x3.mul_add(t, x);
+            x = x.mla(F64x::splat(2.), F64x::splat(0.693_147_180_559_945_286_226_764) * ef);
+            x = x3.mla(t, x);
 
             x = d.simd_eq(INFINITY).select(INFINITY, x);
             x = (d.simd_lt(ZERO) | d.is_nan()).select(NAN, x);
             d.simd_eq(ZERO).select(NEG_INFINITY, x)
             /* } else {
-                x = x.mul_add(F64x::splat(2.), F64x::splat(0.693_147_180_559_945_286_226_764) * ef);
-                x = x3.mul_add(t, x);
+                x = x.mla(F64x::splat(2.), F64x::splat(0.693_147_180_559_945_286_226_764) * ef);
+                x = x3.mla(t, x);
                 vfixup_vd_vd_vd_vi2_i(x, d, I64x::splat((5 << (5 * 4))), 0)
             }*/
         }
@@ -1174,12 +1174,12 @@ macro_rules! impl_math_f64_u35 {
             let x2 = x * x;
 
             let t = F64x::splat(0.221_194_175_045_608_149)
-                .mul_add(x2, F64x::splat(0.220_076_869_315_227_768_9))
-                .mul_add(x2, F64x::splat(0.262_370_805_748_851_465_6))
-                .mul_add(x2, F64x::splat(0.320_597_747_794_449_550_2))
-                .mul_add(x2, F64x::splat(0.412_198_594_548_532_470_9))
-                .mul_add(x2, F64x::splat(0.577_078_016_299_705_898_2))
-                .mul_add(x2, F64x::splat(0.961_796_693_926_080_914_49));
+                .mla(x2, F64x::splat(0.220_076_869_315_227_768_9))
+                .mla(x2, F64x::splat(0.262_370_805_748_851_465_6))
+                .mla(x2, F64x::splat(0.320_597_747_794_449_550_2))
+                .mla(x2, F64x::splat(0.412_198_594_548_532_470_9))
+                .mla(x2, F64x::splat(0.577_078_016_299_705_898_2))
+                .mla(x2, F64x::splat(0.961_796_693_926_080_914_49));
 
             let s = //if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")
             {
@@ -1188,7 +1188,7 @@ macro_rules! impl_math_f64_u35 {
                 e.add_checked(x.mul_as_doubled(F64x::splat(2.885_390_081_777_926_774)))
             */ };
 
-            let mut r = t.mul_add(x * x2, F64x::from(s));
+            let mut r = t.mla(x * x2, F64x::from(s));
 
             //if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {
             r = d.simd_eq(INFINITY).select(INFINITY, r);
@@ -1218,8 +1218,8 @@ macro_rules! impl_math_f64_u35 {
             let mut u = (d * LOG10_2).round();
             let q = u.roundi();
 
-            let mut s = u.mul_add(-L10_U, d);
-            s = u.mul_add(-L10_L, s);
+            let mut s = u.mla(-L10_U, d);
+            s = u.mla(-L10_L, s);
 
             let s2 = s * s;
             let s4 = s2 * s2;
@@ -1242,7 +1242,7 @@ macro_rules! impl_math_f64_u35 {
                 0.230_258_509_299_404_590_1_e+1,
             );
 
-            u = u.mul_add(s, ONE);
+            u = u.mla(s, ONE);
 
             u = ldexp2k(u, q);
 
@@ -1290,9 +1290,9 @@ macro_rules! impl_math_f64_u35 {
                 0.555_041_086_648_204_659_6_e-1,
                 0.240_226_506_959_101_221_4,
             );
-            u = u.mul_add(s, F64x::splat(0.693_147_180_559_945_286_2));
+            u = u.mla(s, F64x::splat(0.693_147_180_559_945_286_2));
 
-            u = u.mul_add(s, ONE);
+            u = u.mla(s, ONE);
 
             u = ldexp2k(u, q);
 
@@ -1344,17 +1344,17 @@ macro_rules! impl_math_f64_u35 {
             d = d.abs();
 
             let mut x = F64x::splat(-0.640_245_898_480_692_909_870_982)
-                .mul_add(d, F64x::splat(2.961_551_030_200_395_118_185_95))
-                .mul_add(d, F64x::splat(-5.733_530_609_229_478_436_361_66))
-                .mul_add(d, F64x::splat(6.039_903_689_894_587_479_614_07))
-                .mul_add(d, F64x::splat(-3.858_419_355_104_449_888_216_32))
-                .mul_add(d, F64x::splat(2.230_727_530_249_660_972_572_2));
+                .mla(d, F64x::splat(2.961_551_030_200_395_118_185_95))
+                .mla(d, F64x::splat(-5.733_530_609_229_478_436_361_66))
+                .mla(d, F64x::splat(6.039_903_689_894_587_479_614_07))
+                .mla(d, F64x::splat(-3.858_419_355_104_449_888_216_32))
+                .mla(d, F64x::splat(2.230_727_530_249_660_972_572_2));
 
             let mut y = x * x;
             y = y * y;
             x -= d.mul_sub(y, x) * F64x::splat(1. / 3.);
             y = d * x * x;
-            y = (y - F64x::splat(2. / 3.) * y * y.mul_add(x, F64x::splat(-1.))) * q;
+            y = (y - F64x::splat(2. / 3.) * y * y.mla(x, F64x::splat(-1.))) * q;
 
             /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
                 y = s.is_infinite().select(INFINITY.mul_sign(s), y);
@@ -1386,7 +1386,7 @@ macro_rules! impl_math_f64_u35 {
             let max = x.simd_max(y);
 
             let t = min / max;
-            let mut ret = max * t.mul_add(t, ONE).sqrt();
+            let mut ret = max * t.mla(t, ONE).sqrt();
             ret = min.simd_eq(ZERO).select(max, ret);
             ret = (x.is_nan() | y.is_nan()).select(NAN, ret);
             (x.simd_eq(INFINITY) | y.simd_eq(INFINITY)).select(INFINITY, ret)

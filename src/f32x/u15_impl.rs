@@ -25,7 +25,7 @@ macro_rules! impl_math_f32_u15 {
                 -0.386_950_403_5,
                 0.111_534_416_7_e+1,
             )
-            .mul_add(
+            .mla(
                 u.0,
                 F32x::select4(
                     o0,
@@ -37,7 +37,7 @@ macro_rules! impl_math_f32_u15 {
                     -0.945_490_419_9,
                 ),
             )
-            .mul_add(
+            .mla(
                 u.0,
                 F32x::select4(
                     o0,
@@ -49,7 +49,7 @@ macro_rules! impl_math_f32_u15 {
                     -0.366_725_951_4,
                 ),
             )
-            .mul_add(
+            .mla(
                 u.0,
                 F32x::select4(
                     o0,
@@ -61,7 +61,7 @@ macro_rules! impl_math_f32_u15 {
                     0.715_566_337_1,
                 ),
             )
-            .mul_add(
+            .mla(
                 u.0,
                 F32x::select4(
                     o0,

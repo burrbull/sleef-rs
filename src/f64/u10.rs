@@ -990,8 +990,8 @@ pub fn exp(d: f64) -> f64 {
     let qf = rintk(d * R_LN2);
     let q = qf as i32;
 
-    let s = qf.mul_add(-L2.0, d);
-    let s = qf.mul_add(-L2.1, s);
+    let s = qf.mul_add(-L2_U, d);
+    let s = qf.mul_add(-L2_L, s);
 
     let s2 = s * s;
     let s4 = s2 * s2;
@@ -1038,8 +1038,8 @@ fn test_exp() {
 pub fn exp10(d: f64) -> f64 {
     let q = rintk(d * LOG10_2) as i32;
     let qf = q as f64;
-    let s = qf.mul_add(-L10.0, d);
-    let s = qf.mul_add(-L10.1, s);
+    let s = qf.mul_add(-L10_U, d);
+    let s = qf.mul_add(-L10_L, s);
 
     let mut u = 0.241_146_349_833_426_765_2_e-3_f64
         .mul_add(s, 0.115_748_841_521_718_737_5_e-2)

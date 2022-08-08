@@ -804,8 +804,8 @@ fn test_log1pf() {
 pub fn expf(d: f32) -> f32 {
     let qf = rintfk(d * R_LN2_F);
     let q = qf as i32;
-    let s = qf.mul_add(-L2_F.0, d);
-    let s = qf.mul_add(-L2_F.1, s);
+    let s = qf.mul_add(-L2U_F, d);
+    let s = qf.mul_add(-L2L_F, s);
 
     let mut u = 0.000_198_527_617_612_853_646_278_381_f32
         .mul_add(s, 0.001_393_043_552_525_341_510_772_71)
@@ -838,8 +838,8 @@ pub fn exp10f(d: f32) -> f32 {
     let qf = rintfk(d * LOG10_2_F);
 
     let q = qf as i32;
-    let s = qf.mul_add(-L10_F.0, d);
-    let s = qf.mul_add(-L10_F.1, s);
+    let s = qf.mul_add(-L10U_F, d);
+    let s = qf.mul_add(-L10L_F, s);
 
     let mut u = 0.680_255_591_9_e-1
         .mul_add(s, 0.207_808_032_6)

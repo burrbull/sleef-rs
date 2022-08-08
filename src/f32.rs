@@ -24,10 +24,11 @@ pub(crate) const TRIGRANGEMAX2_F: f32 = 125.0;
 pub(crate) const SLEEF_FP_ILOGB0: i32 = -2_147_483_648;
 pub(crate) const SLEEF_FP_ILOGBNAN: i32 = 2_147_483_647;
 pub(crate) const SQRT_FLT_MAX: f32 = 18_446_743_523_953_729_536.;
-pub(crate) const L10_F: Doubled<f32> = Doubled::new(0.301_025_390_6, 4.605_038_981_e-6);
+pub(crate) const L10U_F: f32 = 0.301_025_390_6;
+pub(crate) const L10L_F: f32 = 4.605_038_981_e-6;
 pub(crate) const TRIGRANGEMAX4_F: f32 = 8e+6;
-pub(crate) const L2_F: Doubled<f32> =
-    Doubled::new(0.693_145_751_953_125, 1.428_606_765_330_187_045_e-6);
+pub(crate) const L2U_F: f32 = 0.693_145_751_953_125;
+pub(crate) const L2L_F: f32 = 1.428_606_765_330_187_045_e-6;
 pub(crate) const R_LN2_F: f32 =
     1.442_695_040_888_963_407_359_924_681_001_892_137_426_645_954_152_985_934_135_449_406_931;
 pub(crate) const LOG10_2_F: f32 = 3.321_928_094_887_362_347_870_319_429_489_390_175_864_831_393;
@@ -714,8 +715,8 @@ fn expkf(d: Doubled<f32>) -> f32 {
     let qf = rintfk(f32::from(d) * R_LN2_F);
 
     let q = qf as i32;
-    let mut s = d + qf * -L2_F.0;
-    s += qf * -L2_F.1;
+    let mut s = d + qf * -L2U_F;
+    s += qf * -L2L_F;
 
     s = s.normalize();
 
@@ -741,8 +742,8 @@ fn expm1kf(d: f32) -> f32 {
     let qf = rintfk(d * R_LN2_F);
 
     let q = qf as i32;
-    let s = qf.mul_add(-L2_F.0, d);
-    let s = qf.mul_add(-L2_F.1, s);
+    let s = qf.mul_add(-L2U_F, d);
+    let s = qf.mul_add(-L2L_F, s);
 
     let s2 = s * s;
     let s4 = s2 * s2;
@@ -802,8 +803,8 @@ fn expk2f(d: Doubled<f32>) -> Doubled<f32> {
     let qf = rintfk(f32::from(d) * R_LN2_F);
 
     let q = qf as i32;
-    let mut s = d + qf * -L2_F.0;
-    s += qf * -L2_F.1;
+    let mut s = d + qf * -L2U_F;
+    s += qf * -L2L_F;
 
     let u = 0.198_096_022_4_e-3_f32
         .mul_add(s.0, 0.139_425_648_4_e-2)
@@ -1623,8 +1624,8 @@ fn logk3f(mut d: f32) -> f32 {
 fn expk3f(d: f32) -> f32 {
     let q = rintfk(d * R_LN2_F);
 
-    let mut s = q.mul_add(-L2_F.0, d);
-    s = q.mul_add(-L2_F.1, s);
+    let mut s = q.mul_add(-L2U_F, d);
+    s = q.mul_add(-L2L_F, s);
 
     let mut u = 0.000_198_527_617_612_853_646_278_381
         .mul_add(s, 0.001_393_043_552_525_341_510_772_71)

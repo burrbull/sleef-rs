@@ -1145,8 +1145,8 @@ macro_rules! impl_math_f32_u10 {
         pub fn expf(d: F32x) -> F32x {
             let q = (d * R_LN2_F).roundi();
 
-            let s = q.cast::<f32>().mul_add(-L2_F.0, d);
-            let s = q.cast::<f32>().mul_add(-L2_F.1, s);
+            let s = q.cast::<f32>().mul_add(-L2U_F, d);
+            let s = q.cast::<f32>().mul_add(-L2L_F, s);
 
             let mut u = F32x::splat(0.000_198_527_617_612_853_646_278_381)
                 .mul_add(s, F32x::splat(0.001_393_043_552_525_341_510_772_71))
@@ -1181,8 +1181,8 @@ macro_rules! impl_math_f32_u10 {
             let mut u = (d * LOG10_2_F).round();
             let q = u.roundi();
 
-            let s = u.mul_add(-L10_F.0, d);
-            let s = u.mul_add(-L10_F.1, s);
+            let s = u.mul_add(-L10U_F, d);
+            let s = u.mul_add(-L10L_F, s);
 
             u = F32x::splat(0.680_255_591_9_e-1)
                 .mul_add(s, F32x::splat(0.207_808_032_6))

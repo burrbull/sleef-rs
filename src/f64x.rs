@@ -294,9 +294,11 @@ macro_rules! impl_math_f64 {
         const M_2_PI_H: F64x = splat(crate::f64::M_2_PI_H);
         const M_2_PI_L: F64x = splat(crate::f64::M_2_PI_L);
         const TRIGRANGEMAX3: F64x = splat(crate::f64::TRIGRANGEMAX3);
-        const L2: Doubled<F64x> = Doubled::<F64x>::splat(crate::f64::L2);
+        const L2_U: F64x = splat(crate::f64::L2_U);
+        const L2_L: F64x = splat(crate::f64::L2_L);
         const R_LN2: F64x = splat(crate::f64::R_LN2);
-        const L10: Doubled<F64x> = Doubled::<F64x>::splat(crate::f64::L10);
+        const L10_U: F64x = splat(crate::f64::L10_U);
+        const L10_L: F64x = splat(crate::f64::L10_L);
         const LOG10_2: F64x = splat(crate::f64::LOG10_2);
 
         mod u05 {
@@ -973,8 +975,8 @@ macro_rules! impl_math_f64 {
             let mut u = (d * R_LN2).round();
             let q = u.roundi();
 
-            let s = u.mul_add(-L2.0, d);
-            let s = u.mul_add(-L2.1, s);
+            let s = u.mul_add(-L2_U, d);
+            let s = u.mul_add(-L2_L, s);
 
             let s2 = s * s;
             let s4 = s2 * s2;
@@ -1058,8 +1060,8 @@ macro_rules! impl_math_f64 {
             let dq = u.round();
             let q = dq.roundi();
 
-            let mut s = d + dq * (-L2.0);
-            s += dq * (-L2.1);
+            let mut s = d + dq * (-L2_U);
+            s += dq * (-L2_L);
 
             s = s.normalize();
 
@@ -1099,7 +1101,7 @@ macro_rules! impl_math_f64 {
             let dq = u.round();
             let q = dq.roundi();
 
-            let s = d + dq * (-L2.0) + dq * (-L2.1);
+            let s = d + dq * (-L2_U) + dq * (-L2_L);
 
             let s2 = s.square();
             let s4 = s2.square();

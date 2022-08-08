@@ -20,16 +20,12 @@ pub(crate) const SQRT_DBL_MAX: f64 = 1.340_780_792_994_259_635_5_e+154;
 pub(crate) const M_2_PI_H: f64 = 0.636_619_772_367_581_382_43;
 pub(crate) const M_2_PI_L: f64 = -3.935_735_335_036_497_176_4_e-17;
 pub(crate) const TRIGRANGEMAX3: f64 = 1e+9;
-pub(crate) const L2: Doubled<f64> = Doubled::new(
-    0.693_147_180_559_662_956_511_601_805_686_950_683_593_75,
-    0.282_352_905_630_315_771_225_884_481_750_134_360_255_254_120_68_e-12,
-);
+pub(crate) const L2_U: f64 = 0.693_147_180_559_662_956_511_601_805_686_950_683_593_75;
+pub(crate) const L2_L: f64 = 0.282_352_905_630_315_771_225_884_481_750_134_360_255_254_120_68_e-12;
 pub(crate) const R_LN2: f64 =
     1.442_695_040_888_963_407_359_924_681_001_892_137_426_645_954_152_985_934_135_449_406_931;
-pub(crate) const L10: Doubled<f64> = Doubled::new(
-    0.301_029_995_663_839_144_98,
-    1.420_502_322_726_609_941_8_e-13,
-); // log 2 / log 10
+pub(crate) const L10_U: f64 = 0.301_029_995_663_839_144_98;
+pub(crate) const L10_L: f64 = 1.420_502_322_726_609_941_8_e-13; // log 2 / log 10
 pub(crate) const LOG10_2: f64 = 3.321_928_094_887_362_347_870_319_429_489_390_175_864_831_393;
 
 /*
@@ -950,8 +946,8 @@ fn cospik(d: f64) -> Doubled<f64> {
 fn expm1k(d: f64) -> f64 {
     let q = rintk(d * R_LN2);
 
-    let s = q.mul_add(-L2.0, d);
-    let s = q.mul_add(-L2.1, s);
+    let s = q.mul_add(-L2_U, d);
+    let s = q.mul_add(-L2_L, s);
 
     let s2 = s * s;
     let s4 = s2 * s2;
@@ -1036,7 +1032,7 @@ fn logk(mut d: f64) -> Doubled<f64> {
 fn expk(d: Doubled<f64>) -> f64 {
     let q = rintk(f64::from(d) * R_LN2);
 
-    let s = d + q * (-L2.0) + q * (-L2.1);
+    let s = d + q * (-L2_U) + q * (-L2_L);
 
     let s = s.normalize();
 
@@ -1077,7 +1073,7 @@ fn expk2(d: Doubled<f64>) -> Doubled<f64> {
     let qf = rintk(f64::from(d) * R_LN2);
     let q = qf as i32;
 
-    let s = d + qf * (-L2.0) + qf * (-L2.1);
+    let s = d + qf * (-L2_U) + qf * (-L2_L);
 
     let u = 0.160_247_221_970_993_207_2_e-9_f64
         .mul_add(s.0, 0.209_225_518_356_315_700_7_e-8)

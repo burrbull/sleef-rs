@@ -9,7 +9,7 @@ jobs:
   ci:
     name: CI
     runs-on: ubuntu-latest
-    needs: [build, test]
+    needs: [build, test, test-native]
     steps:
       - name: Done
         run: exit 0
@@ -58,6 +58,34 @@ jobs:
           toolchain: nightly
           profile: minimal
           override: true
+
+      - name: Print enabled target features
+        run: rustc --print=cfg -C target-cpu=native
+
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+
+  test-native:
+    name: Test
+    runs-on: ubuntu-latest
+    env:
+      RUST_BACKTRACE: 1
+      RUSTFLAGS: -C target-cpu=native
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          profile: minimal
+          override: true
+
+      - name: Print enabled target features
+        run: rustc --print=cfg -C target-cpu=native
 
       - uses: actions-rs/cargo@v1
         with:

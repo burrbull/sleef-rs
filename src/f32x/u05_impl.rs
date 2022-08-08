@@ -11,9 +11,8 @@ macro_rules! impl_math_f32_u05 {
         pub fn sincospif(d: F32x) -> (F32x, F32x) {
             let u = d * F32x::splat(4.);
             let q = u.trunci();
-            let q = (q + (I32x::from_bits(U32x::from_bits(q) >> 31) ^ I32x::splat(1)))
-                & I32x::splat(!1);
-            let s = u - F32x::from_cast(q);
+            let q = (q + ((q.cast() >> U32x::splat(31)).cast() ^ I32x::splat(1))) & I32x::splat(!1);
+            let s = u - q.cast();
 
             let t = s;
             let s = s * s;
@@ -55,27 +54,23 @@ macro_rules! impl_math_f32_u05 {
             x = x * s2 + ONE;
             let ry = F32x::from(x);
 
-            let o = (q & I32x::splat(2)).eq(I32x::splat(0));
+            let o = (q & I32x::splat(2)).simd_eq(I32x::splat(0));
             let mut rsin = o.select(rx, ry);
             let mut rcos = o.select(ry, rx);
 
-            let o = (q & I32x::splat(4)).eq(I32x::splat(4));
-            rsin = F32x::from_bits(
-                (U32x::from_bits(o) & U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(rsin),
-            );
+            let o = (q & I32x::splat(4)).simd_eq(I32x::splat(4));
+            rsin = F32x::from_bits((o.to_int().cast() & NEG_ZERO.to_bits()) ^ rsin.to_bits());
 
-            let o = ((q + I32x::splat(2)) & I32x::splat(4)).eq(I32x::splat(4));
-            rcos = F32x::from_bits(
-                (U32x::from_bits(o) & U32x::from_bits(NEG_ZERO)) ^ U32x::from_bits(rcos),
-            );
+            let o = ((q + I32x::splat(2)) & I32x::splat(4)).simd_eq(I32x::splat(4));
+            rcos = F32x::from_bits((o.to_int().cast() & NEG_ZERO.to_bits()) ^ rcos.to_bits());
 
-            let o = d.abs().gt(F32x::splat(1e+7));
-            rsin = F32x::from_bits(!U32x::from_bits(o) & U32x::from_bits(rsin));
-            rcos = F32x::from_bits(!U32x::from_bits(o) & U32x::from_bits(rcos));
+            let o = d.abs().simd_gt(F32x::splat(1e+7));
+            rsin = F32x::from_bits(!o.to_int().cast::<u32>() & rsin.to_bits());
+            rcos = F32x::from_bits(!o.to_int().cast::<u32>() & rcos.to_bits());
 
             let o = d.is_infinite();
-            rsin = F32x::from_bits(U32x::from_bits(o) | U32x::from_bits(rsin));
-            rcos = F32x::from_bits(U32x::from_bits(o) | U32x::from_bits(rcos));
+            rsin = F32x::from_bits(o.to_int().cast() | rsin.to_bits());
+            rcos = F32x::from_bits(o.to_int().cast() | rcos.to_bits());
 
             (rsin, rcos)
         }
@@ -138,19 +133,20 @@ macro_rules! impl_math_f32_u05 {
             #else
             */
 
-            let d = d.lt(ZERO).select(F32x::NAN, d);
+            let d = d.simd_lt(ZERO).select(NAN, d);
 
-            let o = d.lt(F32x::splat(5.293_955_920_339_377_e-23));
+            let o = d.simd_lt(F32x::splat(5.293_955_920_339_377_e-23));
             let d = o.select(d * F32x::splat(1.888_946_593_147_858_e+22), d);
             let q = o.select(F32x::splat(7.275_957_614_183_426_e-12 * 0.5), HALF);
 
-            let o = d.gt(F32x::splat(1.844_674_407_370_955_2_e+19));
+            let o = d.simd_gt(F32x::splat(1.844_674_407_370_955_2_e+19));
             let d = o.select(d * F32x::splat(5.421_010_862_427_522_e-20), d);
             let q = o.select(F32x::splat(4_294_967_296.0 * 0.5), q);
 
             let mut x = F32x::from_bits(
-                I32x::splat(0x_5f37_5a86)
-                    - I32x::from_bits(U32x::from_bits(d + F32x::splat(1e-45)) >> 1),
+                (I32x::splat(0x_5f37_5a86)
+                    - ((d + F32x::splat(1e-45)).to_bits() >> U32x::splat(1)).cast())
+                .cast(),
             );
 
             x *= F32x::splat(1.5) - HALF * d * x * x;
@@ -158,12 +154,12 @@ macro_rules! impl_math_f32_u05 {
             x *= F32x::splat(1.5) - HALF * d * x * x;
             x *= d;
 
-            let d2 = (d + x.mul_as_doubled(x)) * x.recpre_as_doubled();
+            let d2 = (d + x.mul_as_doubled(x)) * x.recip_as_doubled();
 
             x = F32x::from(d2) * q;
 
-            x = d.eq(F32x::INFINITY).select(F32x::INFINITY, x);
-            d.eq(ZERO).select(d, x)
+            x = d.simd_eq(INFINITY).select(INFINITY, x);
+            d.simd_eq(ZERO).select(d, x)
             // #endif
         }
 
@@ -178,22 +174,22 @@ macro_rules! impl_math_f32_u05 {
         pub fn hypotf(x: F32x, y: F32x) -> F32x {
             let x = x.abs();
             let y = y.abs();
-            let min = x.min(y);
+            let min = x.simd_min(y);
             let n = min;
-            let max = x.max(y);
+            let max = x.simd_max(y);
             let d = max;
 
-            let o = max.lt(F32x::splat(f32::MIN_POSITIVE));
+            let o = max.simd_lt(F32x::splat(f32::MIN_POSITIVE));
             let n = o.select(n * F1_24X, n);
             let d = o.select(d * F1_24X, d);
 
             let t = Doubled::from(n) / Doubled::from(d);
             let t = (t.square() + ONE).sqrt() * max;
             let mut ret = F32x::from(t);
-            ret = ret.is_nan().select(F32x::INFINITY, ret);
-            ret = min.eq(ZERO).select(max, ret);
-            ret = (x.is_nan() | y.is_nan()).select(F32x::NAN, ret);
-            (x.eq(F32x::INFINITY) | y.eq(F32x::INFINITY)).select(F32x::INFINITY, ret)
+            ret = ret.is_nan().select(INFINITY, ret);
+            ret = min.simd_eq(ZERO).select(max, ret);
+            ret = (x.is_nan() | y.is_nan()).select(NAN, ret);
+            (x.simd_eq(INFINITY) | y.simd_eq(INFINITY)).select(INFINITY, ret)
         }
 
         #[test]
@@ -219,8 +215,10 @@ macro_rules! impl_math_f32_u05 {
             let mut r = F32x::from(x);
 
             r = d.is_neg_zero().select(NEG_ZERO, r);
-            r = F32x::from_bits(!U32x::from_bits(d.abs().gt(TRIGRANGEMAX4_F)) & U32x::from_bits(r));
-            F32x::from_bits(U32x::from_bits(d.is_infinite()) | U32x::from_bits(r))
+            r = F32x::from_bits(
+                !d.abs().simd_gt(TRIGRANGEMAX4_F).to_int().cast::<u32>() & r.to_bits(),
+            );
+            F32x::from_bits(d.is_infinite().to_int().cast() | r.to_bits())
         }
 
         #[test]
@@ -250,8 +248,8 @@ macro_rules! impl_math_f32_u05 {
             let x = cospifk(d);
             let r = F32x::from(x);
 
-            let r = d.abs().gt(TRIGRANGEMAX4_F).select(ONE, r);
-            F32x::from_bits(U32x::from_bits(d.is_infinite()) | U32x::from_bits(r))
+            let r = d.abs().simd_gt(TRIGRANGEMAX4_F).select(ONE, r);
+            F32x::from_bits(d.is_infinite().to_int().cast() | r.to_bits())
         }
 
         #[test]

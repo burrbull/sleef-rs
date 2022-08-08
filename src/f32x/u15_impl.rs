@@ -9,10 +9,10 @@ macro_rules! impl_math_f32_u15 {
         pub fn erfcf(a: F32x) -> F32x {
             let s = a;
             let a = a.abs();
-            let o0 = a.lt(ONE);
-            let o1 = a.lt(F32x::splat(2.2));
-            let o2 = a.lt(F32x::splat(4.3));
-            let o3 = a.lt(F32x::splat(10.1));
+            let o0 = a.simd_lt(ONE);
+            let o1 = a.simd_lt(F32x::splat(2.2));
+            let o2 = a.simd_lt(F32x::splat(4.3));
+            let o3 = a.simd_lt(F32x::splat(10.1));
 
             let u = o1.select_doubled(Doubled::from(a), Doubled::from(ONE) / Doubled::from(a));
 
@@ -113,7 +113,7 @@ macro_rules! impl_math_f32_u15 {
 
             let mut r = o3.select(F32x::from(x), ZERO);
             r = s.is_sign_negative().select(F32x::splat(2.) - r, r);
-            s.is_nan().select(F32x::NAN, r)
+            s.is_nan().select(NAN, r)
         }
 
         #[test]

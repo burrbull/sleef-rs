@@ -11,13 +11,8 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 
 [dependencies.doubled]
-version = "0.2.3"
-features = ["packed_simd"]
-
-[dependencies.packed_simd]
-package = "packed_simd_2"
-version = "0.3.8"
-features = ["into_bits"]
+version = "0.3.0"
+features = ["simd"]
 
 [features]
 default = []
@@ -27,4 +22,3 @@ rug = "1.16"
 
 [dev-dependencies.rand]
 version = "0.8.5"
-features = ["simd_support"]

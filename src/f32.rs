@@ -24,10 +24,11 @@ pub(crate) const TRIGRANGEMAX2_F: f32 = 125.0;
 pub(crate) const SLEEF_FP_ILOGB0: i32 = -2_147_483_648;
 pub(crate) const SLEEF_FP_ILOGBNAN: i32 = 2_147_483_647;
 pub(crate) const SQRT_FLT_MAX: f32 = 18_446_743_523_953_729_536.;
-pub(crate) const L10_F: Doubled<f32> = Doubled::new(0.301_025_390_6, 4.605_038_981_e-6);
+pub(crate) const L10U_F: f32 = 0.301_025_390_6;
+pub(crate) const L10L_F: f32 = 4.605_038_981_e-6;
 pub(crate) const TRIGRANGEMAX4_F: f32 = 8e+6;
-pub(crate) const L2_F: Doubled<f32> =
-    Doubled::new(0.693_145_751_953_125, 1.428_606_765_330_187_045_e-6);
+pub(crate) const L2U_F: f32 = 0.693_145_751_953_125;
+pub(crate) const L2L_F: f32 = 1.428_606_765_330_187_045_e-6;
 pub(crate) const R_LN2_F: f32 =
     1.442_695_040_888_963_407_359_924_681_001_892_137_426_645_954_152_985_934_135_449_406_931;
 pub(crate) const LOG10_2_F: f32 = 3.321_928_094_887_362_347_870_319_429_489_390_175_864_831_393;
@@ -494,14 +495,14 @@ impl Poly<Self> for f32 {
 }
 
 impl Sign for f32 {
-    #[inline]
+    /*    #[inline]
     fn is_sign_negative(self) -> Self::Mask {
         self.is_sign_negative()
     }
     #[inline]
     fn is_sign_positive(self) -> Self::Mask {
         self.is_sign_positive()
-    }
+    }*/
     #[inline]
     fn sign_bit(self) -> Self::Bits {
         self.to_bits() & (1 << 31)
@@ -671,139 +672,12 @@ fn rempif(a: f32) -> (Doubled<f32>, i32) {
 }
 
 #[inline]
-fn atan2kf(mut y: f32, mut x: f32) -> f32 {
-    let mut q = if x < 0. {
-        x = -x;
-        -2
-    } else {
-        0
-    };
-
-    if y > x {
-        let t = x;
-        x = y;
-        y = -t;
-        q += 1;
-    }
-
-    let s = y / x;
-    let mut t = s * s;
-    let t2 = t * t;
-    let t4 = t2 * t2;
-
-    let u = f32::poly8(
-        t,
-        t2,
-        t4,
-        0.002_823_638_962_581_753_730_773_93,
-        -0.015_956_902_876_496_315_002_441_4,
-        0.042_504_988_610_744_476_318_359_4,
-        -0.074_890_092_015_266_418_457_031_2,
-        0.106_347_933_411_598_205_566_406,
-        -0.142_027_363_181_114_196_777_344,
-        0.199_926_957_488_059_997_558_594,
-        -0.333_331_018_686_294_555_664_062,
-    );
-
-    t = u * t * s + s;
-    (q as f32) * f32::consts::FRAC_PI_2 + t
-}
-
-#[inline]
-fn expkf(d: Doubled<f32>) -> f32 {
-    let qf = rintfk(f32::from(d) * R_LN2_F);
-
-    let q = qf as i32;
-    let mut s = d + qf * -L2_F.0;
-    s += qf * -L2_F.1;
-
-    s = s.normalize();
-
-    let u = 0.001_363_246_468_827_128_410_339_36_f32
-        .mul_add(s.0, 0.008_365_969_173_610_210_418_701_17)
-        .mul_add(s.0, 0.041_671_082_377_433_776_855_468_8)
-        .mul_add(s.0, 0.166_665_524_244_308_471_679_688)
-        .mul_add(s.0, 0.499_999_850_988_388_061_523_438);
-
-    let mut t = s.add_checked(s.square() * u);
-
-    t = (1.).add_checked(t);
-
-    if d.0 < -104. {
-        0.
-    } else {
-        ldexpkf(f32::from(t), q)
-    }
-}
-
-#[inline]
-fn expm1kf(d: f32) -> f32 {
-    let qf = rintfk(d * R_LN2_F);
-
-    let q = qf as i32;
-    let s = qf.mul_add(-L2_F.0, d);
-    let s = qf.mul_add(-L2_F.1, s);
-
-    let s2 = s * s;
-    let s4 = s2 * s2;
-
-    let mut u = f32::poly6(
-        s,
-        s2,
-        s4,
-        0.000_198_527_617_612_853_646_278_381,
-        0.001_393_043_552_525_341_510_772_71,
-        0.008_333_360_776_305_198_669_433_59,
-        0.041_666_485_369_205_474_853_515_6,
-        0.166_666_671_633_720_397_949_219,
-        0.5,
-    );
-    u = s * s * u + s;
-
-    if q != 0 {
-        ldexp2kf(u + 1., q) - 1.
-    } else {
-        u
-    }
-}
-
-#[inline]
-fn logkf(mut d: f32) -> Doubled<f32> {
-    let o = d < f32::MIN_POSITIVE;
-    if o {
-        d *= F1_32 * F1_32;
-    }
-
-    let mut e = ilogb2kf(d * (1. / 0.75));
-    let m = ldexp3kf(d, -e);
-
-    if o {
-        e -= 64;
-    }
-
-    let x = (-1.).add_as_doubled(m) / (1.).add_as_doubled(m);
-    let x2 = x.square();
-
-    let t = 0.240_320_354_700_088_500_976_562_f32
-        .mul_add(x2.0, 0.285_112_679_004_669_189_453_125)
-        .mul_add(x2.0, 0.400_007_992_982_864_379_882_812);
-    let c = Doubled::new(
-        0.666_666_626_930_236_816_406_25,
-        3.691_838_612_596_143_320_843_11_e-9,
-    );
-
-    (D_LN2 * (e as f32))
-        .add_checked(x.scale(2.))
-        .add_checked(x2 * x * (x2 * t + c))
-}
-
-#[inline]
 fn expk2f(d: Doubled<f32>) -> Doubled<f32> {
     let qf = rintfk(f32::from(d) * R_LN2_F);
 
     let q = qf as i32;
-    let mut s = d + qf * -L2_F.0;
-    s += qf * -L2_F.1;
+    let mut s = d + qf * -L2U_F;
+    s += qf * -L2L_F;
 
     let u = 0.198_096_022_4_e-3_f32
         .mul_add(s.0, 0.139_425_648_4_e-2)
@@ -823,22 +697,6 @@ fn expk2f(d: Doubled<f32>) -> Doubled<f32> {
     } else {
         t
     }
-}
-
-#[inline]
-fn logk2f(d: Doubled<f32>) -> Doubled<f32> {
-    let e = ilogbkf(d.0 * (1. / 0.75));
-    let m = d.scale(pow2if(-e));
-
-    let x = (m + (-1.)) / (m + 1.);
-    let x2 = x.square();
-
-    let t = 0.239_282_846_450_805_664_062_5_f32
-        .mul_add(x2.0, 0.285_182_118_415_832_519_531_25)
-        .mul_add(x2.0, 0.400_005_877_017_974_853_515_625)
-        .mul_add(x2.0, 0.666_666_686_534_881_591_796_875);
-
-    (D_LN2 * (e as f32)) + x.scale(2.) + x2 * x * t
 }
 
 #[inline]
@@ -979,189 +837,6 @@ fn cospifk(d: f32) -> Doubled<f32> {
         x = -x;
     }
     x
-}
-
-fn gammafk(a: f32) -> (Doubled<f32>, Doubled<f32>) {
-    let otiny = fabsfk(a) < 1e-30;
-    let oref = a < 0.5;
-
-    let mut x = if otiny {
-        Doubled::from(0.)
-    } else if oref {
-        (1.).add_as_doubled(-a)
-    } else {
-        Doubled::from(a)
-    };
-
-    let o0 = (0.5 <= x.0) && (x.0 <= 1.2);
-    let o2 = 2.3 < x.0;
-
-    let mut y = ((x + 1.) * x).normalize();
-    y = ((x + 2.) * y).normalize();
-
-    let mut clln = if o2 && (x.0 <= 7.) {
-        y
-    } else {
-        Doubled::from(1.)
-    };
-
-    x = if o2 && (x.0 <= 7.) { x + 3. } else { x };
-    let t = if o2 {
-        1. / x.0
-    } else {
-        (x + (if o0 { -1. } else { -2. })).normalize().0
-    };
-
-    let u = (if o2 {
-        0.000_839_498_720_672_087_279_971_000_786_f32
-    } else if o0 {
-        0.943_515_777_6
-    } else {
-        0.110_248_955_e-3
-    })
-    .mul_add(
-        t,
-        if o2 {
-            -5.171_790_908_260_592_193_293_944_22_e-5
-        } else if o0 {
-            0.867_006_361_5
-        } else {
-            0.816_001_993_4_e-4
-        },
-    )
-    .mul_add(
-        t,
-        if o2 {
-            -0.000_592_166_437_353_693_882_857_342_347
-        } else if o0 {
-            0.482_670_247_6
-        } else {
-            0.152_846_885_6_e-3
-        },
-    )
-    .mul_add(
-        t,
-        if o2 {
-            6.972_813_758_365_857_774_037_435_39_e-5
-        } else if o0 {
-            -0.885_512_977_8_e-1
-        } else {
-            -0.235_506_871_8_e-3
-        },
-    )
-    .mul_add(
-        t,
-        if o2 {
-            0.000_784_039_221_720_066_627_493_314_301
-        } else if o0 {
-            0.101_382_523_8
-        } else {
-            0.496_224_209_2_e-3
-        },
-    )
-    .mul_add(
-        t,
-        if o2 {
-            -0.000_229_472_093_621_399_176_949_318_732
-        } else if o0 {
-            -0.149_340_897_8
-        } else {
-            -0.119_348_801_7_e-2
-        },
-    )
-    .mul_add(
-        t,
-        if o2 {
-            -0.002_681_327_160_493_827_160_473_958_490
-        } else if o0 {
-            0.169_750_914_0
-        } else {
-            0.289_159_943_3_e-2
-        },
-    )
-    .mul_add(
-        t,
-        if o2 {
-            0.003_472_222_222_222_222_222_175_164_840
-        } else if o0 {
-            -0.207_245_454_2
-        } else {
-            -0.738_545_181_2_e-2
-        },
-    )
-    .mul_add(
-        t,
-        if o2 {
-            0.083_333_333_333_333_333_335_592_087_900
-        } else if o0 {
-            0.270_587_235_7
-        } else {
-            0.205_807_704_5_e-1
-        },
-    );
-
-    y = (x + (-0.5)) * logk2f(x);
-    y += -x;
-    y += Doubled::from(0.918_938_533_204_672_780_56); // 0.5*log(2*M_PI)
-
-    let mut z = u.mul_as_doubled(t)
-        + (if o0 {
-            -0.400_686_534_596_170_958_447_352_690_395
-        } else {
-            -0.673_523_028_297_382_446_749_257_758_235_e-1
-        });
-    z = z * t
-        + (if o0 {
-            0.822_466_960_142_643_054_450_325_495_997
-        } else {
-            0.322_467_033_928_981_157_743_538_726_901
-        });
-    z = z * t
-        + (if o0 {
-            -0.577_215_665_946_766_039_837_398_973_297
-        } else {
-            0.422_784_335_087_484_338_986_941_629_852
-        });
-    z *= t;
-
-    let mut clc = if o2 { y } else { z };
-
-    let mut clld = if o2 {
-        u.mul_as_doubled(t) + 1.
-    } else {
-        Doubled::from(1.)
-    };
-
-    y = clln;
-
-    clc = if otiny {
-        Doubled::from(41.588_830_833_596_718_565_03) // log(2^60)
-    } else if oref {
-        Doubled::from(1.144_729_885_849_400_163_9_f32) + (-clc)
-    } else {
-        clc
-    }; // log(M_PI)
-    clln = if otiny {
-        Doubled::from(1.)
-    } else if oref {
-        clln
-    } else {
-        clld
-    };
-
-    if oref {
-        x = clld * sinpifk(a - F1_12 * ((a * (1. / F1_12)) as i32 as f32));
-    }
-
-    clld = if otiny {
-        Doubled::from(a * (F1_30 * F1_30))
-    } else if oref {
-        x
-    } else {
-        y
-    };
-
-    (clc, clln / clld)
 }
 
 /// Integer exponent of an FP number
@@ -1592,53 +1267,3 @@ pub fn sqrtf(d: f32) -> f32 {
     SQRTF(d)
 }
 */
-
-#[inline]
-fn logk3f(mut d: f32) -> f32 {
-    let o = d < f32::MIN_POSITIVE;
-    if o {
-        d *= F1_32 * F1_32;
-    }
-
-    let mut e = ilogb2kf(d * (1. / 0.75));
-    let m = ldexp3kf(d, -e);
-
-    if o {
-        e -= 64;
-    }
-
-    let x = (m - 1.) / (m + 1.);
-    let x2 = x * x;
-
-    let t = 0.239_282_846_450_805_664_062_5
-        .mul_add(x2, 0.285_182_118_415_832_519_531_25)
-        .mul_add(x2, 0.400_005_877_017_974_853_515_625)
-        .mul_add(x2, 0.666_666_686_534_881_591_796_875)
-        .mul_add(x2, 2.);
-
-    x.mul_add(t, 0.693_147_180_559_945_286_226_764 * (e as f32))
-}
-
-#[inline]
-fn expk3f(d: f32) -> f32 {
-    let q = rintfk(d * R_LN2_F);
-
-    let mut s = q.mul_add(-L2_F.0, d);
-    s = q.mul_add(-L2_F.1, s);
-
-    let mut u = 0.000_198_527_617_612_853_646_278_381
-        .mul_add(s, 0.001_393_043_552_525_341_510_772_71)
-        .mul_add(s, 0.008_333_360_776_305_198_669_433_59)
-        .mul_add(s, 0.041_666_485_369_205_474_853_515_6)
-        .mul_add(s, 0.166_666_671_633_720_397_949_219)
-        .mul_add(s, 0.5);
-
-    u = (s * s).mul_add(u, s + 1.);
-    u = ldexpkf(u, q as i32);
-
-    if d < -104. {
-        0.
-    } else {
-        u
-    }
-}

@@ -325,6 +325,45 @@ fn test_sincospif() {
     );
 }
 
+#[inline]
+fn atan2kf(mut y: f32, mut x: f32) -> f32 {
+    let mut q = if x < 0. {
+        x = -x;
+        -2
+    } else {
+        0
+    };
+
+    if y > x {
+        let t = x;
+        x = y;
+        y = -t;
+        q += 1;
+    }
+
+    let s = y / x;
+    let mut t = s * s;
+    let t2 = t * t;
+    let t4 = t2 * t2;
+
+    let u = f32::poly8(
+        t,
+        t2,
+        t4,
+        0.002_823_638_962_581_753_730_773_93,
+        -0.015_956_902_876_496_315_002_441_4,
+        0.042_504_988_610_744_476_318_359_4,
+        -0.074_890_092_015_266_418_457_031_2,
+        0.106_347_933_411_598_205_566_406,
+        -0.142_027_363_181_114_196_777_344,
+        0.199_926_957_488_059_997_558_594,
+        -0.333_331_018_686_294_555_664_062,
+    );
+
+    t = u * t * s + s;
+    (q as f32) * f32::consts::FRAC_PI_2 + t
+}
+
 /// Arc tangent function of two variables
 ///
 /// These functions evaluates the arc tangent function of (***y*** / ***x***).
@@ -483,6 +522,37 @@ pub fn atanf(mut s: f32) -> f32 {
 #[test]
 fn test_atanf() {
     test_f_f(atanf, rug::Float::atan, f32::MIN..=f32::MAX, 3.5);
+}
+
+#[inline]
+fn expm1kf(d: f32) -> f32 {
+    let qf = rintfk(d * R_LN2_F);
+
+    let q = qf as i32;
+    let s = qf.mul_add(-L2U_F, d);
+    let s = qf.mul_add(-L2L_F, s);
+
+    let s2 = s * s;
+    let s4 = s2 * s2;
+
+    let mut u = f32::poly6(
+        s,
+        s2,
+        s4,
+        0.000_198_527_617_612_853_646_278_381,
+        0.001_393_043_552_525_341_510_772_71,
+        0.008_333_360_776_305_198_669_433_59,
+        0.041_666_485_369_205_474_853_515_6,
+        0.166_666_671_633_720_397_949_219,
+        0.5,
+    );
+    u = s * s * u + s;
+
+    if q != 0 {
+        ldexp2kf(u + 1., q) - 1.
+    } else {
+        u
+    }
 }
 
 /// Hyperbolic sine function
@@ -648,8 +718,8 @@ fn test_log2f() {
 pub fn exp10f(d: f32) -> f32 {
     let q = rintfk(d * LOG10_2_F);
 
-    let mut s = q.mul_add(-L10_F.0, d);
-    s = q.mul_add(-L10_F.1, s);
+    let mut s = q.mul_add(-L10U_F, d);
+    s = q.mul_add(-L10L_F, s);
 
     let mut u = 0.206_400_498_7
         .mul_add(s, 0.541_787_743_6)

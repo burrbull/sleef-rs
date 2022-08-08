@@ -10,10 +10,10 @@ macro_rules! impl_math_f64_u15 {
         pub fn erfc(a: F64x) -> F64x {
             let s = a;
             let a = a.abs();
-            let o0 = a.lt(ONE);
-            let o1 = a.lt(F64x::splat(2.2));
-            let o2 = a.lt(F64x::splat(4.2));
-            let o3 = a.lt(F64x::splat(27.3));
+            let o0 = a.simd_lt(ONE);
+            let o1 = a.simd_lt(F64x::splat(2.2));
+            let o2 = a.simd_lt(F64x::splat(4.2));
+            let o3 = a.simd_lt(F64x::splat(27.3));
 
             let u = o0.select_doubled(
                 a.mul_as_doubled(a),
@@ -305,7 +305,7 @@ macro_rules! impl_math_f64_u15 {
 
             let mut r = o3.select(F64x::from(x), ZERO);
             r = s.is_sign_negative().select(F64x::splat(2.) - r, r);
-            s.is_nan().select(F64x::NAN, r)
+            s.is_nan().select(NAN, r)
         }
 
         #[test]

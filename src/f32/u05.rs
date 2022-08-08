@@ -185,7 +185,7 @@ pub fn sqrtf(mut d: f32) -> f32 {
     x *= 1.5 - 0.5 * d * x * x;
     x *= (1.5 - 0.5 * d * x * x) * d;
 
-    let d2 = (d + x.mul_as_doubled(x)) * x.recpre();
+    let d2 = (d + x.mul_as_doubled(x)) * x.recip_as_doubled();
 
     if (d == 0.) || (d == f32::INFINITY) {
         d

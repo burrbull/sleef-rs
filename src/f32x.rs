@@ -553,24 +553,36 @@ macro_rules! impl_math_f32 {
         impl MulAdd for F32x {
             #[inline]
             fn mul_add(self, y: Self, z: Self) -> Self {
-                use std::simd::{StdFloat};
-                <Self as StdFloat>::mul_add(self, y, z)
+                if cfg!(target_feature = "fma") {
+                    use std::simd::{StdFloat};
+                    <Self as StdFloat>::mul_add(self, y, z)
+                } else {
+                    self * y + z
+                }
             }
         }
 
         impl MulSub for F32x {
             #[inline]
             fn mul_sub(self, y: Self, z: Self) -> Self {
-                use std::simd::{StdFloat};
-                <Self as StdFloat>::mul_add(self, y, -z)
+                if cfg!(target_feature = "fma") {
+                    use std::simd::{StdFloat};
+                    <Self as StdFloat>::mul_add(self, y, -z)
+                } else {
+                    self * y - z
+                }
             }
         }
 
         impl NegMulAdd for F32x {
             #[inline]
             fn neg_mul_add(self, y: Self, z: Self) -> Self {
-                use std::simd::{StdFloat};
-                <Self as StdFloat>::mul_add(-self, y, z)
+                if cfg!(target_feature = "fma") {
+                    use std::simd::{StdFloat};
+                    <Self as StdFloat>::mul_add(-self, y, z)
+                } else {
+                    -self * y + z
+                }
             }
         }
 

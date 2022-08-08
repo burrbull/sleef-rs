@@ -19,8 +19,8 @@ macro_rules! impl_math_f32_u05 {
             let s2 = t.mul_as_doubled(t);
 
             let u = F32x::splat(0.309_384_205_4_e-6)
-                .mul_add(s, F32x::splat(-0.365_730_738_8_e-4))
-                .mul_add(s, F32x::splat(0.249_039_358_5_e-2));
+                .mla(s, F32x::splat(-0.365_730_738_8_e-4))
+                .mla(s, F32x::splat(0.249_039_358_5_e-2));
             let mut x = u * s
                 + Doubled::new(
                     F32x::splat(-0.080_745_510_756_969_451_904),
@@ -38,8 +38,8 @@ macro_rules! impl_math_f32_u05 {
             let rx = d.is_neg_zero().select(NEG_ZERO, rx);
 
             let u = F32x::splat(-0.243_061_180_1_e-7)
-                .mul_add(s, F32x::splat(0.359_057_708_e-5))
-                .mul_add(s, F32x::splat(-0.325_991_772_1_e-3));
+                .mla(s, F32x::splat(0.359_057_708_e-5))
+                .mla(s, F32x::splat(-0.325_991_772_1_e-3));
             x = u * s
                 + Doubled::new(
                     F32x::splat(0.015_854_343_771_934_509_277),

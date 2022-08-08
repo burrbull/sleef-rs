@@ -525,25 +525,37 @@ macro_rules! impl_math_f64 {
 
         impl MulAdd for F64x {
             #[inline]
-            fn mul_add(self, y: Self, z: Self) -> Self {
-                use std::simd::{StdFloat};
-                <Self as StdFloat>::mul_add(self, y, z)
+            fn mla(self, y: Self, z: Self) -> Self {
+                if cfg!(target_feature = "fma") {
+                    use std::simd::{StdFloat};
+                    self.mul_add(y, z)
+                } else {
+                    self * y + z
+                }
             }
         }
 
         impl MulSub for F64x {
             #[inline]
             fn mul_sub(self, y: Self, z: Self) -> Self {
-                use std::simd::{StdFloat};
-                <Self as StdFloat>::mul_add(self, y, -z)
+                if cfg!(target_feature = "fma") {
+                    use std::simd::{StdFloat};
+                    self.mul_add(y, -z)
+                } else {
+                    self * y - z
+                }
             }
         }
 
         impl NegMulAdd for F64x {
             #[inline]
             fn neg_mul_add(self, y: Self, z: Self) -> Self {
-                use std::simd::{StdFloat};
-                <Self as StdFloat>::mul_add(-self, y, z)
+                if cfg!(target_feature = "fma") {
+                    use std::simd::{StdFloat};
+                    (-self).mul_add(y, z)
+                } else {
+                    -self * y + z
+                }
             }
         }
 
@@ -608,27 +620,7 @@ macro_rules! impl_math_f64 {
             }
         }
 
-        // return d0 < d1 ? x : y
-        #[inline]
-        fn vsel_vi_vd_vd_vi_vi(d0: F64x, d1: F64x, x: Ix, y: Ix) -> Ix {
-            d0.simd_lt(d1).cast().select(x, y)
-        }
-
-        // return d0 < 0 ? x : 0
-        #[inline]
-        fn vsel_vi_vd_vi(d: F64x, x: Ix) -> Ix {
-            d.is_sign_negative().cast::<i32>().to_int() & x
-        }
-
         impl Sign for F64x {
-/*            #[inline]
-            fn is_sign_negative(self) -> Self::Mask {
-                self.sign_bit().simd_ne(Self::Bits::splat(0))
-            }
-            #[inline]
-            fn is_sign_positive(self) -> Self::Mask {
-                !self.is_sign_negative()
-            }*/
             #[inline]
             fn sign_bit(self) -> Self::Bits {
                 self.to_bits() & NEG_ZERO.to_bits()
@@ -665,7 +657,7 @@ macro_rules! impl_math_f64 {
                     self.trunc().simd_eq(self)
                 } else {
                     let mut x = (self * (ONE / D1_31X)).trunc();
-                    x = (-D1_31X).mul_add(x, self);
+                    x = (-D1_31X).mla(x, self);
                     x.trunc().simd_eq(x) | self.abs().simd_gt(D1_53X)
                 }
             }
@@ -731,7 +723,7 @@ macro_rules! impl_math_f64 {
                     x.trunc().simd_ne(x)
                 } else {
                     let mut x = (self * (ONE / D1_31X)).trunc();
-                    x = (-D1_31X).mul_add(x, self);
+                    x = (-D1_31X).mla(x, self);
 
                     (x.trunci() & Ix::splat(1)).simd_eq(Ix::splat(1)).cast::<i64>() & self.abs().simd_lt(D1_53X)
                 }
@@ -777,12 +769,12 @@ macro_rules! impl_math_f64 {
                 let c = D1_52X.mul_sign(x);
                 let rint4x = (F64x::splat(4.) * x).abs().simd_gt(D1_52X).select(
                     (F64x::splat(4.) * x),
-                    (F64x::splat(4.).mul_add(x, c) - c).or_sign(x)
+                    (F64x::splat(4.).mla(x, c) - c).or_sign(x)
                 );
                 let rintx  = x.abs().simd_gt(D1_52X).select(x, ((x + c) - c).or_sign(x));
 
-                let fr = F64x::splat(-0.25).mul_add(rint4x, x);
-                let vi = F64x::splat(-4.).mul_add(rintx, rint4x).trunci();
+                let fr = F64x::splat(-0.25).mla(rint4x, x);
+                let vi = F64x::splat(-4.).mla(rintx, rint4x).trunci();
                 (fr, vi)
             }
         }
@@ -1149,7 +1141,7 @@ macro_rules! impl_math_f64 {
             #[cfg(not(feature = "full_fp_rounding"))]
             #[inline]
             fn trunc_positive(x: F64x) -> F64x {
-                let mut fr = (-D1_31X).mul_add((x * (ONE / D1_31X)).trunci().cast(), x);
+                let mut fr = (-D1_31X).mla((x * (ONE / D1_31X)).trunci().cast(), x);
                 fr -= fr.trunci().cast();
                 x.abs().simd_ge(D1_52X).select(x, x - fr)
             }
@@ -1264,35 +1256,35 @@ macro_rules! impl_math_f64 {
                     9.944_803_876_268_437_740_902_08_e-16,
                     -2.024_611_207_851_823_992_958_68_e-14,
                 )
-                .mul_add(
+                .mla(
                     s,
                     o.select_splat(
                         -3.897_962_260_629_327_991_640_47_e-13,
                         6.948_218_305_801_794_613_277_84_e-12,
                     ),
                 )
-                .mul_add(
+                .mla(
                     s,
                     o.select_splat(
                         1.150_115_825_399_960_352_669_01_e-10,
                         -1.757_247_499_528_531_799_526_64_e-9,
                     ),
                 )
-                .mul_add(
+                .mla(
                     s,
                     o.select_splat(
                         -2.461_136_950_104_469_749_535_9_e-8,
                         3.133_616_889_668_683_928_784_22_e-7,
                     ),
                 )
-                .mul_add(
+                .mla(
                     s,
                     o.select_splat(
                         3.590_860_448_590_527_540_050_62_e-6,
                         -3.657_620_418_216_155_192_036_1_e-5,
                     ),
                 )
-                .mul_add(
+                .mla(
                     s,
                     o.select_splat(
                         -0.000_325_991_886_927_389_905_997_954,

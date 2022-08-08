@@ -497,8 +497,12 @@ impl BitsType for f64 {
 
 impl MulAdd for f64 {
     #[inline]
-    fn mul_add(self, y: Self, z: Self) -> Self {
-        self * y + z
+    fn mla(self, y: Self, z: Self) -> Self {
+        if cfg!(target_feature = "fma") {
+            self.mul_add(y, z)
+        } else {
+            self * y + z
+        }
     }
 }
 
@@ -509,14 +513,6 @@ impl Poly<f64> for f64 {
 }
 
 impl Sign for f64 {
-    /*    #[inline]
-    fn is_sign_negative(self) -> Self::Mask {
-        self.is_sign_negative()
-    }
-    #[inline]
-    fn is_sign_positive(self) -> Self::Mask {
-        self.is_sign_positive()
-    }*/
     #[inline]
     fn sign_bit(self) -> Self::Bits {
         self.to_bits() & (1 << 63)
@@ -642,15 +638,15 @@ fn rempisub(x: f64) -> (f64, i32) {
     let rint4x = if fabsk(4.0 * x) > D1_52 {
         4.0 * x
     } else {
-        (4.0.mul_add(x, c) - c).or_sign(x)
+        (4.0.mla(x, c) - c).or_sign(x)
     };
     let rintx = if fabsk(x) > D1_52 {
         x
     } else {
         (x + c - c).or_sign(x)
     };
-    let retd = (-0.25).mul_add(rint4x, x);
-    let reti = (-4_f64).mul_add(rintx, rint4x) as i32;
+    let retd = (-0.25).mla(rint4x, x);
+    let reti = (-4_f64).mla(rintx, rint4x) as i32;
     (retd, reti)
 }
 
@@ -701,7 +697,7 @@ fn sinpik(d: f64) -> Doubled<f64> {
     } else {
         -2.024_611_207_851_823_992_958_68_e-14
     })
-    .mul_add(
+    .mla(
         s,
         if o {
             -3.897_962_260_629_327_991_640_47_e-13
@@ -709,7 +705,7 @@ fn sinpik(d: f64) -> Doubled<f64> {
             6.948_218_305_801_794_613_277_84_e-12
         },
     )
-    .mul_add(
+    .mla(
         s,
         if o {
             1.150_115_825_399_960_352_669_01_e-10
@@ -717,7 +713,7 @@ fn sinpik(d: f64) -> Doubled<f64> {
             -1.757_247_499_528_531_799_526_64_e-9
         },
     )
-    .mul_add(
+    .mla(
         s,
         if o {
             -2.461_136_950_104_469_749_535_9_e-8
@@ -725,7 +721,7 @@ fn sinpik(d: f64) -> Doubled<f64> {
             3.133_616_889_668_683_928_784_22_e-7
         },
     )
-    .mul_add(
+    .mla(
         s,
         if o {
             3.590_860_448_590_527_540_050_62_e-6
@@ -733,7 +729,7 @@ fn sinpik(d: f64) -> Doubled<f64> {
             -3.657_620_418_216_155_192_036_1_e-5
         },
     )
-    .mul_add(
+    .mla(
         s,
         if o {
             -0.000_325_991_886_927_389_905_997_954
@@ -786,15 +782,15 @@ fn expk2(d: Doubled<f64>) -> Doubled<f64> {
     let s = d + qf * (-L2_U) + qf * (-L2_L);
 
     let u = 0.160_247_221_970_993_207_2_e-9_f64
-        .mul_add(s.0, 0.209_225_518_356_315_700_7_e-8)
-        .mul_add(s.0, 0.250_523_002_378_264_446_5_e-7)
-        .mul_add(s.0, 0.275_572_480_090_213_530_3_e-6)
-        .mul_add(s.0, 0.275_573_189_238_604_437_3_e-5)
-        .mul_add(s.0, 0.248_015_873_560_581_506_5_e-4)
-        .mul_add(s.0, 0.198_412_698_414_807_185_8_e-3)
-        .mul_add(s.0, 0.138_888_888_888_676_325_5_e-2)
-        .mul_add(s.0, 0.833_333_333_333_334_709_5_e-2)
-        .mul_add(s.0, 0.416_666_666_666_666_990_5_e-1);
+        .mla(s.0, 0.209_225_518_356_315_700_7_e-8)
+        .mla(s.0, 0.250_523_002_378_264_446_5_e-7)
+        .mla(s.0, 0.275_572_480_090_213_530_3_e-6)
+        .mla(s.0, 0.275_573_189_238_604_437_3_e-5)
+        .mla(s.0, 0.248_015_873_560_581_506_5_e-4)
+        .mla(s.0, 0.198_412_698_414_807_185_8_e-3)
+        .mla(s.0, 0.138_888_888_888_676_325_5_e-2)
+        .mla(s.0, 0.833_333_333_333_334_709_5_e-2)
+        .mla(s.0, 0.416_666_666_666_666_990_5_e-1);
 
     let mut t = s * u + 0.166_666_666_666_666_657_4;
     t = s * t + 0.5;
@@ -1112,7 +1108,7 @@ pub fn fmod(x: f64, y: f64) -> f64 {
 
     #[inline]
     fn trunc_positive(x: f64) -> f64 {
-        let fr = (-D1_31).mul_add((x * (1. / D1_31)) as i32 as f64, x);
+        let fr = (-D1_31).mla((x * (1. / D1_31)) as i32 as f64, x);
         if fabsk(x) >= D1_52 {
             x
         } else {

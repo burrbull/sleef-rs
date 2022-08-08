@@ -1410,45 +1410,26 @@ macro_rules! impl_math_f64_u10 {
             let s = u.mul_add(-L2_U, d);
             let s = u.mul_add(-L2_L, s);
 
-            /*if cfg!(target_feature = "fma") {
-/*                if cfg!(feature = "split_kernel") {
-                    let s2 = s * s;
-
-                    u = F64x::splat(0.208_127_637_823_716_445_7_e-8)
-                        .mul_adde(s2, F64x::splat(0.275_576_262_816_949_119_2_e-6))
-                        .mul_adde(s2, F64x::splat(0.248_015_868_747_968_626_4_e-4))
-                        .mul_adde(s2, F64x::splat(0.138_888_888_891_449_779_7_e-2))
-                        .mul_adde(s2, F64x::splat(0.416_666_666_666_660_259_8_e-1))
-                        .mul_adde(s2, HALF);
-
-                    let v = F64x::splat(0.251_121_070_304_228_802_2_e-7)
-                        .mul_adde(s2, F64x::splat(0.275_572_340_202_538_823_9_e-5))
-                        .mul_adde(s2, F64x::splat(0.198_412_698_985_586_585_e-3))
-                        .mul_adde(s2, F64x::splat(0.833_333_333_331_493_821_e-2))
-                        .mul_adde(s2, F64x::splat(0.166_666_666_666_666_907_2));
-
-                    u = v.mul_add(s, u).mul_adde(s, ONE).mul_adde(s, ONE);
-                } else {
-                */
+            if cfg!(target_feature = "fma") {
                 let s2 = s * s;
                 let s4 = s2 * s2;
                 let s8 = s4 * s4;
                 u = F64x::poly10(s, s2, s4, s8,
                     0.208_127_637_823_716_445_7_e-8,
-                        0.251_121_070_304_228_802_2_e-7,
-                        0.275_576_262_816_949_119_2_e-6,
-                        0.275_572_340_202_538_823_9_e-5,
-                        0.248_015_868_747_968_626_4_e-4,
-                        0.198_412_698_985_586_585_e-3,
-                        0.138_888_888_891_449_779_7_e-2,
-                        0.833_333_333_331_493_821_e-2,
-                        0.416_666_666_666_660_259_8_e-1,
-                        0.166_666_666_666_666_907_2)
-                        .mul_adde(s, HALF)
-                        .mul_adde(s, ONE)
-                        .mul_adde(s, ONE);
+                    0.251_121_070_304_228_802_2_e-7,
+                    0.275_576_262_816_949_119_2_e-6,
+                    0.275_572_340_202_538_823_9_e-5,
+                    0.248_015_868_747_968_626_4_e-4,
+                    0.198_412_698_985_586_585_e-3,
+                    0.138_888_888_891_449_779_7_e-2,
+                    0.833_333_333_331_493_821_e-2,
+                    0.416_666_666_666_660_259_8_e-1,
+                    0.166_666_666_666_666_907_2)
+                    .mul_add(s, HALF)
+                    .mul_add(s, ONE)
+                    .mul_add(s, ONE);
 
-            } else {*/
+            } else {
                 let s2 = s * s;
                 let s4 = s2 * s2;
                 let s8 = s4 * s4;
@@ -1467,7 +1448,7 @@ macro_rules! impl_math_f64_u10 {
                     .mul_add(s, HALF);
 
                 u = ONE + (s * s).mul_add(u, s);
-            //}
+            }
 
             u = ldexp2k(u, q);
 
@@ -1510,11 +1491,11 @@ macro_rules! impl_math_f64_u10 {
                 .mul_add(s, F64x::splat(0.265_094_905_523_920_587_6_e+1))
                 .mul_add(s, F64x::splat(0.230_258_509_299_404_590_1_e+1));
 
-            /*if cfg!(target_feature = "fma") {
-                u = u.mul_adde(s, ONE);
-            } else {*/
+            if cfg!(target_feature = "fma") {
+                u = u.mul_add(s, ONE);
+            } else {
                 u = ONE.add_checked(u.mul_as_doubled(s)).normalize().0;
-            //}
+            }
 
             u = ldexp2k(u, q);
 
@@ -1587,11 +1568,11 @@ macro_rules! impl_math_f64_u10 {
                 0.240_226_506_959_101_221_4)
                 .mul_add(s, F64x::splat(0.693_147_180_559_945_286_2));
 
-            /*if cfg!(target_feature = "fma") {
-                u = u.mul_adde(s, ONE);
-            } else {*/
+            if cfg!(target_feature = "fma") {
+                u = u.mul_add(s, ONE);
+            } else {
                 u = ONE.add_checked(u.mul_as_doubled(s)).normalize().0;
-            //}
+            }
 
             u = ldexp2k(u, q);
 

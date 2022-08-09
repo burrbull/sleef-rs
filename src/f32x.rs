@@ -964,43 +964,41 @@ macro_rules! impl_math_f32 {
         /// This function may return infinity with a correct sign if the absolute value of the correct return value is greater than `1e+33`.
         /// The error bounds of the returned value is `max(0.500_01 ULP, f32::MIN_POSITIVE)`.
         pub fn fmaf(mut x: F32x, mut y: F32x, mut z: F32x) -> F32x {
-    /*
-    #ifdef ENABLE_FMA_SP
-  return vfma_vf_vf_vf_vf(x, y, z);
-#else
-    */
-            let h2 = x * y + z;
-            let mut q = ONE;
-            let o = h2.abs().simd_lt(F32x::splat(1e-38));
-            const C0: F32x = F1_25X;
-            let c1: F32x = C0 * C0;
-            let c2: F32x = c1 * c1;
-            {
-                x = o.select(x * c1, x);
-                y = o.select(y * c1, y);
-                z = o.select(z * c2, z);
-                q = o.select(ONE / c2, q);
-            }
-            let o = h2.abs().simd_gt(F32x::splat(1e+38));
-            {
-                x = o.select(x * (ONE / c1), x);
-                y = o.select(y * (ONE / c1), y);
-                z = o.select(z * (ONE / c2), z);
-                q = o.select(c2, q);
-            }
-            let d = x.mul_as_doubled(y) + z;
-            let ret = (x.simd_eq(ZERO) | y.simd_eq(ZERO)).select(z, F32x::from(d));
-            let mut o = z.is_infinite();
-            o = !x.is_infinite() & o;
-            o = !x.is_nan() & o;
-            o = !y.is_infinite() & o;
-            o = !y.is_nan() & o;
-            let h2 = o.select(z, h2);
+            if cfg!(target_feature = "fma") {
+                x.mla(y, z)
+            } else {
+                let h2 = x * y + z;
+                let mut q = ONE;
+                let o = h2.abs().simd_lt(F32x::splat(1e-38));
+                const C0: F32x = F1_25X;
+                let c1: F32x = C0 * C0;
+                let c2: F32x = c1 * c1;
+                {
+                    x = o.select(x * c1, x);
+                    y = o.select(y * c1, y);
+                    z = o.select(z * c2, z);
+                    q = o.select(ONE / c2, q);
+                }
+                let o = h2.abs().simd_gt(F32x::splat(1e+38));
+                {
+                    x = o.select(x * (ONE / c1), x);
+                    y = o.select(y * (ONE / c1), y);
+                    z = o.select(z * (ONE / c2), z);
+                    q = o.select(c2, q);
+                }
+                let d = x.mul_as_doubled(y) + z;
+                let ret = (x.simd_eq(ZERO) | y.simd_eq(ZERO)).select(z, F32x::from(d));
+                let mut o = z.is_infinite();
+                o = !x.is_infinite() & o;
+                o = !x.is_nan() & o;
+                o = !y.is_infinite() & o;
+                o = !y.is_nan() & o;
+                let h2 = o.select(z, h2);
 
-            o = h2.is_infinite() | h2.is_nan();
+                o = h2.is_infinite() | h2.is_nan();
 
-            o.select(h2, ret * q)
-// #endif
+                o.select(h2, ret * q)
+            }
         }
 
         /// Square root function

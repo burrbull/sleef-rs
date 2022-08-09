@@ -95,72 +95,73 @@ macro_rules! impl_math_f32_u05 {
         ///
         /// The error bound of the returned value is `0.5001 ULP`.
         pub fn sqrtf(d: F32x) -> F32x {
-            /*
-            #if defined(ENABLE_FMA_SP)
-              vfloat q, w, x, y, z;
+            if cfg!(target_feature = "fma") {
+                let d = d.simd_lt(ZERO).select(NAN, d);
 
-              d = vsel_vf_vo_vf_vf(vlt_vo_vf_vf(d, vcast_vf_f(0)), vcast_vf_f(SLEEF_NANf), d);
+                let o = d.simd_lt(F32x::splat(5.293_955_920_339_377_e-23));
+                let d = o.select(d * F32x::splat(1.888_946_593_147_858_e+22), d);
+                let q = o.select(F32x::splat(7.275_957_614_183_426_e-12), F32x::splat(1.));
 
-              vopmask o = vlt_vo_vf_vf(d, vcast_vf_f(5.2939559203393770e-23f));
-              d = vsel_vf_vo_vf_vf(o, vmul_vf_vf_vf(d, vcast_vf_f(1.8889465931478580e+22f)), d);
-              q = vsel_vf_vo_vf_vf(o, vcast_vf_f(7.2759576141834260e-12f), vcast_vf_f(1.0f));
+                let mut y = F32x::from_bits(
+                    (I32x::splat(0x5f3759df) - (d.to_bits().cast::<i32>() >> I32x::splat(1)))
+                        .cast(),
+                );
 
-              y = vreinterpret_vf_vi2(vsub_vi2_vi2_vi2(vcast_vi2_i(0x5f3759df), vsrl_vi2_vi2_i(vreinterpret_vi2_vf(d), 1)));
+                let mut x = d * y;
+                let mut w = HALF * y;
+                y = x.neg_mul_add(w, HALF);
+                x = x.mla(y, x);
+                w = w.mla(y, w);
+                y = x.neg_mul_add(w, HALF);
+                x = x.mla(y, x);
+                w = w.mla(y, w);
 
-              x = vmul_vf_vf_vf(d, y);         w = vmul_vf_vf_vf(vcast_vf_f(0.5), y);
-              y = vfmanp_vf_vf_vf_vf(x, w, vcast_vf_f(0.5));
-              x = vfma_vf_vf_vf_vf(x, y, x);   w = vfma_vf_vf_vf_vf(w, y, w);
-              y = vfmanp_vf_vf_vf_vf(x, w, vcast_vf_f(0.5));
-              x = vfma_vf_vf_vf_vf(x, y, x);   w = vfma_vf_vf_vf_vf(w, y, w);
+                y = x.neg_mul_add(w, F32x::splat(1.5));
+                w += w;
+                w *= y;
+                x = w * d;
+                y = w.mul_sub(d, x);
+                let mut z = w.neg_mul_add(x, ONE);
 
-              y = vfmanp_vf_vf_vf_vf(x, w, vcast_vf_f(1.5));  w = vadd_vf_vf_vf(w, w);
-              w = vmul_vf_vf_vf(w, y);
-              x = vmul_vf_vf_vf(w, d);
-              y = vfmapn_vf_vf_vf_vf(w, d, x); z = vfmanp_vf_vf_vf_vf(w, x, vcast_vf_f(1));
+                z = w.neg_mul_add(y, z);
+                w = HALF * x;
+                w = w.mla(z, y);
+                w += x;
 
-              z = vfmanp_vf_vf_vf_vf(w, y, z); w = vmul_vf_vf_vf(vcast_vf_f(0.5), x);
-              w = vfma_vf_vf_vf_vf(w, z, y);
-              w = vadd_vf_vf_vf(w, x);
+                w *= q;
 
-              w = vmul_vf_vf_vf(w, q);
+                w = (d.simd_eq(ZERO) | d.simd_eq(INFINITY)).select(d, w);
 
-              w = vsel_vf_vo_vf_vf(vor_vo_vo_vo(veq_vo_vf_vf(d, vcast_vf_f(0)),
-                                veq_vo_vf_vf(d, vcast_vf_f(SLEEF_INFINITYf))), d, w);
+                d.simd_lt(ZERO).select(NAN, w)
+            } else {
+                let d = d.simd_lt(ZERO).select(NAN, d);
 
-              w = vsel_vf_vo_vf_vf(vlt_vo_vf_vf(d, vcast_vf_f(0)), vcast_vf_f(SLEEF_NANf), w);
+                let o = d.simd_lt(F32x::splat(5.293_955_920_339_377_e-23));
+                let d = o.select(d * F32x::splat(1.888_946_593_147_858_e+22), d);
+                let q = o.select(F32x::splat(7.275_957_614_183_426_e-12 * 0.5), HALF);
 
-              return w;
-            #else
-            */
+                let o = d.simd_gt(F32x::splat(1.844_674_407_370_955_2_e+19));
+                let d = o.select(d * F32x::splat(5.421_010_862_427_522_e-20), d);
+                let q = o.select(F32x::splat(4_294_967_296.0 * 0.5), q);
 
-            let d = d.simd_lt(ZERO).select(NAN, d);
+                let mut x = F32x::from_bits(
+                    (I32x::splat(0x_5f37_5a86)
+                        - ((d + F32x::splat(1e-45)).to_bits() >> U32x::splat(1)).cast())
+                    .cast(),
+                );
 
-            let o = d.simd_lt(F32x::splat(5.293_955_920_339_377_e-23));
-            let d = o.select(d * F32x::splat(1.888_946_593_147_858_e+22), d);
-            let q = o.select(F32x::splat(7.275_957_614_183_426_e-12 * 0.5), HALF);
+                x *= F32x::splat(1.5) - HALF * d * x * x;
+                x *= F32x::splat(1.5) - HALF * d * x * x;
+                x *= F32x::splat(1.5) - HALF * d * x * x;
+                x *= d;
 
-            let o = d.simd_gt(F32x::splat(1.844_674_407_370_955_2_e+19));
-            let d = o.select(d * F32x::splat(5.421_010_862_427_522_e-20), d);
-            let q = o.select(F32x::splat(4_294_967_296.0 * 0.5), q);
+                let d2 = (d + x.mul_as_doubled(x)) * x.recip_as_doubled();
 
-            let mut x = F32x::from_bits(
-                (I32x::splat(0x_5f37_5a86)
-                    - ((d + F32x::splat(1e-45)).to_bits() >> U32x::splat(1)).cast())
-                .cast(),
-            );
+                x = F32x::from(d2) * q;
 
-            x *= F32x::splat(1.5) - HALF * d * x * x;
-            x *= F32x::splat(1.5) - HALF * d * x * x;
-            x *= F32x::splat(1.5) - HALF * d * x * x;
-            x *= d;
-
-            let d2 = (d + x.mul_as_doubled(x)) * x.recip_as_doubled();
-
-            x = F32x::from(d2) * q;
-
-            x = d.simd_eq(INFINITY).select(INFINITY, x);
-            d.simd_eq(ZERO).select(d, x)
-            // #endif
+                x = d.simd_eq(INFINITY).select(INFINITY, x);
+                d.simd_eq(ZERO).select(d, x)
+            }
         }
 
         #[test]

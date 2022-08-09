@@ -83,7 +83,8 @@ fn test_sincospif() {
         |mut in1| {
             let prec = in1.prec();
             in1.set_prec(prec * 2);
-            (in1 * Float::with_val(prec * 2, rug::float::Constant::Pi)).sin_cos(Float::new(prec))
+            (in1 * rug::Float::with_val(prec * 2, rug::float::Constant::Pi))
+                .sin_cos(rug::Float::new(prec))
         },
         -rangemax2..=rangemax2,
         0.505,
@@ -119,7 +120,7 @@ fn test_sinpif() {
         |mut in1| {
             let prec = in1.prec();
             in1.set_prec(prec * 2);
-            (in1 * Float::with_val(prec * 2, rug::float::Constant::Pi)).sin()
+            (in1 * rug::Float::with_val(prec * 2, rug::float::Constant::Pi)).sin()
         },
         -rangemax2..=rangemax2,
         0.506,
@@ -153,7 +154,7 @@ fn test_cospif() {
         |mut in1| {
             let prec = in1.prec();
             in1.set_prec(prec * 2);
-            (in1 * Float::with_val(prec * 2, rug::float::Constant::Pi)).cos()
+            (in1 * rug::Float::with_val(prec * 2, rug::float::Constant::Pi)).cos()
         },
         -rangemax2..=rangemax2,
         0.506,

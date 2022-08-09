@@ -24,45 +24,11 @@ pub mod f32;
 /// Math functions for `f64`
 pub mod f64;
 
-#[macro_use]
-mod f32x;
-#[macro_use]
-mod f64x;
+/// Math functions for `Simd<f32, N>`
+pub mod f32x;
 
-/// Math functions for `f32x2`
-pub mod f32x2 {
-    impl_math_f32!(2, f32x2, u32x2, i32x2, mask32x2);
-}
-
-/// Math functions for `f32x4`
-pub mod f32x4 {
-    impl_math_f32!(4, f32x4, u32x4, i32x4, mask32x4);
-}
-
-/// Math functions for `f32x8`
-pub mod f32x8 {
-    impl_math_f32!(8, f32x8, u32x8, i32x8, mask32x8);
-}
-
-/// Math functions for `f32x16`
-pub mod f32x16 {
-    impl_math_f32!(16, f32x16, u32x16, i32x16, mask32x16);
-}
-
-/// Math functions for `f64x2`
-pub mod f64x2 {
-    impl_math_f64!(2, f64x2, u64x2, i64x2, mask64x2, u32x2, i32x2, mask32x2);
-}
-
-/// Math functions for `f64x4`
-pub mod f64x4 {
-    impl_math_f64!(4, f64x4, u64x4, i64x4, mask64x4, u32x4, i32x4, mask32x4);
-}
-
-/// Math functions for `f64x8`
-pub mod f64x8 {
-    impl_math_f64!(8, f64x8, u64x8, i64x8, mask64x8, u32x8, i32x8, mask32x8);
-}
+/// Math functions for `Simd<f64, N>`
+pub mod f64x;
 
 #[cfg(test)]
 const TEST_REPEAT_FAST: usize = 10_000;

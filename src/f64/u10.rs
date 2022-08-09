@@ -243,7 +243,7 @@ fn test_sincos() {
         sincos,
         |in1| {
             let prec = in1.prec();
-            in1.sin_cos(Float::new(prec))
+            in1.sin_cos(rug::Float::new(prec))
         },
         f64::MIN..=f64::MAX,
         1.,
@@ -266,7 +266,7 @@ pub fn tan(d: f64) -> f64 {
             .add_checked_as_doubled(qlf * (-PI_B2 * 0.5));
     } else if fabsk(d) < TRIGRANGEMAX {
         let dqh = trunck(d * (FRAC_2_PI / D1_24)) * D1_24;
-        s = Doubled::new(M_2_PI_H, M_2_PI_L) * d + ((if d < 0. { -0.5 } else { 0.5 }) - dqh);
+        s = M_2_PI * d + ((if d < 0. { -0.5 } else { 0.5 }) - dqh);
         ql = f64::from(s) as isize;
 
         let qlf = ql as f64;

@@ -178,7 +178,7 @@ fn test_sincosf() {
         sincosf,
         |in1| {
             let prec = in1.prec();
-            in1.sin_cos(Float::new(prec))
+            in1.sin_cos(rug::Float::new(prec))
         },
         f32::MIN..=f32::MAX,
         1.,

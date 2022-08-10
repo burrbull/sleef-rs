@@ -99,7 +99,7 @@ where
     fn select_doubled(self, l: Doubled<T>, r: Doubled<T>) -> Doubled<T>;
 }
 
-pub trait Sign: MaskType + BitsType {
+pub trait Sign: BitsType {
     fn sign_bit(self) -> Self::Bits;
     fn sign(self) -> Self;
     fn mul_sign(self, other: Self) -> Self;

@@ -1,3 +1,8 @@
+#[cfg(test)]
+mod tst;
+#[cfg(test)]
+pub(crate) use tst::*;
+
 use core::f64::consts::{FRAC_1_PI, FRAC_2_PI, FRAC_PI_2, FRAC_PI_4, PI};
 
 use crate::common::*;
@@ -17,8 +22,6 @@ pub(crate) const D1_23: f64 = (1u64 << 23) as f64;
 pub(crate) const SLEEF_FP_ILOGB0: i32 = -2_147_483_648;
 pub(crate) const SLEEF_FP_ILOGBNAN: i32 = 2_147_483_647;
 pub(crate) const SQRT_DBL_MAX: f64 = 1.340_780_792_994_259_635_5_e+154;
-pub(crate) const M_2_PI_H: f64 = 0.636_619_772_367_581_382_43;
-pub(crate) const M_2_PI_L: f64 = -3.935_735_335_036_497_176_4_e-17;
 pub(crate) const TRIGRANGEMAX3: f64 = 1e+9;
 pub(crate) const L2_U: f64 = 0.693_147_180_559_662_956_511_601_805_686_950_683_593_75;
 pub(crate) const L2_L: f64 = 0.282_352_905_630_315_771_225_884_481_750_134_360_255_254_120_68_e-12;
@@ -28,6 +31,10 @@ pub(crate) const L10_U: f64 = 0.301_029_995_663_839_144_98;
 pub(crate) const L10_L: f64 = 1.420_502_322_726_609_941_8_e-13; // log 2 / log 10
 pub(crate) const LOG10_2: f64 = 3.321_928_094_887_362_347_870_319_429_489_390_175_864_831_393;
 
+pub(crate) const M_2_PI: Doubled<f64> = Doubled::new(
+    0.636_619_772_367_581_382_43,
+    -3.935_735_335_036_497_176_4_e-17,
+);
 /*
  PI_A to PI_D are constants that satisfy the following two conditions.
 
@@ -139,145 +146,6 @@ pub use u35::{
     exp10 as exp10_u35,
     log2 as log2_u35,
 };
-
-#[cfg(test)]
-use rug::{Assign, Float};
-#[cfg(test)]
-pub(crate) const PRECF64: u32 = 128;
-
-#[cfg(test)]
-pub(crate) fn count_ulp(d: f64, c: &Float) -> f64 {
-    let c2 = c.to_f64();
-
-    if (c2 == 0. || c2.is_subnormal()) && (d == 0. || d.is_subnormal()) {
-        return 0.;
-    }
-
-    if (c2 == 0.) && (d != 0.) {
-        return 10000.;
-    }
-
-    if c2.is_infinite() && d.is_infinite() {
-        return 0.;
-    }
-
-    let prec = c.prec();
-
-    let mut fry = Float::with_val(prec, d);
-
-    let mut frw = Float::new(prec);
-
-    let (_, e) = c.to_f64_exp();
-
-    frw.assign(Float::u_exp(1, e - 53_i32));
-
-    fry -= c;
-    fry /= &frw;
-    let u = fabs(fry.to_f64());
-
-    u
-}
-
-#[cfg(test)]
-pub(crate) fn gen_input(
-    rng: &mut rand::rngs::ThreadRng,
-    range: core::ops::RangeInclusive<f64>,
-) -> f64 {
-    use rand::Rng;
-    let mut start = *range.start();
-    if start == f64::MIN {
-        start = -1e306;
-    }
-    let mut end = *range.end();
-    if end == f64::MAX {
-        end = 1e306;
-    }
-    rng.gen_range(start..=end)
-}
-
-#[cfg(test)]
-#[allow(warnings)]
-fn test_f_f(
-    fun_fx: fn(f64) -> f64,
-    fun_f: fn(Float) -> Float,
-    range: core::ops::RangeInclusive<f64>,
-    ulp_ex: f64,
-) {
-    use rand::Rng;
-    let mut rng = rand::thread_rng();
-    for n in 0..crate::TEST_REPEAT {
-        let input = gen_input(&mut rng, range.clone());
-        let output = fun_fx(input);
-        let expected = fun_f(Float::with_val(PRECF64, input));
-        if expected.is_nan() && output.is_nan() {
-            continue;
-        }
-        let ulp = count_ulp(output, &expected);
-        assert!(
-            ulp <= ulp_ex,
-            "Iteration: {n}, Input: {input:e}, Output: {output}, Expected: {expected}, ULP: {ulp} > {}",
-            ulp_ex
-        );
-    }
-}
-
-#[cfg(test)]
-#[allow(warnings)]
-fn test_f_ff(
-    fun_fx: fn(f64) -> (f64, f64),
-    fun_f: fn(Float) -> (Float, Float),
-    range: core::ops::RangeInclusive<f64>,
-    ulp_ex: f64,
-) {
-    use rand::Rng;
-    let mut rng = rand::thread_rng();
-    for n in 0..crate::TEST_REPEAT {
-        let input = gen_input(&mut rng, range.clone());
-        let (output1, output2) = fun_fx(input);
-        let (expected1, expected2) = fun_f(Float::with_val(PRECF64, input));
-        if (expected1.is_nan() && output1.is_nan()) || (expected2.is_nan() && output2.is_nan()) {
-            continue;
-        }
-        let ulp1 = count_ulp(output1, &expected1);
-        let ulp2 = count_ulp(output2, &expected2);
-        assert!(
-            ulp1 <= ulp_ex && ulp2 <= ulp_ex,
-                "Iteration: {n}, Input: {input:e}, Output: ({output1}, {output2}), Expected: ({expected1}, {expected2}), ULP: ({ulp1}, {ulp2}) > {}",
-                ulp_ex
-        );
-    }
-}
-
-#[cfg(test)]
-#[allow(warnings)]
-fn test_ff_f(
-    fun_fx: fn(f64, f64) -> f64,
-    fun_f: fn(Float, &Float) -> Float,
-    range1: core::ops::RangeInclusive<f64>,
-    range2: core::ops::RangeInclusive<f64>,
-    ulp_ex: f64,
-) {
-    use rand::Rng;
-    let mut rng = rand::thread_rng();
-    for n in 0..crate::TEST_REPEAT {
-        let input1 = gen_input(&mut rng, range1.clone());
-        let input2 = gen_input(&mut rng, range2.clone());
-        let output = fun_fx(input1, input2);
-        let expected = fun_f(
-            Float::with_val(PRECF64, input1),
-            &Float::with_val(PRECF64, input2),
-        );
-        if expected.is_nan() && output.is_nan() {
-            continue;
-        }
-        let ulp = count_ulp(output, &expected);
-        assert!(
-            ulp <= ulp_ex,
-            "Iteration: {n}, Input: ({input1:e}, {input2:e}), Output: {output}, Expected: {expected}, ULP: {ulp} > {}",
-            ulp_ex
-        );
-    }
-}
 
 impl crate::Sleef for f64 {
     type Int = i32;

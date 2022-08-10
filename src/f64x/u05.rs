@@ -228,7 +228,7 @@ where
     x *= o.select_doubled(s2, Doubled::from(t));
     x = o.select_doubled(x + one(), x);
 
-    let o = (q + Ix::splat(2) & Ix::splat(4))
+    let o = ((q + Ix::splat(2)) & Ix::splat(4))
         .simd_eq(Ix::splat(4))
         .cast::<i64>();
     x = Doubled::new(

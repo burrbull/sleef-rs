@@ -1373,7 +1373,7 @@ pub fn sqrt<const N: usize>(d: F64x<N>) -> F64x<N>
 where
     LaneCount<N>: SupportedLaneCount,
 {
-    return u05::sqrt(d);
+    u05::sqrt(d)
 }
 
 /// Cube root function

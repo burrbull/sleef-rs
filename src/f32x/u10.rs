@@ -11,12 +11,12 @@ where
     let mut q;
     let mut s;
 
-    if d.abs().simd_lt(trigrangemax2_f()).all() {
-        let u = (d * frac_1_pi()).round();
+    if d.abs().simd_lt(F32x::TRIGRANGEMAX2).all() {
+        let u = (d * F32x::FRAC_1_PI).round();
         q = u.roundi();
-        let v = u.mla(-pi_a2_f(), d);
-        s = v.add_as_doubled(u * (-pi_b2_f()));
-        s = s.add_checked(u * (-pi_c2_f()));
+        let v = u.mla(-F32x::PI_A2, d);
+        s = v.add_as_doubled(u * (-F32x::PI_B2));
+        s = s.add_checked(u * (-F32x::PI_C2));
     } else {
         let (mut dfidf, dfii) = rempif(d);
         q = dfii & I32x::splat(3);
@@ -24,7 +24,7 @@ where
             + q
             + dfidf
                 .0
-                .simd_gt(zero())
+                .simd_gt(F32x::ZERO)
                 .select(I32x::splat(2), I32x::splat(1));
         q >>= I32x::splat(2);
         let o = (dfii & I32x::splat(1)).simd_eq(I32x::splat(1));
@@ -46,14 +46,14 @@ where
         .mla(s.0, F32x::splat(-0.000_198_106_907_191_686_332_225_8))
         .mla(s.0, F32x::splat(0.008_333_078_585_565_090_179_443_36));
 
-    let x = one().add_checked(
+    let x = F32x::ONE.add_checked(
         F32x::splat(-0.166_666_597_127_914_428_710_938).add_checked_as_doubled(u * s.0) * s,
     );
 
     u = t.mul_as_f(x);
 
     u = F32x::from_bits(
-        ((q & I32x::splat(1)).simd_eq(I32x::splat(1)).to_int().cast() & neg_zero().to_bits())
+        ((q & I32x::splat(1)).simd_eq(I32x::splat(1)).to_int().cast() & F32x::NEG_ZERO.to_bits())
             ^ u.to_bits(),
     );
 
@@ -70,12 +70,12 @@ pub fn sinf_deterministic<const N: usize>(d: F32x<N>) -> F32x<N>
 where
     LaneCount<N>: SupportedLaneCount,
 {
-    let u = (d * frac_1_pi()).round();
+    let u = (d * F32x::FRAC_1_PI).round();
     let mut q = u.roundi();
-    let v = u.mla(-pi_a2_f(), d);
-    let mut s = v.add_as_doubled(u * (-pi_b2_f()));
-    s = s.add_checked(u * (-pi_c2_f()));
-    let g = d.abs().simd_lt(trigrangemax2_f());
+    let v = u.mla(-F32x::PI_A2, d);
+    let mut s = v.add_as_doubled(u * (-F32x::PI_B2));
+    s = s.add_checked(u * (-F32x::PI_C2));
+    let g = d.abs().simd_lt(F32x::TRIGRANGEMAX2);
 
     if !g.all() {
         let (mut dfidf, dfii) = rempif(d);
@@ -84,7 +84,7 @@ where
             + q2
             + dfidf
                 .0
-                .simd_gt(zero())
+                .simd_gt(F32x::ZERO)
                 .select(I32x::splat(2), I32x::splat(1));
         q2 >>= I32x::splat(2);
         let o = (dfii & I32x::splat(1)).simd_eq(I32x::splat(1));
@@ -109,14 +109,14 @@ where
         .mla(s.0, F32x::splat(-0.000_198_106_907_191_686_332_225_8))
         .mla(s.0, F32x::splat(0.008_333_078_585_565_090_179_443_36));
 
-    let x = one().add_checked(
+    let x = F32x::ONE.add_checked(
         F32x::splat(-0.166_666_597_127_914_428_710_938).add_checked_as_doubled(u * s.0) * s,
     );
 
     u = t.mul_as_f(x);
 
     u = F32x::from_bits(
-        ((q & I32x::splat(1)).simd_eq(I32x::splat(1)).to_int().cast() & neg_zero().to_bits())
+        ((q & I32x::splat(1)).simd_eq(I32x::splat(1)).to_int().cast() & F32x::NEG_ZERO.to_bits())
             ^ u.to_bits(),
     );
 
@@ -140,14 +140,14 @@ where
     let mut q;
     let mut s;
 
-    if d.abs().simd_lt(trigrangemax2_f()).all() {
-        let dq = (d.mla(frac_1_pi(), F32x::splat(-0.5)))
+    if d.abs().simd_lt(F32x::TRIGRANGEMAX2).all() {
+        let dq = (d.mla(F32x::FRAC_1_PI, F32x::splat(-0.5)))
             .round()
-            .mla(F32x::splat(2.), one());
+            .mla(F32x::splat(2.), F32x::ONE);
         q = dq.roundi();
-        s = d.add_as_doubled(dq * (-pi_a2_f()) * half());
-        s += dq * (-pi_b2_f()) * half();
-        s += dq * (-pi_c2_f()) * half();
+        s = d.add_as_doubled(dq * (-F32x::PI_A2) * F32x::HALF);
+        s += dq * (-F32x::PI_B2) * F32x::HALF;
+        s += dq * (-F32x::PI_C2) * F32x::HALF;
     } else {
         let (mut dfidf, dfii) = rempif(d);
         q = dfii & I32x::splat(3);
@@ -155,11 +155,14 @@ where
             + q
             + dfidf
                 .0
-                .simd_gt(zero())
+                .simd_gt(F32x::ZERO)
                 .select(I32x::splat(8), I32x::splat(7));
         q >>= I32x::splat(1);
         let o = (dfii & I32x::splat(1)).simd_eq(I32x::splat(0));
-        let y = dfidf.0.simd_gt(zero()).select(zero(), F32x::splat(-1.));
+        let y = dfidf
+            .0
+            .simd_gt(F32x::ZERO)
+            .select(F32x::ZERO, F32x::splat(-1.));
         let mut x = Doubled::new(
             F32x::splat(crate::f32::D_PI.0 * -0.5).mul_sign(y),
             F32x::splat(crate::f32::D_PI.1 * -0.5).mul_sign(y),
@@ -178,14 +181,14 @@ where
         .mla(s.0, F32x::splat(-0.000_198_106_907_191_686_332_225_8))
         .mla(s.0, F32x::splat(0.008_333_078_585_565_090_179_443_36));
 
-    let x = one().add_checked(
+    let x = F32x::ONE.add_checked(
         F32x::splat(-0.166_666_597_127_914_428_710_938).add_checked_as_doubled(u * s.0) * s,
     );
 
     let u = t.mul_as_f(x);
 
     F32x::from_bits(
-        ((q & I32x::splat(2)).simd_eq(I32x::splat(0)).to_int().cast() & neg_zero().to_bits())
+        ((q & I32x::splat(2)).simd_eq(I32x::splat(0)).to_int().cast() & F32x::NEG_ZERO.to_bits())
             ^ u.to_bits(),
     )
 }
@@ -200,14 +203,14 @@ pub fn cosf_deterministic<const N: usize>(d: F32x<N>) -> F32x<N>
 where
     LaneCount<N>: SupportedLaneCount,
 {
-    let dq = (d.mla(frac_1_pi(), F32x::splat(-0.5)))
+    let dq = (d.mla(F32x::FRAC_1_PI, F32x::splat(-0.5)))
         .round()
-        .mla(F32x::splat(2.), one());
+        .mla(F32x::splat(2.), F32x::ONE);
     let mut q = dq.roundi();
-    let mut s = d.add_as_doubled(dq * (-pi_a2_f() * half()));
-    s += dq * (-pi_b2_f() * half());
-    s += dq * (-pi_c2_f() * half());
-    let g = d.abs().simd_lt(trigrangemax2_f());
+    let mut s = d.add_as_doubled(dq * (-F32x::PI_A2 * F32x::HALF));
+    s += dq * (-F32x::PI_B2 * F32x::HALF);
+    s += dq * (-F32x::PI_C2 * F32x::HALF);
+    let g = d.abs().simd_lt(F32x::TRIGRANGEMAX2);
 
     if !g.all() {
         let (mut dfidf, dfii) = rempif(d);
@@ -216,11 +219,14 @@ where
             + q2
             + dfidf
                 .0
-                .simd_gt(zero())
+                .simd_gt(F32x::ZERO)
                 .select(I32x::splat(8), I32x::splat(7));
         q2 >>= I32x::splat(1);
         let o = (dfii & I32x::splat(1)).simd_eq(I32x::splat(0));
-        let y = dfidf.0.simd_gt(zero()).select(zero(), F32x::splat(-1.));
+        let y = dfidf
+            .0
+            .simd_gt(F32x::ZERO)
+            .select(F32x::ZERO, F32x::splat(-1.));
         let mut x = Doubled::new(
             F32x::splat(crate::f32::D_PI.0 * -0.5).mul_sign(y),
             F32x::splat(crate::f32::D_PI.1 * -0.5).mul_sign(y),
@@ -242,14 +248,14 @@ where
         .mla(s.0, F32x::splat(-0.000_198_106_907_191_686_332_225_8))
         .mla(s.0, F32x::splat(0.008_333_078_585_565_090_179_443_36));
 
-    let x = one().add_checked(
+    let x = F32x::ONE.add_checked(
         F32x::splat(-0.166_666_597_127_914_428_710_938).add_checked_as_doubled(u * s.0) * s,
     );
 
     let u = t.mul_as_f(x);
 
     F32x::from_bits(
-        ((q & I32x::splat(2)).simd_eq(I32x::splat(0)).to_int().cast() & neg_zero().to_bits())
+        ((q & I32x::splat(2)).simd_eq(I32x::splat(0)).to_int().cast() & F32x::NEG_ZERO.to_bits())
             ^ u.to_bits(),
     )
 }
@@ -274,12 +280,12 @@ where
     let q;
     let mut s;
 
-    if d.abs().simd_lt(trigrangemax2_f()).all() {
-        let u = (d * frac_2_pi()).round();
+    if d.abs().simd_lt(F32x::TRIGRANGEMAX2).all() {
+        let u = (d * F32x::FRAC_2_PI).round();
         q = u.roundi();
-        let v = u.mla(-pi_a2_f() * half(), d);
-        s = v.add_as_doubled(u * (-pi_b2_f()) * half());
-        s = s.add_checked(u * (-pi_c2_f()) * half());
+        let v = u.mla(-F32x::PI_A2 * F32x::HALF, d);
+        s = v.add_as_doubled(u * (-F32x::PI_B2) * F32x::HALF);
+        s = s.add_checked(u * (-F32x::PI_C2) * F32x::HALF);
     } else {
         let (dfidf, dfii) = rempif(d);
         q = dfii;
@@ -300,7 +306,7 @@ where
     let x = t.add_checked(u);
     let rx = F32x::from(x);
 
-    let rx = d.is_neg_zero().select(neg_zero(), rx);
+    let rx = d.is_neg_zero().select(F32x::NEG_ZERO, rx);
 
     let u = F32x::splat(-2.718_118_423_672_422_068_193_55_e-7)
         .mla(s.0, F32x::splat(2.479_904_469_510_074_704_885_48_e-5))
@@ -308,7 +314,7 @@ where
         .mla(s.0, F32x::splat(0.041_666_664_183_139_801_025_390_6))
         .mla(s.0, F32x::splat(-0.5));
 
-    let x = one().add_checked(s.0.mul_as_doubled(u));
+    let x = F32x::ONE.add_checked(s.0.mul_as_doubled(u));
     let ry = F32x::from(x);
 
     let o = (q & I32x::splat(1)).simd_eq(I32x::splat(0));
@@ -316,10 +322,10 @@ where
     let mut rcos = o.select(ry, rx);
 
     let o = (q & I32x::splat(2)).simd_eq(I32x::splat(2));
-    rsin = F32x::from_bits((o.to_int().cast() & neg_zero().to_bits()) ^ rsin.to_bits());
+    rsin = F32x::from_bits((o.to_int().cast() & F32x::NEG_ZERO.to_bits()) ^ rsin.to_bits());
 
     let o = ((q + I32x::splat(1)) & I32x::splat(2)).simd_eq(I32x::splat(2));
-    rcos = F32x::from_bits((o.to_int().cast() & neg_zero().to_bits()) ^ rcos.to_bits());
+    rcos = F32x::from_bits((o.to_int().cast() & F32x::NEG_ZERO.to_bits()) ^ rcos.to_bits());
 
     (rsin, rcos)
 }
@@ -337,12 +343,12 @@ pub fn sincosf_deterministic<const N: usize>(d: F32x<N>) -> (F32x<N>, F32x<N>)
 where
     LaneCount<N>: SupportedLaneCount,
 {
-    let u = (d * frac_2_pi()).round();
+    let u = (d * F32x::FRAC_2_PI).round();
     let mut q = u.roundi();
-    let v = u.mla(-pi_a2_f() * half(), d);
-    let mut s = v.add_as_doubled(u * (-pi_b2_f() * half()));
-    s = s.add_checked(u * (-pi_c2_f() * half()));
-    let g = d.abs().simd_lt(trigrangemax2_f());
+    let v = u.mla(-F32x::PI_A2 * F32x::HALF, d);
+    let mut s = v.add_as_doubled(u * (-F32x::PI_B2 * F32x::HALF));
+    s = s.add_checked(u * (-F32x::PI_C2 * F32x::HALF));
+    let g = d.abs().simd_lt(F32x::TRIGRANGEMAX2);
 
     if !g.all() {
         let (dfidf, dfii) = rempif(d);
@@ -365,7 +371,7 @@ where
     let x = t.add_checked(u);
     let mut rx = F32x::from(x);
 
-    rx = d.is_neg_zero().select(neg_zero(), rx);
+    rx = d.is_neg_zero().select(F32x::NEG_ZERO, rx);
 
     let u = F32x::splat(-2.718_118_423_672_422_068_193_55_e-7)
         .mla(s.0, F32x::splat(2.479_904_469_510_074_704_885_48_e-5))
@@ -373,7 +379,7 @@ where
         .mla(s.0, F32x::splat(0.041_666_664_183_139_801_025_390_6))
         .mla(s.0, F32x::splat(-0.5));
 
-    let x = one().add_checked(s.0.mul_as_doubled(u));
+    let x = F32x::ONE.add_checked(s.0.mul_as_doubled(u));
     let ry = F32x::from(x);
 
     let o = (q & I32x::splat(1)).simd_eq(I32x::splat(0));
@@ -381,10 +387,10 @@ where
     let mut rcos = o.select(ry, rx);
 
     let o = (q & I32x::splat(2)).simd_eq(I32x::splat(2));
-    rsin = F32x::from_bits((o.to_int().cast() & neg_zero().to_bits()) ^ rsin.to_bits());
+    rsin = F32x::from_bits((o.to_int().cast() & F32x::NEG_ZERO.to_bits()) ^ rsin.to_bits());
 
     let o = ((q + I32x::splat(1)) & I32x::splat(2)).simd_eq(I32x::splat(2));
-    rcos = F32x::from_bits((o.to_int().cast() & neg_zero().to_bits()) ^ rcos.to_bits());
+    rcos = F32x::from_bits((o.to_int().cast() & F32x::NEG_ZERO.to_bits()) ^ rcos.to_bits());
 
     (rsin, rcos)
 }
@@ -421,12 +427,12 @@ where
 {
     let q;
 
-    let mut s = if d.abs().simd_lt(trigrangemax2_f()).all() {
-        let u = (d * frac_2_pi()).round();
+    let mut s = if d.abs().simd_lt(F32x::TRIGRANGEMAX2).all() {
+        let u = (d * F32x::FRAC_2_PI).round();
         q = u.roundi();
-        let v = u.mla(-pi_a2_f() * half(), d);
-        v.add_as_doubled(u * (-pi_b2_f()) * half())
-            .add_checked(u * (-pi_c2_f()) * half())
+        let v = u.mla(-F32x::PI_A2 * F32x::HALF, d);
+        v.add_as_doubled(u * (-F32x::PI_B2) * F32x::HALF)
+            .add_checked(u * (-F32x::PI_C2) * F32x::HALF)
     } else {
         let (dfidf, dfii) = rempif(d);
         q = dfii;
@@ -438,7 +444,7 @@ where
     };
 
     let o = (q & I32x::splat(1)).simd_eq(I32x::splat(1));
-    let n = o.to_int().cast() & neg_zero().to_bits();
+    let n = o.to_int().cast() & F32x::NEG_ZERO.to_bits();
     s = Doubled::new(
         F32x::from_bits(s.0.to_bits() ^ n),
         F32x::from_bits(s.1.to_bits() ^ n),
@@ -455,7 +461,7 @@ where
         .mla(s.0, F32x::splat(0.054_068_714_380_264_282_226_562_5));
 
     let mut x = F32x::splat(0.133_325_666_189_193_725_585_938).add_checked_as_doubled(u * s.0);
-    x = one().add_checked(F32x::splat(0.333_333_611_488_342_285_156_25).add_checked(s * x) * s);
+    x = F32x::ONE.add_checked(F32x::splat(0.333_333_611_488_342_285_156_25).add_checked(s * x) * s);
     x = t * x;
 
     x = o.select_doubled(x.recip(), x);
@@ -475,12 +481,12 @@ pub fn tanf_deterministic<const N: usize>(d: F32x<N>) -> F32x<N>
 where
     LaneCount<N>: SupportedLaneCount,
 {
-    let u = (d * frac_2_pi()).round();
+    let u = (d * F32x::FRAC_2_PI).round();
     let mut q = u.roundi();
-    let v = u.mla(-pi_a2_f() * half(), d);
-    let mut s = v.add_as_doubled(u * (-pi_b2_f() * half()));
-    s = s.add_checked(u * (-pi_c2_f() * half()));
-    let g = d.abs().simd_lt(trigrangemax2_f());
+    let v = u.mla(-F32x::PI_A2 * F32x::HALF, d);
+    let mut s = v.add_as_doubled(u * (-F32x::PI_B2 * F32x::HALF));
+    s = s.add_checked(u * (-F32x::PI_C2 * F32x::HALF));
+    let g = d.abs().simd_lt(F32x::TRIGRANGEMAX2);
 
     if !g.all() {
         let (dfidf, dfii) = rempif(d);
@@ -495,7 +501,7 @@ where
     }
 
     let o = (q & I32x::splat(1)).simd_eq(I32x::splat(1));
-    let n = o.to_int().cast() & neg_zero().to_bits();
+    let n = o.to_int().cast() & F32x::NEG_ZERO.to_bits();
     s = Doubled::new(
         F32x::from_bits(s.0.to_bits() ^ n),
         F32x::from_bits(s.1.to_bits() ^ n),
@@ -512,7 +518,7 @@ where
         .mla(s.0, F32x::splat(0.054_068_714_380_264_282_226_562_5));
 
     let mut x = F32x::splat(0.133_325_666_189_193_725_585_938).add_checked_as_doubled(u * s.0);
-    x = one().add_checked(F32x::splat(0.333_333_611_488_342_285_156_25).add_checked(s * x) * s);
+    x = F32x::ONE.add_checked(F32x::splat(0.333_333_611_488_342_285_156_25).add_checked(s * x) * s);
     x = t * x;
 
     x = o.select_doubled(x.recip(), x);
@@ -533,9 +539,11 @@ fn atan2kf_u1<const N: usize>(y: Doubled<F32x<N>>, mut x: Doubled<F32x<N>>) -> D
 where
     LaneCount<N>: SupportedLaneCount,
 {
-    let q = x.0.simd_lt(zero()).select(I32x::splat(-2), I32x::splat(0));
-    let p = x.0.simd_lt(zero());
-    let r = p.to_int().cast() & neg_zero().to_bits();
+    let q =
+        x.0.simd_lt(F32x::ZERO)
+            .select(I32x::splat(-2), I32x::splat(0));
+    let p = x.0.simd_lt(F32x::ZERO);
+    let r = p.to_int().cast() & F32x::NEG_ZERO.to_bits();
     x = Doubled::new(
         F32x::from_bits(x.0.to_bits() ^ r),
         F32x::from_bits(x.1.to_bits() ^ r),
@@ -560,7 +568,7 @@ where
         .mla(t.0, F32x::splat(0.199_983_194_470_405_578_613_281));
 
     t *= F32x::splat(-0.333_332_866_430_282_592_773_438).add_checked_as_doubled(u * t.0);
-    t = s * one().add_checked(t);
+    t = s * F32x::ONE.add_checked(t);
     (Doubled::new(
         F32x::splat(1.570_796_370_506_286_621_1),
         F32x::splat(-4.371_138_828_673_792_886_5_e-8),
@@ -581,23 +589,23 @@ where
     let o = x
         .abs()
         .simd_lt(F32x::splat(2.938_737_278_354_183_094_7_e-39)); // nexttowardf((1.0 / FLT_MAX), 1)
-    x = o.select(x * f1_24x(), x);
-    y = o.select(y * f1_24x(), y);
+    x = o.select(x * F32x::F1_24, x);
+    y = o.select(y * F32x::F1_24, y);
 
     let d = atan2kf_u1(Doubled::from(y.abs()), Doubled::from(x));
     let mut r = F32x::from(d);
 
     r = r.mul_sign(x);
-    r = (x.is_infinite() | x.simd_eq(zero())).select(
-        frac_pi_2() - visinf2_vf_vf_vf(x, frac_pi_2().mul_sign(x)),
+    r = (x.is_infinite() | x.simd_eq(F32x::ZERO)).select(
+        F32x::FRAC_PI_2 - visinf2_vf_vf_vf(x, F32x::FRAC_PI_2.mul_sign(x)),
         r,
     );
     r = y.is_infinite().select(
-        frac_pi_2() - visinf2_vf_vf_vf(x, frac_pi_4().mul_sign(x)),
+        F32x::FRAC_PI_2 - visinf2_vf_vf_vf(x, F32x::FRAC_PI_4.mul_sign(x)),
         r,
     );
-    r = y.simd_eq(zero()).select(
-        F32x::from_bits(x.is_sign_negative().to_int().cast() & pi().to_bits()),
+    r = y.simd_eq(F32x::ZERO).select(
+        F32x::from_bits(x.is_sign_negative().to_int().cast() & F32x::PI.to_bits()),
         r,
     );
 
@@ -623,13 +631,13 @@ pub fn asinf<const N: usize>(d: F32x<N>) -> F32x<N>
 where
     LaneCount<N>: SupportedLaneCount,
 {
-    let o = d.abs().simd_lt(half());
-    let x2 = o.select(d * d, (one() - d.abs()) * half());
+    let o = d.abs().simd_lt(F32x::HALF);
+    let x2 = o.select(d * d, (F32x::ONE - d.abs()) * F32x::HALF);
     let mut x = o.select_doubled(Doubled::from(d.abs()), x2.sqrt_as_doubled());
     x = d
         .abs()
-        .simd_eq(one())
-        .select_doubled(Doubled::from(zero()), x);
+        .simd_eq(F32x::ONE)
+        .select_doubled(Doubled::from(F32x::ZERO), x);
 
     let u = F32x::splat(0.419_745_482_5_e-1)
         .mla(x2, F32x::splat(0.242_404_602_5_e-1))
@@ -662,14 +670,14 @@ pub fn acosf<const N: usize>(d: F32x<N>) -> F32x<N>
 where
     LaneCount<N>: SupportedLaneCount,
 {
-    let o = d.abs().simd_lt(half());
-    let x2 = o.select(d * d, (one() - d.abs()) * half());
+    let o = d.abs().simd_lt(F32x::HALF);
+    let x2 = o.select(d * d, (F32x::ONE - d.abs()) * F32x::HALF);
 
     let mut x = o.select_doubled(Doubled::from(d.abs()), x2.sqrt_as_doubled());
     x = d
         .abs()
-        .simd_eq(one())
-        .select_doubled(Doubled::from(zero()), x);
+        .simd_eq(F32x::ONE)
+        .select_doubled(Doubled::from(F32x::ZERO), x);
 
     let u = F32x::splat(0.419_745_482_5_e-1)
         .mla(x2, F32x::splat(0.242_404_602_5_e-1))
@@ -687,7 +695,7 @@ where
 
     y = o.select_doubled(y, x.scale(F32x::splat(2.)));
 
-    y = (!o & d.simd_lt(zero())).select_doubled(
+    y = (!o & d.simd_lt(F32x::ZERO)).select_doubled(
         Doubled::<F32x<N>>::splat(crate::f32::D_PI).sub_checked(y),
         y,
     );
@@ -708,7 +716,7 @@ pub fn atanf<const N: usize>(d: F32x<N>) -> F32x<N>
 where
     LaneCount<N>: SupportedLaneCount,
 {
-    let d2 = atan2kf_u1(Doubled::from(d.abs()), Doubled::from(one()));
+    let d2 = atan2kf_u1(Doubled::from(d.abs()), Doubled::from(F32x::ONE));
     let mut r = F32x::from(d2);
     r = d
         .is_infinite()
@@ -734,9 +742,9 @@ where
     let mut y = x.abs();
     let d = expk2f(Doubled::from(y));
     let d = d.sub_checked(d.recip());
-    y = F32x::from(d) * half();
+    y = F32x::from(d) * F32x::HALF;
 
-    y = (x.abs().simd_gt(F32x::splat(89.)) | y.is_nan()).select(infinity(), y);
+    y = (x.abs().simd_gt(F32x::splat(89.)) | y.is_nan()).select(F32x::INFINITY, y);
     y = y.mul_sign(x);
     F32x::from_bits(x.is_nan().to_int().cast() | y.to_bits())
 }
@@ -759,9 +767,9 @@ where
     let mut y = x.abs();
     let d = expk2f(Doubled::from(y));
     let d = d.add_checked(d.recip());
-    y = F32x::from(d) * half();
+    y = F32x::from(d) * F32x::HALF;
 
-    y = (x.abs().simd_gt(F32x::splat(89.)) | y.is_nan()).select(infinity(), y);
+    y = (x.abs().simd_gt(F32x::splat(89.)) | y.is_nan()).select(F32x::INFINITY, y);
     F32x::from_bits(x.is_nan().to_int().cast() | y.to_bits())
 }
 
@@ -784,7 +792,7 @@ where
     let d = d.add_checked(-e) / d.add_checked(e);
     y = F32x::from(d);
 
-    y = (x.abs().simd_gt(F32x::splat(8.664_339_742)) | y.is_nan()).select(one(), y); // TODO: check
+    y = (x.abs().simd_gt(F32x::splat(8.664_339_742)) | y.is_nan()).select(F32x::ONE, y); // TODO: check
     y = y.mul_sign(x);
     F32x::from_bits(x.is_nan().to_int().cast() | y.to_bits())
 }
@@ -806,7 +814,7 @@ where
             }*/;
     let m = d.scale(pow2if(-e));
 
-    let x = (m + F32x::splat(-1.)) / (m + one());
+    let x = (m + F32x::splat(-1.)) / (m + F32x::ONE);
     let x2 = x.square();
 
     let t = F32x::splat(0.239_282_846_450_805_664_062_5)
@@ -830,18 +838,18 @@ where
     LaneCount<N>: SupportedLaneCount,
 {
     let mut y = x.abs();
-    let o = y.simd_gt(one());
+    let o = y.simd_gt(F32x::ONE);
 
     let mut d = o.select_doubled(x.recip_as_doubled(), Doubled::from(y));
-    d = (d.square() + one()).sqrt();
+    d = (d.square() + F32x::ONE).sqrt();
     d = o.select_doubled(d * y, d);
 
     d = logk2f((d + x).normalize());
     y = F32x::from(d);
 
-    y = (x.abs().simd_gt(sqrt_flt_max()) | y.is_nan()).select(infinity().mul_sign(x), y);
+    y = (x.abs().simd_gt(F32x::SQRT_FLT_MAX) | y.is_nan()).select(F32x::INFINITY.mul_sign(x), y);
     y = F32x::from_bits(x.is_nan().to_int().cast() | y.to_bits());
-    x.is_neg_zero().select(neg_zero(), y)
+    x.is_neg_zero().select(F32x::NEG_ZERO, y)
 }
 
 #[test]
@@ -864,14 +872,15 @@ pub fn acoshf<const N: usize>(x: F32x<N>) -> F32x<N>
 where
     LaneCount<N>: SupportedLaneCount,
 {
-    let d = logk2f(x.add_as_doubled(one()).sqrt() * x.add_as_doubled(F32x::splat(-1.)).sqrt() + x);
+    let d =
+        logk2f(x.add_as_doubled(F32x::ONE).sqrt() * x.add_as_doubled(F32x::splat(-1.)).sqrt() + x);
     let mut y = F32x::from(d);
 
-    y = (x.abs().simd_gt(sqrt_flt_max()) | y.is_nan()).select(infinity(), y);
+    y = (x.abs().simd_gt(F32x::SQRT_FLT_MAX) | y.is_nan()).select(F32x::INFINITY, y);
 
-    y = F32x::from_bits(!x.simd_eq(one()).to_int().cast::<u32>() & y.to_bits());
+    y = F32x::from_bits(!x.simd_eq(F32x::ONE).to_int().cast::<u32>() & y.to_bits());
 
-    y = F32x::from_bits(x.simd_lt(one()).to_int().cast() | y.to_bits());
+    y = F32x::from_bits(x.simd_lt(F32x::ONE).to_int().cast() | y.to_bits());
     F32x::from_bits(x.is_nan().to_int().cast() | y.to_bits())
 }
 
@@ -894,11 +903,11 @@ where
     LaneCount<N>: SupportedLaneCount,
 {
     let mut y = x.abs();
-    let d = logk2f(one().add_as_doubled(y) / one().add_as_doubled(-y));
+    let d = logk2f(F32x::ONE.add_as_doubled(y) / F32x::ONE.add_as_doubled(-y));
     y = F32x::from_bits(
-        y.simd_gt(one()).to_int().cast()
-            | y.simd_eq(one())
-                .select(infinity(), F32x::from(d) * half())
+        y.simd_gt(F32x::ONE).to_int().cast()
+            | y.simd_eq(F32x::ONE)
+                .select(F32x::INFINITY, F32x::from(d) * F32x::HALF)
                 .to_bits(),
     );
 
@@ -926,19 +935,19 @@ where
         && !cfg!(feature = "enable_avx512fnofma")*/
     {
         let o = d.simd_lt(F32x::splat(f32::MIN_POSITIVE));
-        d = o.select(d * (f1_32x() * f1_32x()), d);
+        d = o.select(d * (F32x::F1_32 * F32x::F1_32), d);
         let mut e = ilogb2kf(d * F32x::splat(1. / 0.75));
         m = ldexp3kf(d, -e);
         e = o.select(e - I32x::splat(64), e);
         Doubled::<F32x<N>>::splat(crate::f32::D_LN2) * e.cast()
     }/* else {
         let mut e = vgetexp_vf_vf(d * F32x::splat(1. / 0.75));
-        e = e.simd_eq(infinity()).select(F32x::splat(128.), e);
+        e = e.simd_eq(F32x::INFINITY).select(F32x::splat(128.), e);
         m = vgetmant_vf_vf(d);
         Doubled::<F32x<N>>::splat(crate::f32::D_LN2) * e
     }*/;
 
-    let x = F32x::splat(-1.).add_as_doubled(m) / one().add_as_doubled(m);
+    let x = F32x::splat(-1.).add_as_doubled(m) / F32x::ONE.add_as_doubled(m);
     let x2 = x.0 * x.0;
 
     let t = F32x::splat(0.302_729_487_4)
@@ -951,9 +960,9 @@ where
     let r = F32x::from(s);
 
     /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
-    let r = d.simd_eq(infinity()).select(infinity(), r);
-    let r = (d.simd_lt(zero()) | d.is_nan()).select(nan(), r);
-    d.simd_eq(zero()).select(neg_infinity(), r)
+    let r = d.simd_eq(F32x::INFINITY).select(F32x::INFINITY, r);
+    let r = (d.simd_lt(F32x::ZERO) | d.is_nan()).select(F32x::NAN, r);
+    d.simd_eq(F32x::ZERO).select(F32x::NEG_INFINITY, r)
     /*} else {
         vfixup_vf_vf_vf_vi2_i(
             r,
@@ -982,7 +991,7 @@ where
     let mut s =
         /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
             let o = d.simd_lt(F32x::splat(f32::MIN_POSITIVE));
-            d = o.select(d * (f1_32x() * f1_32x()), d);
+            d = o.select(d * (F32x::F1_32 * F32x::F1_32), d);
             let mut e = ilogb2kf(d * F32x::splat(1. / 0.75));
             m = ldexp3kf(d, -e);
             e = o.select(e - I32x::splat(64), e);
@@ -992,7 +1001,7 @@ where
             ) * e.cast()
         }/* else {
             let mut e = vgetexp_vf_vf(d * F32x::splat(1. / 0.75));
-            e = e.simd_eq(infinity()).select(F32x::splat(128.), e);
+            e = e.simd_eq(F32x::INFINITY).select(F32x::splat(128.), e);
             m = vgetmant_vf_vf(d);
             Doubled::new(
                 F32x::splat(0.301_030_01),
@@ -1000,7 +1009,7 @@ where
             ) * e
         }*/;
 
-    let x = F32x::splat(-1.).add_as_doubled(m) / one().add_as_doubled(m);
+    let x = F32x::splat(-1.).add_as_doubled(m) / F32x::ONE.add_as_doubled(m);
     let x2 = x.0 * x.0;
 
     let t = F32x::splat(0.131_428_986_8)
@@ -1014,9 +1023,9 @@ where
     let mut r = F32x::from(s);
 
     /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
-    r = d.simd_eq(infinity()).select(infinity(), r);
-    r = (d.simd_lt(zero()) | d.is_nan()).select(nan(), r);
-    d.simd_eq(zero()).select(neg_infinity(), r)
+    r = d.simd_eq(F32x::INFINITY).select(F32x::INFINITY, r);
+    r = (d.simd_lt(F32x::ZERO) | d.is_nan()).select(F32x::NAN, r);
+    d.simd_eq(F32x::ZERO).select(F32x::NEG_INFINITY, r)
     /*} else {
         vfixup_vf_vf_vf_vi2_i(
             r,
@@ -1045,19 +1054,19 @@ where
     let ef =
         /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
             let o = d.simd_lt(F32x::splat(f32::MIN_POSITIVE));
-            d = o.select(d * (f1_32x() * f1_32x()), d);
+            d = o.select(d * (F32x::F1_32 * F32x::F1_32), d);
             let mut e = ilogb2kf(d * F32x::splat(1. / 0.75));
             m = ldexp3kf(d, -e);
             e = o.select(e - I32x::splat(64), e);
             e.cast()
         }/* else {
             let mut e = vgetexp_vf_vf(d * F32x::splat(1. / 0.75));
-            e = e.simd_eq(infinity()).select(F32x::splat(128.), e);
+            e = e.simd_eq(F32x::INFINITY).select(F32x::splat(128.), e);
             m = vgetmant_vf_vf(d);
             e
         }*/;
 
-    let x = F32x::splat(-1.).add_as_doubled(m) / one().add_as_doubled(m);
+    let x = F32x::splat(-1.).add_as_doubled(m) / F32x::ONE.add_as_doubled(m);
     let x2 = x.0 * x.0;
 
     let t = F32x::splat(0.437_455_028_3)
@@ -1073,9 +1082,9 @@ where
     let mut r = F32x::from(s);
 
     /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
-    r = d.simd_eq(infinity()).select(infinity(), r);
-    r = (d.simd_lt(zero()) | d.is_nan()).select(nan(), r);
-    d.simd_eq(zero()).select(neg_infinity(), r)
+    r = d.simd_eq(F32x::INFINITY).select(F32x::INFINITY, r);
+    r = (d.simd_lt(F32x::ZERO) | d.is_nan()).select(F32x::NAN, r);
+    d.simd_eq(F32x::ZERO).select(F32x::NEG_INFINITY, r)
     /*} else {
         vfixup_vf_vf_vf_vi2_i(
             r,
@@ -1101,22 +1110,22 @@ where
 {
     let m;
 
-    let dp1 = d + one();
+    let dp1 = d + F32x::ONE;
 
     let mut s =
     /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
         let o = dp1.simd_lt(F32x::splat(f32::MIN_POSITIVE));
-        let dp1 = o.select(dp1 * (f1_32x() * f1_32x()), dp1);
+        let dp1 = o.select(dp1 * (F32x::F1_32 * F32x::F1_32), dp1);
         let e = ilogb2kf(dp1 * F32x::splat(1. / 0.75));
-        let t = ldexp3kf(one(), -e);
-        m = d.mla(t, t - one());
+        let t = ldexp3kf(F32x::ONE, -e);
+        m = d.mla(t, t - F32x::ONE);
         let e = o.select(e - I32x::splat(64), e);
         Doubled::<F32x<N>>::splat(crate::f32::D_LN2) * e.cast()
     }/* else {
         let e = vgetexp_vf_vf(dp1, F32x::splat(1. / 0.75));
-        let e = e.simd_eq(infinity()).select(F32x::splat(128.), e);
-        let t = ldexp3kf(one(), -e.roundi());
-        m = d.mla(t, t - one());
+        let e = e.simd_eq(F32x::INFINITY).select(F32x::splat(128.), e);
+        let t = ldexp3kf(F32x::ONE, -e.roundi());
+        m = d.mla(t, t - F32x::ONE);
         Doubled::<F32x<N>>::splat(crate::f32::D_LN2) * e
     }*/;
 
@@ -1132,10 +1141,10 @@ where
 
     let mut r = F32x::from(s);
 
-    r = d.simd_gt(F32x::splat(1e+38)).select(infinity(), r);
+    r = d.simd_gt(F32x::splat(1e+38)).select(F32x::INFINITY, r);
     r = F32x::from_bits(F32x::splat(-1.).simd_gt(d).to_int().cast() | r.to_bits());
-    r = d.simd_eq(F32x::splat(-1.)).select(neg_infinity(), r);
-    d.is_neg_zero().select(neg_zero(), r)
+    r = d.simd_eq(F32x::splat(-1.)).select(F32x::NEG_INFINITY, r);
+    d.is_neg_zero().select(F32x::NEG_ZERO, r)
 }
 
 #[test]
@@ -1151,24 +1160,24 @@ pub fn expf<const N: usize>(d: F32x<N>) -> F32x<N>
 where
     LaneCount<N>: SupportedLaneCount,
 {
-    let q = (d * r_ln2_f()).roundi();
+    let q = (d * F32x::R_LN2).roundi();
 
-    let s = q.cast::<f32>().mla(-l2u_f(), d);
-    let s = q.cast::<f32>().mla(-l2l_f(), s);
+    let s = q.cast::<f32>().mla(-F32x::L2_U, d);
+    let s = q.cast::<f32>().mla(-F32x::L2_L, s);
 
     let mut u = F32x::splat(0.000_198_527_617_612_853_646_278_381)
         .mla(s, F32x::splat(0.001_393_043_552_525_341_510_772_71))
         .mla(s, F32x::splat(0.008_333_360_776_305_198_669_433_59))
         .mla(s, F32x::splat(0.041_666_485_369_205_474_853_515_6))
         .mla(s, F32x::splat(0.166_666_671_633_720_397_949_219))
-        .mla(s, half());
+        .mla(s, F32x::HALF);
 
-    u = one() + (s * s).mla(u, s);
+    u = F32x::ONE + (s * s).mla(u, s);
 
     u = ldexp2kf(u, q);
 
     u = F32x::from_bits(!d.simd_lt(F32x::splat(-104.)).to_int().cast::<u32>() & u.to_bits());
-    F32x::splat(100.).simd_lt(d).select(infinity(), u)
+    F32x::splat(100.).simd_lt(d).select(F32x::INFINITY, u)
 }
 
 #[test]
@@ -1184,11 +1193,11 @@ pub fn exp10f<const N: usize>(d: F32x<N>) -> F32x<N>
 where
     LaneCount<N>: SupportedLaneCount,
 {
-    let mut u = (d * log10_2_f()).round();
+    let mut u = (d * F32x::LOG10_2).round();
     let q = u.roundi();
 
-    let s = u.mla(-l10u_f(), d);
-    let s = u.mla(-l10l_f(), s);
+    let s = u.mla(-F32x::L10_U, d);
+    let s = u.mla(-F32x::L10_L, s);
 
     u = F32x::splat(0.680_255_591_9_e-1)
         .mla(s, F32x::splat(0.207_808_032_6))
@@ -1201,13 +1210,13 @@ where
         F32x::splat(-3.170_517_251_649_359_315_7_e-08),
     )
     .add_checked(u * s);
-    u = one().add_checked(x * s).normalize().0;
+    u = F32x::ONE.add_checked(x * s).normalize().0;
 
     u = ldexp2kf(u, q);
 
     u = d
         .simd_gt(F32x::splat(38.531_839_419_103_623_894_138_7))
-        .select(infinity(), u);
+        .select(F32x::INFINITY, u);
     F32x::from_bits(!d.simd_lt(F32x::splat(-50.)).to_int().cast::<u32>() & u.to_bits())
 }
 
@@ -1228,11 +1237,11 @@ where
     let mut x = F32x::from(d);
     x = a
         .simd_gt(F32x::splat(88.722_831_726_074_218_75))
-        .select(infinity(), x);
+        .select(F32x::INFINITY, x);
     x = a
         .simd_lt(F32x::splat(-16.635_532_333_438_687_426_013_570))
         .select(F32x::splat(-1.), x);
-    a.is_neg_zero().select(neg_zero(), x)
+    a.is_neg_zero().select(F32x::NEG_ZERO, x)
 }
 
 #[test]
@@ -1261,14 +1270,14 @@ where
         .mla(s, F32x::splat(0.693_147_182_5));
 
     if cfg!(target_feature = "fma") {
-        u = u.mla(s, one());
+        u = u.mla(s, F32x::ONE);
     } else {
-        u = one().add_checked(u.mul_as_doubled(s)).normalize().0;
+        u = F32x::ONE.add_checked(u.mul_as_doubled(s)).normalize().0;
     }
 
     u = ldexp2kf(u, q);
 
-    u = d.simd_ge(F32x::splat(128.)).select(infinity(), u);
+    u = d.simd_ge(F32x::splat(128.)).select(F32x::INFINITY, u);
     F32x::from_bits(!d.simd_lt(F32x::splat(-150.)).to_int().cast::<u32>() & u.to_bits())
 }
 
@@ -1287,19 +1296,19 @@ where
     let ef = /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/
             {
                 let o = d.simd_lt(F32x::splat(f32::MIN_POSITIVE));
-                d = o.select(d * (f1_32x() * f1_32x()), d);
+                d = o.select(d * (F32x::F1_32 * F32x::F1_32), d);
                 let mut e = ilogb2kf(d * F32x::splat(1. / 0.75));
                 m = ldexp3kf(d, -e);
                 e = o.select(e - I32x::splat(64), e);
                 e.cast()
             }/* else {
                 let mut e = vgetexp_vf_vf(d * F32x::splat(1. / 0.75));
-                e = e.simd_eq(infinity()).select(F32x::splat(128.), e);
+                e = e.simd_eq(F32x::INFINITY).select(F32x::splat(128.), e);
                 m = vgetmant_vf_vf(d);
                 e
             }*/;
 
-    let x = F32x::splat(-1.).add_as_doubled(m) / one().add_as_doubled(m);
+    let x = F32x::splat(-1.).add_as_doubled(m) / F32x::ONE.add_as_doubled(m);
     let x2 = x.square();
 
     let t = F32x::splat(0.240_320_354_700_088_500_976_562)
@@ -1321,11 +1330,11 @@ fn expkf<const N: usize>(d: Doubled<F32x<N>>) -> F32x<N>
 where
     LaneCount<N>: SupportedLaneCount,
 {
-    let u = F32x::from(d) * r_ln2_f();
+    let u = F32x::from(d) * F32x::R_LN2;
     let q = u.roundi();
 
-    let mut s = d + q.cast::<f32>() * (-l2u_f());
-    s += q.cast::<f32>() * (-l2l_f());
+    let mut s = d + q.cast::<f32>() * (-F32x::L2_U);
+    s += q.cast::<f32>() * (-F32x::L2_L);
 
     s = s.normalize();
 
@@ -1337,7 +1346,7 @@ where
 
     let mut t = s.add_checked(s.square() * u);
 
-    t = one().add_checked(t);
+    t = F32x::ONE.add_checked(t);
     u = F32x::from(t);
     u = ldexpkf(u, q);
 
@@ -1353,10 +1362,10 @@ where
     LaneCount<N>: SupportedLaneCount,
 {
     if true {
-        let yisint = y.trunc().simd_eq(y) | y.abs().simd_gt(f1_24x());
+        let yisint = y.trunc().simd_eq(y) | y.abs().simd_gt(F32x::F1_24);
         let yisodd = (y.trunci() & I32x::splat(1)).simd_eq(I32x::splat(1))
             & yisint
-            & y.abs().simd_lt(f1_24x());
+            & y.abs().simd_lt(F32x::F1_24);
 
         #[cfg(any(feature = "enable_neon32", feature = "enable_neon32vfpv4"))]
         {
@@ -1365,39 +1374,42 @@ where
 
         let mut result = expkf(logkf(x.abs()) * y);
 
-        result = result.is_nan().select(infinity(), result);
+        result = result.is_nan().select(F32x::INFINITY, result);
 
-        result *= x.simd_gt(zero()).select(
-            one(),
-            yisint.select(yisodd.select(F32x::splat(-1.), one()), nan()),
+        result *= x.simd_gt(F32x::ZERO).select(
+            F32x::ONE,
+            yisint.select(yisodd.select(F32x::splat(-1.), F32x::ONE), F32x::NAN),
         );
 
-        let efx = (x.abs() - one()).mul_sign(y);
+        let efx = (x.abs() - F32x::ONE).mul_sign(y);
 
         result = y.is_infinite().select(
             F32x::from_bits(
-                !efx.simd_lt(zero()).to_int().cast::<u32>()
-                    & efx.simd_eq(zero()).select(one(), infinity()).to_bits(),
+                !efx.simd_lt(F32x::ZERO).to_int().cast::<u32>()
+                    & efx
+                        .simd_eq(F32x::ZERO)
+                        .select(F32x::ONE, F32x::INFINITY)
+                        .to_bits(),
             ),
             result,
         );
 
-        result = (x.is_infinite() | x.simd_eq(zero())).select(
-            yisodd.select(x.sign(), one())
+        result = (x.is_infinite() | x.simd_eq(F32x::ZERO)).select(
+            yisodd.select(x.sign(), F32x::ONE)
                 * F32x::from_bits(
-                    !x.simd_eq(zero())
+                    !x.simd_eq(F32x::ZERO)
                         .select(-y, y)
-                        .simd_lt(zero())
+                        .simd_lt(F32x::ZERO)
                         .to_int()
                         .cast::<u32>()
-                        & infinity().to_bits(),
+                        & F32x::INFINITY.to_bits(),
                 ),
             result,
         );
 
         result = F32x::from_bits((x.is_nan() | y.is_nan()).to_int().cast() | result.to_bits());
 
-        (y.simd_eq(zero()) | x.simd_eq(one())).select(one(), result)
+        (y.simd_eq(F32x::ZERO) | x.simd_eq(F32x::ONE)).select(F32x::ONE, result)
     } else {
         expkf(logkf(x) * y)
     }
@@ -1423,7 +1435,7 @@ pub fn cbrtf<const N: usize>(mut d: F32x<N>) -> F32x<N>
 where
     LaneCount<N>: SupportedLaneCount,
 {
-    let mut q2 = Doubled::from(one());
+    let mut q2 = Doubled::from(F32x::ONE);
 
     /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
         let s = d;
@@ -1479,16 +1491,16 @@ where
     v *= q2;
     z = ldexp2kf(F32x::from(v), qu - I32x::splat(2048));
 
-    z = d.is_infinite().select(infinity().mul_sign(q2.0), z);
+    z = d.is_infinite().select(F32x::INFINITY.mul_sign(q2.0), z);
     z = d
-        .simd_eq(zero())
+        .simd_eq(F32x::ZERO)
         .select(F32x::from_bits(q2.0.sign_bit()), z);
 
     /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
-        z = s.is_infinite().select(infinity().mul_sign(s), z);
+        z = s.is_infinite().select(F32x::INFINITY.mul_sign(s), z);
         z = s
-            .simd_eq(zero())
-            .select((zero(), s).mul_sign(z);
+            .simd_eq(F32x::ZERO)
+            .select((F32x::ZERO, s).mul_sign(z);
     }*/
 
     z
@@ -1504,21 +1516,21 @@ fn gammafk<const N: usize>(a: F32x<N>) -> (Doubled<F32x<N>>, Doubled<F32x<N>>)
 where
     LaneCount<N>: SupportedLaneCount,
 {
-    let mut clln = Doubled::from(one());
-    let mut clld = Doubled::from(one());
+    let mut clln = Doubled::from(F32x::ONE);
+    let mut clld = Doubled::from(F32x::ONE);
 
     let otiny = a.abs().simd_lt(F32x::splat(1e-30));
-    let oref = a.simd_lt(half());
+    let oref = a.simd_lt(F32x::HALF);
 
     let x = otiny.select_doubled(
-        Doubled::from(zero()),
-        oref.select_doubled(one().add_as_doubled(-a), Doubled::from(a)),
+        Doubled::from(F32x::ZERO),
+        oref.select_doubled(F32x::ONE.add_as_doubled(-a), Doubled::from(a)),
     );
 
-    let o0 = half().simd_le(x.0) & x.0.simd_le(F32x::splat(1.2));
+    let o0 = F32x::HALF.simd_le(x.0) & x.0.simd_le(F32x::splat(1.2));
     let o2 = F32x::splat(2.3).simd_le(x.0);
 
-    let mut y = ((x + one()) * x).normalize();
+    let mut y = ((x + F32x::ONE) * x).normalize();
     y = ((x + F32x::splat(2.)) * y).normalize();
 
     let o = o2 & x.0.simd_le(F32x::splat(7.));
@@ -1638,7 +1650,7 @@ where
 
     let mut clc = o2.select_doubled(y, z);
 
-    clld = o2.select_doubled(u.mul_as_doubled(t) + one(), clld);
+    clld = o2.select_doubled(u.mul_as_doubled(t) + F32x::ONE, clld);
 
     y = clln;
 
@@ -1649,15 +1661,15 @@ where
             clc,
         ),
     ); // log(M_PI)
-    clln = otiny.select_doubled(Doubled::from(one()), oref.select_doubled(clln, clld));
+    clln = otiny.select_doubled(Doubled::from(F32x::ONE), oref.select_doubled(clln, clld));
 
     if !(!oref).all() {
-        let t = a - f1_12x() * (a * (one() / f1_12x())).trunci().cast();
+        let t = a - F32x::F1_12 * (a * (F32x::ONE / F32x::F1_12)).trunci().cast();
         x = clld * sinpifk(t);
     }
 
     clld = otiny.select_doubled(
-        Doubled::from(a * (f1_30x() * f1_30x())),
+        Doubled::from(a * (F32x::F1_30 * F32x::F1_30)),
         oref.select_doubled(x, y),
     );
 
@@ -1675,15 +1687,15 @@ where
     let y = expk2f(da) * db;
     let r = F32x::from(y);
 
-    let o = a.simd_eq(neg_infinity())
-        | (a.simd_lt(zero()) & a.is_integer())
-        | (a.is_finite() & a.simd_lt(zero()) & r.is_nan());
-    let r = o.select(nan(), r);
+    let o = a.simd_eq(F32x::NEG_INFINITY)
+        | (a.simd_lt(F32x::ZERO) & a.is_integer())
+        | (a.is_finite() & a.simd_lt(F32x::ZERO) & r.is_nan());
+    let r = o.select(F32x::NAN, r);
 
-    let o = (a.simd_eq(infinity()) | a.is_finite())
+    let o = (a.simd_eq(F32x::INFINITY) | a.is_finite())
         & a.simd_ge(F32x::splat(-f32::MIN_POSITIVE))
-        & (a.simd_eq(zero()) | a.simd_gt(F32x::splat(36.)) | r.is_nan());
-    o.select(infinity().mul_sign(a), r)
+        & (a.simd_eq(F32x::ZERO) | a.simd_gt(F32x::splat(36.)) | r.is_nan());
+    o.select(F32x::INFINITY.mul_sign(a), r)
 }
 
 #[test]
@@ -1704,8 +1716,9 @@ where
     let y = da + logk2f(db.abs());
     let r = F32x::from(y);
 
-    let o = a.is_infinite() | ((a.simd_le(zero()) & a.is_integer()) | (a.is_finite() & r.is_nan()));
-    o.select(infinity(), r)
+    let o =
+        a.is_infinite() | ((a.simd_le(F32x::ZERO) & a.is_integer()) | (a.is_finite() & r.is_nan()));
+    o.select(F32x::INFINITY, r)
 }
 
 #[test]
@@ -1790,7 +1803,7 @@ where
                 F32x::splat(-3.661_630_931_870_736_516_3_e-09),
             ),
         );
-        t2 = one().add_checked(t2 * x);
+        t2 = F32x::ONE.add_checked(t2 * x);
         t2 = t2.square();
         t2 = t2.square();
         t2 = t2.square();
@@ -1843,7 +1856,7 @@ where
             ),
         );
         t2 *= x;
-        let mut s2 = one().add_checked(t2);
+        let mut s2 = F32x::ONE.add_checked(t2);
         s2 = s2.square();
         s2 = s2.square();
         s2 = s2.square();
@@ -1862,9 +1875,9 @@ where
     );
 
     let mut z = -F32x::from(t2);
-    z = x.simd_ge(F32x::splat(6.)).select(one(), z);
-    z = a.is_infinite().select(one(), z);
-    z = a.simd_eq(zero()).select(zero(), z);
+    z = x.simd_ge(F32x::splat(6.)).select(F32x::ONE, z);
+    z = a.is_infinite().select(F32x::ONE, z);
+    z = a.simd_eq(F32x::ZERO).select(F32x::ZERO, z);
     z.mul_sign(a)
 }
 

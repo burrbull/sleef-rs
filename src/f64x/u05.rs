@@ -41,7 +41,7 @@ where
     x *= t;
     let rx = F64x::from(x);
 
-    let rx = d.is_neg_zero().select(neg_zero(), rx);
+    let rx = d.is_neg_zero().select(F64x::NEG_ZERO, rx);
 
     //
 
@@ -62,7 +62,7 @@ where
             F64x::splat(-1.956_984_921_336_335_503_383_45_e-17),
         );
 
-    x = x * s2 + one();
+    x = x * s2 + F64x::ONE;
     let ry = F64x::from(x);
 
     //
@@ -72,16 +72,16 @@ where
     let mut rcos = o.select(ry, rx);
 
     let o = (q & Ix::splat(4)).simd_eq(Ix::splat(4)).cast::<i64>();
-    rsin = F64x::from_bits((o.to_int().cast() & neg_zero().to_bits()) ^ rsin.to_bits());
+    rsin = F64x::from_bits((o.to_int().cast() & F64x::NEG_ZERO.to_bits()) ^ rsin.to_bits());
 
     let o = ((q + Ix::splat(2)) & Ix::splat(4))
         .simd_eq(Ix::splat(4))
         .cast::<i64>();
-    rcos = F64x::from_bits((o.to_int().cast() & neg_zero().to_bits()) ^ rcos.to_bits());
+    rcos = F64x::from_bits((o.to_int().cast() & F64x::NEG_ZERO.to_bits()) ^ rcos.to_bits());
 
-    let o = d.abs().simd_gt(trigrangemax3() / F64x::splat(4.));
+    let o = d.abs().simd_gt(F64x::TRIGRANGEMAX3 / F64x::splat(4.));
     rsin = F64x::from_bits(!o.to_int().cast::<u64>() & rsin.to_bits());
-    rcos = o.select(one(), rcos);
+    rcos = o.select(F64x::ONE, rcos);
 
     let o = d.is_infinite();
     rsin = F64x::from_bits(o.to_int().cast() | rsin.to_bits());
@@ -120,10 +120,10 @@ where
     let x = sinpik(d);
     let mut r = F64x::from(x);
 
-    r = d.is_neg_zero().select(neg_zero(), r);
+    r = d.is_neg_zero().select(F64x::NEG_ZERO, r);
     r = F64x::from_bits(
         !d.abs()
-            .simd_gt(trigrangemax3() / F64x::splat(4.))
+            .simd_gt(F64x::TRIGRANGEMAX3 / F64x::splat(4.))
             .to_int()
             .cast::<u64>()
             & r.to_bits(),
@@ -226,14 +226,14 @@ where
         );
 
     x *= o.select_doubled(s2, Doubled::from(t));
-    x = o.select_doubled(x + one(), x);
+    x = o.select_doubled(x + F64x::ONE, x);
 
     let o = ((q + Ix::splat(2)) & Ix::splat(4))
         .simd_eq(Ix::splat(4))
         .cast::<i64>();
     x = Doubled::new(
-        F64x::from_bits((o.to_int().cast() & neg_zero().to_bits()) ^ x.0.to_bits()),
-        F64x::from_bits((o.to_int().cast() & neg_zero().to_bits()) ^ x.1.to_bits()),
+        F64x::from_bits((o.to_int().cast() & F64x::NEG_ZERO.to_bits()) ^ x.0.to_bits()),
+        F64x::from_bits((o.to_int().cast() & F64x::NEG_ZERO.to_bits()) ^ x.1.to_bits()),
     );
 
     x
@@ -255,8 +255,8 @@ where
 
     let r = d
         .abs()
-        .simd_gt(trigrangemax3() / F64x::splat(4.))
-        .select(one(), r);
+        .simd_gt(F64x::TRIGRANGEMAX3 / F64x::splat(4.))
+        .select(F64x::ONE, r);
     F64x::from_bits(d.is_infinite().to_int().cast() | r.to_bits())
 }
 
@@ -284,11 +284,11 @@ where
     LaneCount<N>: SupportedLaneCount,
 {
     if cfg!(target_feature = "fma") {
-        let d = d.simd_lt(zero()).select(nan(), d);
+        let d = d.simd_lt(F64x::ZERO).select(F64x::NAN, d);
 
         let o = d.simd_lt(F64x::splat(8.636_168_555_094_445_e-78));
         let d = o.select(d * F64x::splat(1.157_920_892_373_162_e77), d);
-        let q = o.select(F64x::splat(2.938_735_877_055_718_8_e-39), one());
+        let q = o.select(F64x::splat(2.938_735_877_055_718_8_e-39), F64x::ONE);
 
         let mut y = F64x::from_bits(
             (I64x::splat(0x5fe6_ec85_e7de_30da) - (d.to_bits().cast::<i64>() >> I64x::splat(1)))
@@ -296,14 +296,14 @@ where
         );
 
         let mut x = d * y;
-        let mut w = half() * y;
-        y = x.neg_mul_add(w, half());
+        let mut w = F64x::HALF * y;
+        y = x.neg_mul_add(w, F64x::HALF);
         x = x.mla(y, x);
         w = w.mla(y, w);
-        y = x.neg_mul_add(w, half());
+        y = x.neg_mul_add(w, F64x::HALF);
         x = x.mla(y, x);
         w = w.mla(y, w);
-        y = x.neg_mul_add(w, half());
+        y = x.neg_mul_add(w, F64x::HALF);
         x = x.mla(y, x);
         w = w.mla(y, w);
 
@@ -312,24 +312,24 @@ where
         w *= y;
         x = w * d;
         y = w.mul_sub(d, x);
-        let mut z = w.neg_mul_add(x, one());
+        let mut z = w.neg_mul_add(x, F64x::ONE);
 
         z = w.neg_mul_add(y, z);
-        w = half() * x;
+        w = F64x::HALF * x;
         w = w.mla(z, y);
         w += x;
 
         w *= q;
 
-        w = (d.simd_eq(zero()) | d.simd_eq(infinity())).select(d, w);
+        w = (d.simd_eq(F64x::ZERO) | d.simd_eq(F64x::INFINITY)).select(d, w);
 
-        d.simd_lt(zero()).select(nan(), w)
+        d.simd_lt(F64x::ZERO).select(F64x::NAN, w)
     } else {
-        let d = d.simd_lt(zero()).select(nan(), d);
+        let d = d.simd_lt(F64x::ZERO).select(F64x::NAN, d);
 
         let o = d.simd_lt(F64x::splat(8.636_168_555_094_445_e-78));
         let d = o.select(d * F64x::splat(1.157_920_892_373_162_e77), d);
-        let q = o.select(F64x::splat(2.938_735_877_055_718_8_e-39 * 0.5), half());
+        let q = o.select(F64x::splat(2.938_735_877_055_718_8_e-39 * 0.5), F64x::HALF);
 
         let o = d.simd_gt(F64x::splat(1.340_780_792_994_259_7_e+154));
         let d = o.select(d * F64x::splat(7.458_340_731_200_207_e-155), d);
@@ -341,17 +341,17 @@ where
             .cast(),
         );
 
-        x *= F64x::splat(1.5) - half() * d * x * x;
-        x *= F64x::splat(1.5) - half() * d * x * x;
-        x *= F64x::splat(1.5) - half() * d * x * x;
+        x *= F64x::splat(1.5) - F64x::HALF * d * x * x;
+        x *= F64x::splat(1.5) - F64x::HALF * d * x * x;
+        x *= F64x::splat(1.5) - F64x::HALF * d * x * x;
         x *= d;
 
         let d2 = (d + x.mul_as_doubled(x)) * x.recip_as_doubled();
 
         x = F64x::from(d2) * q;
 
-        x = d.simd_eq(infinity()).select(infinity(), x);
-        d.simd_eq(zero()).select(d, x)
+        x = d.simd_eq(F64x::INFINITY).select(F64x::INFINITY, x);
+        d.simd_eq(F64x::ZERO).select(d, x)
     }
 }
 
@@ -375,16 +375,16 @@ where
     let d = max;
 
     let o = max.simd_lt(F64x::splat(f64::MIN_POSITIVE));
-    let n = o.select(n * d1_54x(), n);
-    let d = o.select(d * d1_54x(), d);
+    let n = o.select(n * F64x::D1_54, n);
+    let d = o.select(d * F64x::D1_54, d);
 
     let t = Doubled::from(n) / Doubled::from(d);
-    let t = (t.square() + one()).sqrt() * max;
+    let t = (t.square() + F64x::ONE).sqrt() * max;
     let mut ret = F64x::from(t);
-    ret = ret.is_nan().select(infinity(), ret);
-    ret = min.simd_eq(zero()).select(max, ret);
-    ret = (x.is_nan() | y.is_nan()).select(nan(), ret);
-    (x.simd_eq(infinity()) | y.simd_eq(infinity())).select(infinity(), ret)
+    ret = ret.is_nan().select(F64x::INFINITY, ret);
+    ret = min.simd_eq(F64x::ZERO).select(max, ret);
+    ret = (x.is_nan() | y.is_nan()).select(F64x::NAN, ret);
+    (x.simd_eq(F64x::INFINITY) | y.simd_eq(F64x::INFINITY)).select(F64x::INFINITY, ret)
 }
 
 #[test]

@@ -534,3 +534,33 @@ where
         )
     }
 }
+
+pub trait Constants {
+    const PI: Self;
+    const FRAC_1_PI: Self;
+    const FRAC_2_PI: Self;
+    const FRAC_PI_2: Self;
+    const FRAC_PI_4: Self;
+    const NAN: Self;
+    const INFINITY: Self;
+    const NEG_INFINITY: Self;
+    const ZERO: Self;
+    const NEG_ZERO: Self;
+    const ONE: Self;
+    const HALF: Self;
+    const L10_U: Self;
+    const L10_L: Self;
+    const L2_U: Self;
+    const L2_L: Self;
+    const R_LN2: Self;
+    const LOG10_2: Self;
+}
+
+macro_rules! cons {
+    ($($name:ident: $ty:ident = $val:expr;)*) => {
+        $(
+            const $name: $ty<N> = $ty::from_array([$val; N]);
+        )*
+    };
+}
+pub(crate) use cons;

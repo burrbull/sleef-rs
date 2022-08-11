@@ -10,12 +10,15 @@ where
 {
     let s = a;
     let a = a.abs();
-    let o0 = a.simd_lt(one());
+    let o0 = a.simd_lt(F32x::ONE);
     let o1 = a.simd_lt(F32x::splat(2.2));
     let o2 = a.simd_lt(F32x::splat(4.3));
     let o3 = a.simd_lt(F32x::splat(10.1));
 
-    let u = o1.select_doubled(Doubled::from(a), Doubled::from(one()) / Doubled::from(a));
+    let u = o1.select_doubled(
+        Doubled::from(a),
+        Doubled::from(F32x::ONE) / Doubled::from(a),
+    );
 
     let t = F32x::select4(
         o0,
@@ -112,9 +115,9 @@ where
     x = expk2f(x);
     x = o1.select_doubled(x, x * u);
 
-    let mut r = o3.select(F32x::from(x), zero());
+    let mut r = o3.select(F32x::from(x), F32x::ZERO);
     r = s.is_sign_negative().select(F32x::splat(2.) - r, r);
-    s.is_nan().select(nan(), r)
+    s.is_nan().select(F32x::NAN, r)
 }
 
 #[test]

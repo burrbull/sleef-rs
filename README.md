@@ -5,7 +5,38 @@
 
 # sleef-rs
 
-Rust port of [Sleef] math library based on [Portable SIMD Vectors] a.k.a. `core::simd`
+Rust port of [Sleef] math library based on [Portable SIMD Vectors][core_simd] a.k.a. `core::simd`
+
+## Usage
+
+Requires nightly feature `portable_simd`.
+
+You can call math functions directly:
+```rust
+#![feature(portable_simd)]
+
+use core::simd::f64x2;
+
+fn main() {
+    let input = f64x2::from_array([1.43, 0.57]);
+    let output = sleef::f64x::sin_u10(input);
+    println!("sin(α) = {:?}", output);
+}
+```
+
+or use `Sleef` trait:
+```rust
+#![feature(portable_simd)]
+
+use core::simd::f64x2;
+use sleef::Sleef;
+
+fn main() {
+    let input = f64x2::from_array([1.43, 0.57]);
+    let output = f64x::sin(input);
+    println!("sin(α) = {:?}", output);
+}
+```
 
 [Sleef]: https://github.com/shibatch/sleef/
-[Portable Packed SIMD Vectors]: https://github.com/rust-lang/portable-simd
+[core_simd]: https://github.com/rust-lang/portable-simd

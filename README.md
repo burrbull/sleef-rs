@@ -33,7 +33,7 @@ use sleef::Sleef;
 
 fn main() {
     let input = f64x2::from_array([1.43, 0.57]);
-    let output = f64x::sin(input);
+    let output = input.sin();
     println!("sin(α) = {:?}", output);
 }
 ```

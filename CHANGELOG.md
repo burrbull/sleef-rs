@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.3.0] - 2022-08-11
+
+- All functions now generic over size of SIMD vectors. Support all sizes
+
 ## [v0.2.0] - 2022-08-08
 
 ### Changed

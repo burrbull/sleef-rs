@@ -22,3 +22,14 @@ rug = "1.16"
 
 [dev-dependencies.rand]
 version = "0.8.5"
+
+[dev-dependencies.core_simd]
+git = "https://github.com/atomicincrement/stdsimd"
+branch = "feature/libm"
+
+[dev-dependencies.std_float]
+git = "https://github.com/atomicincrement/stdsimd"
+branch = "feature/libm"
+
+[dev-dependencies.libm]
+version = "0.2.3"

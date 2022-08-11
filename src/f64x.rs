@@ -464,11 +464,11 @@ where
 {
     #[inline]
     fn sign_bit(self) -> Self::Bits {
-        self.to_bits() & neg_zero().to_bits()
+        self.to_bits() & F64x::NEG_ZERO.to_bits()
     }
     #[inline]
     fn sign(self) -> Self {
-        one().mul_sign(self)
+        F64x::ONE.mul_sign(self)
     }
     #[inline]
     fn mul_sign(self, other: Self) -> Self {
@@ -480,7 +480,7 @@ where
     }
     #[inline]
     fn copy_sign(self, other: Self) -> Self {
-        Self::from_bits((!neg_zero().to_bits() & self.to_bits()) ^ other.sign_bit())
+        Self::from_bits((!F64x::NEG_ZERO.to_bits() & self.to_bits()) ^ other.sign_bit())
     }
 }
 
@@ -490,7 +490,7 @@ where
 {
     #[inline]
     fn is_neg_zero(self) -> Self::Mask {
-        self.to_bits().simd_eq(neg_zero().to_bits())
+        self.to_bits().simd_eq(F64x::NEG_ZERO.to_bits())
     }
 }
 
@@ -503,9 +503,9 @@ where
         if cfg!(feature = "full_fp_rounding") {
             self.trunc().simd_eq(self)
         } else {
-            let mut x = (self * (one() / d1_31x())).trunc();
-            x = (-d1_31x()).mla(x, self);
-            x.trunc().simd_eq(x) | self.abs().simd_gt(d1_53x())
+            let mut x = (self * (F64x::ONE / F64x::D1_31)).trunc();
+            x = (-F64x::D1_31).mla(x, self);
+            x.trunc().simd_eq(x) | self.abs().simd_gt(F64x::D1_53)
         }
     }
 }
@@ -590,16 +590,16 @@ where
     #[inline]
     fn is_odd(self) -> Self::Mask {
         if cfg!(feature = "full_fp_rounding") {
-            let x = self * half();
+            let x = self * F64x::HALF;
             x.trunc().simd_ne(x)
         } else {
-            let mut x = (self * (one() / d1_31x())).trunc();
-            x = (-d1_31x()).mla(x, self);
+            let mut x = (self * (F64x::ONE / F64x::D1_31)).trunc();
+            x = (-F64x::D1_31).mla(x, self);
 
             (x.trunci() & Ix::splat(1))
                 .simd_eq(Ix::splat(1))
                 .cast::<i64>()
-                & self.abs().simd_lt(d1_53x())
+                & self.abs().simd_lt(F64x::D1_53)
         }
     }
 }
@@ -636,8 +636,12 @@ where
     LaneCount<N>: SupportedLaneCount,
 {
     let mut e = ilogbk(d.abs()).cast::<f64>();
-    e = d.simd_eq(zero()).select(sleef_fp_ilogb0(), e);
-    e = d.is_nan().select(sleef_fp_ilogbnan(), e);
+    e = d
+        .simd_eq(F64x::ZERO)
+        .select(F64x::splat(crate::f64::SLEEF_FP_ILOGB0 as f64), e);
+    e = d
+        .is_nan()
+        .select(F64x::splat(crate::f64::SLEEF_FP_ILOGBNAN as f64), e);
     e = d.is_infinite().select(F64x::splat(f64::MAX), e);
     e.roundi()
 }
@@ -652,14 +656,14 @@ where
         let vi = (y - x.round() * F64x::splat(4.)).trunci();
         (x - y * F64x::splat(0.25), vi)
     } else {
-        let c = d1_52x().mul_sign(x);
-        let rint4x = (F64x::splat(4.) * x).abs().simd_gt(d1_52x()).select(
+        let c = F64x::D1_52.mul_sign(x);
+        let rint4x = (F64x::splat(4.) * x).abs().simd_gt(F64x::D1_52).select(
             F64x::splat(4.) * x,
             (F64x::splat(4.).mla(x, c) - c).or_sign(x),
         );
         let rintx = x
             .abs()
-            .simd_gt(d1_52x())
+            .simd_gt(F64x::D1_52)
             .select(x, ((x + c) - c).or_sign(x));
 
         let fr = F64x::splat(-0.25).mla(rint4x, x);
@@ -718,7 +722,7 @@ where
     LaneCount<N>: SupportedLaneCount,
 {
     F64x::from_bits(
-        d.is_infinite().to_int().cast() & ((d.to_bits() & neg_zero().to_bits()) | m.to_bits()),
+        d.is_infinite().to_int().cast() & ((d.to_bits() & F64x::NEG_ZERO.to_bits()) | m.to_bits()),
     )
 }
 
@@ -727,11 +731,11 @@ fn expk2<const N: usize>(d: Doubled<F64x<N>>) -> Doubled<F64x<N>>
 where
     LaneCount<N>: SupportedLaneCount,
 {
-    let u = F64x::from(d) * r_ln2();
+    let u = F64x::from(d) * F64x::R_LN2;
     let dq = u.round();
     let q = dq.roundi();
 
-    let s = d + dq * (-l2_u()) + dq * (-l2_l());
+    let s = d + dq * (-F64x::L2_U) + dq * (-F64x::L2_L);
 
     let s2 = s.square();
     let s4 = s2.square();
@@ -754,9 +758,9 @@ where
         0.416_666_666_666_666_990_5_e-1,
     );
 
-    let mut t = half().add_checked(s * F64x::splat(0.166_666_666_666_666_657_4));
-    t = one().add_checked(t * s);
-    t = one().add_checked(t * s);
+    let mut t = F64x::HALF.add_checked(s * F64x::splat(0.166_666_666_666_666_657_4));
+    t = F64x::ONE.add_checked(t * s);
+    t = F64x::ONE.add_checked(t * s);
     t = t.add_checked(s4 * u);
 
     t = Doubled::new(ldexp2k(t.0, q), ldexp2k(t.1, q));
@@ -828,7 +832,7 @@ where
     LaneCount<N>: SupportedLaneCount,
 {
     let ret = x - y;
-    (ret.simd_lt(zero()) | x.simd_eq(y)).select(zero(), ret)
+    (ret.simd_lt(F64x::ZERO) | x.simd_eq(y)).select(F64x::ZERO, ret)
 }
 
 /// Round to integer towards zero
@@ -841,9 +845,9 @@ where
     return vtruncate_vd_vd(x);
     #else
     */
-    let mut fr = x - d1_31x() * (x * (one() / d1_31x())).trunci().cast();
+    let mut fr = x - F64x::D1_31 * (x * (F64x::ONE / F64x::D1_31)).trunci().cast();
     fr -= fr.trunci().cast();
-    (x.is_infinite() | x.abs().simd_ge(d1_52x())).select(x, (x - fr).copy_sign(x))
+    (x.is_infinite() | x.abs().simd_ge(F64x::D1_52)).select(x, (x - fr).copy_sign(x))
     // #endif
 }
 
@@ -852,10 +856,10 @@ pub fn floor<const N: usize>(x: F64x<N>) -> F64x<N>
 where
     LaneCount<N>: SupportedLaneCount,
 {
-    let mut fr = x - d1_31x() * (x * (one() / d1_31x())).trunci().cast();
+    let mut fr = x - F64x::D1_31 * (x * (F64x::ONE / F64x::D1_31)).trunci().cast();
     fr -= fr.trunci().cast();
-    fr = fr.simd_lt(zero()).select(fr + one(), fr);
-    (x.is_infinite() | x.abs().simd_ge(d1_52x())).select(x, (x - fr).copy_sign(x))
+    fr = fr.simd_lt(F64x::ZERO).select(fr + F64x::ONE, fr);
+    (x.is_infinite() | x.abs().simd_ge(F64x::D1_52)).select(x, (x - fr).copy_sign(x))
 }
 
 /// Round to integer towards plus infinity
@@ -863,10 +867,10 @@ pub fn ceil<const N: usize>(x: F64x<N>) -> F64x<N>
 where
     LaneCount<N>: SupportedLaneCount,
 {
-    let mut fr = x - d1_31x() * (x * (one() / d1_31x())).trunci().cast();
+    let mut fr = x - F64x::D1_31 * (x * (F64x::ONE / F64x::D1_31)).trunci().cast();
     fr -= fr.trunci().cast();
-    fr = fr.simd_le(zero()).select(fr, fr - one());
-    (x.is_infinite() | x.abs().simd_ge(d1_52x())).select(x, (x - fr).copy_sign(x))
+    fr = fr.simd_le(F64x::ZERO).select(fr, fr - F64x::ONE);
+    (x.is_infinite() | x.abs().simd_ge(F64x::D1_52)).select(x, (x - fr).copy_sign(x))
 }
 
 /// Round to integer away from zero
@@ -874,15 +878,15 @@ pub fn round<const N: usize>(d: F64x<N>) -> F64x<N>
 where
     LaneCount<N>: SupportedLaneCount,
 {
-    let mut x = d + half();
-    let mut fr = x - d1_31x() * (x * (one() / d1_31x())).trunci().cast();
+    let mut x = d + F64x::HALF;
+    let mut fr = x - F64x::D1_31 * (x * (F64x::ONE / F64x::D1_31)).trunci().cast();
     fr -= fr.trunci().cast();
-    x = (x.simd_le(zero()) & fr.simd_eq(zero())).select(x - one(), x);
-    fr = fr.simd_lt(zero()).select(fr + one(), fr);
+    x = (x.simd_le(F64x::ZERO) & fr.simd_eq(F64x::ZERO)).select(x - F64x::ONE, x);
+    fr = fr.simd_lt(F64x::ZERO).select(fr + F64x::ONE, fr);
     x = d
         .simd_eq(F64x::splat(0.499_999_999_999_999_944_49))
-        .select(zero(), x);
-    (d.is_infinite() | d.abs().simd_ge(d1_52x())).select(d, (x - fr).copy_sign(d))
+        .select(F64x::ZERO, x);
+    (d.is_infinite() | d.abs().simd_ge(F64x::D1_52)).select(d, (x - fr).copy_sign(d))
 }
 
 /// Round to integer, ties round to even
@@ -895,9 +899,9 @@ where
     return vrint_vd_vd(d);
     #else
     */
-    let c = d1_52x().mul_sign(d);
+    let c = F64x::D1_52.mul_sign(d);
     d.abs()
-        .simd_gt(d1_52x())
+        .simd_gt(F64x::D1_52)
         .select(d, ((d + c) - c).or_sign(d))
     //#endif
 }
@@ -907,7 +911,7 @@ pub fn nextafter<const N: usize>(x: F64x<N>, y: F64x<N>) -> F64x<N>
 where
     LaneCount<N>: SupportedLaneCount,
 {
-    let x = x.simd_eq(zero()).select(zero().mul_sign(y), x);
+    let x = x.simd_eq(F64x::ZERO).select(F64x::ZERO.mul_sign(y), x);
     let mut xi2 = x.to_bits().cast::<i64>();
     let c = x.is_sign_negative() ^ y.simd_ge(x);
 
@@ -952,11 +956,11 @@ where
 
     let mut ret = F64x::from_bits(xi2.cast());
 
-    ret = (ret.simd_eq(zero()) & x.simd_ne(zero())).select(zero().mul_sign(x), ret);
+    ret = (ret.simd_eq(F64x::ZERO) & x.simd_ne(F64x::ZERO)).select(F64x::ZERO.mul_sign(x), ret);
 
-    ret = (x.simd_eq(zero()) & y.simd_eq(zero())).select(y, ret);
+    ret = (x.simd_eq(F64x::ZERO) & y.simd_eq(F64x::ZERO)).select(y, ret);
 
-    (x.is_nan() | y.is_nan()).select(nan(), ret)
+    (x.is_nan() | y.is_nan()).select(F64x::NAN, ret)
 }
 
 #[test]
@@ -984,7 +988,7 @@ where
     let x = x
         .abs()
         .simd_lt(F64x::splat(f64::MIN_POSITIVE))
-        .select(x * d1_63x(), x);
+        .select(x * F64x::D1_63, x);
 
     let mut xm = x.to_bits();
     xm &= U64x::splat(0x_800f_ffff_ffff_ffff);
@@ -992,8 +996,8 @@ where
 
     let ret = F64x::from_bits(xm);
 
-    let ret = x.is_infinite().select(infinity().mul_sign(x), ret);
-    x.simd_eq(zero()).select(x, ret)
+    let ret = x.is_infinite().select(F64x::INFINITY.mul_sign(x), ret);
+    x.simd_eq(F64x::ZERO).select(x, ret)
 }
 
 /// Exponent of an FP number
@@ -1004,12 +1008,12 @@ where
     let x = x
         .abs()
         .simd_lt(F64x::splat(f64::MIN_POSITIVE))
-        .select(x * d1_63x(), x);
+        .select(x * F64x::D1_63, x);
 
     let mut ret = cast_from_upper(x.to_bits());
     ret = ((ret.cast() >> Ux::splat(20)).cast() & Ix::splat(0x7ff)) - Ix::splat(0x3fe);
 
-    (x.simd_eq(zero()) | x.is_nan() | x.is_infinite())
+    (x.simd_eq(F64x::ZERO) | x.is_nan() | x.is_infinite())
         .cast()
         .select(Ix::splat(0), ret)
 }
@@ -1027,25 +1031,25 @@ where
         x.mla(y, z)
     } else {
         let mut h2 = x * y + z;
-        let mut q = one();
-        let c1 = d1_54x() * d1_54x();
+        let mut q = F64x::ONE;
+        let c1 = F64x::D1_54 * F64x::D1_54;
         let c2 = c1 * c1;
         let o = h2.abs().simd_lt(F64x::splat(1e-300));
         {
             x = o.select(x * c1, x);
             y = o.select(y * c1, y);
             z = o.select(z * c2, z);
-            q = o.select(one() / c2, q);
+            q = o.select(F64x::ONE / c2, q);
         }
         let o = h2.abs().simd_gt(F64x::splat(1e+300));
         {
-            x = o.select(x * (one() / c1), x);
-            y = o.select(y * (one() / c1), y);
-            z = o.select(z * (one() / c2), z);
+            x = o.select(x * (F64x::ONE / c1), x);
+            y = o.select(y * (F64x::ONE / c1), y);
+            z = o.select(z * (F64x::ONE / c2), z);
             q = o.select(c2, q);
         }
         let d = x.mul_as_doubled(y) + z;
-        let ret = (x.simd_eq(zero()) | y.simd_eq(zero())).select(z, d.0 + d.1);
+        let ret = (x.simd_eq(F64x::ZERO) | y.simd_eq(F64x::ZERO)).select(z, d.0 + d.1);
         let mut o = z.is_infinite();
         o = !x.is_infinite() & o;
         o = !x.is_nan() & o;
@@ -1091,7 +1095,7 @@ where
     {
         // returns nextafter(x, 0)
         let t = F64x::from_bits(x.to_bits() + I64x::splat(-1).cast());
-        x.simd_eq(zero()).select(zero(), t)
+        x.simd_eq(F64x::ZERO).select(F64x::ZERO, t)
     }
 
     #[cfg(feature = "full_fp_rounding")]
@@ -1109,18 +1113,18 @@ where
     where
         LaneCount<N>: SupportedLaneCount,
     {
-        let mut fr = (-d1_31x()).mla((x * (one() / d1_31x())).trunci().cast(), x);
+        let mut fr = (-F64x::D1_31).mla((x * (F64x::ONE / F64x::D1_31)).trunci().cast(), x);
         fr -= fr.trunci().cast();
-        x.abs().simd_ge(d1_52x()).select(x, x - fr)
+        x.abs().simd_ge(F64x::D1_52).select(x, x - fr)
     }
 
     let n = x.abs();
     let d = y.abs();
-    let s = one();
+    let s = F64x::ONE;
     let o = d.simd_lt(F64x::splat(f64::MIN_POSITIVE));
-    let n = o.select(n * d1_54x(), n);
-    let d = o.select(d * d1_54x(), d);
-    let s = o.select(s * (one() / d1_54x()), s);
+    let n = o.select(n * F64x::D1_54, n);
+    let d = o.select(d * F64x::D1_54, d);
+    let s = o.select(s * (F64x::ONE / F64x::D1_54), s);
     let rd = toward0(d.recip());
     let mut r = Doubled::from(n);
 
@@ -1131,7 +1135,7 @@ where
             q = F64x::from_bits(q.to_bits() & U64x::splat(0xffff_ffff_ffff_fffe));
         }
         q = ((F64x::splat(3.) * d).simd_gt(r.0) & r.0.simd_ge(d)).select(F64x::splat(2.), q);
-        q = ((d + d).simd_gt(r.0) & r.0.simd_ge(d)).select(one(), q);
+        q = ((d + d).simd_gt(r.0) & r.0.simd_ge(d)).select(F64x::ONE, q);
         r = (r + q.mul_as_doubled(-d)).normalize();
         if r.0.simd_lt(d).all() {
             break;
@@ -1139,12 +1143,12 @@ where
     }
 
     let mut ret = r.0 * s;
-    ret = F64x::from(r).simd_eq(d).select(zero(), ret);
+    ret = F64x::from(r).simd_eq(d).select(F64x::ZERO, ret);
 
     ret = ret.mul_sign(x);
 
     ret = n.simd_lt(d).select(x, ret);
-    d.simd_eq(zero()).select(nan(), ret)
+    d.simd_eq(F64x::ZERO).select(F64x::NAN, ret)
 }
 
 // TODO: add test for fmodf
@@ -1157,9 +1161,9 @@ where
     if cfg!(feature = "full_fp_rounding") {
         rint(d)
     } else {
-        let c = d1_52x().mul_sign(d);
+        let c = F64x::D1_52.mul_sign(d);
         d.abs()
-            .simd_gt(d1_52x())
+            .simd_gt(F64x::D1_52)
             .select(d, ((d + c) - c).or_sign(d))
     }
 }
@@ -1171,10 +1175,10 @@ where
 {
     let mut n = x.abs();
     let mut d = y.abs();
-    let mut s = one();
+    let mut s = F64x::ONE;
     let o = d.simd_lt(F64x::splat(f64::MIN_POSITIVE * 2.));
-    n = o.select(n * d1_54x(), n);
-    d = o.select(d * d1_54x(), d);
+    n = o.select(n * F64x::D1_54, n);
+    d = o.select(d * F64x::D1_54, d);
     s = o.select(s * F64x::splat(1. / crate::f64::D1_54), s);
     let rd = d.recip();
     let mut r = Doubled::from(n);
@@ -1189,10 +1193,10 @@ where
         q =
             r.0.abs()
                 .simd_lt(d * F64x::splat(1.5))
-                .select(one().mul_sign(r.0), q);
-        q = (r.0.abs().simd_lt(d * half()) | (!qisodd & r.0.abs().simd_eq(d * half())))
-            .select(zero(), q);
-        if q.simd_eq(zero()).all() {
+                .select(F64x::ONE.mul_sign(r.0), q);
+        q = (r.0.abs().simd_lt(d * F64x::HALF) | (!qisodd & r.0.abs().simd_eq(d * F64x::HALF)))
+            .select(F64x::ZERO, q);
+        if q.simd_eq(F64x::ZERO).all() {
             break;
         }
         q = (q * (-d))
@@ -1206,8 +1210,8 @@ where
     ret = ret.mul_sign(x);
     ret = y
         .is_infinite()
-        .select(x.is_infinite().select(nan(), x), ret);
-    d.simd_eq(zero()).select(nan(), ret)
+        .select(x.is_infinite().select(F64x::NAN, x), ret);
+    d.simd_eq(F64x::ZERO).select(F64x::NAN, ret)
 }
 
 #[test]
@@ -1302,11 +1306,11 @@ where
         );
 
     x *= o.select_doubled(s2, Doubled::from(t));
-    x = o.select_doubled(x + one(), x);
+    x = o.select_doubled(x + F64x::ONE, x);
 
     let o = (q & Ix::splat(4)).simd_eq(Ix::splat(4)).cast::<i64>();
-    x.0 = F64x::from_bits((o.to_int().cast() & neg_zero().to_bits()) ^ x.0.to_bits());
-    x.1 = F64x::from_bits((o.to_int().cast() & neg_zero().to_bits()) ^ x.1.to_bits());
+    x.0 = F64x::from_bits((o.to_int().cast() & F64x::NEG_ZERO.to_bits()) ^ x.0.to_bits());
+    x.1 = F64x::from_bits((o.to_int().cast() & F64x::NEG_ZERO.to_bits()) ^ x.1.to_bits());
 
     x
 }
@@ -1316,9 +1320,9 @@ pub fn modf<const N: usize>(x: F64x<N>) -> (F64x<N>, F64x<N>)
 where
     LaneCount<N>: SupportedLaneCount,
 {
-    let mut fr = x - d1_31x() * (x * (one() / d1_31x())).trunci().cast();
+    let mut fr = x - F64x::D1_31 * (x * (F64x::ONE / F64x::D1_31)).trunci().cast();
     fr -= fr.trunci().cast();
-    fr = x.abs().simd_gt(d1_52x()).select(zero(), fr);
+    fr = x.abs().simd_gt(F64x::D1_52).select(F64x::ZERO, fr);
 
     (fr.copy_sign(x), (x - fr).copy_sign(x))
 }

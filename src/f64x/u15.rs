@@ -11,14 +11,17 @@ where
 {
     let s = a;
     let a = a.abs();
-    let o0 = a.simd_lt(one());
+    let o0 = a.simd_lt(F64x::ONE);
     let o1 = a.simd_lt(F64x::splat(2.2));
     let o2 = a.simd_lt(F64x::splat(4.2));
     let o3 = a.simd_lt(F64x::splat(27.3));
 
     let u = o0.select_doubled(
         a.mul_as_doubled(a),
-        o1.select_doubled(Doubled::from(a), Doubled::from(one()) / Doubled::from(a)),
+        o1.select_doubled(
+            Doubled::from(a),
+            Doubled::from(F64x::ONE) / Doubled::from(a),
+        ),
     );
 
     let t = F64x::select4(
@@ -301,12 +304,12 @@ where
 
     let mut x = o1.select_doubled(d, Doubled::from(-a)) * a;
     x = o1.select_doubled(x, x + d);
-    x = o0.select_doubled(Doubled::from(one()).sub_checked(x), expk2(x));
+    x = o0.select_doubled(Doubled::from(F64x::ONE).sub_checked(x), expk2(x));
     x = o1.select_doubled(x, x * u);
 
-    let mut r = o3.select(F64x::from(x), zero());
+    let mut r = o3.select(F64x::from(x), F64x::ZERO);
     r = s.is_sign_negative().select(F64x::splat(2.) - r, r);
-    s.is_nan().select(nan(), r)
+    s.is_nan().select(F64x::NAN, r)
 }
 
 #[test]

@@ -63,7 +63,7 @@ jobs:
           RUST_BACKTRACE: 1
 
   test-native:
-    name: Test
+    name: Test (native)
     runs-on: ubuntu-latest
 
     steps:

@@ -5,6 +5,8 @@ pub(crate) use tst::*;
 mod constants;
 pub(crate) use constants::*;
 
+use core::simd::prelude::*;
+
 /// Fast functions with 350.0 ULP error bound
 mod fast;
 pub use fast::{cosf as cos_fast, powf as pow_fast, sinf as sin_fast};
@@ -49,9 +51,7 @@ pub use u35::{
 use crate::common::*;
 use doubled::*;
 
-use core::simd::{
-    LaneCount, Mask, Simd, SimdFloat, SimdPartialEq, SimdPartialOrd, SupportedLaneCount,
-};
+use core::simd::{LaneCount, Mask, Simd, SupportedLaneCount};
 
 type F32x<const N: usize> = Simd<f32, N>;
 type U32x<const N: usize> = Simd<u32, N>;

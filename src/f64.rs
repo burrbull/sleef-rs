@@ -716,12 +716,8 @@ pub fn ldexp(x: f64, mut exp: i32) -> f64 {
 /// Integer exponent of an FP number
 pub fn ilogb(d: f64) -> i32 {
     let mut e = ilogbk(fabsk(d));
-    e = if d == 0. { SLEEF_FP_ILOGB0 as i32 } else { e };
-    e = if d.is_nan() {
-        SLEEF_FP_ILOGBNAN as i32
-    } else {
-        e
-    };
+    e = if d == 0. { SLEEF_FP_ILOGB0 } else { e };
+    e = if d.is_nan() { SLEEF_FP_ILOGBNAN } else { e };
     if d.is_infinite() {
         i32::MAX
     } else {

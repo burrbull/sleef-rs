@@ -1,8 +1,10 @@
 name: CI
 
 on:
+  schedule:
+    - cron: "0 0 1 * *"
   push:
-    branches: [ staging, trying, master ]
+    branches: master
   pull_request:
 
 jobs:
@@ -16,6 +18,7 @@ jobs:
 
   build:
     name: Build
+
     strategy:
       matrix:
         include:
@@ -27,66 +30,55 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
-          profile: minimal
-          target: ${{ matrix.target }}
-          override: true
+          targets: ${{ matrix.target }}
 
-      - uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --target ${{ matrix.target }} --release
+      - run: cargo build --target ${{ matrix.target }} --release
+        env:
+          RUSTFLAGS: -D warnings
 
   test:
     name: Test
     runs-on: ubuntu-latest
-    env:
-      RUST_BACKTRACE: 1
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
-          profile: minimal
-          override: true
 
       - name: Print enabled target features
         run: rustc --print=cfg -C target-cpu=native
 
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
+      - run: cargo test
+        env:
+          RUST_BACKTRACE: 1
 
   test-native:
     name: Test
     runs-on: ubuntu-latest
-    env:
-      RUST_BACKTRACE: 1
-      RUSTFLAGS: -C target-cpu=native
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
-          profile: minimal
-          override: true
 
       - name: Print enabled target features
         run: rustc --print=cfg -C target-cpu=native
 
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
+      - run: cargo test
+        env:
+          RUST_BACKTRACE: 1
+          RUSTFLAGS: -C target-cpu=native

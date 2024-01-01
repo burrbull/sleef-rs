@@ -5,6 +5,8 @@ pub(crate) use tst::*;
 mod constants;
 pub(crate) use constants::*;
 
+use core::simd::prelude::*;
+
 /// Functions with 0.5 ULP error bound
 mod u05;
 pub use u05::{
@@ -42,7 +44,7 @@ pub use u35::{
 
 use crate::common::*;
 use core::simd::{
-    LaneCount, Mask, Simd, SimdFloat, SimdPartialEq, SimdPartialOrd, SupportedLaneCount,
+    LaneCount, Mask, Simd, SupportedLaneCount,
 };
 use doubled::*;
 

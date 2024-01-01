@@ -51,9 +51,7 @@ pub use u35::{
 use crate::common::*;
 use doubled::*;
 
-use core::simd::{
-    LaneCount, Mask, Simd, SupportedLaneCount,
-};
+use core::simd::{LaneCount, Mask, Simd, SupportedLaneCount};
 
 type F32x<const N: usize> = Simd<f32, N>;
 type U32x<const N: usize> = Simd<u32, N>;

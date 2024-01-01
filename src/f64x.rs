@@ -43,9 +43,7 @@ pub use u35::{
 };
 
 use crate::common::*;
-use core::simd::{
-    LaneCount, Mask, Simd, SupportedLaneCount,
-};
+use core::simd::{LaneCount, Mask, Simd, SupportedLaneCount};
 use doubled::*;
 
 type F64x<const N: usize> = Simd<f64, N>;

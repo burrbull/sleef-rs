@@ -147,7 +147,7 @@ pub fn cos(d: f64) -> f64 {
 
     let u = t.mul_as_f(x);
 
-    if ((ql as isize) & 2) == 0 {
+    if (ql & 2) == 0 {
         -u
     } else {
         u

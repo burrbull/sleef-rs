@@ -564,7 +564,7 @@ where
     let o = d.simd_lt(F64x::splat(4.909_093_465_297_726_6_e-91));
     d = o.select(F64x::splat(2.037_035_976_334_486_e90) * d, d);
     let mut q = cast_from_upper(d.to_bits());
-    q &= Ix::splat((((1u32 << 12) - 1) << 20) as _);
+    q &= Ix::splat(((1 << 12) - 1) << 20);
     q = (q.cast() >> Ux::splat(20)).cast();
     q - o.cast().select(Ix::splat(300 + 0x3ff), Ix::splat(0x3ff))
 }

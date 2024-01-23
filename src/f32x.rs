@@ -538,7 +538,7 @@ where
 {
     let o = d.simd_lt(F32x::splat(5.421_010_862_427_522_e-20));
     d = o.select(F32x::splat(1.844_674_407_370_955_2_e19) * d, d);
-    let q = (d.to_bits() >> U32x::splat(23)).cast() & I32x::splat(0xff);
+    let q = (d.to_bits().cast() >> I32x::splat(23)) & I32x::splat(0xff);
     q - o.select(I32x::splat(64 + 0x7f), I32x::splat(0x7f))
 }
 
@@ -551,8 +551,8 @@ pub(crate) fn ilogb2kf<const N: usize>(d: F32x<N>) -> I32x<N>
 where
     LaneCount<N>: SupportedLaneCount,
 {
-    let q = d.to_bits();
-    let mut q = (q >> U32x::splat(23)).cast();
+    let q = d.to_bits().cast();
+    let mut q = q >> I32x::splat(23);
     q &= I32x::splat(0xff);
     q - I32x::splat(0x7f)
 }

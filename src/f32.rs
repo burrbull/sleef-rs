@@ -88,10 +88,7 @@ pub use u10::{
 };
 
 mod u15;
-#[rustfmt::skip]
-pub use u15::{
-    erfcf as erfc_u15,
-};
+pub use u15::erfcf as erfc_u15;
 
 mod u35;
 #[rustfmt::skip]
@@ -434,7 +431,7 @@ fn ilogbkf(mut d: f32) -> i32 {
     } else {
         d
     };
-    let q = ((d.to_bits() >> 23) & 0xff) as i32;
+    let q = ((d.to_bits() as i32) >> 23) & 0xff;
     if m {
         q - (64 + 0x7f)
     } else {
@@ -446,7 +443,7 @@ fn ilogbkf(mut d: f32) -> i32 {
 // normalized FP value.
 #[inline]
 fn ilogb2kf(d: f32) -> i32 {
-    ((d.to_bits() >> 23) & 0xff) as i32 - 0x7f
+    (((d.to_bits() as i32) >> 23) & 0xff) - 0x7f
 }
 
 #[inline]
@@ -939,7 +936,7 @@ pub fn fmodf(x: f32, y: f32) -> f32 {
         if d == 0. {
             0.
         } else {
-            f32::from_bits(d.to_bits() - 1)
+            f32::from_bits(((d.to_bits() as i32) - 1) as u32)
         }
     }
 

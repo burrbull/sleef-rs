@@ -1124,10 +1124,10 @@ where
 {
     let e = F32x::from_bits(
         U32x::splat(0x_2000_0000)
-            + (U32x::splat(0x_7f00_0000) & (d.to_bits() >> U32x::splat(1))),
+            + (U32x::splat(0x_7f00_0000) & (d.to_bits().cast() >> I32x::splat(1))),
     );
     let m = F32x::from_bits(
-        I32x::splat(0x_3f00_0000) + (I32x::splat(0x_01ff_ffff) & I32x::from_bits(d)),
+        I32x::splat(0x_3f00_0000) + (I32x::splat(0x_01ff_ffff) & d.to_bits().cast()),
     );
     let mut x = vrsqrteq_f32(m);
     x = vmulq_f32(x, vrsqrtsq_f32(m, vmulq_f32(x, x)));

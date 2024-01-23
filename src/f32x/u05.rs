@@ -149,7 +149,7 @@ where
 
         let mut x = F32x::from_bits(
             (I32x::splat(0x_5f37_5a86)
-                - ((d + F32x::splat(1e-45)).to_bits() >> U32x::splat(1)).cast())
+                - ((d + F32x::splat(1e-45)).to_bits().cast() >> I32x::splat(1)))
             .cast(),
         );
 

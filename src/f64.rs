@@ -119,10 +119,7 @@ pub use u10::{
 };
 
 mod u15;
-#[rustfmt::skip]
-pub use u15::{
-    erfc as erfc_u15,
-};
+pub use u15::erfc as erfc_u15;
 mod u35;
 #[rustfmt::skip]
 pub use u35::{

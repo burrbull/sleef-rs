@@ -1395,15 +1395,9 @@ where
         );
 
         result = (x.is_infinite() | x.simd_eq(F32x::ZERO)).select(
-            yisodd.select(x.sign(), F32x::ONE)
-                * F32x::from_bits(
-                    !x.simd_eq(F32x::ZERO)
-                        .select(-y, y)
-                        .simd_lt(F32x::ZERO)
-                        .to_int()
-                        .cast::<u32>()
-                        & F32x::INFINITY.to_bits(),
-                ),
+            (y.is_sign_negative() ^ x.simd_eq(F32x::ZERO))
+                .select(F32x::ZERO, F32x::INFINITY)
+                .mul_sign(yisodd.select(x, F32x::ONE)),
             result,
         );
 

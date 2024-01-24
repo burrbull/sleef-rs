@@ -1806,15 +1806,9 @@ where
         );
 
         result = (x.is_infinite() | x.simd_eq(F64x::ZERO)).select(
-            yisodd.select(x.sign(), F64x::ONE)
-                * F64x::from_bits(
-                    !x.simd_eq(F64x::ZERO)
-                        .select(-y, y)
-                        .simd_lt(F64x::ZERO)
-                        .to_int()
-                        .cast::<u64>()
-                        & F64x::INFINITY.to_bits(),
-                ),
+            (y.is_sign_negative() ^ x.simd_eq(F64x::ZERO))
+                .select(F64x::ZERO, F64x::INFINITY)
+                .mul_sign(yisodd.select(x, F64x::ONE)),
             result,
         );
 

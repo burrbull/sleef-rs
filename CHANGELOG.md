@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v0.3.2] - 2024-01-24
+
+- ported some chenges (fixes) from `sleef`
+
 ## [v0.3.1] - 2024-01-01
 
 - Update on `nightly-2024-01-01`
@@ -23,7 +27,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v0.1.0] - 2022-08-05
 
-[Unreleased]: https://github.com/rust-embedded/svd2rust/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/rust-embedded/svd2rust/compare/v0.3.2...HEAD
+[v0.3.2]: https://github.com/rust-embedded/svd2rust/compare/v0.3.1...v0.3.2
 [v0.3.1]: https://github.com/rust-embedded/svd2rust/compare/v0.3.0...v0.3.1
 [v0.3.0]: https://github.com/rust-embedded/svd2rust/compare/v0.2.0...v0.3.0
 [v0.2.0]: https://github.com/rust-embedded/svd2rust/compare/v0.1.0...v0.2.0

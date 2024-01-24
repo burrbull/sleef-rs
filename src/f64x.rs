@@ -912,47 +912,14 @@ where
     LaneCount<N>: SupportedLaneCount,
 {
     let x = x.simd_eq(F64x::ZERO).select(F64x::ZERO.mul_sign(y), x);
-    let mut xi2 = x.to_bits().cast::<i64>();
+    let xi2 = x.to_bits().cast::<i64>();
     let c = x.is_sign_negative() ^ y.simd_ge(x);
 
-    let mut t = (xi2 ^ I64x::splat(0x_7fff_ffff_ffff_ffff_u64 as _)) + I64x::splat(1);
-    t += swap_upper_lower(
-        I64x::splat(1)
-            & t.simd_eq(I64x::splat(0x_ffff_ffff_0000_0000_u64 as _))
-                .to_int(),
-    );
-    xi2 = c
-        .select(F64x::from_bits(t.cast()), F64x::from_bits(xi2.cast()))
-        .to_bits()
-        .cast();
+    let xi2 = c.select(-(xi2 ^ I64x::splat(i64::MIN)), xi2);
 
-    xi2 -= (x.simd_ne(y).to_int().cast() & U64x::splat(1)).cast();
+    let xi2 = x.simd_ne(y).select(xi2 - I64x::splat(1), xi2);
 
-    xi2 = x
-        .simd_ne(y)
-        .select(
-            F64x::from_bits(
-                (xi2 + swap_upper_lower(
-                    I64x::splat(0x_ffff_ffff_u64 as _)
-                        & xi2.simd_eq(I64x::splat(0x_ffff_ffff_u64 as _)).to_int(),
-                ))
-                .cast(),
-            ),
-            F64x::from_bits(xi2.cast()),
-        )
-        .to_bits()
-        .cast();
-
-    let mut t = (xi2 ^ I64x::splat(0x_7fff_ffff_ffff_ffff_u64 as _)) + I64x::splat(1);
-    t += swap_upper_lower(
-        I64x::splat(1)
-            & t.simd_eq(I64x::splat(0x_ffff_ffff_0000_0000_u64 as _))
-                .to_int(),
-    );
-    xi2 = c
-        .select(F64x::from_bits(t.cast()), F64x::from_bits(xi2.cast()))
-        .to_bits()
-        .cast();
+    let xi2 = c.select(-(xi2 ^ I64x::splat(i64::MIN)), xi2);
 
     let mut ret = F64x::from_bits(xi2.cast());
 

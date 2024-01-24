@@ -873,7 +873,7 @@ pub fn nextafter(x: f64, y: f64) -> f64 {
     let mut cxi = x.to_bits() as i64;
     let c = (cxi < 0) == (y < x);
     if c {
-        cxi = -(cxi ^ (1 << 63));
+        cxi = -(cxi ^ i64::MIN);
     }
 
     if x != y {
@@ -881,7 +881,7 @@ pub fn nextafter(x: f64, y: f64) -> f64 {
     }
 
     if c {
-        cxi = -(((cxi as u64) ^ (1u64 << 63)) as i64);
+        cxi = -(cxi ^ i64::MIN);
     }
 
     let cxf = f64::from_bits(cxi as u64);

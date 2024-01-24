@@ -1282,12 +1282,14 @@ pub fn pow(x: f64, y: f64) -> f64 {
     };
     result *= if x > 0. {
         1.
-    } else if !yisint {
-        f64::NAN
-    } else if yisodd {
-        -1.
+    } else if yisint {
+        if yisodd {
+            -1.
+        } else {
+            1.
+        }
     } else {
-        1.
+        f64::NAN
     };
 
     let efx = (fabsk(x) - 1.).mul_sign(y);
@@ -1302,12 +1304,12 @@ pub fn pow(x: f64, y: f64) -> f64 {
             f64::INFINITY
         }
     } else if x.is_infinite() || (x == 0.) {
-        (if yisodd { x.sign() } else { 1. })
-            * (if (if x == 0. { -y } else { y }) < 0. {
-                0.
-            } else {
-                f64::INFINITY
-            })
+        (if y.is_sign_negative() ^ (x == 0.) {
+            0.
+        } else {
+            f64::INFINITY
+        })
+        .mul_sign(if yisodd { x } else { 1. })
     } else if x.is_nan() || y.is_nan() {
         f64::NAN
     } else {

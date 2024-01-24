@@ -1011,12 +1011,14 @@ pub fn powf(x: f32, y: f32) -> f32 {
     };
     result *= if x >= 0. {
         1.
-    } else if !yisint {
-        f32::NAN
-    } else if yisodd {
-        -1.
+    } else if yisint {
+        if yisodd {
+            -1.
+        } else {
+            1.
+        }
     } else {
-        1.
+        f32::NAN
     };
 
     let efx = (fabsfk(x) - 1.).mul_sign(y);
@@ -1025,12 +1027,12 @@ pub fn powf(x: f32, y: f32) -> f32 {
     } else if x.is_nan() || y.is_nan() {
         f32::NAN
     } else if x.is_infinite() || (x == 0.) {
-        (if yisodd { x.sign() } else { 1. })
-            * (if (if x == 0. { -y } else { y }) < 0. {
-                0.
-            } else {
-                f32::INFINITY
-            })
+        (if y.is_sign_negative() ^ (x == 0.) {
+            0.
+        } else {
+            f32::INFINITY
+        })
+        .mul_sign(if yisodd { x } else { 1. })
     } else if y.is_infinite() {
         if efx < 0. {
             0.

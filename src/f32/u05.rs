@@ -180,7 +180,7 @@ pub fn sqrtf(mut d: f32) -> f32 {
     }
 
     // http://en.wikipedia.org/wiki/Fast_inverse_square_root
-    let mut x = f32::from_bits(0x_5f37_5a86 - ((d + 1e-45).to_bits() >> 1));
+    let mut x = f32::from_bits((0x_5f37_5a86 - (((d + 1e-45).to_bits() as i32) >> 1)) as u32);
 
     x *= 1.5 - 0.5 * d * x * x;
     x *= 1.5 - 0.5 * d * x * x;

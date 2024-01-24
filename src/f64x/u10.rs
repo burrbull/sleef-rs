@@ -1222,14 +1222,21 @@ where
 
     let x = F64x::splat(-1.).add_as_doubled(m) / F64x::ONE.add_as_doubled(m);
     let x2 = x.0 * x.0;
+    let x4 = x2 * x2;
+    let x8 = x4 * x4;
 
-    let t = F64x::splat(0.153_207_698_850_270_135_3)
-        .mla(x2, F64x::splat(0.152_562_905_100_342_871_6))
-        .mla(x2, F64x::splat(0.181_860_593_293_778_599_6))
-        .mla(x2, F64x::splat(0.222_221_451_983_938_000_9))
-        .mla(x2, F64x::splat(0.285_714_293_279_429_931_7))
-        .mla(x2, F64x::splat(0.399_999_999_963_525_199))
-        .mla(x2, F64x::splat(0.666_666_666_666_733_354_1));
+    let t = F64x::poly7(
+        x2,
+        x4,
+        x8,
+        0.153_207_698_850_270_135_3,
+        0.152_562_905_100_342_871_6,
+        0.181_860_593_293_778_599_6,
+        0.222_221_451_983_938_000_9,
+        0.285_714_293_279_429_931_7,
+        0.399_999_999_963_525_199,
+        0.666_666_666_666_733_354_1,
+    );
 
     s = s.add_checked(x.scale(F64x::splat(2.)));
     s = s.add_checked(x2 * x.0 * t);
@@ -1799,15 +1806,9 @@ where
         );
 
         result = (x.is_infinite() | x.simd_eq(F64x::ZERO)).select(
-            yisodd.select(x.sign(), F64x::ONE)
-                * F64x::from_bits(
-                    !x.simd_eq(F64x::ZERO)
-                        .select(-y, y)
-                        .simd_lt(F64x::ZERO)
-                        .to_int()
-                        .cast::<u64>()
-                        & F64x::INFINITY.to_bits(),
-                ),
+            (y.is_sign_negative() ^ x.simd_eq(F64x::ZERO))
+                .select(F64x::ZERO, F64x::INFINITY)
+                .mul_sign(yisodd.select(x, F64x::ONE)),
             result,
         );
 

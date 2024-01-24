@@ -295,19 +295,6 @@ where
     F64x::from_array(ar)
 }
 
-#[inline]
-fn swap_upper_lower<const N: usize>(i: I64x<N>) -> I64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
-{
-    //        i.rotate_left(I64x::splat(32))
-    let mut ar = i.to_array();
-    for v in &mut ar {
-        *v = v.rotate_left(32);
-    }
-    I64x::from_array(ar)
-}
-
 impl<const N: usize> Round for F64x<N>
 where
     LaneCount<N>: SupportedLaneCount,

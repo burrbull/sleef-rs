@@ -1,11 +1,10 @@
 use super::*;
+use std::simd::Select;
 
 /// Fast sine function
 ///
 /// The error bounds of the returned value is `min(350 ULP, 2e-6)`.
 pub fn sinf<const N: usize>(mut d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let t = d;
 
@@ -49,8 +48,6 @@ fn test_sinf() {
 ///
 /// The error bounds of the returned value is `min(350 ULP, 2e-6)`.
 pub fn cosf<const N: usize>(mut d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let t = d;
 
@@ -92,8 +89,6 @@ fn test_cosf() {
 
 #[inline]
 fn logk3f<const N: usize>(mut d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let (m, e) = //if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")
     {
@@ -124,8 +119,6 @@ where
 
 #[inline]
 fn expk3f<const N: usize>(d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let q = (d * F32x::R_LN2).roundi();
 
@@ -149,8 +142,6 @@ where
 ///
 /// The error bounds of the returned value is `350 ULP`.
 pub fn powf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut result = expk3f(logk3f(x.abs()) * y);
     let yisint = y.trunc().simd_eq(y) | y.abs().simd_gt(F32x::F1_24);

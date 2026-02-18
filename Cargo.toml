@@ -11,11 +11,14 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 
 [dependencies.doubled]
-version = "0.3.2"
+path = "../doubled-rs"
 features = ["simd"]
 
 [features]
 default = []
+enable_neon32 = []
+enable_neon32vfpv4 = []
+full_fp_rounding = []
 
 [dev-dependencies]
 rug = "1.16"

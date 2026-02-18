@@ -30,9 +30,7 @@ pub fn count_ulp(d: f32, c: &Float) -> f32 {
 
     fry -= c;
     fry /= &frw;
-    let u = fabsf(fry.to_f32());
-
-    u
+    fabsf(fry.to_f32())
 }
 
 pub fn gen_input(rng: &mut rand::rngs::ThreadRng, range: core::ops::RangeInclusive<f32>) -> f32 {

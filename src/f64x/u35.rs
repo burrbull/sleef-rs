@@ -4,10 +4,7 @@ use super::*;
 ///
 /// These functions evaluates the sine function of a value in ***a***.
 /// The error bound of the returned value is `3.5 ULP`.
-pub fn sin<const N: usize>(mut d: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
-{
+pub fn sin<const N: usize>(mut d: F64x<N>) -> F64x<N>{
     let r = d;
     let mut ql;
 
@@ -37,7 +34,7 @@ where
             + ddidd
                 .0
                 .simd_gt(F64x::ZERO)
-                .cast()
+                .cast::<i32>()
                 .select(Ix::splat(2), Ix::splat(1));
         ql >>= Ix::splat(2);
         let o = (ddii & Ix::splat(1)).simd_eq(Ix::splat(1));
@@ -87,10 +84,7 @@ where
 /// The error bound of the returned value is `3.5 ULP`.
 ///
 /// NOTE: This version is slower, but SIMD lanes are independent
-pub fn sin_deterministic<const N: usize>(mut d: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
-{
+pub fn sin_deterministic<const N: usize>(mut d: F64x<N>) -> F64x<N>{
     // This is the deterministic implementation of sin function. Returned
     // values from deterministic functions are bitwise consistent across
     // all platforms.
@@ -115,7 +109,7 @@ where
         u = dql.mla(-F64x::PI_C, u);
         u = (dqh + dql).mla(-F64x::PI_D, u);
 
-        ql = g.cast().select(ql, dql.roundi());
+        ql = g.cast::<i32>().select(ql, dql.roundi());
         d = g.select(d, u);
         let g = r.abs().simd_lt(F64x::TRIGRANGEMAX);
 
@@ -127,7 +121,7 @@ where
                 + ddidd
                     .0
                     .simd_gt(F64x::ZERO)
-                    .cast()
+                    .cast::<i32>()
                     .select(Ix::splat(2), Ix::splat(1));
             ql2 >>= Ix::splat(2);
             let o = (ddii & Ix::splat(1)).simd_eq(Ix::splat(1));
@@ -138,7 +132,7 @@ where
             x = ddidd + x;
             ddidd = o.cast().select_doubled(x, ddidd);
             let u = F64x::from(ddidd);
-            ql = g.cast().select(ql, ql2);
+            ql = g.cast::<i32>().select(ql, ql2);
             d = g.select(d, u);
             d = F64x::from_bits((r.is_infinite() | r.is_nan()).to_int().cast() | d.to_bits());
         }
@@ -185,8 +179,6 @@ fn test_sin() {
 /// These functions evaluates the cosine function of a value in ***a***.
 /// The error bound of the returned value is `3.5 ULP`.
 pub fn cos<const N: usize>(mut d: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let r = d;
     let mut ql;
@@ -223,7 +215,7 @@ where
             + ddidd
                 .0
                 .simd_gt(F64x::ZERO)
-                .cast()
+                .cast::<i32>()
                 .select(Ix::splat(8), Ix::splat(7));
         ql >>= Ix::splat(1);
         let o = (ddii & Ix::splat(1)).simd_eq(Ix::splat(0));
@@ -276,8 +268,6 @@ where
 ///
 /// NOTE: This version is slower, but SIMD lanes are independent
 pub fn cos_deterministic<const N: usize>(mut d: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let r = d;
 
@@ -309,7 +299,7 @@ where
         u = dql.mla(-F64x::PI_C * F64x::HALF, u);
         u = (dqh + dql).mla(-F64x::PI_D * F64x::HALF, u);
 
-        ql = g.cast().select(ql, ql2);
+        ql = g.cast::<i32>().select(ql, ql2);
         d = g.select(d, u);
         let g = r.abs().simd_lt(F64x::TRIGRANGEMAX);
 
@@ -321,7 +311,7 @@ where
                 + ddidd
                     .0
                     .simd_gt(F64x::ZERO)
-                    .cast()
+                    .cast::<i32>()
                     .select(Ix::splat(8), Ix::splat(7));
             ql2 >>= Ix::splat(1);
             let o = (ddii & Ix::splat(1)).simd_eq(Ix::splat(0));
@@ -336,7 +326,7 @@ where
             x = ddidd + x;
             ddidd = o.cast().select_doubled(x, ddidd);
             let u = F64x::from(ddidd);
-            ql = g.cast().select(ql, ql2);
+            ql = g.cast::<i32>().select(ql, ql2);
             d = g.select(d, u);
             d = F64x::from_bits((r.is_infinite() | r.is_nan()).to_int().cast() | d.to_bits());
         }
@@ -383,8 +373,6 @@ fn test_cos() {
 /// The error bound of the returned values is `3.5 ULP`.
 /// If ***a*** is a `NaN` or `infinity`, a `NaN` is returned.
 pub fn sincos<const N: usize>(d: F64x<N>) -> (F64x<N>, F64x<N>)
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut s;
     let ql;
@@ -438,7 +426,7 @@ where
 
     let ry = s.mla(u, F64x::ONE);
 
-    let o = (ql & Ix::splat(1)).simd_eq(Ix::splat(0)).cast();
+    let o = (ql & Ix::splat(1)).simd_eq(Ix::splat(0)).cast::<i64>();
     let mut rsin = o.select(rx, ry);
     let mut rcos = o.select(ry, rx);
 
@@ -462,8 +450,6 @@ where
 ///
 /// NOTE: This version is slower, but SIMD lanes are independent
 pub fn sincos_deterministic<const N: usize>(d: F64x<N>) -> (F64x<N>, F64x<N>)
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut s = d;
 
@@ -486,7 +472,7 @@ where
         u = dql.mla(-F64x::PI_C * F64x::HALF, u);
         u = (dqh + dql).mla(-F64x::PI_D * F64x::HALF, u);
 
-        ql = g.cast().select(ql, dql.roundi());
+        ql = g.cast::<i32>().select(ql, dql.roundi());
         s = g.select(s, u);
         let g = d.abs().simd_lt(F64x::TRIGRANGEMAX);
 
@@ -495,7 +481,7 @@ where
             let mut u = F64x::from(ddidd);
             u = F64x::from_bits((d.is_infinite() | d.is_nan()).to_int().cast() | u.to_bits());
 
-            ql = g.cast().select(ql, ddii);
+            ql = g.cast::<i32>().select(ql, ddii);
             s = g.select(s, u);
         }
     }
@@ -524,7 +510,7 @@ where
 
     let ry = s.mla(u, F64x::ONE);
 
-    let o = (ql & Ix::splat(1)).simd_eq(Ix::splat(0)).cast();
+    let o = (ql & Ix::splat(1)).simd_eq(Ix::splat(0)).cast::<i64>();
     let mut rsin = o.select(rx, ry);
     let mut rcos = o.select(ry, rx);
 
@@ -566,8 +552,6 @@ fn test_sincos() {
 /// These functions evaluates the tangent function of a value in ***a***.
 /// The error bound of the returned value is `3.5 ULP`.
 pub fn tan<const N: usize>(d: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let ql;
 
@@ -624,7 +608,7 @@ where
     let y = u.mla(u, -F64x::ONE);
     x = u * F64x::splat(-2.);
 
-    let o = (ql & Ix::splat(1)).simd_eq(Ix::splat(1)).cast();
+    let o = (ql & Ix::splat(1)).simd_eq(Ix::splat(1)).cast::<i64>();
 
     u = o.select(-y, x) / o.select(x, y);
     d.simd_eq(F64x::ZERO).select(d, u)
@@ -637,8 +621,6 @@ where
 ///
 /// NOTE: This version is slower, but SIMD lanes are independent
 pub fn tan_deterministic<const N: usize>(d: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let dql = (d * F64x::FRAC_2_PI).round();
     let mut ql = dql.roundi();
@@ -659,7 +641,7 @@ where
         u = dql.mla(-F64x::PI_C * F64x::HALF, u);
         u = (dqh + dql).mla(-F64x::PI_D * F64x::HALF, u);
 
-        ql = g.cast().select(ql, dql.roundi());
+        ql = g.cast::<i32>().select(ql, dql.roundi());
         s = g.select(s, u);
         let g = d.abs().simd_lt(F64x::splat(1e+6));
 
@@ -669,7 +651,7 @@ where
             let mut u = F64x::from(ddidd);
             u = F64x::from_bits((d.is_infinite() | d.is_nan()).to_int().cast() | u.to_bits());
 
-            ql = g.cast().select(ql, ql2);
+            ql = g.cast::<i32>().select(ql, ql2);
             s = g.select(s, u);
         }
     }
@@ -699,7 +681,7 @@ where
     let y = u.mla(u, -F64x::ONE);
     let x = u * F64x::splat(-2.);
 
-    let o = (ql & Ix::splat(1)).simd_eq(Ix::splat(1)).cast();
+    let o = (ql & Ix::splat(1)).simd_eq(Ix::splat(1)).cast::<i64>();
     u = o.select(-y, x) / o.select(x, y);
     d.simd_eq(F64x::ZERO).select(d, u)
 }
@@ -718,8 +700,6 @@ fn test_tan() {
 /// If a is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
 /// If a is a `NaN` or `infinity`, a `NaN` is returned.
 pub fn sincospi<const N: usize>(d: F64x<N>) -> (F64x<N>, F64x<N>)
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let u = d * F64x::splat(4.);
     let mut q = u.trunci();
@@ -752,7 +732,7 @@ where
 
     let ry = u;
 
-    let o = (q & Ix::splat(2)).simd_eq(Ix::splat(0)).cast();
+    let o = (q & Ix::splat(2)).simd_eq(Ix::splat(0)).cast::<i64>();
     let mut rsin = o.select(rx, ry);
     let mut rcos = o.select(ry, rx);
 
@@ -793,13 +773,11 @@ fn test_sincospi() {
 
 #[inline]
 fn atan2k<const N: usize>(y: F64x<N>, x: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let q = x.is_sign_negative().cast().to_int() & Ix::splat(-2);
     let x = x.abs();
 
-    let q = x.simd_lt(y).cast().select(q + Ix::splat(1), q);
+    let q = x.simd_lt(y).cast::<i32>().select(q + Ix::splat(1), q);
     let p = x.simd_lt(y);
     let s = p.select(-x, y);
     let mut t = x.simd_max(y);
@@ -849,8 +827,6 @@ where
 /// The quadrant of the result is determined according to the signs of ***x*** and ***y***.
 /// The error bound of the returned value is `3.5 ULP`.
 pub fn atan2<const N: usize>(y: F64x<N>, x: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut r = atan2k(y.abs(), x);
 
@@ -887,8 +863,6 @@ fn test_atan2() {
 /// These functions evaluates the arc sine function of a value in ***a***.
 /// The error bound of the returned value is `3.5 ULP`.
 pub fn asin<const N: usize>(d: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let o = d.abs().simd_lt(F64x::HALF);
     let x2 = o.select(d * d, (F64x::ONE - d.abs()) * F64x::HALF);
@@ -933,8 +907,6 @@ fn test_asin() {
 /// These functions evaluates the arc cosine function of a value in ***a***.
 /// The error bound of the returned value is `3.5 ULP`.
 pub fn acos<const N: usize>(d: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let o = d.abs().simd_lt(F64x::HALF);
     let x2 = o.select(d * d, (F64x::ONE - d.abs()) * F64x::HALF);
@@ -987,8 +959,6 @@ fn test_acos() {
 /// These functions evaluates the arc tangent function of a value in ***a***.
 /// The error bound of the returned value is `3.5 ULP`.
 pub fn atan<const N: usize>(mut s: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     /*if cfg!(feature = "__intel_compiler") {
         // && defined(ENABLE_PURECFMA_SCALAR)
@@ -998,7 +968,7 @@ where
     let q = s.is_sign_negative().cast().to_int() & Ix::splat(2);
     s = s.abs();
 
-    let q = F64x::ONE.simd_lt(s).cast().select(q + Ix::splat(1), q);
+    let q = F64x::ONE.simd_lt(s).cast::<i32>().select(q + Ix::splat(1), q);
     s = F64x::ONE.simd_lt(s).select(s.recip(), s);
 
     let mut t = s * s;
@@ -1039,7 +1009,7 @@ where
 
     t = (q & Ix::splat(1))
         .simd_eq(Ix::splat(1))
-        .cast()
+        .cast::<i64>()
         .select(F64x::FRAC_PI_2 - t, t);
     t = F64x::from_bits(
         ((q & Ix::splat(2)).simd_eq(Ix::splat(2)).to_int().cast() & F64x::NEG_ZERO.to_bits())
@@ -1060,8 +1030,6 @@ fn test_atan() {
 
 #[inline]
 fn expm1k<const N: usize>(d: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut u = (d * F64x::R_LN2).round();
     let q = u.roundi();
@@ -1093,7 +1061,7 @@ where
     u = s2.mla(F64x::HALF, s2 * s * u) + s;
 
     q.simd_eq(Ix::splat(0))
-        .cast()
+        .cast::<i64>()
         .select(u, ldexp2k(u + F64x::ONE, q) - F64x::ONE)
 }
 
@@ -1104,8 +1072,6 @@ where
 /// If ***a*** is a finite value out of this range, infinity with a correct sign
 /// or a correct value with `3.5 ULP` error bound is returned.
 pub fn sinh<const N: usize>(x: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let e = expm1k(x.abs());
 
@@ -1129,8 +1095,6 @@ fn test_sinh() {
 /// If ***a*** is a finite value out of this range, infinity with a correct sign
 /// or a correct value with `3.5 ULP` error bound is returned.
 pub fn cosh<const N: usize>(x: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let e = u10::exp(x.abs());
     let mut y = F64x::HALF.mla(e, F64x::HALF / e);
@@ -1150,8 +1114,6 @@ fn test_cosh() {
 /// The error bound of the returned value is `3.5 ULP` for the double-precision
 /// function or `3.5 ULP` for the single-precision function.
 pub fn tanh<const N: usize>(x: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let d = expm1k(F64x::splat(2.) * x.abs());
     let mut y = d / (F64x::splat(2.) + d);
@@ -1171,8 +1133,6 @@ fn test_tanh() {
 /// These functions return the natural logarithm of ***a***.
 /// The error bound of the returned value is `3.5 ULP`.
 pub fn log<const N: usize>(mut d: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let m;
 
@@ -1182,7 +1142,7 @@ where
                 d = o.select(d * (F64x::D1_32 * F64x::D1_32), d);
                 let mut e = ilogb2k(d * F64x::splat(1. / 0.75));
                 m = ldexp3k(d, -e);
-                e = o.cast().select(e - Ix::splat(64), e);
+                e = o.cast::<i32>().select(e - Ix::splat(64), e);
                 e.cast()
             }/* else {
                 let mut e = vgetexp_vd_vd(d * F64x::splat(1. / 0.75));
@@ -1237,15 +1197,13 @@ fn test_log() {
 ///
 /// This function returns the base-10 logarithm of ***a***.
 pub fn log2<const N: usize>(mut d: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let (m, e) = //if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")
     {
         let o = d.simd_lt(F64x::splat(f64::MIN_POSITIVE));
         d = o.select(d * (F64x::D1_32 * F64x::D1_32), d);
         let e = ilogb2k(d * F64x::splat(1./0.75));
-        (ldexp3k(d, -e), o.cast().select(e - Ix::splat(64), e))
+        (ldexp3k(d, -e), o.cast::<i32>().select(e - Ix::splat(64), e))
     /*} else {
         vdouble e = vgetexp_vd_vd(d * F64x::splat(1./0.75));
         (vgetmant_vd_vd(d), e.simd_eq(F64x::INFINITY).select(F64x::splat(1024.), e))
@@ -1291,8 +1249,6 @@ fn test_log2() {
 ///
 /// This function returns 10 raised to ***a***.
 pub fn exp10<const N: usize>(d: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut u = (d * F64x::LOG10_2).round();
     let q = u.roundi();
@@ -1340,8 +1296,6 @@ fn test_exp10() {
 ///
 /// This function returns `2` raised to ***a***.
 pub fn exp2<const N: usize>(d: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut u = d.round();
     let q = u.roundi();
@@ -1386,8 +1340,6 @@ fn test_exp2() {
 ///
 /// The error bound of the returned value is `3.5 ULP`.
 pub fn sqrt<const N: usize>(d: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     u05::sqrt(d)
 }
@@ -1397,8 +1349,6 @@ where
 /// These functions return the real cube root of ***a***.
 /// The error bound of the returned value is `3.5 ULP`.
 pub fn cbrt<const N: usize>(mut d: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut q = F64x::ONE;
     /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
@@ -1413,11 +1363,11 @@ where
 
     q = re
         .simd_eq(Ix::splat(1))
-        .cast()
+        .cast::<i64>()
         .select(F64x::splat(1.259_921_049_894_873_164_767_210_6), q);
     q = re
         .simd_eq(Ix::splat(2))
-        .cast()
+        .cast::<i64>()
         .select(F64x::splat(1.587_401_051_968_199_474_751_705_6), q);
     q = ldexp2k(q, qu - Ix::splat(2048));
 
@@ -1457,8 +1407,6 @@ fn test_cbrt() {
 ///
 /// The error bound of the returned value is `3.5 ULP`.
 pub fn hypot<const N: usize>(x: F64x<N>, y: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let x = x.abs();
     let y = y.abs();

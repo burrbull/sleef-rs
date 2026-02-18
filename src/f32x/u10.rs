@@ -5,8 +5,6 @@ use super::*;
 /// This function evaluates the sine function of a value in ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
 pub fn sinf<const N: usize>(d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut q;
     let mut s;
@@ -67,8 +65,6 @@ where
 ///
 /// NOTE: This version is slower, but SIMD lanes are independent
 pub fn sinf_deterministic<const N: usize>(d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let u = (d * F32x::FRAC_1_PI).round();
     let mut q = u.roundi();
@@ -134,8 +130,6 @@ fn test_sinf() {
 /// This function evaluates the cosine function of a value in ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
 pub fn cosf<const N: usize>(d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut q;
     let mut s;
@@ -200,8 +194,6 @@ where
 ///
 /// NOTE: This version is slower, but SIMD lanes are independent
 pub fn cosf_deterministic<const N: usize>(d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let dq = (d.mla(F32x::FRAC_1_PI, F32x::splat(-0.5)))
         .round()
@@ -274,8 +266,6 @@ fn test_cosf() {
 /// The error bound of the returned values is `1.0 ULP`.
 /// If ***a*** is a `NaN` or `infinity`, a `NaN` is returned.
 pub fn sincosf<const N: usize>(d: F32x<N>) -> (F32x<N>, F32x<N>)
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let q;
     let mut s;
@@ -340,8 +330,6 @@ where
 ///
 /// NOTE: This version is slower, but SIMD lanes are independent
 pub fn sincosf_deterministic<const N: usize>(d: F32x<N>) -> (F32x<N>, F32x<N>)
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let u = (d * F32x::FRAC_2_PI).round();
     let mut q = u.roundi();
@@ -422,8 +410,6 @@ fn test_sincosf() {
 /// This function evaluates the tangent function of a value in ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
 pub fn tanf<const N: usize>(d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let q;
 
@@ -478,8 +464,6 @@ where
 ///
 /// NOTE: This version is slower, but SIMD lanes are independent
 pub fn tanf_deterministic<const N: usize>(d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let u = (d * F32x::FRAC_2_PI).round();
     let mut q = u.roundi();
@@ -536,8 +520,6 @@ fn test_tanf() {
 
 #[inline]
 fn atan2kf_u1<const N: usize>(y: Doubled<F32x<N>>, mut x: Doubled<F32x<N>>) -> Doubled<F32x<N>>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let q =
         x.0.simd_lt(F32x::ZERO)
@@ -583,8 +565,6 @@ where
 /// of ***x*** and ***y***.
 /// The error bound of the returned values is `max(1.0 ULP, f32::MIN_POSITIVE)`.
 pub fn atan2f<const N: usize>(mut y: F32x<N>, mut x: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let o = x
         .abs()
@@ -628,8 +608,6 @@ fn test_atan2f() {
 /// This function evaluates the arc sine function of a value in ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
 pub fn asinf<const N: usize>(d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let o = d.abs().simd_lt(F32x::HALF);
     let x2 = o.select(d * d, (F32x::ONE - d.abs()) * F32x::HALF);
@@ -667,8 +645,6 @@ fn test_asinf() {
 /// This function evaluates the arc cosine function of a value in ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
 pub fn acosf<const N: usize>(d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let o = d.abs().simd_lt(F32x::HALF);
     let x2 = o.select(d * d, (F32x::ONE - d.abs()) * F32x::HALF);
@@ -713,8 +689,6 @@ fn test_acosf() {
 /// This function evaluates the arc tangent function of a value in ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
 pub fn atanf<const N: usize>(d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let d2 = atan2kf_u1(Doubled::from(d.abs()), Doubled::from(F32x::ONE));
     let mut r = F32x::from(d2);
@@ -736,8 +710,6 @@ fn test_atanf() {
 /// If ***a*** is a finite value out of this range, infinity with a correct
 /// sign or a correct value with `1.0 ULP` error bound is returned.
 pub fn sinhf<const N: usize>(x: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut y = x.abs();
     let d = expk2f(Doubled::from(y));
@@ -761,8 +733,6 @@ fn test_sinhf() {
 /// If a is a finite value out of this range, infinity with a correct
 /// sign or a correct value with `1.0 ULP` error bound is returned.
 pub fn coshf<const N: usize>(x: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut y = x.abs();
     let d = expk2f(Doubled::from(y));
@@ -783,8 +753,6 @@ fn test_coshf() {
 /// This function evaluates the hyperbolic tangent function of a value in ***a***.
 /// The error bound of the returned value is `1.0001 ULP`.
 pub fn tanhf<const N: usize>(x: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut y = x.abs();
     let d = expk2f(Doubled::from(y));
@@ -804,8 +772,6 @@ fn test_tanhf() {
 
 #[inline]
 fn logk2f<const N: usize>(d: Doubled<F32x<N>>) -> Doubled<F32x<N>>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let e = /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
                 ilogbkf(d.0 * F32x::splat(1. / 0.75))
@@ -834,8 +800,6 @@ where
 /// If ***a*** is a finite value out of this range, infinity with a correct
 /// sign or a correct value with `1.0 ULP` error bound is returned.
 pub fn asinhf<const N: usize>(x: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut y = x.abs();
     let o = y.simd_gt(F32x::ONE);
@@ -869,8 +833,6 @@ fn test_asinhf() {
 /// If ***a*** is a finite value out of this range, infinity with a correct
 /// sign or a correct value with `1.0 ULP` error bound is returned.
 pub fn acoshf<const N: usize>(x: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let d =
         logk2f(x.add_as_doubled(F32x::ONE).sqrt() * x.add_as_doubled(F32x::splat(-1.)).sqrt() + x);
@@ -899,8 +861,6 @@ fn test_acoshf() {
 /// This function evaluates the inverse hyperbolic tangent function of a value in ***a***.
 /// The error bound of the returned value is `1.0001 ULP`.
 pub fn atanhf<const N: usize>(x: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut y = x.abs();
     let d = logk2f(F32x::ONE.add_as_doubled(y) / F32x::ONE.add_as_doubled(-y));
@@ -926,8 +886,6 @@ fn test_atanhf() {
 /// This function returns the natural logarithm of ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
 pub fn logf<const N: usize>(mut d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let m;
 
@@ -983,8 +941,6 @@ fn test_logf() {
 /// This function returns the base-10 logarithm of ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
 pub fn log10f<const N: usize>(mut d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let m;
 
@@ -1046,8 +1002,6 @@ fn test_log10f() {
 /// This function returns the base-2 logarithm of ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
 pub fn log2f<const N: usize>(mut d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let m;
 
@@ -1105,8 +1059,6 @@ fn test_log2f() {
 /// This function returns the natural logarithm of (1+***a***).
 /// The error bound of the returned value is `1.0 ULP`.
 pub fn log1pf<const N: usize>(d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let m;
 
@@ -1157,8 +1109,6 @@ fn test_log1pf() {
 /// This function returns the value of *e* raised to ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
 pub fn expf<const N: usize>(d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let q = (d * F32x::R_LN2).roundi();
 
@@ -1190,8 +1140,6 @@ fn test_expf() {
 /// This function returns 10 raised to ***a***.
 /// The error bound of the returned value is `1.09 ULP`.
 pub fn exp10f<const N: usize>(d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut u = (d * F32x::LOG10_2).round();
     let q = u.roundi();
@@ -1230,8 +1178,6 @@ fn test_exp10f() {
 /// This function returns the value one less than *e* raised to ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
 pub fn expm1f<const N: usize>(a: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let d = expk2f(Doubled::from(a)) + F32x::splat(-1.);
     let mut x = F32x::from(d);
@@ -1254,8 +1200,6 @@ fn test_expm1f() {
 /// This function returns `2` raised to ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
 pub fn exp2f<const N: usize>(d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut u = d.round();
     let q = u.roundi();
@@ -1288,8 +1232,6 @@ fn test_exp2f() {
 
 #[inline]
 fn logkf<const N: usize>(mut d: F32x<N>) -> Doubled<F32x<N>>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let m;
 
@@ -1327,8 +1269,6 @@ where
 
 #[inline]
 fn expkf<const N: usize>(d: Doubled<F32x<N>>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let u = F32x::from(d) * F32x::R_LN2;
     let q = u.roundi();
@@ -1358,8 +1298,6 @@ where
 /// This function returns the value of ***x*** raised to the power of ***y***.
 /// The error bound of the returned value is `1.0 ULP`.
 pub fn powf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     if true {
         let yisint = y.trunc().simd_eq(y) | y.abs().simd_gt(F32x::F1_24);
@@ -1426,8 +1364,6 @@ fn test_powf() {
 /// This function returns the real cube root of ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
 pub fn cbrtf<const N: usize>(mut d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut q2 = Doubled::from(F32x::ONE);
 
@@ -1507,8 +1443,6 @@ fn test_cbrtf() {
 
 /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
 fn gammafk<const N: usize>(a: F32x<N>) -> (Doubled<F32x<N>>, Doubled<F32x<N>>)
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut clln = Doubled::from(F32x::ONE);
     let mut clld = Doubled::from(F32x::ONE);
@@ -1674,8 +1608,6 @@ where
 ///
 /// The error bound of the returned value is `1.0 ULP`.
 pub fn tgammaf<const N: usize>(a: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let (da, db) = gammafk(a);
     let y = expk2f(da) * db;
@@ -1703,8 +1635,6 @@ fn test_tgammaf() {
 /// If the argument is larger than `4e+36`, it may return infinity instead of the correct value.
 /// The error bound is `max(1 ULP and 1e-8)`, if the argument is negative.
 pub fn lgammaf<const N: usize>(a: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let (da, db) = gammafk(a);
     let y = da + logk2f(db.abs());
@@ -1721,8 +1651,6 @@ fn test_lgammaf() {
 }
 
 fn dfmla<const N: usize>(x: F32x<N>, y: Doubled<F32x<N>>, z: Doubled<F32x<N>>) -> Doubled<F32x<N>>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     z + (y * x)
 }
@@ -1731,14 +1659,10 @@ fn poly2df_b<const N: usize>(
     c1: Doubled<F32x<N>>,
     c0: Doubled<F32x<N>>,
 ) -> Doubled<F32x<N>>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     dfmla(x, c1, c0)
 }
 fn poly2df<const N: usize>(x: F32x<N>, c1: F32x<N>, c0: Doubled<F32x<N>>) -> Doubled<F32x<N>>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     dfmla(x, Doubled::from(c1), c0)
 }
@@ -1749,8 +1673,6 @@ fn poly4df<const N: usize>(
     c1: Doubled<F32x<N>>,
     c0: Doubled<F32x<N>>,
 ) -> Doubled<F32x<N>>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     dfmla(x * x, poly2df(x, c3, c2), poly2df_b(x, c1, c0))
 }
@@ -1759,8 +1681,6 @@ where
 ///
 /// The error bound of the returned value is `1.0 ULP`.
 pub fn erff<const N: usize>(a: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let x = a.abs();
     let x2 = x * x;

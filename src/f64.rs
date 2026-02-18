@@ -690,12 +690,7 @@ fn ldexpk(x: f64, mut q: i32) -> f64 {
 ///
 /// These functions return the result of multiplying ***m*** by `2` raised to the power ***x***.
 pub fn ldexp(x: f64, mut exp: i32) -> f64 {
-    if exp > 2100 {
-        exp = 2100;
-    }
-    if exp < -2100 {
-        exp = -2100;
-    }
+    exp = exp.clamp(-2100, 2100);
 
     let mut e0 = exp >> 2;
     if exp < 0 {
@@ -903,7 +898,7 @@ fn test_nextafter() {
         |mut f, t| {
             let prec = f.prec();
             f.set_prec(53);
-            f.next_toward(&t);
+            f.next_toward(t);
             f.set_prec(prec);
             f
         },

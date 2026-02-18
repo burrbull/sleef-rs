@@ -1,8 +1,6 @@
-use super::{F64x, LaneCount, SupportedLaneCount};
+use super::F64x;
 
 impl<const N: usize> crate::common::Constants for F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     crate::common::cons! {
         PI: F64x = core::f64::consts::PI;
@@ -50,8 +48,6 @@ pub trait F64Constants {
 }
 
 impl<const N: usize> F64Constants for F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     crate::common::cons! {
         D1_63: F64x = crate::f64::D1_63;

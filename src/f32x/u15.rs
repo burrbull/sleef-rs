@@ -5,8 +5,6 @@ use super::*;
 ///
 /// The error bound is `max(1.5 ULP, f32::MIN_POSITIVE)`.
 pub fn erfcf<const N: usize>(a: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let s = a;
     let a = a.abs();

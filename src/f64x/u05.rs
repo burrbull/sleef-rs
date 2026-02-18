@@ -7,8 +7,6 @@ use super::*;
 /// If ***a*** is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
 /// If ***a*** is a `NaN` or infinity, a `NaN` is returned.
 pub fn sincospi<const N: usize>(d: F64x<N>) -> (F64x<N>, F64x<N>)
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let u = d * F64x::splat(4.);
     let mut q = u.trunci();
@@ -67,7 +65,7 @@ where
 
     //
 
-    let o = (q & Ix::splat(2)).simd_eq(Ix::splat(0)).cast();
+    let o = (q & Ix::splat(2)).simd_eq(Ix::splat(0)).cast::<i64>();
     let mut rsin = o.select(rx, ry);
     let mut rcos = o.select(ry, rx);
 
@@ -114,8 +112,6 @@ fn test_sincospi() {
 /// If ***a*** is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
 /// If ***a*** is a `NaN` or infinity, a NaN is returned.
 pub fn sinpi<const N: usize>(d: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let x = sinpik(d);
     let mut r = F64x::from(x);
@@ -149,8 +145,6 @@ fn test_sinpi() {
 
 #[inline]
 fn cospik<const N: usize>(d: F64x<N>) -> Doubled<F64x<N>>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let u = d * F64x::splat(4.);
     let mut q = u.trunci();
@@ -247,8 +241,6 @@ where
 /// If ***a*** is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
 /// If ***a*** is a `NaN` or infinity, a `NaN` is returned.
 pub fn cospi<const N: usize>(d: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let x = cospik(d);
     let r = F64x::from(x);
@@ -280,8 +272,6 @@ fn test_cospi() {
 ///
 /// The error bound of the returned value is `0.5001 ULP`.
 pub fn sqrt<const N: usize>(d: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     if cfg!(target_feature = "fma") {
         let d = d.simd_lt(F64x::ZERO).select(F64x::NAN, d);
@@ -364,8 +354,6 @@ fn test_sqrt() {
 ///
 /// The error bound of the returned value is `0.5001 ULP`.
 pub fn hypot<const N: usize>(x: F64x<N>, y: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let x = x.abs();
     let y = y.abs();

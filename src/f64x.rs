@@ -6,6 +6,7 @@ mod constants;
 pub(crate) use constants::*;
 
 use core::simd::prelude::*;
+use std::simd::Select;
 
 /// Functions with 0.5 ULP error bound
 mod u05;
@@ -43,7 +44,7 @@ pub use u35::{
 };
 
 use crate::common::*;
-use core::simd::{LaneCount, Mask, Simd, SupportedLaneCount};
+use core::simd::{Mask, Simd};
 use doubled::*;
 
 type F64x<const N: usize> = Simd<f64, N>;
@@ -54,29 +55,21 @@ type Ux<const N: usize> = Simd<u32, N>;
 type Ix<const N: usize> = Simd<i32, N>;
 
 impl<const N: usize> MaskType for F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     type Mask = M64x<N>;
 }
 
 impl<const N: usize> BitsType for F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     type Bits = U64x<N>;
 }
 
 impl<const N: usize> MaskType for Doubled<F64x<N>>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     type Mask = M64x<N>;
 }
 
 impl<const N: usize> crate::Sleef for F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     type Int = Ix<N>;
     #[inline]
@@ -287,8 +280,6 @@ where
 
 #[inline]
 fn from_slice_offset<const N: usize>(ptr: &[f64], vi: Ix<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     //F64x::gather_or_default(ptr, vi.cast())
     let ar: [f64; N] = core::array::from_fn(|i| ptr[vi[i] as usize]);
@@ -296,8 +287,6 @@ where
 }
 
 impl<const N: usize> Round for F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     type Int = Ix<N>;
     #[inline]
@@ -319,8 +308,6 @@ where
 }
 
 impl<const N: usize> MulAdd for F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     #[inline]
     fn mla(self, y: Self, z: Self) -> Self {
@@ -334,8 +321,6 @@ where
 }
 
 impl<const N: usize> MulSub for F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     #[inline]
     fn mul_sub(self, y: Self, z: Self) -> Self {
@@ -349,8 +334,6 @@ where
 }
 
 impl<const N: usize> NegMulAdd for F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     #[inline]
     fn neg_mul_add(self, y: Self, z: Self) -> Self {
@@ -364,8 +347,6 @@ where
 }
 
 impl<const N: usize> Sqrt for F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     #[inline]
     fn sqrt(self) -> Self {
@@ -375,8 +356,6 @@ where
 }
 
 impl<const N: usize> SqrtAsDoubled for F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     #[inline]
     fn sqrt_as_doubled(self) -> Doubled<Self> {
@@ -386,8 +365,6 @@ where
 }
 
 impl<const N: usize> VectorizedSelect<f64> for M64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     type Output = F64x<N>;
     fn select_splat(self, l: f64, r: f64) -> Self::Output {
@@ -395,8 +372,6 @@ where
     }
 }
 impl<const N: usize> DoubledSelect<F64x<N>> for M64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     fn select_doubled(self, l: Doubled<F64x<N>>, r: Doubled<F64x<N>>) -> Doubled<F64x<N>> {
         Doubled::new(self.select(l.0, r.0), self.select(l.1, r.1))
@@ -404,8 +379,6 @@ where
 }
 
 impl<const N: usize> SelectSeveral<f64> for F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     #[inline]
     fn select3(o0: Self::Mask, o1: Self::Mask, d0: f64, d1: f64, d2: f64) -> Self {
@@ -428,8 +401,6 @@ where
 }
 
 impl<const N: usize> Poly<f64> for F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     fn c2v(c: f64) -> Self {
         F64x::splat(c)
@@ -437,8 +408,6 @@ where
 }
 
 impl<const N: usize> Poly<Self> for F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     fn c2v(c: Self) -> Self {
         c
@@ -446,8 +415,6 @@ where
 }
 
 impl<const N: usize> Sign for F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     #[inline]
     fn sign_bit(self) -> Self::Bits {
@@ -472,8 +439,6 @@ where
 }
 
 impl<const N: usize> IsNegZero for F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     #[inline]
     fn is_neg_zero(self) -> Self::Mask {
@@ -482,8 +447,6 @@ where
 }
 
 impl<const N: usize> IsInt for F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     #[inline]
     fn is_integer(self) -> Self::Mask {
@@ -499,8 +462,6 @@ where
 
 #[inline]
 fn cast_into_upper<const N: usize>(q: Ix<N>) -> I64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let q64 = q.cast();
     q64 << I64x::splat(32)
@@ -508,16 +469,12 @@ where
 
 #[inline]
 fn cast_from_upper<const N: usize>(q: U64x<N>) -> Ix<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     (q >> U64x::splat(32)).cast()
 }
 
 #[inline]
 fn pow2i<const N: usize>(q: Ix<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let q = Ix::splat(0x3ff) + q;
     let r = cast_into_upper(q);
@@ -525,16 +482,12 @@ where
 }
 #[inline]
 fn ldexp2k<const N: usize>(d: F64x<N>, e: Ix<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let e1 = e >> Ix::splat(1);
     d * pow2i(e1) * pow2i(e - (e1))
 }
 #[inline]
 fn ldexp3k<const N: usize>(d: F64x<N>, q: Ix<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     F64x::from_bits((d.to_bits().cast() + (cast_into_upper(q) << I64x::splat(20))).cast())
 }
@@ -545,15 +498,13 @@ where
 ))]*/
 #[inline]
 fn ilogbk<const N: usize>(mut d: F64x<N>) -> Ix<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let o = d.simd_lt(F64x::splat(4.909_093_465_297_726_6_e-91));
     d = o.select(F64x::splat(2.037_035_976_334_486_e90) * d, d);
     let mut q = cast_from_upper(d.to_bits());
     q &= Ix::splat(((1 << 12) - 1) << 20);
     q = (q.cast() >> Ux::splat(20)).cast();
-    q - o.cast().select(Ix::splat(300 + 0x3ff), Ix::splat(0x3ff))
+    q - o.cast::<i32>().select(Ix::splat(300 + 0x3ff), Ix::splat(0x3ff))
 }
 /*#[cfg(all(
     not(feature = "enable_avx512f"),
@@ -561,8 +512,6 @@ where
 ))]*/
 #[inline]
 fn ilogb2k<const N: usize>(d: F64x<N>) -> Ix<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut q = cast_from_upper(d.to_bits());
     q = (q.cast() >> Ux::splat(20)).cast();
@@ -571,8 +520,6 @@ where
 }
 
 impl<const N: usize> IsOdd for F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     #[inline]
     fn is_odd(self) -> Self::Mask {
@@ -593,8 +540,6 @@ where
 
 #[inline]
 fn ldexpk<const N: usize>(x: F64x<N>, q: Ix<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut m = q >> Ix::splat(31);
     m = (((m + q) >> Ix::splat(9)) - m) << Ix::splat(7);
@@ -611,16 +556,12 @@ where
 ///
 /// These functions return the result of multiplying ***m*** by `2` raised to the power ***x***.
 pub fn ldexp<const N: usize>(x: F64x<N>, q: Ix<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     ldexpk(x, q)
 }
 
 /// Integer exponent of an FP number
 pub fn ilogb<const N: usize>(d: F64x<N>) -> Ix<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut e = ilogbk(d.abs()).cast::<f64>();
     e = d
@@ -635,8 +576,6 @@ where
 
 #[inline]
 fn rempisub<const N: usize>(x: F64x<N>) -> (F64x<N>, Ix<N>)
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     if cfg!(feature = "full_fp_rounding") {
         let y = (x * F64x::splat(4.)).round();
@@ -660,8 +599,6 @@ where
 }
 #[inline]
 fn rempi<const N: usize>(mut a: F64x<N>) -> (Doubled<F64x<N>>, Ix<N>)
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut ex = ilogb2k(a);
     /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
@@ -705,8 +642,6 @@ where
 
 #[inline]
 fn visinf2_vd_vd_vd<const N: usize>(d: F64x<N>, m: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     F64x::from_bits(
         d.is_infinite().to_int().cast() & ((d.to_bits() & F64x::NEG_ZERO.to_bits()) | m.to_bits()),
@@ -715,8 +650,6 @@ where
 
 #[inline]
 fn expk2<const N: usize>(d: Doubled<F64x<N>>) -> Doubled<F64x<N>>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let u = F64x::from(d) * F64x::R_LN2;
     let dq = u.round();
@@ -762,8 +695,6 @@ where
 /// Absolute value
 #[inline]
 pub fn fabs<const N: usize>(x: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     x.abs()
 }
@@ -771,8 +702,6 @@ where
 /// Copy sign of a number
 #[inline]
 pub fn copysign<const N: usize>(x: F64x<N>, y: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     x.copy_sign(y)
 }
@@ -780,8 +709,6 @@ where
 /// Maximum of two numbers
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))] //  && !defined(ENABLE_VECEXT) && !defined(ENABLE_PUREC)
 pub fn fmax<const N: usize>(x: F64x<N>, y: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     y.is_nan().select(x, x.simd_max(y))
 }
@@ -789,8 +716,6 @@ where
 /// Maximum of two numbers
 #[cfg(all(not(target_arch = "x86"), not(target_arch = "x86_64")))]
 pub fn fmax<const N: usize>(x: F64x<N>, y: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     y.is_nan().select(x, x.simd_gt(y).select(x, y))
 }
@@ -798,8 +723,6 @@ where
 /// Minimum of two numbers
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))] //  && !defined(ENABLE_VECEXT) && !defined(ENABLE_PUREC)
 pub fn fmin<const N: usize>(x: F64x<N>, y: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     y.is_nan().select(x, x.simd_min(y))
 }
@@ -807,16 +730,12 @@ where
 /// Minimum of two numbers
 #[cfg(all(not(target_arch = "x86"), not(target_arch = "x86_64")))]
 pub fn fmin<const N: usize>(x: F64x<N>, y: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     y.is_nan().select(x, y.simd_gt(x).select(x, y))
 }
 
 /// Positive difference
 pub fn fdim<const N: usize>(x: F64x<N>, y: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let ret = x - y;
     (ret.simd_lt(F64x::ZERO) | x.simd_eq(y)).select(F64x::ZERO, ret)
@@ -824,8 +743,6 @@ where
 
 /// Round to integer towards zero
 pub fn trunc<const N: usize>(x: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     /*
     #ifdef FULL_FP_ROUNDING
@@ -840,8 +757,6 @@ where
 
 /// Round to integer towards minus infinity
 pub fn floor<const N: usize>(x: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut fr = x - F64x::D1_31 * (x * (F64x::ONE / F64x::D1_31)).trunci().cast();
     fr -= fr.trunci().cast();
@@ -851,8 +766,6 @@ where
 
 /// Round to integer towards plus infinity
 pub fn ceil<const N: usize>(x: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut fr = x - F64x::D1_31 * (x * (F64x::ONE / F64x::D1_31)).trunci().cast();
     fr -= fr.trunci().cast();
@@ -862,8 +775,6 @@ where
 
 /// Round to integer away from zero
 pub fn round<const N: usize>(d: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut x = d + F64x::HALF;
     let mut fr = x - F64x::D1_31 * (x * (F64x::ONE / F64x::D1_31)).trunci().cast();
@@ -878,8 +789,6 @@ where
 
 /// Round to integer, ties round to even
 pub fn rint<const N: usize>(d: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     /*
     #ifdef FULL_FP_ROUNDING
@@ -895,8 +804,6 @@ where
 
 /// Find the next representable FP value
 pub fn nextafter<const N: usize>(x: F64x<N>, y: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let x = x.simd_eq(F64x::ZERO).select(F64x::ZERO.mul_sign(y), x);
     let xi2 = x.to_bits().cast::<i64>();
@@ -924,7 +831,7 @@ fn test_nextafter() {
         |mut f, t| {
             let prec = f.prec();
             f.set_prec(53);
-            f.next_toward(&t);
+            f.next_toward(t);
             f.set_prec(prec);
             f
         },
@@ -936,8 +843,6 @@ fn test_nextafter() {
 
 /// Fractional component of an FP number
 pub fn frfrexp<const N: usize>(x: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let x = x
         .abs()
@@ -956,8 +861,6 @@ where
 
 /// Exponent of an FP number
 pub fn expfrexp<const N: usize>(x: F64x<N>) -> Ix<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let x = x
         .abs()
@@ -968,7 +871,7 @@ where
     ret = ((ret.cast() >> Ux::splat(20)).cast() & Ix::splat(0x7ff)) - Ix::splat(0x3fe);
 
     (x.simd_eq(F64x::ZERO) | x.is_nan() | x.is_infinite())
-        .cast()
+        .cast::<i32>()
         .select(Ix::splat(0), ret)
 }
 
@@ -978,8 +881,6 @@ where
 /// This function may return infinity with a correct sign if the absolute value of the correct return value is greater than `1e+300`.
 /// The error bounds of the returned value is `max(0.500_01 ULP, f64::MIN_POSITIVE)`.
 pub fn fma<const N: usize>(mut x: F64x<N>, mut y: F64x<N>, mut z: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     if cfg!(target_feature = "fma") {
         x.mla(y, z)
@@ -1022,16 +923,12 @@ where
 /// The error bound of the returned value is `0.5001 ULP`
 //#[cfg(feature = "accurate_sqrt")]
 pub fn sqrt<const N: usize>(d: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     d.sqrt()
 }
 // fall back to approximation if ACCURATE_SQRT is undefined
 /*#[cfg(not(feature = "accurate_sqrt"))]
 pub fn xsqrt<const N: usize>(d: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     u05::sqrt(d)
 }*/
@@ -1039,13 +936,9 @@ where
 /// FP remainder
 /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
 pub fn fmod<const N: usize>(x: F64x<N>, y: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     #[inline]
     fn toward0<const N: usize>(x: F64x<N>) -> F64x<N>
-    where
-        LaneCount<N>: SupportedLaneCount,
     {
         // returns nextafter(x, 0)
         let t = F64x::from_bits(x.to_bits() + I64x::splat(-1).cast());
@@ -1055,8 +948,6 @@ where
     #[cfg(feature = "full_fp_rounding")]
     #[inline]
     fn trunc_positive<const N: usize>(x: F64x<N>) -> F64x<N>
-    where
-        LaneCount<N>: SupportedLaneCount,
     {
         // round to integer toward 0, positive argument only
         x.trunc()
@@ -1064,8 +955,6 @@ where
     #[cfg(not(feature = "full_fp_rounding"))]
     #[inline]
     fn trunc_positive<const N: usize>(x: F64x<N>) -> F64x<N>
-    where
-        LaneCount<N>: SupportedLaneCount,
     {
         let mut fr = (-F64x::D1_31).mla((x * (F64x::ONE / F64x::D1_31)).trunci().cast(), x);
         fr -= fr.trunci().cast();
@@ -1109,8 +998,6 @@ where
 
 #[inline]
 fn rintk2<const N: usize>(d: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     if cfg!(feature = "full_fp_rounding") {
         rint(d)
@@ -1124,8 +1011,6 @@ where
 
 /// FP remainder
 pub fn remainder<const N: usize>(x: F64x<N>, y: F64x<N>) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut n = x.abs();
     let mut d = y.abs();
@@ -1181,8 +1066,6 @@ fn test_remainder() {
 
 #[inline]
 fn sinpik<const N: usize>(d: F64x<N>) -> Doubled<F64x<N>>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let u = d * F64x::splat(4.);
     let mut q = u.trunci();
@@ -1271,8 +1154,6 @@ where
 
 /// Integral and fractional value of FP number
 pub fn modf<const N: usize>(x: F64x<N>) -> (F64x<N>, F64x<N>)
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut fr = x - F64x::D1_31 * (x * (F64x::ONE / F64x::D1_31)).trunci().cast();
     fr -= fr.trunci().cast();

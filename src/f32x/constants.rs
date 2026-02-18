@@ -1,9 +1,6 @@
-use super::{F32x, LaneCount, SupportedLaneCount};
+use super::F32x;
 
-impl<const N: usize> crate::common::Constants for F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
-{
+impl<const N: usize> crate::common::Constants for F32x<N> {
     crate::common::cons! {
         PI: F32x = core::f32::consts::PI;
         FRAC_1_PI: F32x =  core::f32::consts::FRAC_1_PI;
@@ -46,10 +43,7 @@ pub trait F32Constants {
     const SQRT_FLT_MAX: Self;
 }
 
-impl<const N: usize> F32Constants for F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
-{
+impl<const N: usize> F32Constants for F32x<N> {
     crate::common::cons! {
         F1_32: F32x = crate::f32::F1_32;
         F1_30: F32x = crate::f32::F1_30;

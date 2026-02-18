@@ -6,6 +6,7 @@ mod constants;
 pub(crate) use constants::*;
 
 use core::simd::prelude::*;
+use std::simd::Select;
 
 /// Fast functions with 350.0 ULP error bound
 mod fast;
@@ -51,7 +52,7 @@ pub use u35::{
 use crate::common::*;
 use doubled::*;
 
-use core::simd::{LaneCount, Mask, Simd, SupportedLaneCount};
+use core::simd::{Mask, Simd};
 
 type F32x<const N: usize> = Simd<f32, N>;
 type U32x<const N: usize> = Simd<u32, N>;
@@ -59,29 +60,21 @@ type I32x<const N: usize> = Simd<i32, N>;
 type M32x<const N: usize> = Mask<i32, N>;
 
 impl<const N: usize> MaskType for F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     type Mask = M32x<N>;
 }
 
 impl<const N: usize> BitsType for F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     type Bits = U32x<N>;
 }
 
 impl<const N: usize> MaskType for Doubled<F32x<N>>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     type Mask = M32x<N>;
 }
 
 impl<const N: usize> crate::Sleef for F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     type Int = I32x<N>;
     #[inline]
@@ -291,8 +284,6 @@ where
 }
 
 impl<const N: usize> Sqrt for F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     #[inline]
     fn sqrt(self) -> Self {
@@ -302,8 +293,6 @@ where
 }
 
 impl<const N: usize> SqrtAsDoubled for F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     #[inline]
     fn sqrt_as_doubled(self) -> Doubled<Self> {
@@ -313,8 +302,6 @@ where
 }
 
 impl<const N: usize> Round for F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     type Int = I32x<N>;
     #[inline]
@@ -336,8 +323,6 @@ where
 }
 
 impl<const N: usize> MulAdd for F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     #[inline]
     fn mla(self, y: Self, z: Self) -> Self {
@@ -351,8 +336,6 @@ where
 }
 
 impl<const N: usize> MulSub for F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     #[inline]
     fn mul_sub(self, y: Self, z: Self) -> Self {
@@ -366,8 +349,6 @@ where
 }
 
 impl<const N: usize> NegMulAdd for F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     #[inline]
     fn neg_mul_add(self, y: Self, z: Self) -> Self {
@@ -381,8 +362,6 @@ where
 }
 
 impl<const N: usize> VectorizedSelect<f32> for M32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     type Output = F32x<N>;
     fn select_splat(self, l: f32, r: f32) -> Self::Output {
@@ -391,8 +370,6 @@ where
 }
 
 impl<const N: usize> DoubledSelect<F32x<N>> for M32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     fn select_doubled(self, l: Doubled<F32x<N>>, r: Doubled<F32x<N>>) -> Doubled<F32x<N>> {
         Doubled::new(self.select(l.0, r.0), self.select(l.1, r.1))
@@ -400,8 +377,6 @@ where
 }
 
 impl<const N: usize> SelectSeveral<f32> for F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     #[inline]
     fn select3(o0: Self::Mask, o1: Self::Mask, d0: f32, d1: f32, d2: f32) -> Self {
@@ -424,8 +399,6 @@ where
 }
 
 impl<const N: usize> SelectSeveral<f64> for Doubled<F32x<N>>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     #[inline]
     fn select3(o0: Self::Mask, o1: Self::Mask, d0: f64, d1: f64, d2: f64) -> Self {
@@ -454,8 +427,6 @@ where
 }
 
 impl<const N: usize> Poly<f32> for F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     fn c2v(c: f32) -> Self {
         F32x::splat(c)
@@ -463,8 +434,6 @@ where
 }
 
 impl<const N: usize> Poly<Self> for F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     fn c2v(c: Self) -> Self {
         c
@@ -472,8 +441,6 @@ where
 }
 
 impl<const N: usize> Sign for F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     #[inline]
     fn sign_bit(self) -> Self::Bits {
@@ -498,8 +465,6 @@ where
 }
 
 impl<const N: usize> IsNegZero for F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     #[inline]
     fn is_neg_zero(self) -> Self::Mask {
@@ -508,8 +473,6 @@ where
 }
 
 impl<const N: usize> IsInt for F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     #[inline]
     fn is_integer(self) -> Self::Mask {
@@ -519,8 +482,6 @@ where
 
 #[inline]
 pub(crate) fn from_slice_offset<const N: usize>(ptr: &[f32], vi: I32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     //F32x::gather_or_default(ptr, vi.cast()) // Failes to compile on release
     let ar: [f32; N] = core::array::from_fn(|i| ptr[vi[i] as usize]);
@@ -533,8 +494,6 @@ where
 ))]*/
 #[inline]
 pub(crate) fn ilogbkf<const N: usize>(mut d: F32x<N>) -> I32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let o = d.simd_lt(F32x::splat(5.421_010_862_427_522_e-20));
     d = o.select(F32x::splat(1.844_674_407_370_955_2_e19) * d, d);
@@ -548,8 +507,6 @@ where
 ))]*/
 #[inline]
 pub(crate) fn ilogb2kf<const N: usize>(d: F32x<N>) -> I32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let q = d.to_bits().cast();
     let mut q = q >> I32x::splat(23);
@@ -559,8 +516,6 @@ where
 
 /// Integer exponent of an FP number
 pub fn ilogbf<const N: usize>(d: F32x<N>) -> I32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut e = ilogbkf(d.abs());
     e = d
@@ -573,16 +528,12 @@ where
 }
 #[inline]
 pub(crate) fn pow2if<const N: usize>(q: I32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     F32x::from_bits(((q + I32x::splat(0x7f)) << I32x::splat(23)).cast())
 }
 
 #[inline]
 pub(crate) fn ldexpkf<const N: usize>(mut x: F32x<N>, mut q: I32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut m = q >> I32x::splat(31);
     m = (((m + q) >> I32x::splat(6)) - m) << I32x::splat(4);
@@ -599,8 +550,6 @@ where
 
 #[inline]
 pub(crate) fn ldexp2kf<const N: usize>(d: F32x<N>, e: I32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let e1 = e >> I32x::splat(1);
     d * pow2if(e1) * pow2if(e - e1)
@@ -608,8 +557,6 @@ where
 
 #[inline]
 pub(crate) fn ldexp3kf<const N: usize>(d: F32x<N>, q: I32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     F32x::from_bits((d.to_bits().cast() + (q << I32x::splat(23))).cast())
 }
@@ -618,16 +565,12 @@ where
 ///
 /// These functions return the result of multiplying ***m*** by `2` raised to the power ***x***.
 pub fn ldexpf<const N: usize>(x: F32x<N>, q: I32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     ldexpkf(x, q)
 }
 
 #[inline]
 pub(crate) fn rempisubf<const N: usize>(x: F32x<N>) -> (F32x<N>, I32x<N>)
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     if cfg!(feature = "full_fp_rounding") {
         let y = (x * F32x::splat(4.)).round();
@@ -652,8 +595,6 @@ where
 
 #[inline]
 pub(crate) fn rempif<const N: usize>(mut a: F32x<N>) -> (Doubled<F32x<N>>, I32x<N>)
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut ex = ilogb2kf(a);
     /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
@@ -695,8 +636,6 @@ where
 
 /// Integral and fractional value of FP number
 pub fn modff<const N: usize>(x: F32x<N>) -> (F32x<N>, F32x<N>)
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let fr = x - x.trunci().cast();
     let fr = x.abs().simd_gt(F32x::F1_23).select(F32x::ZERO, fr);
@@ -705,16 +644,12 @@ where
 
 #[inline]
 pub(crate) fn visinf2_vf_vf_vf<const N: usize>(d: F32x<N>, m: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     F32x::from_bits(d.is_infinite().to_int().cast() & (d.sign_bit() | m.to_bits()))
 }
 
 #[inline]
 pub(crate) fn expk2f<const N: usize>(d: Doubled<F32x<N>>) -> Doubled<F32x<N>>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let u = F32x::from(d) * F32x::R_LN2;
     let q = u.roundi();
@@ -745,24 +680,18 @@ where
 
 /// Absolute value
 pub fn fabsf<const N: usize>(x: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     x.abs()
 }
 
 /// Copy sign of a number
 pub fn copysignf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     x.copy_sign(y)
 }
 
 /// Maximum of two numbers
 pub fn fmaxf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     if cfg!(target_arch = "x86_64") || cfg!(target_arch = "x86")
     /*    && !cfg!(feature = "enable_vecext")
@@ -776,8 +705,6 @@ where
 
 /// Minimum of two numbers
 pub fn fminf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     if cfg!(target_arch = "x86_64") || cfg!(target_arch = "x86")
     /*    && !cfg!(feature = "enable_vecext")
@@ -791,8 +718,6 @@ where
 
 /// Positive difference
 pub fn fdimf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let ret = x - y;
     (ret.simd_lt(F32x::ZERO) | x.simd_eq(y)).select(F32x::ZERO, ret)
@@ -800,8 +725,6 @@ where
 
 /// Round to integer towards zero
 pub fn truncf<const N: usize>(x: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     /*
     #ifdef FULL_FP_ROUNDING
@@ -815,8 +738,6 @@ where
 
 /// Round to integer towards minus infinity
 pub fn floorf<const N: usize>(x: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let fr = x - x.trunci().cast();
     let fr = fr.simd_lt(F32x::ZERO).select(fr + F32x::ONE, fr);
@@ -825,8 +746,6 @@ where
 
 /// Round to integer towards plus infinity
 pub fn ceilf<const N: usize>(x: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let fr = x - x.trunci().cast();
     let fr = fr.simd_le(F32x::ZERO).select(fr, fr - F32x::ONE);
@@ -835,8 +754,6 @@ where
 
 /// Round to integer away from zero
 pub fn roundf<const N: usize>(d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut x = d + F32x::HALF;
     let fr = x - x.trunci().cast();
@@ -850,8 +767,6 @@ where
 
 /// Round to integer, ties round to even
 pub fn rintf<const N: usize>(d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     /* #ifdef FULL_FP_ROUNDING
         return vrint_vf_vf(d);
@@ -869,8 +784,6 @@ where
 /// This function may return infinity with a correct sign if the absolute value of the correct return value is greater than `1e+33`.
 /// The error bounds of the returned value is `max(0.500_01 ULP, f32::MIN_POSITIVE)`.
 pub fn fmaf<const N: usize>(mut x: F32x<N>, mut y: F32x<N>, mut z: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     if cfg!(target_feature = "fma") {
         x.mla(y, z)
@@ -912,8 +825,6 @@ where
 ///
 /// The error bound of the returned value is `0.5001 ULP`
 pub fn sqrtf<const N: usize>(d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     //   if cfg!(feature = "accurate_sqrt") {
     d.sqrt()
@@ -925,8 +836,6 @@ where
 
 /// Find the next representable FP value
 pub fn nextafterf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let x = x.simd_eq(F32x::ZERO).select(F32x::ZERO.mul_sign(y), x);
     let mut xi2: I32x<N> = x.to_bits().cast();
@@ -954,7 +863,7 @@ fn test_nextafterf() {
         |mut f, t| {
             let prec = f.prec();
             f.set_prec(24);
-            f.next_toward(&t);
+            f.next_toward(t);
             f.set_prec(prec);
             f
         },
@@ -966,8 +875,6 @@ fn test_nextafterf() {
 
 /// Fractional component of an FP number
 pub fn frfrexpf<const N: usize>(x: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let x = x
         .abs()
@@ -986,8 +893,6 @@ where
 
 /// Exponent of an FP number
 pub fn expfrexpf<const N: usize>(_x: F32x<N>) -> I32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     /*
       x = x.abs().simd_lt(F32x::splat(f32::MIN_POSITIVE)).select(x * F1_63X, x);
@@ -1002,21 +907,15 @@ where
 
 /// FP remainder
 pub fn fmodf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     #[inline]
     fn toward0<const N: usize>(x: F32x<N>) -> F32x<N>
-    where
-        LaneCount<N>: SupportedLaneCount,
     {
         let t = F32x::from_bits((x.to_bits().cast() - I32x::splat(1)).cast());
         x.simd_eq(F32x::ZERO).select(F32x::ZERO, t)
     }
     #[inline]
     fn trunc_positive<const N: usize>(x: F32x<N>) -> F32x<N>
-    where
-        LaneCount<N>: SupportedLaneCount,
     {
         if cfg!(feature = "full_fp_rounding") {
             x.trunc()
@@ -1065,8 +964,6 @@ where
 
 #[inline]
 pub(crate) fn rintfk2<const N: usize>(d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     /*#ifdef FULL_FP_ROUNDING
         return vrint_vf_vf(d);
@@ -1080,8 +977,6 @@ where
 
 /// FP remainder
 pub fn remainderf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut n = x.abs();
     let mut d = y.abs();
@@ -1135,8 +1030,6 @@ fn test_remainderf() {
 
 #[inline]
 pub(crate) fn sinpifk<const N: usize>(d: F32x<N>) -> Doubled<F32x<N>>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let u = d * F32x::splat(4.);
     let q = u.trunci();
@@ -1191,8 +1084,6 @@ where
 
 #[inline]
 pub(crate) fn cospifk<const N: usize>(d: F32x<N>) -> Doubled<F32x<N>>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let u = d * F32x::splat(4.);
     let q = u.trunci();
@@ -1247,8 +1138,6 @@ where
 
 #[inline]
 pub(crate) fn expm1fk<const N: usize>(d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let q = (d * F32x::R_LN2).roundi();
     let s = q.cast::<f32>().mla(-F32x::L2_U, d);

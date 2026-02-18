@@ -4,12 +4,10 @@ fn gen_input<const N: usize>(
     rng: &mut rand::rngs::ThreadRng,
     range: core::ops::RangeInclusive<f64>,
 ) -> F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let mut arr = [0.; N];
-    for i in 0..N {
-        arr[i] = crate::f64::gen_input(rng, range.clone());
+    for reference in arr.iter_mut() {
+        *reference = crate::f64::gen_input(rng, range.clone());
     }
     arr.into()
 }
@@ -19,8 +17,7 @@ pub fn test_f_f<const N: usize>(
     fun_f: fn(rug::Float) -> rug::Float,
     range: core::ops::RangeInclusive<f64>,
     ulp_ex: f64,
-) where
-    LaneCount<N>: SupportedLaneCount,
+)
 {
     let mut rng = rand::thread_rng();
     for n in 0..crate::TEST_REPEAT_FAST {
@@ -48,8 +45,7 @@ pub fn test_f_ff<const N: usize>(
     fun_f: fn(rug::Float) -> (rug::Float, rug::Float),
     range: core::ops::RangeInclusive<f64>,
     ulp_ex: f64,
-) where
-    LaneCount<N>: SupportedLaneCount,
+)
 {
     let mut rng = rand::thread_rng();
     for n in 0..crate::TEST_REPEAT_FAST {
@@ -81,8 +77,7 @@ pub fn test_ff_f<const N: usize>(
     range1: core::ops::RangeInclusive<f64>,
     range2: core::ops::RangeInclusive<f64>,
     ulp_ex: f64,
-) where
-    LaneCount<N>: SupportedLaneCount,
+)
 {
     let mut rng = rand::thread_rng();
     for n in 0..crate::TEST_REPEAT_FAST {

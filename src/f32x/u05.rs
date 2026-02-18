@@ -7,8 +7,6 @@ use super::*;
 /// If ***a*** is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
 /// If ***a*** is a `NaN` or infinity, a `NaN` is returned.
 pub fn sincospif<const N: usize>(d: F32x<N>) -> (F32x<N>, F32x<N>)
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let u = d * F32x::splat(4.);
     let q = u.trunci();
@@ -96,8 +94,6 @@ fn test_sincospif() {
 ///
 /// The error bound of the returned value is `0.5001 ULP`.
 pub fn sqrtf<const N: usize>(d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     if cfg!(target_feature = "fma") {
         let d = d.simd_lt(F32x::ZERO).select(F32x::NAN, d);
@@ -176,8 +172,6 @@ fn test_sqrtf() {
 ///
 /// The error bound of the returned value is `0.5001 ULP`.
 pub fn hypotf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let x = x.abs();
     let y = y.abs();
@@ -218,8 +212,6 @@ fn test_hypotf() {
 /// If ***a*** is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
 /// If ***a*** is a `NaN` or infinity, a NaN is returned.
 pub fn sinpif<const N: usize>(d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let x = sinpifk(d);
     let mut r = F32x::from(x);
@@ -253,8 +245,6 @@ fn test_sinpif() {
 /// If ***a*** is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
 /// If ***a*** is a `NaN` or infinity, a `NaN` is returned.
 pub fn cospif<const N: usize>(d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
 {
     let x = cospifk(d);
     let r = F32x::from(x);

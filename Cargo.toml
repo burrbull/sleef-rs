@@ -11,7 +11,7 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 
 [dependencies.doubled]
-version = "*" # The version of doubled that was here no longer compiles
+git = "https://github.com/burrbull/doubled-rs.git"
 features = ["simd"]
 
 [features]

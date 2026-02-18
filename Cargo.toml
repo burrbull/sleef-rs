@@ -11,7 +11,7 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 
 [dependencies.doubled]
-path = "../doubled-rs"
+version = "*" # The version of doubled that was here no longer compiles
 features = ["simd"]
 
 [features]

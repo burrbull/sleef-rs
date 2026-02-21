@@ -1,9 +1,6 @@
-use super::{F64x, LaneCount, SupportedLaneCount};
+use super::F64x;
 
-impl<const N: usize> crate::common::Constants for F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
-{
+impl<const N: usize> crate::common::Constants for F64x<N> {
     crate::common::cons! {
         PI: F64x = core::f64::consts::PI;
         FRAC_1_PI: F64x =  core::f64::consts::FRAC_1_PI;
@@ -49,10 +46,7 @@ pub trait F64Constants {
     const SQRT_DBL_MAX: Self;
 }
 
-impl<const N: usize> F64Constants for F64x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
-{
+impl<const N: usize> F64Constants for F64x<N> {
     crate::common::cons! {
         D1_63: F64x = crate::f64::D1_63;
         D1_60: F64x = crate::f64::D1_60;

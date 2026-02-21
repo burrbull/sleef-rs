@@ -1,12 +1,10 @@
 use super::*;
+use std::simd::Select;
 
 /// Fast sine function
 ///
 /// The error bounds of the returned value is `min(350 ULP, 2e-6)`.
-pub fn sinf<const N: usize>(mut d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
-{
+pub fn sinf<const N: usize>(mut d: F32x<N>) -> F32x<N> {
     let t = d;
 
     let s = d * F32x::FRAC_1_PI;
@@ -48,10 +46,7 @@ fn test_sinf() {
 /// Fast sine function
 ///
 /// The error bounds of the returned value is `min(350 ULP, 2e-6)`.
-pub fn cosf<const N: usize>(mut d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
-{
+pub fn cosf<const N: usize>(mut d: F32x<N>) -> F32x<N> {
     let t = d;
 
     let s = d.mla(F32x::FRAC_1_PI, -F32x::HALF);
@@ -91,10 +86,7 @@ fn test_cosf() {
 }
 
 #[inline]
-fn logk3f<const N: usize>(mut d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
-{
+fn logk3f<const N: usize>(mut d: F32x<N>) -> F32x<N> {
     let (m, e) = //if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")
     {
         let o = d.simd_lt(F32x::splat(f32::MIN_POSITIVE));
@@ -123,10 +115,7 @@ where
 }
 
 #[inline]
-fn expk3f<const N: usize>(d: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
-{
+fn expk3f<const N: usize>(d: F32x<N>) -> F32x<N> {
     let q = (d * F32x::R_LN2).roundi();
 
     let mut s = q.cast::<f32>().mla(-F32x::L2_U, d);
@@ -148,10 +137,7 @@ where
 /// Fast power function
 ///
 /// The error bounds of the returned value is `350 ULP`.
-pub fn powf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N>
-where
-    LaneCount<N>: SupportedLaneCount,
-{
+pub fn powf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N> {
     let mut result = expk3f(logk3f(x.abs()) * y);
     let yisint = y.trunc().simd_eq(y) | y.abs().simd_gt(F32x::F1_24);
     let yisodd = (y.trunci() & I32x::splat(1)).simd_eq(I32x::splat(1))

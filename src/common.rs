@@ -1,11 +1,28 @@
 pub use core::f32;
 pub use core::f64;
-pub use core::i32;
-pub use core::i64;
+use std::simd::Mask;
+use std::simd::Select;
+use std::simd::Simd;
 
 // ---- Advanced Traits -----------------
 
 use doubled::*;
+
+pub trait MaskToInt {
+    type Int;
+    fn to_int(self) -> Self::Int;
+}
+
+impl<T, const N: usize> MaskToInt for Mask<T, N>
+where
+    T: std::simd::MaskElement + std::simd::SimdElement + From<i8>,
+{
+    type Int = Simd<T, N>;
+
+    fn to_int(self) -> Self::Int {
+        self.select(Simd::splat(T::from(-1)), Simd::splat(T::from(0)))
+    }
+}
 
 pub trait SqrtAsDoubled
 where
@@ -132,7 +149,7 @@ pub trait SelectSeveral<T>: MaskType {
     fn select4(o0: Self::Mask, o1: Self::Mask, o2: Self::Mask, d0: T, d1: T, d2: T, d3: T) -> Self;
 }
 
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments, dead_code)]
 pub trait Poly<B>: MulAdd
 where
     Self: Sized + Copy,

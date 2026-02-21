@@ -826,12 +826,7 @@ pub fn modff(x: f32) -> (f32, f32) {
 ///
 /// These functions return the result of multiplying ***m*** by `2` raised to the power ***x***.
 pub fn ldexpf(x: f32, mut exp: i32) -> f32 {
-    if exp > 300 {
-        exp = 300;
-    }
-    if exp < -300 {
-        exp = -300;
-    }
+    exp = exp.clamp(-300, 300);
 
     let mut e0 = exp >> 2;
     if exp < 0 {
@@ -882,7 +877,7 @@ fn test_nextafterf() {
         |mut f, t| {
             let prec = f.prec();
             f.set_prec(24);
-            f.next_toward(&t);
+            f.next_toward(t);
             f.set_prec(prec);
             f
         },

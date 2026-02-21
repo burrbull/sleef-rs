@@ -11,11 +11,15 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 
 [dependencies.doubled]
-version = "0.3.2"
+version = "0.3.3"
 features = ["simd"]
 
 [features]
 default = []
+# TODO: replace with `target features`
+enable_neon32 = []
+enable_neon32vfpv4 = []
+full_fp_rounding = []
 
 [dev-dependencies]
 rug = "1.16"

@@ -4,8 +4,7 @@ use super::*;
 ///
 /// This function evaluates the sine function of a value in ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn sinf<const N: usize>(d: F32x<N>) -> F32x<N>
-{
+pub fn sinf<const N: usize>(d: F32x<N>) -> F32x<N> {
     let mut q;
     let mut s;
 
@@ -64,8 +63,7 @@ pub fn sinf<const N: usize>(d: F32x<N>) -> F32x<N>
 /// The error bound of the returned value is `1.0 ULP`.
 ///
 /// NOTE: This version is slower, but SIMD lanes are independent
-pub fn sinf_deterministic<const N: usize>(d: F32x<N>) -> F32x<N>
-{
+pub fn sinf_deterministic<const N: usize>(d: F32x<N>) -> F32x<N> {
     let u = (d * F32x::FRAC_1_PI).round();
     let mut q = u.roundi();
     let v = u.mla(-F32x::PI_A2, d);
@@ -129,8 +127,7 @@ fn test_sinf() {
 ///
 /// This function evaluates the cosine function of a value in ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn cosf<const N: usize>(d: F32x<N>) -> F32x<N>
-{
+pub fn cosf<const N: usize>(d: F32x<N>) -> F32x<N> {
     let mut q;
     let mut s;
 
@@ -193,8 +190,7 @@ pub fn cosf<const N: usize>(d: F32x<N>) -> F32x<N>
 /// The error bound of the returned value is `1.0 ULP`.
 ///
 /// NOTE: This version is slower, but SIMD lanes are independent
-pub fn cosf_deterministic<const N: usize>(d: F32x<N>) -> F32x<N>
-{
+pub fn cosf_deterministic<const N: usize>(d: F32x<N>) -> F32x<N> {
     let dq = (d.mla(F32x::FRAC_1_PI, F32x::splat(-0.5)))
         .round()
         .mla(F32x::splat(2.), F32x::ONE);
@@ -265,8 +261,7 @@ fn test_cosf() {
 /// returned value, respectively.
 /// The error bound of the returned values is `1.0 ULP`.
 /// If ***a*** is a `NaN` or `infinity`, a `NaN` is returned.
-pub fn sincosf<const N: usize>(d: F32x<N>) -> (F32x<N>, F32x<N>)
-{
+pub fn sincosf<const N: usize>(d: F32x<N>) -> (F32x<N>, F32x<N>) {
     let q;
     let mut s;
 
@@ -329,8 +324,7 @@ pub fn sincosf<const N: usize>(d: F32x<N>) -> (F32x<N>, F32x<N>)
 /// If ***a*** is a `NaN` or `infinity`, a `NaN` is returned.
 ///
 /// NOTE: This version is slower, but SIMD lanes are independent
-pub fn sincosf_deterministic<const N: usize>(d: F32x<N>) -> (F32x<N>, F32x<N>)
-{
+pub fn sincosf_deterministic<const N: usize>(d: F32x<N>) -> (F32x<N>, F32x<N>) {
     let u = (d * F32x::FRAC_2_PI).round();
     let mut q = u.roundi();
     let v = u.mla(-F32x::PI_A2 * F32x::HALF, d);
@@ -409,8 +403,7 @@ fn test_sincosf() {
 ///
 /// This function evaluates the tangent function of a value in ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn tanf<const N: usize>(d: F32x<N>) -> F32x<N>
-{
+pub fn tanf<const N: usize>(d: F32x<N>) -> F32x<N> {
     let q;
 
     let mut s = if d.abs().simd_lt(F32x::TRIGRANGEMAX2).all() {
@@ -463,8 +456,7 @@ pub fn tanf<const N: usize>(d: F32x<N>) -> F32x<N>
 /// The error bound of the returned value is `1.0 ULP`.
 ///
 /// NOTE: This version is slower, but SIMD lanes are independent
-pub fn tanf_deterministic<const N: usize>(d: F32x<N>) -> F32x<N>
-{
+pub fn tanf_deterministic<const N: usize>(d: F32x<N>) -> F32x<N> {
     let u = (d * F32x::FRAC_2_PI).round();
     let mut q = u.roundi();
     let v = u.mla(-F32x::PI_A2 * F32x::HALF, d);
@@ -519,8 +511,7 @@ fn test_tanf() {
 }
 
 #[inline]
-fn atan2kf_u1<const N: usize>(y: Doubled<F32x<N>>, mut x: Doubled<F32x<N>>) -> Doubled<F32x<N>>
-{
+fn atan2kf_u1<const N: usize>(y: Doubled<F32x<N>>, mut x: Doubled<F32x<N>>) -> Doubled<F32x<N>> {
     let q =
         x.0.simd_lt(F32x::ZERO)
             .select(I32x::splat(-2), I32x::splat(0));
@@ -564,8 +555,7 @@ fn atan2kf_u1<const N: usize>(y: Doubled<F32x<N>>, mut x: Doubled<F32x<N>>) -> D
 /// The quadrant of the result is determined according to the signs
 /// of ***x*** and ***y***.
 /// The error bound of the returned values is `max(1.0 ULP, f32::MIN_POSITIVE)`.
-pub fn atan2f<const N: usize>(mut y: F32x<N>, mut x: F32x<N>) -> F32x<N>
-{
+pub fn atan2f<const N: usize>(mut y: F32x<N>, mut x: F32x<N>) -> F32x<N> {
     let o = x
         .abs()
         .simd_lt(F32x::splat(2.938_737_278_354_183_094_7_e-39)); // nexttowardf((1.0 / FLT_MAX), 1)
@@ -607,8 +597,7 @@ fn test_atan2f() {
 ///
 /// This function evaluates the arc sine function of a value in ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn asinf<const N: usize>(d: F32x<N>) -> F32x<N>
-{
+pub fn asinf<const N: usize>(d: F32x<N>) -> F32x<N> {
     let o = d.abs().simd_lt(F32x::HALF);
     let x2 = o.select(d * d, (F32x::ONE - d.abs()) * F32x::HALF);
     let mut x = o.select_doubled(Doubled::from(d.abs()), x2.sqrt_as_doubled());
@@ -644,8 +633,7 @@ fn test_asinf() {
 ///
 /// This function evaluates the arc cosine function of a value in ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn acosf<const N: usize>(d: F32x<N>) -> F32x<N>
-{
+pub fn acosf<const N: usize>(d: F32x<N>) -> F32x<N> {
     let o = d.abs().simd_lt(F32x::HALF);
     let x2 = o.select(d * d, (F32x::ONE - d.abs()) * F32x::HALF);
 
@@ -688,8 +676,7 @@ fn test_acosf() {
 ///
 /// This function evaluates the arc tangent function of a value in ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn atanf<const N: usize>(d: F32x<N>) -> F32x<N>
-{
+pub fn atanf<const N: usize>(d: F32x<N>) -> F32x<N> {
     let d2 = atan2kf_u1(Doubled::from(d.abs()), Doubled::from(F32x::ONE));
     let mut r = F32x::from(d2);
     r = d
@@ -709,8 +696,7 @@ fn test_atanf() {
 /// The error bound of the returned value is `1.0 ULP` if ***a*** is in `[-88.5, 88.5]`.
 /// If ***a*** is a finite value out of this range, infinity with a correct
 /// sign or a correct value with `1.0 ULP` error bound is returned.
-pub fn sinhf<const N: usize>(x: F32x<N>) -> F32x<N>
-{
+pub fn sinhf<const N: usize>(x: F32x<N>) -> F32x<N> {
     let mut y = x.abs();
     let d = expk2f(Doubled::from(y));
     let d = d.sub_checked(d.recip());
@@ -732,8 +718,7 @@ fn test_sinhf() {
 /// The error bound of the returned value is `1.0 ULP` if ***a** is in `[-88.5, 88.5]`.
 /// If a is a finite value out of this range, infinity with a correct
 /// sign or a correct value with `1.0 ULP` error bound is returned.
-pub fn coshf<const N: usize>(x: F32x<N>) -> F32x<N>
-{
+pub fn coshf<const N: usize>(x: F32x<N>) -> F32x<N> {
     let mut y = x.abs();
     let d = expk2f(Doubled::from(y));
     let d = d.add_checked(d.recip());
@@ -752,8 +737,7 @@ fn test_coshf() {
 ///
 /// This function evaluates the hyperbolic tangent function of a value in ***a***.
 /// The error bound of the returned value is `1.0001 ULP`.
-pub fn tanhf<const N: usize>(x: F32x<N>) -> F32x<N>
-{
+pub fn tanhf<const N: usize>(x: F32x<N>) -> F32x<N> {
     let mut y = x.abs();
     let d = expk2f(Doubled::from(y));
     let e = d.recip();
@@ -771,8 +755,7 @@ fn test_tanhf() {
 }
 
 #[inline]
-fn logk2f<const N: usize>(d: Doubled<F32x<N>>) -> Doubled<F32x<N>>
-{
+fn logk2f<const N: usize>(d: Doubled<F32x<N>>) -> Doubled<F32x<N>> {
     let e = /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma") {*/
                 ilogbkf(d.0 * F32x::splat(1. / 0.75))
             /*} else {
@@ -799,8 +782,7 @@ fn logk2f<const N: usize>(d: Doubled<F32x<N>>) -> Doubled<F32x<N>>
 /// The error bound of the returned value is `1.001 ULP` if ***a*** is in `[-1.84e+19, 1.84e+19]`.
 /// If ***a*** is a finite value out of this range, infinity with a correct
 /// sign or a correct value with `1.0 ULP` error bound is returned.
-pub fn asinhf<const N: usize>(x: F32x<N>) -> F32x<N>
-{
+pub fn asinhf<const N: usize>(x: F32x<N>) -> F32x<N> {
     let mut y = x.abs();
     let o = y.simd_gt(F32x::ONE);
 
@@ -832,8 +814,7 @@ fn test_asinhf() {
 /// The error bound of the returned value is `1.001 ULP` if ***a*** is in `[-1.84e+19, 1.84e+19]`.
 /// If ***a*** is a finite value out of this range, infinity with a correct
 /// sign or a correct value with `1.0 ULP` error bound is returned.
-pub fn acoshf<const N: usize>(x: F32x<N>) -> F32x<N>
-{
+pub fn acoshf<const N: usize>(x: F32x<N>) -> F32x<N> {
     let d =
         logk2f(x.add_as_doubled(F32x::ONE).sqrt() * x.add_as_doubled(F32x::splat(-1.)).sqrt() + x);
     let mut y = F32x::from(d);
@@ -860,8 +841,7 @@ fn test_acoshf() {
 ///
 /// This function evaluates the inverse hyperbolic tangent function of a value in ***a***.
 /// The error bound of the returned value is `1.0001 ULP`.
-pub fn atanhf<const N: usize>(x: F32x<N>) -> F32x<N>
-{
+pub fn atanhf<const N: usize>(x: F32x<N>) -> F32x<N> {
     let mut y = x.abs();
     let d = logk2f(F32x::ONE.add_as_doubled(y) / F32x::ONE.add_as_doubled(-y));
     y = F32x::from_bits(
@@ -885,8 +865,7 @@ fn test_atanhf() {
 ///
 /// This function returns the natural logarithm of ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn logf<const N: usize>(mut d: F32x<N>) -> F32x<N>
-{
+pub fn logf<const N: usize>(mut d: F32x<N>) -> F32x<N> {
     let m;
 
     let mut s = /*if !cfg!(feature = "enable_avx512f")
@@ -940,8 +919,7 @@ fn test_logf() {
 ///
 /// This function returns the base-10 logarithm of ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn log10f<const N: usize>(mut d: F32x<N>) -> F32x<N>
-{
+pub fn log10f<const N: usize>(mut d: F32x<N>) -> F32x<N> {
     let m;
 
     let mut s =
@@ -1001,8 +979,7 @@ fn test_log10f() {
 ///
 /// This function returns the base-2 logarithm of ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn log2f<const N: usize>(mut d: F32x<N>) -> F32x<N>
-{
+pub fn log2f<const N: usize>(mut d: F32x<N>) -> F32x<N> {
     let m;
 
     let ef =
@@ -1058,8 +1035,7 @@ fn test_log2f() {
 ///
 /// This function returns the natural logarithm of (1+***a***).
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn log1pf<const N: usize>(d: F32x<N>) -> F32x<N>
-{
+pub fn log1pf<const N: usize>(d: F32x<N>) -> F32x<N> {
     let m;
 
     let dp1 = d + F32x::ONE;
@@ -1108,8 +1084,7 @@ fn test_log1pf() {
 ///
 /// This function returns the value of *e* raised to ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn expf<const N: usize>(d: F32x<N>) -> F32x<N>
-{
+pub fn expf<const N: usize>(d: F32x<N>) -> F32x<N> {
     let q = (d * F32x::R_LN2).roundi();
 
     let s = q.cast::<f32>().mla(-F32x::L2_U, d);
@@ -1139,8 +1114,7 @@ fn test_expf() {
 ///
 /// This function returns 10 raised to ***a***.
 /// The error bound of the returned value is `1.09 ULP`.
-pub fn exp10f<const N: usize>(d: F32x<N>) -> F32x<N>
-{
+pub fn exp10f<const N: usize>(d: F32x<N>) -> F32x<N> {
     let mut u = (d * F32x::LOG10_2).round();
     let q = u.roundi();
 
@@ -1177,8 +1151,7 @@ fn test_exp10f() {
 ///
 /// This function returns the value one less than *e* raised to ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn expm1f<const N: usize>(a: F32x<N>) -> F32x<N>
-{
+pub fn expm1f<const N: usize>(a: F32x<N>) -> F32x<N> {
     let d = expk2f(Doubled::from(a)) + F32x::splat(-1.);
     let mut x = F32x::from(d);
     x = a
@@ -1199,8 +1172,7 @@ fn test_expm1f() {
 ///
 /// This function returns `2` raised to ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn exp2f<const N: usize>(d: F32x<N>) -> F32x<N>
-{
+pub fn exp2f<const N: usize>(d: F32x<N>) -> F32x<N> {
     let mut u = d.round();
     let q = u.roundi();
 
@@ -1231,8 +1203,7 @@ fn test_exp2f() {
 }
 
 #[inline]
-fn logkf<const N: usize>(mut d: F32x<N>) -> Doubled<F32x<N>>
-{
+fn logkf<const N: usize>(mut d: F32x<N>) -> Doubled<F32x<N>> {
     let m;
 
     let ef = /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/
@@ -1268,8 +1239,7 @@ fn logkf<const N: usize>(mut d: F32x<N>) -> Doubled<F32x<N>>
 }
 
 #[inline]
-fn expkf<const N: usize>(d: Doubled<F32x<N>>) -> F32x<N>
-{
+fn expkf<const N: usize>(d: Doubled<F32x<N>>) -> F32x<N> {
     let u = F32x::from(d) * F32x::R_LN2;
     let q = u.roundi();
 
@@ -1297,8 +1267,7 @@ fn expkf<const N: usize>(d: Doubled<F32x<N>>) -> F32x<N>
 ///
 /// This function returns the value of ***x*** raised to the power of ***y***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn powf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N>
-{
+pub fn powf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N> {
     if true {
         let yisint = y.trunc().simd_eq(y) | y.abs().simd_gt(F32x::F1_24);
         let yisodd = (y.trunci() & I32x::splat(1)).simd_eq(I32x::splat(1))
@@ -1363,8 +1332,7 @@ fn test_powf() {
 ///
 /// This function returns the real cube root of ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn cbrtf<const N: usize>(mut d: F32x<N>) -> F32x<N>
-{
+pub fn cbrtf<const N: usize>(mut d: F32x<N>) -> F32x<N> {
     let mut q2 = Doubled::from(F32x::ONE);
 
     /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
@@ -1442,8 +1410,7 @@ fn test_cbrtf() {
 }
 
 /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
-fn gammafk<const N: usize>(a: F32x<N>) -> (Doubled<F32x<N>>, Doubled<F32x<N>>)
-{
+fn gammafk<const N: usize>(a: F32x<N>) -> (Doubled<F32x<N>>, Doubled<F32x<N>>) {
     let mut clln = Doubled::from(F32x::ONE);
     let mut clld = Doubled::from(F32x::ONE);
 
@@ -1607,8 +1574,7 @@ fn gammafk<const N: usize>(a: F32x<N>) -> (Doubled<F32x<N>>, Doubled<F32x<N>>)
 /// Gamma function
 ///
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn tgammaf<const N: usize>(a: F32x<N>) -> F32x<N>
-{
+pub fn tgammaf<const N: usize>(a: F32x<N>) -> F32x<N> {
     let (da, db) = gammafk(a);
     let y = expk2f(da) * db;
     let r = F32x::from(y);
@@ -1634,8 +1600,7 @@ fn test_tgammaf() {
 /// The error bound of the returned value is `1.0 ULP` if the argument is positive.
 /// If the argument is larger than `4e+36`, it may return infinity instead of the correct value.
 /// The error bound is `max(1 ULP and 1e-8)`, if the argument is negative.
-pub fn lgammaf<const N: usize>(a: F32x<N>) -> F32x<N>
-{
+pub fn lgammaf<const N: usize>(a: F32x<N>) -> F32x<N> {
     let (da, db) = gammafk(a);
     let y = da + logk2f(db.abs());
     let r = F32x::from(y);
@@ -1650,20 +1615,17 @@ fn test_lgammaf() {
     test_f_f::<2>(lgammaf, rug::Float::ln_gamma, 0.0..=4e36, 1.0);
 }
 
-fn dfmla<const N: usize>(x: F32x<N>, y: Doubled<F32x<N>>, z: Doubled<F32x<N>>) -> Doubled<F32x<N>>
-{
+fn dfmla<const N: usize>(x: F32x<N>, y: Doubled<F32x<N>>, z: Doubled<F32x<N>>) -> Doubled<F32x<N>> {
     z + (y * x)
 }
 fn poly2df_b<const N: usize>(
     x: F32x<N>,
     c1: Doubled<F32x<N>>,
     c0: Doubled<F32x<N>>,
-) -> Doubled<F32x<N>>
-{
+) -> Doubled<F32x<N>> {
     dfmla(x, c1, c0)
 }
-fn poly2df<const N: usize>(x: F32x<N>, c1: F32x<N>, c0: Doubled<F32x<N>>) -> Doubled<F32x<N>>
-{
+fn poly2df<const N: usize>(x: F32x<N>, c1: F32x<N>, c0: Doubled<F32x<N>>) -> Doubled<F32x<N>> {
     dfmla(x, Doubled::from(c1), c0)
 }
 fn poly4df<const N: usize>(
@@ -1672,16 +1634,14 @@ fn poly4df<const N: usize>(
     c2: Doubled<F32x<N>>,
     c1: Doubled<F32x<N>>,
     c0: Doubled<F32x<N>>,
-) -> Doubled<F32x<N>>
-{
+) -> Doubled<F32x<N>> {
     dfmla(x * x, poly2df(x, c3, c2), poly2df_b(x, c1, c0))
 }
 
 /// Error function
 ///
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn erff<const N: usize>(a: F32x<N>) -> F32x<N>
-{
+pub fn erff<const N: usize>(a: F32x<N>) -> F32x<N> {
     let x = a.abs();
     let x2 = x * x;
     let x4 = x2 * x2;

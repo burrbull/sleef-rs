@@ -4,8 +4,7 @@ use super::*;
 /// Complementary error function
 ///
 /// The error bound is `max(1.5 ULP, f32::MIN_POSITIVE)`.
-pub fn erfcf<const N: usize>(a: F32x<N>) -> F32x<N>
-{
+pub fn erfcf<const N: usize>(a: F32x<N>) -> F32x<N> {
     let s = a;
     let a = a.abs();
     let o0 = a.simd_lt(F32x::ONE);

@@ -5,8 +5,7 @@ use super::*;
 /// The error bound of the returned value is `max(1.5 ULP, f64::MIN_POSITIVE)`
 /// if the argument is less than `26.2`, and `max(2.5 ULP, f64::MIN_POSITIVE)` otherwise.
 /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
-pub fn erfc<const N: usize>(a: F64x<N>) -> F64x<N>
-{
+pub fn erfc<const N: usize>(a: F64x<N>) -> F64x<N> {
     let s = a;
     let a = a.abs();
     let o0 = a.simd_lt(F64x::ONE);

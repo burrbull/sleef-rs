@@ -4,8 +4,7 @@ use super::*;
 ///
 /// This function evaluates the sine function of a value in ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn sin<const N: usize>(d: F64x<N>) -> F64x<N>
-{
+pub fn sin<const N: usize>(d: F64x<N>) -> F64x<N> {
     let mut s;
     let mut ql;
 
@@ -35,7 +34,7 @@ pub fn sin<const N: usize>(d: F64x<N>) -> F64x<N>
             + ddidd
                 .0
                 .simd_gt(F64x::ZERO)
-                       .cast::<i32>()
+                .cast::<i32>()
                 .select(Ix::splat(2), Ix::splat(1));
         ql >>= Ix::splat(2);
         let o = (ddii & Ix::splat(1)).simd_eq(Ix::splat(1));
@@ -87,8 +86,7 @@ pub fn sin<const N: usize>(d: F64x<N>) -> F64x<N>
 /// The error bound of the returned value is `1.0 ULP`.
 ///
 /// NOTE: This version is slower, but SIMD lanes are independent
-pub fn sin_deterministic<const N: usize>(d: F64x<N>) -> F64x<N>
-{
+pub fn sin_deterministic<const N: usize>(d: F64x<N>) -> F64x<N> {
     let mut s;
     let mut ql;
 
@@ -123,7 +121,7 @@ pub fn sin_deterministic<const N: usize>(d: F64x<N>) -> F64x<N>
                 + ddidd
                     .0
                     .simd_gt(F64x::ZERO)
-                       .cast::<i32>()
+                    .cast::<i32>()
                     .select(Ix::splat(2), Ix::splat(1));
             ql2 >>= Ix::splat(2);
             let o = (ddii & Ix::splat(1)).simd_eq(Ix::splat(1));
@@ -183,8 +181,7 @@ fn test_sin() {
 ///
 /// This function evaluates the cosine function of a value in ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn cos<const N: usize>(d: F64x<N>) -> F64x<N>
-{
+pub fn cos<const N: usize>(d: F64x<N>) -> F64x<N> {
     let mut s;
     let mut ql;
 
@@ -221,7 +218,7 @@ pub fn cos<const N: usize>(d: F64x<N>) -> F64x<N>
             + ddidd
                 .0
                 .simd_gt(F64x::ZERO)
-                   .cast::<i32>()
+                .cast::<i32>()
                 .select(Ix::splat(8), Ix::splat(7));
         ql >>= Ix::splat(1);
         let o = (ddii & Ix::splat(1)).simd_eq(Ix::splat(0));
@@ -276,8 +273,7 @@ pub fn cos<const N: usize>(d: F64x<N>) -> F64x<N>
 /// The error bound of the returned value is `1.0 ULP`.
 ///
 /// NOTE: This version is slower, but SIMD lanes are independent
-pub fn cos_deterministic<const N: usize>(d: F64x<N>) -> F64x<N>
-{
+pub fn cos_deterministic<const N: usize>(d: F64x<N>) -> F64x<N> {
     let g = d.abs().simd_lt(F64x::TRIGRANGEMAX2);
     let mut dql = d.mla(F64x::FRAC_1_PI, F64x::splat(-0.5)).round();
     dql = F64x::splat(2.).mla(dql, F64x::ONE);
@@ -316,7 +312,7 @@ pub fn cos_deterministic<const N: usize>(d: F64x<N>) -> F64x<N>
                 + ddidd
                     .0
                     .simd_gt(F64x::ZERO)
-                       .cast::<i32>()
+                    .cast::<i32>()
                     .select(Ix::splat(8), Ix::splat(7));
             ql2 >>= Ix::splat(1);
             let o = (ddii & Ix::splat(1)).simd_eq(Ix::splat(0));
@@ -381,8 +377,7 @@ fn test_cos() {
 /// returned value, respectively.
 /// The error bound of the returned values is `1.0 ULP`.
 /// If ***a*** is a `NaN` or `infinity`, a `NaN` is returned.
-pub fn sincos<const N: usize>(d: F64x<N>) -> (F64x<N>, F64x<N>)
-{
+pub fn sincos<const N: usize>(d: F64x<N>) -> (F64x<N>, F64x<N>) {
     let mut s;
     let ql;
 
@@ -467,8 +462,7 @@ pub fn sincos<const N: usize>(d: F64x<N>) -> (F64x<N>, F64x<N>)
 /// If ***a*** is a `NaN` or `infinity`, a `NaN` is returned.
 ///
 /// NOTE: This version is slower, but SIMD lanes are independent
-pub fn sincos_deterministic<const N: usize>(d: F64x<N>) -> (F64x<N>, F64x<N>)
-{
+pub fn sincos_deterministic<const N: usize>(d: F64x<N>) -> (F64x<N>, F64x<N>) {
     let dql = (d * F64x::FRAC_2_PI).round();
     let mut ql = dql.roundi();
     let u = dql.mla(-F64x::PI_A2 * F64x::HALF, d);
@@ -575,8 +569,7 @@ fn test_sincos() {
 ///
 /// This function evaluates the tangent function of a value in ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn tan<const N: usize>(d: F64x<N>) -> F64x<N>
-{
+pub fn tan<const N: usize>(d: F64x<N>) -> F64x<N> {
     let mut s;
     let ql;
 
@@ -650,8 +643,7 @@ pub fn tan<const N: usize>(d: F64x<N>) -> F64x<N>
 /// The error bound of the returned value is `1.0 ULP`.
 ///
 /// NOTE: This version is slower, but SIMD lanes are independent
-pub fn tan_deterministic<const N: usize>(d: F64x<N>) -> F64x<N>
-{
+pub fn tan_deterministic<const N: usize>(d: F64x<N>) -> F64x<N> {
     let dql = (d * F64x::FRAC_2_PI).round();
     let mut ql = dql.roundi();
     let u = dql.mla(-F64x::PI_A2 * F64x::HALF, d);
@@ -731,8 +723,7 @@ fn test_tan() {
 }
 
 #[inline]
-fn atan2k_u1<const N: usize>(y: Doubled<F64x<N>>, mut x: Doubled<F64x<N>>) -> Doubled<F64x<N>>
-{
+fn atan2k_u1<const N: usize>(y: Doubled<F64x<N>>, mut x: Doubled<F64x<N>>) -> Doubled<F64x<N>> {
     let q = x.0.is_sign_negative().cast().to_int() & Ix::splat(-2);
     let p = x.0.simd_lt(F64x::ZERO);
     let b = p.to_int().cast() & F64x::NEG_ZERO.to_bits();
@@ -795,8 +786,7 @@ fn atan2k_u1<const N: usize>(y: Doubled<F64x<N>>, mut x: Doubled<F64x<N>>) -> Do
 /// The quadrant of the result is determined according to the signs
 /// of ***x*** and ***y***.
 /// The error bound of the returned values is `max(1.0 ULP, f64::MIN_POSITIVE)`.
-pub fn atan2<const N: usize>(y: F64x<N>, x: F64x<N>) -> F64x<N>
-{
+pub fn atan2<const N: usize>(y: F64x<N>, x: F64x<N>) -> F64x<N> {
     let o = x
         .abs()
         .simd_lt(F64x::splat(5.562_684_646_268_008_398_4_e-309)); // nexttoward((1.0 / DBL_MAX), 1)
@@ -838,8 +828,7 @@ fn test_atan2() {
 ///
 /// This function evaluates the arc sine function of a value in ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn asin<const N: usize>(d: F64x<N>) -> F64x<N>
-{
+pub fn asin<const N: usize>(d: F64x<N>) -> F64x<N> {
     let o = d.abs().simd_lt(F64x::HALF);
     let x2 = o.select(d * d, (F64x::ONE - d.abs()) * F64x::HALF);
     let mut x = o.select_doubled(Doubled::from(d.abs()), x2.sqrt_as_doubled());
@@ -893,8 +882,7 @@ fn test_asin() {
 ///
 /// This function evaluates the arc cosine function of a value in ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn acos<const N: usize>(d: F64x<N>) -> F64x<N>
-{
+pub fn acos<const N: usize>(d: F64x<N>) -> F64x<N> {
     let o = d.abs().simd_lt(F64x::HALF);
     let x2 = o.select(d * d, (F64x::ONE - d.abs()) * F64x::HALF);
     let mut x = o.select_doubled(Doubled::from(d.abs()), x2.sqrt_as_doubled());
@@ -954,8 +942,7 @@ fn test_acos() {
 ///
 /// This function evaluates the arc tangent function of a value in ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn atan<const N: usize>(d: F64x<N>) -> F64x<N>
-{
+pub fn atan<const N: usize>(d: F64x<N>) -> F64x<N> {
     let d2 = atan2k_u1(Doubled::from(d.abs()), Doubled::from(F64x::ONE));
     let mut r = F64x::from(d2);
     r = d
@@ -975,8 +962,7 @@ fn test_atan() {
 /// The error bound of the returned value is `1.0 ULP` if ***a*** is in `[-709, 709]`.
 /// If ***a*** is a finite value out of this range, infinity with a correct
 /// sign or a correct value with `1.0 ULP` error bound is returned.
-pub fn sinh<const N: usize>(x: F64x<N>) -> F64x<N>
-{
+pub fn sinh<const N: usize>(x: F64x<N>) -> F64x<N> {
     let mut y = x.abs();
     let mut d = expk2(Doubled::from(y));
     d = d.sub_checked(d.recip());
@@ -998,8 +984,7 @@ fn test_sinh() {
 /// The error bound of the returned value is `1.0 ULP` if ***a** is in `[-709, 709]`.
 /// If a is a finite value out of this range, infinity with a correct
 /// sign or a correct value with `1.0 ULP` error bound is returned.
-pub fn cosh<const N: usize>(x: F64x<N>) -> F64x<N>
-{
+pub fn cosh<const N: usize>(x: F64x<N>) -> F64x<N> {
     let mut y = x.abs();
     let mut d = expk2(Doubled::from(y));
     d = d.add_checked(d.recip());
@@ -1018,8 +1003,7 @@ fn test_cosh() {
 ///
 /// This function evaluates the hyperbolic tangent function of a value in ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn tanh<const N: usize>(x: F64x<N>) -> F64x<N>
-{
+pub fn tanh<const N: usize>(x: F64x<N>) -> F64x<N> {
     let mut y = x.abs();
     let mut d = expk2(Doubled::from(y));
     let e = d.recip();
@@ -1037,8 +1021,7 @@ fn test_tanh() {
 }
 
 #[inline]
-fn logk2<const N: usize>(d: Doubled<F64x<N>>) -> Doubled<F64x<N>>
-{
+fn logk2<const N: usize>(d: Doubled<F64x<N>>) -> Doubled<F64x<N>> {
     let e = ilogbk(d.0 * F64x::splat(1. / 0.75));
 
     let m = Doubled::new(ldexp2k(d.0, -e), ldexp2k(d.1, -e));
@@ -1074,8 +1057,7 @@ fn logk2<const N: usize>(d: Doubled<F64x<N>>) -> Doubled<F64x<N>>
 /// The error bound of the returned value is `1.0 ULP` if ***a*** is in `[-1.34e+154, 1.34e+154]`.
 /// If ***a*** is a finite value out of this range, infinity with a correct
 /// sign or a correct value with `1.0 ULP` error bound is returned.
-pub fn asinh<const N: usize>(x: F64x<N>) -> F64x<N>
-{
+pub fn asinh<const N: usize>(x: F64x<N>) -> F64x<N> {
     let mut y = x.abs();
     let o = y.simd_gt(F64x::ONE);
 
@@ -1108,8 +1090,7 @@ fn test_asinh() {
 /// The error bound of the returned value is `1.0 ULP` if ***a*** is in `[-1.34e+154, 1.34e+154]`.
 /// If ***a*** is a finite value out of this range, infinity with a correct
 /// sign or a correct value with `1.0 ULP` error bound is returned.
-pub fn acosh<const N: usize>(x: F64x<N>) -> F64x<N>
-{
+pub fn acosh<const N: usize>(x: F64x<N>) -> F64x<N> {
     let d =
         logk2(x.add_as_doubled(F64x::ONE).sqrt() * x.add_as_doubled(F64x::splat(-1.)).sqrt() + x);
     let mut y = F64x::from(d);
@@ -1135,8 +1116,7 @@ fn test_acosh() {
 ///
 /// This function evaluates the inverse hyperbolic tangent function of a value in ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn atanh<const N: usize>(x: F64x<N>) -> F64x<N>
-{
+pub fn atanh<const N: usize>(x: F64x<N>) -> F64x<N> {
     let mut y = x.abs();
     let d = logk2(F64x::ONE.add_as_doubled(y) / F64x::ONE.add_as_doubled(-y));
     y = F64x::from_bits(
@@ -1160,8 +1140,7 @@ fn test_atanh() {
 ///
 /// This function returns the natural logarithm of ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn log<const N: usize>(mut d: F64x<N>) -> F64x<N>
-{
+pub fn log<const N: usize>(mut d: F64x<N>) -> F64x<N> {
     let m;
     let mut s =
         /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
@@ -1224,8 +1203,7 @@ fn test_log() {
 ///
 /// This function returns the base-10 logarithm of ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn log10<const N: usize>(mut d: F64x<N>) -> F64x<N>
-{
+pub fn log10<const N: usize>(mut d: F64x<N>) -> F64x<N> {
     let m;
 
     let mut s = /*if !cfg!(feature = "enable_avx512f")
@@ -1301,8 +1279,7 @@ fn test_log10() {
 ///
 /// This function returns the base-2 logarithm of ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn log2<const N: usize>(mut d: F64x<N>) -> F64x<N>
-{
+pub fn log2<const N: usize>(mut d: F64x<N>) -> F64x<N> {
     let m;
     let ef =
     /*if !cfg!(feature = "enable_avx512f") && !cfg!(feature = "enable_avx512fnofma")*/ {
@@ -1369,8 +1346,7 @@ fn test_log2() {
 ///
 /// This function returns the natural logarithm of (1+***a***).
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn log1p<const N: usize>(d: F64x<N>) -> F64x<N>
-{
+pub fn log1p<const N: usize>(d: F64x<N>) -> F64x<N> {
     let m;
 
     let mut dp1 = d + F64x::ONE;
@@ -1430,8 +1406,7 @@ fn test_log1p() {
 ///
 /// This function returns the value of *e* raised to ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn exp<const N: usize>(d: F64x<N>) -> F64x<N>
-{
+pub fn exp<const N: usize>(d: F64x<N>) -> F64x<N> {
     let mut u = (d * F64x::R_LN2).round();
     let q = u.roundi();
 
@@ -1504,8 +1479,7 @@ fn test_exp() {
 ///
 /// This function returns 10 raised to ***a***.
 /// The error bound of the returned value is `1.09 ULP`.
-pub fn exp10<const N: usize>(d: F64x<N>) -> F64x<N>
-{
+pub fn exp10<const N: usize>(d: F64x<N>) -> F64x<N> {
     let mut u = (d * F64x::LOG10_2).round();
     let q = u.roundi();
 
@@ -1547,8 +1521,7 @@ fn test_exp10() {
 ///
 /// This function returns the value one less than *e* raised to ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn expm1<const N: usize>(a: F64x<N>) -> F64x<N>
-{
+pub fn expm1<const N: usize>(a: F64x<N>) -> F64x<N> {
     let d = expk2(Doubled::from(a)) + F64x::splat(-1.);
     let mut x = F64x::from(d);
     x = a
@@ -1569,8 +1542,7 @@ fn test_expm1() {
 ///
 /// This function returns `2` raised to ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn exp2<const N: usize>(d: F64x<N>) -> F64x<N>
-{
+pub fn exp2<const N: usize>(d: F64x<N>) -> F64x<N> {
     let mut u = d.round();
     let q = u.roundi();
 
@@ -1616,8 +1588,7 @@ fn test_exp2() {
 }
 
 #[inline]
-fn expk<const N: usize>(d: Doubled<F64x<N>>) -> F64x<N>
-{
+fn expk<const N: usize>(d: Doubled<F64x<N>>) -> F64x<N> {
     let mut u = F64x::from(d) * F64x::R_LN2;
     let dq = u.round();
     let q = dq.roundi();
@@ -1658,8 +1629,7 @@ fn expk<const N: usize>(d: Doubled<F64x<N>>) -> F64x<N>
 }
 
 #[inline]
-fn logk<const N: usize>(mut d: F64x<N>) -> Doubled<F64x<N>>
-{
+fn logk<const N: usize>(mut d: F64x<N>) -> Doubled<F64x<N>> {
     let m;
 
     let mut s =
@@ -1713,8 +1683,7 @@ fn logk<const N: usize>(mut d: F64x<N>) -> Doubled<F64x<N>>
 ///
 /// This function returns the value of ***x*** raised to the power of ***y***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn pow<const N: usize>(x: F64x<N>, y: F64x<N>) -> F64x<N>
-{
+pub fn pow<const N: usize>(x: F64x<N>, y: F64x<N>) -> F64x<N> {
     if true {
         let yisint = y.is_integer();
         let yisodd = y.is_odd() & yisint;
@@ -1774,8 +1743,7 @@ fn test_pow() {
 ///
 /// This function returns the real cube root of ***a***.
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn cbrt<const N: usize>(mut d: F64x<N>) -> F64x<N>
-{
+pub fn cbrt<const N: usize>(mut d: F64x<N>) -> F64x<N> {
     let mut q2 = Doubled::from(F64x::ONE);
 
     /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
@@ -1849,8 +1817,7 @@ fn test_cbrt() {
 }
 
 /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
-fn gammak<const N: usize>(a: F64x<N>) -> (Doubled<F64x<N>>, Doubled<F64x<N>>)
-{
+fn gammak<const N: usize>(a: F64x<N>) -> (Doubled<F64x<N>>, Doubled<F64x<N>>) {
     let mut clln = Doubled::from(F64x::ONE);
     let mut clld = Doubled::from(F64x::ONE);
 
@@ -2158,8 +2125,7 @@ fn gammak<const N: usize>(a: F64x<N>) -> (Doubled<F64x<N>>, Doubled<F64x<N>>)
 /// Gamma function
 ///
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn tgamma<const N: usize>(a: F64x<N>) -> F64x<N>
-{
+pub fn tgamma<const N: usize>(a: F64x<N>) -> F64x<N> {
     let (da, db) = gammak(a);
     let y = expk2(da) * db;
     let r = F64x::from(y);
@@ -2184,8 +2150,7 @@ fn test_tgamma() {
 /// The error bound of the returned value is `1.0 ULP` if the argument is positive.
 /// If the argument is larger than `2e+305`, it may return infinity instead of the correct value.
 /// The error bound is `max(1 ULP and 1e-15)`, if the argument is negative.
-pub fn lgamma<const N: usize>(a: F64x<N>) -> F64x<N>
-{
+pub fn lgamma<const N: usize>(a: F64x<N>) -> F64x<N> {
     let (da, db) = gammak(a);
     let y = da + logk2(db.abs());
     let r = F64x::from(y);
@@ -2200,20 +2165,17 @@ fn test_lgamma() {
     test_f_f::<2>(lgamma, rug::Float::ln_gamma, 0.0..=2e305, 1.);
 }
 
-fn ddmla<const N: usize>(x: F64x<N>, y: Doubled<F64x<N>>, z: Doubled<F64x<N>>) -> Doubled<F64x<N>>
-{
+fn ddmla<const N: usize>(x: F64x<N>, y: Doubled<F64x<N>>, z: Doubled<F64x<N>>) -> Doubled<F64x<N>> {
     z + (y * x)
 }
 fn poly2dd_b<const N: usize>(
     x: F64x<N>,
     c1: Doubled<F64x<N>>,
     c0: Doubled<F64x<N>>,
-) -> Doubled<F64x<N>>
-{
+) -> Doubled<F64x<N>> {
     ddmla(x, c1, c0)
 }
-fn poly2dd<const N: usize>(x: F64x<N>, c1: F64x<N>, c0: Doubled<F64x<N>>) -> Doubled<F64x<N>>
-{
+fn poly2dd<const N: usize>(x: F64x<N>, c1: F64x<N>, c0: Doubled<F64x<N>>) -> Doubled<F64x<N>> {
     ddmla(x, Doubled::from(c1), c0)
 }
 fn poly4dd<const N: usize>(
@@ -2222,16 +2184,14 @@ fn poly4dd<const N: usize>(
     c2: Doubled<F64x<N>>,
     c1: Doubled<F64x<N>>,
     c0: Doubled<F64x<N>>,
-) -> Doubled<F64x<N>>
-{
+) -> Doubled<F64x<N>> {
     ddmla(x * x, poly2dd(x, c3, c2), poly2dd_b(x, c1, c0))
 }
 
 /// Error function
 ///
 /// The error bound of the returned value is `1.0 ULP`.
-pub fn erf<const N: usize>(a: F64x<N>) -> F64x<N>
-{
+pub fn erf<const N: usize>(a: F64x<N>) -> F64x<N> {
     let x = a.abs();
     let x2 = x * x;
     let x4 = x2 * x2;

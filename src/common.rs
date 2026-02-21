@@ -1,8 +1,8 @@
 pub use core::f32;
 pub use core::f64;
 use std::simd::Mask;
-use std::simd::Simd;
 use std::simd::Select;
+use std::simd::Simd;
 
 // ---- Advanced Traits -----------------
 

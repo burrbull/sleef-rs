@@ -6,8 +6,7 @@ use super::*;
 /// The error bound of the returned value are `max(0.506 ULP, f64::MIN_POSITIVE)` if `[-1e+9, 1e+9]`.
 /// If ***a*** is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
 /// If ***a*** is a `NaN` or infinity, a `NaN` is returned.
-pub fn sincospi<const N: usize>(d: F64x<N>) -> (F64x<N>, F64x<N>)
-{
+pub fn sincospi<const N: usize>(d: F64x<N>) -> (F64x<N>, F64x<N>) {
     let u = d * F64x::splat(4.);
     let mut q = u.trunci();
     q = (q + ((q.cast() >> Ux::splat(31)).cast() ^ Ix::splat(1))) & Ix::splat(!1);
@@ -111,8 +110,7 @@ fn test_sincospi() {
 /// if `[-1e+9, 1e+9]` for the single-precision function.
 /// If ***a*** is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
 /// If ***a*** is a `NaN` or infinity, a NaN is returned.
-pub fn sinpi<const N: usize>(d: F64x<N>) -> F64x<N>
-{
+pub fn sinpi<const N: usize>(d: F64x<N>) -> F64x<N> {
     let x = sinpik(d);
     let mut r = F64x::from(x);
 
@@ -144,8 +142,7 @@ fn test_sinpi() {
 }
 
 #[inline]
-fn cospik<const N: usize>(d: F64x<N>) -> Doubled<F64x<N>>
-{
+fn cospik<const N: usize>(d: F64x<N>) -> Doubled<F64x<N>> {
     let u = d * F64x::splat(4.);
     let mut q = u.trunci();
     q = (q + ((q.cast() >> Ux::splat(31)).cast() ^ Ix::splat(1))) & Ix::splat(!1);
@@ -240,8 +237,7 @@ fn cospik<const N: usize>(d: F64x<N>) -> Doubled<F64x<N>>
 /// if `[-1e+9, 1e+9]` for the single-precision function.
 /// If ***a*** is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
 /// If ***a*** is a `NaN` or infinity, a `NaN` is returned.
-pub fn cospi<const N: usize>(d: F64x<N>) -> F64x<N>
-{
+pub fn cospi<const N: usize>(d: F64x<N>) -> F64x<N> {
     let x = cospik(d);
     let r = F64x::from(x);
 
@@ -271,8 +267,7 @@ fn test_cospi() {
 /// Square root function
 ///
 /// The error bound of the returned value is `0.5001 ULP`.
-pub fn sqrt<const N: usize>(d: F64x<N>) -> F64x<N>
-{
+pub fn sqrt<const N: usize>(d: F64x<N>) -> F64x<N> {
     if cfg!(target_feature = "fma") {
         let d = d.simd_lt(F64x::ZERO).select(F64x::NAN, d);
 
@@ -353,8 +348,7 @@ fn test_sqrt() {
 /// 2D Euclidian distance function
 ///
 /// The error bound of the returned value is `0.5001 ULP`.
-pub fn hypot<const N: usize>(x: F64x<N>, y: F64x<N>) -> F64x<N>
-{
+pub fn hypot<const N: usize>(x: F64x<N>, y: F64x<N>) -> F64x<N> {
     let x = x.abs();
     let y = y.abs();
     let min = x.simd_min(y);

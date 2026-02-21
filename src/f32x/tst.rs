@@ -3,8 +3,7 @@ use super::*;
 fn gen_input<const N: usize>(
     rng: &mut rand::rngs::ThreadRng,
     range: core::ops::RangeInclusive<f32>,
-) -> F32x<N>
-{
+) -> F32x<N> {
     let mut arr = [0.; N];
     for reference in arr.iter_mut() {
         *reference = crate::f32::gen_input(rng, range.clone());
@@ -17,8 +16,7 @@ pub fn test_f_f<const N: usize>(
     f_sample: fn(rug::Float) -> rug::Float,
     range: core::ops::RangeInclusive<f32>,
     ulp_ex: f32,
-) 
-{
+) {
     test_c_f_f(f_tested, f_sample, range, |ulp, _, _| {
         (ulp <= ulp_ex, format!("ULP: {ulp} > {ulp_ex}"))
     })
@@ -29,8 +27,7 @@ pub fn test_c_f_f<const N: usize>(
     f_sample: fn(rug::Float) -> rug::Float,
     range: core::ops::RangeInclusive<f32>,
     cf: impl Fn(f32, f32, &rug::Float) -> (bool, String),
-) 
-{
+) {
     let mut rng = rand::thread_rng();
     for n in 0..crate::TEST_REPEAT_FAST {
         let in_fx = gen_input(&mut rng, range.clone());
@@ -58,8 +55,7 @@ pub fn test_f_ff<const N: usize>(
     fun_f: fn(rug::Float) -> (rug::Float, rug::Float),
     range: core::ops::RangeInclusive<f32>,
     ulp_ex: f32,
-) 
-{
+) {
     let mut rng = rand::thread_rng();
     for n in 0..crate::TEST_REPEAT_FAST {
         let in_fx = gen_input(&mut rng, range.clone());
@@ -90,8 +86,7 @@ pub fn test_ff_f<const N: usize>(
     range1: core::ops::RangeInclusive<f32>,
     range2: core::ops::RangeInclusive<f32>,
     ulp_ex: f32,
-) 
-{
+) {
     let mut rng = rand::thread_rng();
     for n in 0..crate::TEST_REPEAT_FAST {
         let in_fx1 = gen_input(&mut rng, range1.clone());

@@ -6,8 +6,7 @@ use super::*;
 /// The error bound of the returned value are `max(0.506 ULP, f32::MIN_POSITIVE)` if `[-1e+7, 1e+7]`.
 /// If ***a*** is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
 /// If ***a*** is a `NaN` or infinity, a `NaN` is returned.
-pub fn sincospif<const N: usize>(d: F32x<N>) -> (F32x<N>, F32x<N>)
-{
+pub fn sincospif<const N: usize>(d: F32x<N>) -> (F32x<N>, F32x<N>) {
     let u = d * F32x::splat(4.);
     let q = u.trunci();
     let q = (q + ((q.cast() >> U32x::splat(31)).cast() ^ I32x::splat(1))) & I32x::splat(!1);
@@ -93,8 +92,7 @@ fn test_sincospif() {
 /// Square root function
 ///
 /// The error bound of the returned value is `0.5001 ULP`.
-pub fn sqrtf<const N: usize>(d: F32x<N>) -> F32x<N>
-{
+pub fn sqrtf<const N: usize>(d: F32x<N>) -> F32x<N> {
     if cfg!(target_feature = "fma") {
         let d = d.simd_lt(F32x::ZERO).select(F32x::NAN, d);
 
@@ -171,8 +169,7 @@ fn test_sqrtf() {
 /// 2D Euclidian distance function
 ///
 /// The error bound of the returned value is `0.5001 ULP`.
-pub fn hypotf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N>
-{
+pub fn hypotf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N> {
     let x = x.abs();
     let y = y.abs();
     let min = x.simd_min(y);
@@ -211,8 +208,7 @@ fn test_hypotf() {
 /// if `[-1e+7, 1e+7]` for the single-precision function.
 /// If ***a*** is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
 /// If ***a*** is a `NaN` or infinity, a NaN is returned.
-pub fn sinpif<const N: usize>(d: F32x<N>) -> F32x<N>
-{
+pub fn sinpif<const N: usize>(d: F32x<N>) -> F32x<N> {
     let x = sinpifk(d);
     let mut r = F32x::from(x);
 
@@ -244,8 +240,7 @@ fn test_sinpif() {
 /// if `[-1e+7, 1e+7]` for the single-precision function.
 /// If ***a*** is a finite value out of this range, an arbitrary value within `[-1, 1]` is returned.
 /// If ***a*** is a `NaN` or infinity, a `NaN` is returned.
-pub fn cospif<const N: usize>(d: F32x<N>) -> F32x<N>
-{
+pub fn cospif<const N: usize>(d: F32x<N>) -> F32x<N> {
     let x = cospifk(d);
     let r = F32x::from(x);
 

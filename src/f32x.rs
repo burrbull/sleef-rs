@@ -59,23 +59,19 @@ type U32x<const N: usize> = Simd<u32, N>;
 type I32x<const N: usize> = Simd<i32, N>;
 type M32x<const N: usize> = Mask<i32, N>;
 
-impl<const N: usize> MaskType for F32x<N>
-{
+impl<const N: usize> MaskType for F32x<N> {
     type Mask = M32x<N>;
 }
 
-impl<const N: usize> BitsType for F32x<N>
-{
+impl<const N: usize> BitsType for F32x<N> {
     type Bits = U32x<N>;
 }
 
-impl<const N: usize> MaskType for Doubled<F32x<N>>
-{
+impl<const N: usize> MaskType for Doubled<F32x<N>> {
     type Mask = M32x<N>;
 }
 
-impl<const N: usize> crate::Sleef for F32x<N>
-{
+impl<const N: usize> crate::Sleef for F32x<N> {
     type Int = I32x<N>;
     #[inline]
     fn sin(self) -> Self {
@@ -283,8 +279,7 @@ impl<const N: usize> crate::Sleef for F32x<N>
     }
 }
 
-impl<const N: usize> Sqrt for F32x<N>
-{
+impl<const N: usize> Sqrt for F32x<N> {
     #[inline]
     fn sqrt(self) -> Self {
         use std::simd::StdFloat;
@@ -292,8 +287,7 @@ impl<const N: usize> Sqrt for F32x<N>
     }
 }
 
-impl<const N: usize> SqrtAsDoubled for F32x<N>
-{
+impl<const N: usize> SqrtAsDoubled for F32x<N> {
     #[inline]
     fn sqrt_as_doubled(self) -> Doubled<Self> {
         let t = self.sqrt();
@@ -301,8 +295,7 @@ impl<const N: usize> SqrtAsDoubled for F32x<N>
     }
 }
 
-impl<const N: usize> Round for F32x<N>
-{
+impl<const N: usize> Round for F32x<N> {
     type Int = I32x<N>;
     #[inline]
     fn trunc(self) -> Self {
@@ -322,8 +315,7 @@ impl<const N: usize> Round for F32x<N>
     }
 }
 
-impl<const N: usize> MulAdd for F32x<N>
-{
+impl<const N: usize> MulAdd for F32x<N> {
     #[inline]
     fn mla(self, y: Self, z: Self) -> Self {
         if cfg!(target_feature = "fma") {
@@ -335,8 +327,7 @@ impl<const N: usize> MulAdd for F32x<N>
     }
 }
 
-impl<const N: usize> MulSub for F32x<N>
-{
+impl<const N: usize> MulSub for F32x<N> {
     #[inline]
     fn mul_sub(self, y: Self, z: Self) -> Self {
         if cfg!(target_feature = "fma") {
@@ -348,8 +339,7 @@ impl<const N: usize> MulSub for F32x<N>
     }
 }
 
-impl<const N: usize> NegMulAdd for F32x<N>
-{
+impl<const N: usize> NegMulAdd for F32x<N> {
     #[inline]
     fn neg_mul_add(self, y: Self, z: Self) -> Self {
         if cfg!(target_feature = "fma") {
@@ -361,23 +351,20 @@ impl<const N: usize> NegMulAdd for F32x<N>
     }
 }
 
-impl<const N: usize> VectorizedSelect<f32> for M32x<N>
-{
+impl<const N: usize> VectorizedSelect<f32> for M32x<N> {
     type Output = F32x<N>;
     fn select_splat(self, l: f32, r: f32) -> Self::Output {
         self.select(Self::Output::splat(l), Self::Output::splat(r))
     }
 }
 
-impl<const N: usize> DoubledSelect<F32x<N>> for M32x<N>
-{
+impl<const N: usize> DoubledSelect<F32x<N>> for M32x<N> {
     fn select_doubled(self, l: Doubled<F32x<N>>, r: Doubled<F32x<N>>) -> Doubled<F32x<N>> {
         Doubled::new(self.select(l.0, r.0), self.select(l.1, r.1))
     }
 }
 
-impl<const N: usize> SelectSeveral<f32> for F32x<N>
-{
+impl<const N: usize> SelectSeveral<f32> for F32x<N> {
     #[inline]
     fn select3(o0: Self::Mask, o1: Self::Mask, d0: f32, d1: f32, d2: f32) -> Self {
         o0.select(Self::splat(d0), o1.select_splat(d1, d2))
@@ -398,8 +385,7 @@ impl<const N: usize> SelectSeveral<f32> for F32x<N>
     }
 }
 
-impl<const N: usize> SelectSeveral<f64> for Doubled<F32x<N>>
-{
+impl<const N: usize> SelectSeveral<f64> for Doubled<F32x<N>> {
     #[inline]
     fn select3(o0: Self::Mask, o1: Self::Mask, d0: f64, d1: f64, d2: f64) -> Self {
         o0.select_doubled(
@@ -426,22 +412,19 @@ impl<const N: usize> SelectSeveral<f64> for Doubled<F32x<N>>
     }
 }
 
-impl<const N: usize> Poly<f32> for F32x<N>
-{
+impl<const N: usize> Poly<f32> for F32x<N> {
     fn c2v(c: f32) -> Self {
         F32x::splat(c)
     }
 }
 
-impl<const N: usize> Poly<Self> for F32x<N>
-{
+impl<const N: usize> Poly<Self> for F32x<N> {
     fn c2v(c: Self) -> Self {
         c
     }
 }
 
-impl<const N: usize> Sign for F32x<N>
-{
+impl<const N: usize> Sign for F32x<N> {
     #[inline]
     fn sign_bit(self) -> Self::Bits {
         self.to_bits() & F32x::NEG_ZERO.to_bits()
@@ -464,16 +447,14 @@ impl<const N: usize> Sign for F32x<N>
     }
 }
 
-impl<const N: usize> IsNegZero for F32x<N>
-{
+impl<const N: usize> IsNegZero for F32x<N> {
     #[inline]
     fn is_neg_zero(self) -> Self::Mask {
         self.to_bits().simd_eq(F32x::NEG_ZERO.to_bits())
     }
 }
 
-impl<const N: usize> IsInt for F32x<N>
-{
+impl<const N: usize> IsInt for F32x<N> {
     #[inline]
     fn is_integer(self) -> Self::Mask {
         self.trunc().simd_eq(self)
@@ -481,8 +462,7 @@ impl<const N: usize> IsInt for F32x<N>
 }
 
 #[inline]
-pub(crate) fn from_slice_offset<const N: usize>(ptr: &[f32], vi: I32x<N>) -> F32x<N>
-{
+pub(crate) fn from_slice_offset<const N: usize>(ptr: &[f32], vi: I32x<N>) -> F32x<N> {
     //F32x::gather_or_default(ptr, vi.cast()) // Failes to compile on release
     let ar: [f32; N] = core::array::from_fn(|i| ptr[vi[i] as usize]);
     F32x::from_array(ar)
@@ -493,8 +473,7 @@ pub(crate) fn from_slice_offset<const N: usize>(ptr: &[f32], vi: I32x<N>) -> F32
     not(feature = "enable_avx512fnofma")
 ))]*/
 #[inline]
-pub(crate) fn ilogbkf<const N: usize>(mut d: F32x<N>) -> I32x<N>
-{
+pub(crate) fn ilogbkf<const N: usize>(mut d: F32x<N>) -> I32x<N> {
     let o = d.simd_lt(F32x::splat(5.421_010_862_427_522_e-20));
     d = o.select(F32x::splat(1.844_674_407_370_955_2_e19) * d, d);
     let q = (d.to_bits().cast() >> I32x::splat(23)) & I32x::splat(0xff);
@@ -506,8 +485,7 @@ pub(crate) fn ilogbkf<const N: usize>(mut d: F32x<N>) -> I32x<N>
     not(feature = "enable_avx512fnofma")
 ))]*/
 #[inline]
-pub(crate) fn ilogb2kf<const N: usize>(d: F32x<N>) -> I32x<N>
-{
+pub(crate) fn ilogb2kf<const N: usize>(d: F32x<N>) -> I32x<N> {
     let q = d.to_bits().cast();
     let mut q = q >> I32x::splat(23);
     q &= I32x::splat(0xff);
@@ -515,8 +493,7 @@ pub(crate) fn ilogb2kf<const N: usize>(d: F32x<N>) -> I32x<N>
 }
 
 /// Integer exponent of an FP number
-pub fn ilogbf<const N: usize>(d: F32x<N>) -> I32x<N>
-{
+pub fn ilogbf<const N: usize>(d: F32x<N>) -> I32x<N> {
     let mut e = ilogbkf(d.abs());
     e = d
         .simd_eq(F32x::ZERO)
@@ -527,14 +504,12 @@ pub fn ilogbf<const N: usize>(d: F32x<N>) -> I32x<N>
     d.is_infinite().select(I32x::splat(i32::MAX), e)
 }
 #[inline]
-pub(crate) fn pow2if<const N: usize>(q: I32x<N>) -> F32x<N>
-{
+pub(crate) fn pow2if<const N: usize>(q: I32x<N>) -> F32x<N> {
     F32x::from_bits(((q + I32x::splat(0x7f)) << I32x::splat(23)).cast())
 }
 
 #[inline]
-pub(crate) fn ldexpkf<const N: usize>(mut x: F32x<N>, mut q: I32x<N>) -> F32x<N>
-{
+pub(crate) fn ldexpkf<const N: usize>(mut x: F32x<N>, mut q: I32x<N>) -> F32x<N> {
     let mut m = q >> I32x::splat(31);
     m = (((m + q) >> I32x::splat(6)) - m) << I32x::splat(4);
     q -= m << I32x::splat(2);
@@ -549,29 +524,25 @@ pub(crate) fn ldexpkf<const N: usize>(mut x: F32x<N>, mut q: I32x<N>) -> F32x<N>
 }
 
 #[inline]
-pub(crate) fn ldexp2kf<const N: usize>(d: F32x<N>, e: I32x<N>) -> F32x<N>
-{
+pub(crate) fn ldexp2kf<const N: usize>(d: F32x<N>, e: I32x<N>) -> F32x<N> {
     let e1 = e >> I32x::splat(1);
     d * pow2if(e1) * pow2if(e - e1)
 }
 
 #[inline]
-pub(crate) fn ldexp3kf<const N: usize>(d: F32x<N>, q: I32x<N>) -> F32x<N>
-{
+pub(crate) fn ldexp3kf<const N: usize>(d: F32x<N>, q: I32x<N>) -> F32x<N> {
     F32x::from_bits((d.to_bits().cast() + (q << I32x::splat(23))).cast())
 }
 
 /// Multiply by integral power of `2`
 ///
 /// These functions return the result of multiplying ***m*** by `2` raised to the power ***x***.
-pub fn ldexpf<const N: usize>(x: F32x<N>, q: I32x<N>) -> F32x<N>
-{
+pub fn ldexpf<const N: usize>(x: F32x<N>, q: I32x<N>) -> F32x<N> {
     ldexpkf(x, q)
 }
 
 #[inline]
-pub(crate) fn rempisubf<const N: usize>(x: F32x<N>) -> (F32x<N>, I32x<N>)
-{
+pub(crate) fn rempisubf<const N: usize>(x: F32x<N>) -> (F32x<N>, I32x<N>) {
     if cfg!(feature = "full_fp_rounding") {
         let y = (x * F32x::splat(4.)).round();
         let vi = (y - x.round() * F32x::splat(4.)).trunci();
@@ -594,8 +565,7 @@ pub(crate) fn rempisubf<const N: usize>(x: F32x<N>) -> (F32x<N>, I32x<N>)
 }
 
 #[inline]
-pub(crate) fn rempif<const N: usize>(mut a: F32x<N>) -> (Doubled<F32x<N>>, I32x<N>)
-{
+pub(crate) fn rempif<const N: usize>(mut a: F32x<N>) -> (Doubled<F32x<N>>, I32x<N>) {
     let mut ex = ilogb2kf(a);
     /*if cfg!(feature = "enable_avx512f") || cfg!(feature = "enable_avx512fnofma") {
         ex = !(ex >> 31) & ex;
@@ -635,22 +605,19 @@ pub(crate) fn rempif<const N: usize>(mut a: F32x<N>) -> (Doubled<F32x<N>>, I32x<
 }
 
 /// Integral and fractional value of FP number
-pub fn modff<const N: usize>(x: F32x<N>) -> (F32x<N>, F32x<N>)
-{
+pub fn modff<const N: usize>(x: F32x<N>) -> (F32x<N>, F32x<N>) {
     let fr = x - x.trunci().cast();
     let fr = x.abs().simd_gt(F32x::F1_23).select(F32x::ZERO, fr);
     (fr.copy_sign(x), (x - fr).copy_sign(x))
 }
 
 #[inline]
-pub(crate) fn visinf2_vf_vf_vf<const N: usize>(d: F32x<N>, m: F32x<N>) -> F32x<N>
-{
+pub(crate) fn visinf2_vf_vf_vf<const N: usize>(d: F32x<N>, m: F32x<N>) -> F32x<N> {
     F32x::from_bits(d.is_infinite().to_int().cast() & (d.sign_bit() | m.to_bits()))
 }
 
 #[inline]
-pub(crate) fn expk2f<const N: usize>(d: Doubled<F32x<N>>) -> Doubled<F32x<N>>
-{
+pub(crate) fn expk2f<const N: usize>(d: Doubled<F32x<N>>) -> Doubled<F32x<N>> {
     let u = F32x::from(d) * F32x::R_LN2;
     let q = u.roundi();
 
@@ -679,20 +646,17 @@ pub(crate) fn expk2f<const N: usize>(d: Doubled<F32x<N>>) -> Doubled<F32x<N>>
 }
 
 /// Absolute value
-pub fn fabsf<const N: usize>(x: F32x<N>) -> F32x<N>
-{
+pub fn fabsf<const N: usize>(x: F32x<N>) -> F32x<N> {
     x.abs()
 }
 
 /// Copy sign of a number
-pub fn copysignf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N>
-{
+pub fn copysignf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N> {
     x.copy_sign(y)
 }
 
 /// Maximum of two numbers
-pub fn fmaxf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N>
-{
+pub fn fmaxf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N> {
     if cfg!(target_arch = "x86_64") || cfg!(target_arch = "x86")
     /*    && !cfg!(feature = "enable_vecext")
     && !cfg!(feature = "enable_purec")*/
@@ -704,8 +668,7 @@ pub fn fmaxf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N>
 }
 
 /// Minimum of two numbers
-pub fn fminf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N>
-{
+pub fn fminf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N> {
     if cfg!(target_arch = "x86_64") || cfg!(target_arch = "x86")
     /*    && !cfg!(feature = "enable_vecext")
     && !cfg!(feature = "enable_purec")*/
@@ -717,15 +680,13 @@ pub fn fminf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N>
 }
 
 /// Positive difference
-pub fn fdimf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N>
-{
+pub fn fdimf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N> {
     let ret = x - y;
     (ret.simd_lt(F32x::ZERO) | x.simd_eq(y)).select(F32x::ZERO, ret)
 }
 
 /// Round to integer towards zero
-pub fn truncf<const N: usize>(x: F32x<N>) -> F32x<N>
-{
+pub fn truncf<const N: usize>(x: F32x<N>) -> F32x<N> {
     /*
     #ifdef FULL_FP_ROUNDING
         return vtruncate_vf_vf(x);
@@ -737,24 +698,21 @@ pub fn truncf<const N: usize>(x: F32x<N>) -> F32x<N>
 }
 
 /// Round to integer towards minus infinity
-pub fn floorf<const N: usize>(x: F32x<N>) -> F32x<N>
-{
+pub fn floorf<const N: usize>(x: F32x<N>) -> F32x<N> {
     let fr = x - x.trunci().cast();
     let fr = fr.simd_lt(F32x::ZERO).select(fr + F32x::ONE, fr);
     (x.is_infinite() | x.abs().simd_ge(F32x::F1_23)).select(x, (x - fr).copy_sign(x))
 }
 
 /// Round to integer towards plus infinity
-pub fn ceilf<const N: usize>(x: F32x<N>) -> F32x<N>
-{
+pub fn ceilf<const N: usize>(x: F32x<N>) -> F32x<N> {
     let fr = x - x.trunci().cast();
     let fr = fr.simd_le(F32x::ZERO).select(fr, fr - F32x::ONE);
     (x.is_infinite() | x.abs().simd_ge(F32x::F1_23)).select(x, (x - fr).copy_sign(x))
 }
 
 /// Round to integer away from zero
-pub fn roundf<const N: usize>(d: F32x<N>) -> F32x<N>
-{
+pub fn roundf<const N: usize>(d: F32x<N>) -> F32x<N> {
     let mut x = d + F32x::HALF;
     let fr = x - x.trunci().cast();
     x = (x.simd_le(F32x::ZERO) & fr.simd_eq(F32x::ZERO)).select(x - F32x::ONE, x);
@@ -766,8 +724,7 @@ pub fn roundf<const N: usize>(d: F32x<N>) -> F32x<N>
 }
 
 /// Round to integer, ties round to even
-pub fn rintf<const N: usize>(d: F32x<N>) -> F32x<N>
-{
+pub fn rintf<const N: usize>(d: F32x<N>) -> F32x<N> {
     /* #ifdef FULL_FP_ROUNDING
         return vrint_vf_vf(d);
     #else */
@@ -783,8 +740,7 @@ pub fn rintf<const N: usize>(d: F32x<N>) -> F32x<N>
 /// This function compute (***x*** × ***y*** + ***z***) without rounding, and then return the rounded value of the result.
 /// This function may return infinity with a correct sign if the absolute value of the correct return value is greater than `1e+33`.
 /// The error bounds of the returned value is `max(0.500_01 ULP, f32::MIN_POSITIVE)`.
-pub fn fmaf<const N: usize>(mut x: F32x<N>, mut y: F32x<N>, mut z: F32x<N>) -> F32x<N>
-{
+pub fn fmaf<const N: usize>(mut x: F32x<N>, mut y: F32x<N>, mut z: F32x<N>) -> F32x<N> {
     if cfg!(target_feature = "fma") {
         x.mla(y, z)
     } else {
@@ -824,8 +780,7 @@ pub fn fmaf<const N: usize>(mut x: F32x<N>, mut y: F32x<N>, mut z: F32x<N>) -> F
 /// Square root function
 ///
 /// The error bound of the returned value is `0.5001 ULP`
-pub fn sqrtf<const N: usize>(d: F32x<N>) -> F32x<N>
-{
+pub fn sqrtf<const N: usize>(d: F32x<N>) -> F32x<N> {
     //   if cfg!(feature = "accurate_sqrt") {
     d.sqrt()
     /*    } else {
@@ -835,8 +790,7 @@ pub fn sqrtf<const N: usize>(d: F32x<N>) -> F32x<N>
 }
 
 /// Find the next representable FP value
-pub fn nextafterf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N>
-{
+pub fn nextafterf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N> {
     let x = x.simd_eq(F32x::ZERO).select(F32x::ZERO.mul_sign(y), x);
     let mut xi2: I32x<N> = x.to_bits().cast();
     let c = x.is_sign_negative() ^ y.simd_ge(x);
@@ -874,8 +828,7 @@ fn test_nextafterf() {
 }
 
 /// Fractional component of an FP number
-pub fn frfrexpf<const N: usize>(x: F32x<N>) -> F32x<N>
-{
+pub fn frfrexpf<const N: usize>(x: F32x<N>) -> F32x<N> {
     let x = x
         .abs()
         .simd_lt(F32x::splat(f32::MIN_POSITIVE))
@@ -892,8 +845,7 @@ pub fn frfrexpf<const N: usize>(x: F32x<N>) -> F32x<N>
 }
 
 /// Exponent of an FP number
-pub fn expfrexpf<const N: usize>(_x: F32x<N>) -> I32x<N>
-{
+pub fn expfrexpf<const N: usize>(_x: F32x<N>) -> I32x<N> {
     /*
       x = x.abs().simd_lt(F32x::splat(f32::MIN_POSITIVE)).select(x * F1_63X, x);
 
@@ -906,17 +858,14 @@ pub fn expfrexpf<const N: usize>(_x: F32x<N>) -> I32x<N>
 }
 
 /// FP remainder
-pub fn fmodf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N>
-{
+pub fn fmodf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N> {
     #[inline]
-    fn toward0<const N: usize>(x: F32x<N>) -> F32x<N>
-    {
+    fn toward0<const N: usize>(x: F32x<N>) -> F32x<N> {
         let t = F32x::from_bits((x.to_bits().cast() - I32x::splat(1)).cast());
         x.simd_eq(F32x::ZERO).select(F32x::ZERO, t)
     }
     #[inline]
-    fn trunc_positive<const N: usize>(x: F32x<N>) -> F32x<N>
-    {
+    fn trunc_positive<const N: usize>(x: F32x<N>) -> F32x<N> {
         if cfg!(feature = "full_fp_rounding") {
             x.trunc()
         } else {
@@ -963,8 +912,7 @@ pub fn fmodf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N>
 // TODO: add test for fmodf
 
 #[inline]
-pub(crate) fn rintfk2<const N: usize>(d: F32x<N>) -> F32x<N>
-{
+pub(crate) fn rintfk2<const N: usize>(d: F32x<N>) -> F32x<N> {
     /*#ifdef FULL_FP_ROUNDING
         return vrint_vf_vf(d);
     #else*/
@@ -976,8 +924,7 @@ pub(crate) fn rintfk2<const N: usize>(d: F32x<N>) -> F32x<N>
 }
 
 /// FP remainder
-pub fn remainderf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N>
-{
+pub fn remainderf<const N: usize>(x: F32x<N>, y: F32x<N>) -> F32x<N> {
     let mut n = x.abs();
     let mut d = y.abs();
     let mut s = F32x::ONE;
@@ -1029,8 +976,7 @@ fn test_remainderf() {
 }
 
 #[inline]
-pub(crate) fn sinpifk<const N: usize>(d: F32x<N>) -> Doubled<F32x<N>>
-{
+pub(crate) fn sinpifk<const N: usize>(d: F32x<N>) -> Doubled<F32x<N>> {
     let u = d * F32x::splat(4.);
     let q = u.trunci();
     let q = (q + ((q.cast() >> U32x::splat(31)).cast() ^ I32x::splat(1))) & I32x::splat(!1);
@@ -1083,8 +1029,7 @@ pub(crate) fn sinpifk<const N: usize>(d: F32x<N>) -> Doubled<F32x<N>>
 }
 
 #[inline]
-pub(crate) fn cospifk<const N: usize>(d: F32x<N>) -> Doubled<F32x<N>>
-{
+pub(crate) fn cospifk<const N: usize>(d: F32x<N>) -> Doubled<F32x<N>> {
     let u = d * F32x::splat(4.);
     let q = u.trunci();
     let q = (q + ((q.cast() >> U32x::splat(31)).cast() ^ I32x::splat(1))) & I32x::splat(!1);
@@ -1137,8 +1082,7 @@ pub(crate) fn cospifk<const N: usize>(d: F32x<N>) -> Doubled<F32x<N>>
 }
 
 #[inline]
-pub(crate) fn expm1fk<const N: usize>(d: F32x<N>) -> F32x<N>
-{
+pub(crate) fn expm1fk<const N: usize>(d: F32x<N>) -> F32x<N> {
     let q = (d * F32x::R_LN2).roundi();
     let s = q.cast::<f32>().mla(-F32x::L2_U, d);
     let s = q.cast::<f32>().mla(-F32x::L2_L, s);
